@@ -1,0 +1,39 @@
+2007-11-07: GMediaRender 0.0.6
+	- Escape evented variables in subscription response
+	- Various code cleanups
+	- New command-line options:
+		--ip-address
+		--uuid
+		--friendly-name
+		--dump-devicedesc
+		--dump-connmgr-scpd
+		--dump-control-scpd
+		--dump-transport-scpd
+
+2007-11-05: GMediaRender 0.0.5
+	- BUG #16640: Rename inline 'min' function to avoid issues with 
+                      GCC 4.0.3 
+	- BUG #17887: Update to gstreamer-0.10
+                      Based on a patch contributed by David Siorpaes
+	- Fix compilation with libupnp-1.60, with largefile support
+	  (the libupnp branch from http://pupnp.sourceforge.net)
+	- Proper encoding of LastChange event in AVTransport service
+	- Add '--version', '--gstout-audiosink' and '--gstout-videosink'
+	  command-line options
+	- Look in datadir for icons
+	- Emit xmlns for XML root elements in device and service descriptors
+
+2006-03-27: GMediaRender 0.0.4
+	- Fix compilation with libupnp >= 0.3.1
+
+2005-09-02: GMediaRender 0.0.3
+	- Use autoconf and automake
+	- Generate device and service XML descriptions on the fly
+
+2005-09-01: GMediaRender 0.0.2
+	- Added binary files copyright and license notices to README
+	- Added copyright and license notice to static XML files
+
+2005-08-31: GMediaRender 0.0.1
+	- First preliminary release
+

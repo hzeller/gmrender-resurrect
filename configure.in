@@ -1,0 +1,152 @@
+AC_PREREQ(2.59)
+AC_INIT(gmediarender, 0.0.6, http://gmrender.nongnu.org)
+AC_CONFIG_AUX_DIR(config)
+AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
+AC_CONFIG_SRCDIR(src/main.c)
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE([1.8 dist-bzip2 no-dist-gzip check-news])
+
+AC_SYS_LARGEFILE
+
+# Checks for programs
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_MAKE_SET
+
+EXTRA_GCC_DEBUG_CFLAGS="" 
+EXTRA_GCC_DEBUG_CXXFLAGS=""
+  
+if test -n "$GCC"; then
+   EXTRA_GCC_DEBUG_CFLAGS="$CFLAGS"
+   EXTRA_GCC_DEBUG_CXXFLAGS="$CXXFLAGS"
+   CFLAGS="-Wall -Wpointer-arith -Wcast-align -Wmissing-prototypes -Wmissing-declarations"
+   CXXFLAGS="-Wall -Wpointer-arith -Wcast-align"
+fi  
+
+AC_CHECK_FUNCS([asprintf])
+
+# Debugging
+AC_ARG_ENABLE(debug,
+        [  --enable-debug          enable debugging],,
+        enable_debug=no)
+if test "x$enable_debug" = "xyes"; then
+        CFLAGS="$CFLAGS -g -Wall -Werror"
+fi
+
+PKG_PROG_PKG_CONFIG
+
+PKG_CHECK_MODULES(GLIB, glib-2.0 gthread-2.0, HAVE_GLIB=yes, HAVE_GLIB=no)
+
+GST_REQS=0.10.1
+GSTPLUG_REQS=0.10.1
+GST_MAJORMINOR=0.10
+
+AC_ARG_WITH( gstreamer,
+  AC_HELP_STRING([--without-gstreamer],[compile without GStreamer support]),
+  try_gstreamer=$withval, try_gstreamer=yes )
+HAVE_GST=no
+if test x$try_gstreamer = xyes; then
+  dnl check for GStreamer
+  PKG_CHECK_MODULES(GST, gstreamer-$GST_MAJORMINOR >= $GST_REQS,
+    [
+      HAVE_GST=yes
+      AC_SUBST(GST_CFLAGS)
+      AC_SUBST(GST_LIBS)
+
+    ],
+    [
+      HAVE_GST=no
+    ])
+fi
+if test x$HAVE_GST = xyes; then
+  AC_DEFINE(HAVE_GST, , [Use GStreamer])
+fi
+AC_SUBST(HAVE_GST)
+AM_CONDITIONAL(HAVE_GST, test x$HAVE_GST = xyes)
+
+
+LIBUPNP_REQUIRED=1.6.0
+AC_ARG_WITH( libupnp,
+  AC_HELP_STRING([--without-libupnp],[compile without libupnp support]),
+  try_libupnp=$withval, try_libupnp=yes )
+HAVE_LIBUPNP=no
+if test x$try_libupnp = xyes; then
+  dnl check for libupnp
+  PKG_CHECK_MODULES(LIBUPNP, libupnp >= $LIBUPNP_REQUIRED,
+    [
+      HAVE_LIBUPNP=yes
+      AC_SUBST(LIBUPNP_CFLAGS)
+      AC_SUBST(LIBUPNP_LIBS)
+
+    ],
+    [
+      HAVE_LIBUPNP=no
+    ])
+fi
+if test x$HAVE_LIBUPNP = xyes; then
+  AC_DEFINE(HAVE_LIBUPNP, , [Use libupnp])
+fi
+AC_SUBST(HAVE_LIBUPNP)
+
+LIBXML_REQUIRED=2.6.0
+AC_ARG_WITH( libxml,
+  AC_HELP_STRING([--without-libxml],[compile without libxml support]),
+  try_libxml=$withval, try_libxml=yes )
+HAVE_LIBXML=no
+if test x$try_libxml = xyes; then
+  dnl check for libxml
+  PKG_CHECK_MODULES(LIBXML, libxml-2.0 >= $LIBXML_REQUIRED,
+    [
+      HAVE_LIBXML=yes
+      AC_SUBST(LIBXML_CFLAGS)
+      AC_SUBST(LIBXML_LIBS)
+
+    ],
+    [
+      HAVE_LIBXML=no
+    ])
+fi
+if test x$HAVE_LIBXML = xyes; then
+  AC_DEFINE(HAVE_LIBXML, , [Use libxml])
+fi
+AC_SUBST(HAVE_LIBXML)
+
+
+#LIBGUPNP_REQUIRED=0.6
+#AC_ARG_WITH( libgupnp,
+#  AC_HELP_STRING([--without-libgupnp],[compile without libgupnp support]),
+#  try_libgupnp=$withval, try_libgupnp=yes )
+#HAVE_LIBGUPNP=no
+#if test x$try_libgupnp = xyes; then
+#  dnl check for libgupnp
+#  PKG_CHECK_MODULES(LIBGUPNP, gupnp-1.0 >= $LIBGUPNP_REQUIRED,
+#    [
+#      HAVE_LIBGUPNP=yes
+#      AC_SUBST(LIBGUPNP_CFLAGS)
+#      AC_SUBST(LIBGUPNP_LIBS)
+#
+#    ],
+#    [
+#      HAVE_LIBGUPNP=no
+#    ])
+#fi
+#if test x$HAVE_LIBGUPNP = xyes; then
+#  AC_DEFINE(HAVE_LIBGUPNP, , [Use libgupnp])
+#fi
+#AC_SUBST(HAVE_LIBGUPNP)
+
+# Checks for header files.
+AC_HEADER_STDC
+
+dnl Give error and exit if we don't have any UPnP SDK
+if test "x$HAVE_LIBUPNP" = "xno"; then
+  if test "x$HAVE_LIBGUPNP" = "xno"; then
+    AC_MSG_ERROR(you need either libupnp or libgupnp)
+  fi
+fi
+
+AC_CONFIG_FILES([Makefile
+                 src/Makefile
+		 data/Makefile])
+AC_OUTPUT
+
