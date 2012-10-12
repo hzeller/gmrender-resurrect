@@ -42,6 +42,7 @@
 #include "upnp.h"
 #include "upnp_device.h"
 #include "upnp_renderer.h"
+#include "upnp_transport.h"
 
 static gboolean show_version = FALSE;
 static gboolean show_devicedesc = FALSE;
@@ -50,9 +51,14 @@ static gboolean show_control_scpd = FALSE;
 static gboolean show_transport_scpd = FALSE;
 static gboolean show_outputs = FALSE;
 static gchar *ip_address = NULL;
-static gchar *uuid = "GMediaRender-1_0-000-000-002";
-static gchar *friendly_name = PACKAGE_NAME;
-static gchar *output = NULL;
+#ifdef GMRENDER_UUID
+// Compile-time uuid.
+static const gchar *uuid = GMRENDER_UUID;
+#else
+static const gchar *uuid = "GMediaRender-1_0-000-000-002";
+#endif
+static const gchar *friendly_name = PACKAGE_NAME;
+static const gchar *output = NULL;
 
  
 /* Generic GMediaRender options */
