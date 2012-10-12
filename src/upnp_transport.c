@@ -105,7 +105,7 @@ typedef enum {
 	TRANSPORT_CMD_SETAVTRANSPORTURI,             
 	TRANSPORT_CMD_SETPLAYMODE,
 	TRANSPORT_CMD_STOP,
-	//TRANSPORT_CMD_SETNEXTAVTRANSPORTURI,
+	TRANSPORT_CMD_SETNEXTAVTRANSPORTURI,
 	//TRANSPORT_CMD_RECORD,
 	//TRANSPORT_CMD_SETRECORDQUALITYMODE,
 	TRANSPORT_CMD_UNKNOWN,                   
@@ -170,7 +170,7 @@ static const char *default_transport_values[] = {
 	[TRANSPORT_VAR_AV_URI_META] = "",
 	[TRANSPORT_VAR_NEXT_AV_URI] = "",
 	[TRANSPORT_VAR_NEXT_AV_URI_META] = "",
-	[TRANSPORT_VAR_REL_TIME_POS] = "NOT_IMPLEMENTED",
+	[TRANSPORT_VAR_REL_TIME_POS] = "00:00:00",
 	[TRANSPORT_VAR_ABS_TIME_POS] = "NOT_IMPLEMENTED",
 	[TRANSPORT_VAR_REL_CTR_POS] = "2147483647",
 	[TRANSPORT_VAR_ABS_CTR_POS] = "2147483647",
@@ -339,12 +339,12 @@ static struct argument *arguments_setavtransporturi[] = {
         NULL
 };
 
-//static struct argument *arguments_setnextavtransporturi[] = {
-//        & (struct argument) { "InstanceID", PARAM_DIR_IN, TRANSPORT_VAR_AAT_INSTANCE_ID },
-//        & (struct argument) { "NextURI", PARAM_DIR_IN, TRANSPORT_VAR_NEXT_AV_URI },
-//        & (struct argument) { "NextURIMetaData", PARAM_DIR_IN, TRANSPORT_VAR_NEXT_AV_URI_META },
-//        NULL
-//};
+static struct argument *arguments_setnextavtransporturi[] = {
+        & (struct argument) { "InstanceID", PARAM_DIR_IN, TRANSPORT_VAR_AAT_INSTANCE_ID },
+        & (struct argument) { "NextURI", PARAM_DIR_IN, TRANSPORT_VAR_NEXT_AV_URI },
+        & (struct argument) { "NextURIMetaData", PARAM_DIR_IN, TRANSPORT_VAR_NEXT_AV_URI_META },
+        NULL
+};
 
 static struct argument *arguments_getmediainfo[] = {
         & (struct argument) { "InstanceID", PARAM_DIR_IN, TRANSPORT_VAR_AAT_INSTANCE_ID },
@@ -449,7 +449,7 @@ static struct argument **argument_list[] = {
 	[TRANSPORT_CMD_SETAVTRANSPORTURI] =         arguments_setavtransporturi,
 	[TRANSPORT_CMD_GETDEVICECAPABILITIES] =     arguments_getdevicecapabilities,
 	[TRANSPORT_CMD_GETMEDIAINFO] =              arguments_getmediainfo,
-	//[TRANSPORT_CMD_SETNEXTAVTRANSPORTURI] =     arguments_setnextavtransporturi,
+	[TRANSPORT_CMD_SETNEXTAVTRANSPORTURI] =     arguments_setnextavtransporturi,
 	[TRANSPORT_CMD_GETTRANSPORTINFO] =          arguments_gettransportinfo,
 	[TRANSPORT_CMD_GETPOSITIONINFO] =           arguments_getpositioninfo,
 	[TRANSPORT_CMD_GETTRANSPORTSETTINGS] =      arguments_gettransportsettings,
@@ -591,7 +591,7 @@ static void notify_lastchange(struct action_event *event, char *value)
 
 /* warning - does not lock service mutex */
 static void change_var(struct action_event *event, int varnum,
-		       char *new_value)
+		       const char *new_value)
 {
 	char *buf;
 
@@ -670,8 +670,6 @@ static int set_avtransport_uri(struct action_event *event)
 	printf("%s: CurrentURI='%s'\n", __FUNCTION__, value);
 
 	output_set_uri(value);
-
-
 	change_var(event, TRANSPORT_VAR_AV_URI, value);
 	free(value);
 
@@ -693,6 +691,7 @@ static int set_avtransport_uri(struct action_event *event)
 
 static int set_next_avtransport_uri(struct action_event *event)
 {
+	int rc = 0;
 	char *value;
 
 	ENTER();
@@ -706,18 +705,29 @@ static int set_next_avtransport_uri(struct action_event *event)
 		LEAVE();
 		return -1;
 	}
+
+	service_lock();
+
+	output_set_next_uri(value);
+	change_var(event, TRANSPORT_VAR_NEXT_AV_URI, value);
+
 	printf("%s: NextURI='%s'\n", __FUNCTION__, value);
 	free(value);
 	value = upnp_get_string(event, "NextURIMetaData");
 	if (value == NULL) {
 		LEAVE();
-		return -1;
+		rc = -1;
+	} else {
+		change_var(event, TRANSPORT_VAR_NEXT_AV_URI_META, value);
+		free(value);
 	}
 	printf("%s: NextURIMetaData='%s'\n", __FUNCTION__, value);
 	free(value);
 
+	service_unlock();
+
 	LEAVE();
-	return 0;
+	return rc;
 }
 
 static int get_transport_info(struct action_event *event)
@@ -1037,7 +1047,7 @@ static struct action transport_actions[] = {
 	[TRANSPORT_CMD_GETDEVICECAPABILITIES] =     {"GetDeviceCapabilities", get_device_caps},
 	[TRANSPORT_CMD_GETMEDIAINFO] =              {"GetMediaInfo", get_media_info},
 	[TRANSPORT_CMD_SETAVTRANSPORTURI] =         {"SetAVTransportURI", set_avtransport_uri},	/* RC9800i */
-        //	[TRANSPORT_CMD_SETNEXTAVTRANSPORTURI] =     {"SetNextAVTransportURI", set_next_avtransport_uri},
+	[TRANSPORT_CMD_SETNEXTAVTRANSPORTURI] =     {"SetNextAVTransportURI", set_next_avtransport_uri},
 	[TRANSPORT_CMD_GETTRANSPORTINFO] =          {"GetTransportInfo", get_transport_info},
 	[TRANSPORT_CMD_GETPOSITIONINFO] =           {"GetPositionInfo", get_position_info},
 	[TRANSPORT_CMD_GETTRANSPORTSETTINGS] =      {"GetTransportSettings", get_transport_settings},

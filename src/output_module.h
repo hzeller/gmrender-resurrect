@@ -33,6 +33,7 @@ struct output_module {
 	// Commands.
 	int (*init)(void);
 	void (*set_uri)(const char *uri);
+	void (*set_next_uri)(const char *uri);
 	int (*play)(void);
 	int (*stop)(void);
 	int (*pause)(void);

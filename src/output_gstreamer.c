@@ -138,12 +138,21 @@ static void scan_mime_list(void)
 }
 
 
-static GstElement *play_ = NULL;
+static GstElement *player_ = NULL;
 static char *gsuri_ = NULL;
-static GstState play_state_ = GST_STATE_NULL;
+static GstState player_state_ = GST_STATE_NULL;
 
-static void output_gstreamer_set_uri(const char *uri)
-{
+static void output_gstreamer_set_next_uri(const char *uri) {
+	ENTER();
+	printf("%s: setting next uri to '%s' **************************************************************\n", __FUNCTION__, uri);
+	if (gsuri_ != NULL) {
+		free(gsuri_);
+	}
+	gsuri_ = strdup(uri);
+	LEAVE();
+}
+
+static void output_gstreamer_set_uri(const char *uri) {
 	ENTER();
 	printf("%s: setting uri to '%s'\n", __FUNCTION__, uri);
 	if (gsuri_ != NULL) {
@@ -157,15 +166,15 @@ static int output_gstreamer_play(void)
 {
 	int result = -1;
 	ENTER();
-	if (play_state_ != GST_STATE_PAUSED) {
-		if (gst_element_set_state(play_, GST_STATE_READY) ==
+	if (player_state_ != GST_STATE_PAUSED) {
+		if (gst_element_set_state(player_, GST_STATE_READY) ==
 		    GST_STATE_CHANGE_FAILURE) {
 			printf("setting play state failed\n");
 			goto out;
 		}
-		g_object_set(G_OBJECT(play_), "uri", gsuri_, NULL);
+		g_object_set(G_OBJECT(player_), "uri", gsuri_, NULL);
 	}
-	if (gst_element_set_state(play_, GST_STATE_PLAYING) ==
+	if (gst_element_set_state(player_, GST_STATE_PLAYING) ==
 	    GST_STATE_CHANGE_FAILURE) {
 		printf("setting play state failed\n");
 		goto out;
@@ -178,7 +187,7 @@ out:
 
 static int output_gstreamer_stop(void)
 {
-	if (gst_element_set_state(play_, GST_STATE_READY) ==
+	if (gst_element_set_state(player_, GST_STATE_READY) ==
 	    GST_STATE_CHANGE_FAILURE) {
 		return -1;
 	} else {
@@ -188,13 +197,12 @@ static int output_gstreamer_stop(void)
 
 static int output_gstreamer_pause(void)
 {
-	if (gst_element_set_state(play_, GST_STATE_PAUSED) ==
+	if (gst_element_set_state(player_, GST_STATE_PAUSED) ==
 	    GST_STATE_CHANGE_FAILURE) {
 		return -1;
 	} else {
 		return 0;
 	}
-
 }
 
 
@@ -253,7 +261,7 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 			gststate_get_name(oldstate),
 			gststate_get_name(newstate),
 			gststate_get_name(pending));
-		play_state_ = newstate;
+		player_state_ = newstate;
 		break;
 	}
 	default:
@@ -303,8 +311,8 @@ static int output_gstreamer_get_position(gint64 *track_duration,
 	*track_duration = 0;
 	*track_pos = 0;
 	GstFormat fmt = GST_FORMAT_TIME;
-	gst_element_query_duration(play_, &fmt, track_duration);
-	gst_element_query_position(play_, &fmt, track_pos);
+	gst_element_query_duration(player_, &fmt, track_duration);
+	gst_element_query_position(player_, &fmt, track_pos);
 	return 0;
 }
 
@@ -316,9 +324,9 @@ static int output_gstreamer_init(void)
 
 	scan_mime_list();
 
-	play_ = gst_element_factory_make("playbin", "play");
+	player_ = gst_element_factory_make("playbin", "play");
 
-	bus = gst_pipeline_get_bus(GST_PIPELINE(play_));
+	bus = gst_pipeline_get_bus(GST_PIPELINE(player_));
 	gst_bus_add_watch(bus, my_bus_callback, NULL);
 	gst_object_unref(bus);
 
@@ -326,16 +334,16 @@ static int output_gstreamer_init(void)
 		GstElement *sink = NULL;
 		printf("Setting audio sink to %s\n", audiosink);
 		sink = gst_element_factory_make (audiosink, "sink");
-		g_object_set (G_OBJECT (play_), "audio-sink", sink, NULL);
+		g_object_set (G_OBJECT (player_), "audio-sink", sink, NULL);
 	}
 	if (videosink != NULL) {
 		GstElement *sink = NULL;
 		printf("Setting video sink to %s\n", videosink);
 		sink = gst_element_factory_make (videosink, "sink");
-		g_object_set (G_OBJECT (play_), "video-sink", sink, NULL);
+		g_object_set (G_OBJECT (player_), "video-sink", sink, NULL);
 	}
 
-	if (gst_element_set_state(play_, GST_STATE_READY) ==
+	if (gst_element_set_state(player_, GST_STATE_READY) ==
 	    GST_STATE_CHANGE_FAILURE) {
 		fprintf(stderr,	"Error: pipeline doesn't want to get ready\n");
 	}
@@ -351,6 +359,7 @@ struct output_module gstreamer_output = {
 	.init        = output_gstreamer_init,
 	.add_options = output_gstreamer_add_options,
 	.set_uri     = output_gstreamer_set_uri,
+	.set_next_uri= output_gstreamer_set_next_uri,
 	.play        = output_gstreamer_play,
 	.stop        = output_gstreamer_stop,
 	.pause       = output_gstreamer_pause,

@@ -140,6 +140,11 @@ void output_set_uri(const char *uri) {
 		output_module->set_uri(uri);
 	}
 }
+void output_set_next_uri(const char *uri) {
+	if (output_module && output_module->set_next_uri) {
+		output_module->set_next_uri(uri);
+	}
+}
 
 int output_play(void) {
 	int result = -1;
