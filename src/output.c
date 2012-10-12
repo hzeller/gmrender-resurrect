@@ -59,8 +59,8 @@ void output_dump_modules(void)
 		int i;
 		for (i=0; i<count; i++) {
 			printf("  %s\t%s%s\n", modules[i]->shortname,
-                                             modules[i]->description,
-			                     (i==0)?" (default)":"");
+			       modules[i]->description,
+			       (i==0) ? " (default)" : "");
 		}
 	}
 }
@@ -123,7 +123,7 @@ int output_add_options(GOptionContext *ctx)
 	int count, i;
 
 	count = sizeof(modules) / sizeof(struct output_module *);
-	for (i=0; i<count; i++) {
+	for (i = 0; i < count; ++i) {
 		if (modules[i]->add_options) {
 			result = modules[i]->add_options(ctx);
 			if (result != 0) {
@@ -137,29 +137,34 @@ out:
 
 void output_set_uri(const char *uri)
 {
-	if (output_module) {
-		if (output_module->set_uri) {
-			output_module->set_uri(uri);
-		}
+	if (output_module && output_module->set_uri) {
+		output_module->set_uri(uri);
 	}
 }
+
 int output_play(void)
 {
 	int result = -1;
-	if (output_module) {
-		if (output_module->play) {
-			result = output_module->play();
-		}
+	if (output_module && output_module->play) {
+		result = output_module->play();
 	}
 	return result;
 }
+
+int output_pause(void)
+{
+	int result = -1;
+	if (output_module && output_module->pause) {
+		result = output_module->pause();
+	}
+	return result;
+}
+
 int output_stop(void)
 {
 	int result = -1;
-	if (output_module) {
-		if (output_module->stop) {
-			result = output_module->stop();
-		}
+	if (output_module && output_module->stop) {
+		result = output_module->stop();
 	}
 	return result;
 }

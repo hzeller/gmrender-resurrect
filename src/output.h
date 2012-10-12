@@ -33,6 +33,6 @@ int output_loop(void);
 void output_set_uri(const char *uri);
 int output_play(void);
 int output_stop(void);
-//int output_pause(void);
+int output_pause(void);
 
 #endif /* _OUTPUT_H */

@@ -1,5 +1,5 @@
 AC_PREREQ(2.59)
-AC_INIT(gmediarender, 0.0.6, http://gmrender.nongnu.org)
+AC_INIT(gmediarender, 0.0.7, http://gmrender.nongnu.org)
 AC_CONFIG_AUX_DIR(config)
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
 AC_CONFIG_SRCDIR(src/main.c)

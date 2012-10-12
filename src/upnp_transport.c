@@ -183,11 +183,11 @@ static char *transport_values[] = {
 
 static const char *transport_states[] = {
 	"STOPPED",
+	"PLAYING",
+	"TRANSITIONING",
 	"PAUSED_PLAYBACK",
 	"PAUSED_RECORDING",
-	"PLAYING",
 	"RECORDING",
-	"TRANSITIONING",
 	"NO_MEDIA_PRESENT",
 	NULL
 };
@@ -689,34 +689,34 @@ static int set_avtransport_uri(struct action_event *event)
 	return rc;
 }
 
-//static int set_next_avtransport_uri(struct action_event *event)
-//{
-//	char *value;
-//
-//	ENTER();
-//
-//	if (obtain_instanceid(event, NULL)) {
-//		LEAVE();
-//		return -1;
-//	}
-//	value = upnp_get_string(event, "NextURI");
-//	if (value == NULL) {
-//		LEAVE();
-//		return -1;
-//	}
-//	printf("%s: NextURI='%s'\n", __FUNCTION__, value);
-//	free(value);
-//	value = upnp_get_string(event, "NextURIMetaData");
-//	if (value == NULL) {
-//		LEAVE();
-//		return -1;
-//	}
-//	printf("%s: NextURIMetaData='%s'\n", __FUNCTION__, value);
-//	free(value);
-//
-//	LEAVE();
-//	return 0;
-//}
+static int set_next_avtransport_uri(struct action_event *event)
+{
+	char *value;
+
+	ENTER();
+
+	if (obtain_instanceid(event, NULL)) {
+		LEAVE();
+		return -1;
+	}
+	value = upnp_get_string(event, "NextURI");
+	if (value == NULL) {
+		LEAVE();
+		return -1;
+	}
+	printf("%s: NextURI='%s'\n", __FUNCTION__, value);
+	free(value);
+	value = upnp_get_string(event, "NextURIMetaData");
+	if (value == NULL) {
+		LEAVE();
+		return -1;
+	}
+	printf("%s: NextURIMetaData='%s'\n", __FUNCTION__, value);
+	free(value);
+
+	LEAVE();
+	return 0;
+}
 
 static int get_transport_info(struct action_event *event)
 {
@@ -919,6 +919,46 @@ static int play(struct action_event *event)
 	return rc;
 }
 
+static int pause_stream(struct action_event *event)
+{
+	int rc = 0;
+	ENTER();
+
+	if (obtain_instanceid(event, NULL)) {
+		LEAVE();
+		return -1;
+	}
+
+	service_lock();
+	switch (transport_state) {
+        case TRANSPORT_PAUSED_PLAYBACK:
+		break;
+
+	case TRANSPORT_PLAYING:
+		if (output_pause()) {
+			upnp_set_error(event, 704, "Pause failed");
+			rc = -1;
+		} else {
+			transport_state = TRANSPORT_PAUSED_PLAYBACK;
+			change_var(event, TRANSPORT_VAR_TRANSPORT_STATE,
+				   "PAUSED_PLAYBACK");
+		}
+		// Set TransportPlaySpeed to '1'
+		break;
+
+        default:
+		/* action not allowed in these states - error 701 */
+		upnp_set_error(event, UPNP_TRANSPORT_E_TRANSITION_NA,
+			       "Transition not allowed");
+		rc = -1;
+        }
+	service_unlock();
+
+	LEAVE();
+
+	return rc;
+}
+
 static int seek(struct action_event *event)
 {
 	int rc = 0;
@@ -967,13 +1007,13 @@ static struct action transport_actions[] = {
 	[TRANSPORT_CMD_GETDEVICECAPABILITIES] =     {"GetDeviceCapabilities", get_device_caps},
 	[TRANSPORT_CMD_GETMEDIAINFO] =              {"GetMediaInfo", get_media_info},
 	[TRANSPORT_CMD_SETAVTRANSPORTURI] =         {"SetAVTransportURI", set_avtransport_uri},	/* RC9800i */
-	//[TRANSPORT_CMD_SETNEXTAVTRANSPORTURI] =     {"SetNextAVTransportURI", set_next_avtransport_uri},
+        //	[TRANSPORT_CMD_SETNEXTAVTRANSPORTURI] =     {"SetNextAVTransportURI", set_next_avtransport_uri},
 	[TRANSPORT_CMD_GETTRANSPORTINFO] =          {"GetTransportInfo", get_transport_info},
 	[TRANSPORT_CMD_GETPOSITIONINFO] =           {"GetPositionInfo", get_position_info},
 	[TRANSPORT_CMD_GETTRANSPORTSETTINGS] =      {"GetTransportSettings", get_transport_settings},
 	[TRANSPORT_CMD_STOP] =                      {"Stop", stop},
 	[TRANSPORT_CMD_PLAY] =                      {"Play", play},
-	[TRANSPORT_CMD_PAUSE] =                     {"Pause", NULL},	/* optional */
+	[TRANSPORT_CMD_PAUSE] =                     {"Pause", pause_stream},
 	//[TRANSPORT_CMD_RECORD] =                    {"Record", NULL},	/* optional */
 	[TRANSPORT_CMD_SEEK] =                      {"Seek", seek},
 	[TRANSPORT_CMD_NEXT] =                      {"Next", next},

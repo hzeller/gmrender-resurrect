@@ -68,7 +68,7 @@ upnp_add_response(struct action_event *event, char *key, const char *value)
 	int rc;
 #endif
 
-	ENTER();
+	//ENTER();
 
 	assert(event != NULL);
 	assert(key != NULL);
@@ -94,6 +94,9 @@ upnp_add_response(struct action_event *event, char *key, const char *value)
 	    UpnpAddToActionResponse(&event->request->ActionResult,
 				    event->request->ActionName,
 				    event->service->type, key, val);
+	fprintf(stderr, "HZ: %s %s=%s\n", event->request->ActionName,
+                key, val);
+
 	if (rc != UPNP_E_SUCCESS) {
 		/* report custom error */
 		event->request->ActionResult = NULL;
@@ -108,7 +111,7 @@ out:
 	if (val != NULL) {
 		free(val);
 	}
-	LEAVE();
+	//LEAVE();
 	return result;
 }
 
@@ -119,7 +122,7 @@ int upnp_append_variable(struct action_event *event,
 	struct service *service = event->service;
 	int retval = -1;
 
-	ENTER();
+	//ENTER();
 
 	assert(event != NULL);
 	assert(paramname != NULL);
@@ -151,7 +154,7 @@ int upnp_append_variable(struct action_event *event,
 	ithread_mutex_unlock(service->service_mutex);
 #endif
 out:
-	LEAVE();
+	//LEAVE();
 	return retval;
 }
 
@@ -339,7 +342,8 @@ static int handle_action_request(struct device_private *priv,
 		rc = (event_action->callback) (&event);
 		if (rc == 0) {
 			ar_event->ErrCode = UPNP_E_SUCCESS;
-			printf("Action was a success!\n");
+			printf("Action '%s' was a success!\n",
+                               ar_event->ActionName);
 		}
 		if (ar_event->ActionResult == NULL) {
 			ar_event->ActionResult =

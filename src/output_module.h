@@ -29,6 +29,8 @@ struct output_module {
         const char *shortname;
         const char *description;
 	int (*add_options)(GOptionContext *ctx);
+
+	// Commands.
 	int (*init)(void);
 	void (*set_uri)(const char *uri);
 	int (*play)(void);
