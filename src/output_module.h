@@ -37,6 +37,9 @@ struct output_module {
 	int (*stop)(void);
 	int (*pause)(void);
 	int (*loop)(void);
+	
+	// Query
+	int (*get_position)(gint64 *track_duration, gint64 *track_pos);
 };
 
 #endif

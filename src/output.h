@@ -24,6 +24,8 @@
 #ifndef _OUTPUT_H
 #define _OUTPUT_H
 
+#include <glib.h>
+
 int output_init(const char *shortname);
 int output_add_options(GOptionContext *ctx);
 void output_dump_modules(void);
@@ -34,5 +36,5 @@ void output_set_uri(const char *uri);
 int output_play(void);
 int output_stop(void);
 int output_pause(void);
-
+int output_get_position(gint64 *track_dur, gint64 *track_pos);
 #endif /* _OUTPUT_H */

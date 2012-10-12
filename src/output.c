@@ -135,15 +135,13 @@ out:
 	return result;
 }
 
-void output_set_uri(const char *uri)
-{
+void output_set_uri(const char *uri) {
 	if (output_module && output_module->set_uri) {
 		output_module->set_uri(uri);
 	}
 }
 
-int output_play(void)
-{
+int output_play(void) {
 	int result = -1;
 	if (output_module && output_module->play) {
 		result = output_module->play();
@@ -151,8 +149,7 @@ int output_play(void)
 	return result;
 }
 
-int output_pause(void)
-{
+int output_pause(void) {
 	int result = -1;
 	if (output_module && output_module->pause) {
 		result = output_module->pause();
@@ -160,8 +157,7 @@ int output_pause(void)
 	return result;
 }
 
-int output_stop(void)
-{
+int output_stop(void) {
 	int result = -1;
 	if (output_module && output_module->stop) {
 		result = output_module->stop();
@@ -169,5 +165,10 @@ int output_stop(void)
 	return result;
 }
 
-
-
+int output_get_position(gint64 *track_dur, gint64 *track_pos) {
+	int result = -1;
+	if (output_module && output_module->get_position) {
+		result = output_module->get_position(track_dur, track_pos);
+	}
+	return result;
+}

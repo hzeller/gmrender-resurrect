@@ -94,8 +94,6 @@ upnp_add_response(struct action_event *event, char *key, const char *value)
 	    UpnpAddToActionResponse(&event->request->ActionResult,
 				    event->request->ActionName,
 				    event->service->type, key, val);
-	fprintf(stderr, "HZ: %s %s=%s\n", event->request->ActionName,
-                key, val);
 
 	if (rc != UPNP_E_SUCCESS) {
 		/* report custom error */
@@ -118,7 +116,7 @@ out:
 int upnp_append_variable(struct action_event *event,
 			 int varnum, char *paramname)
 {
-	char *value;
+	const char *value;
 	struct service *service = event->service;
 	int retval = -1;
 
@@ -140,7 +138,7 @@ int upnp_append_variable(struct action_event *event,
 	ithread_mutex_lock(service->service_mutex);
 #endif
 
-	value = (char *) service->variable_values[varnum];
+	value = (const char *) service->variable_values[varnum];
 	if (value == NULL) {
 #ifdef HAVE_LIBUPNP
 		upnp_set_error(event, UPNP_E_INTERNAL_ERROR,

@@ -298,6 +298,16 @@ static int output_gstreamer_add_options(GOptionContext *ctx)
 	return 0;
 }
 
+static int output_gstreamer_get_position(gint64 *track_duration,
+					 gint64 *track_pos) {
+	*track_duration = 0;
+	*track_pos = 0;
+	GstFormat fmt = GST_FORMAT_TIME;
+	gst_element_query_duration(play_, &fmt, track_duration);
+	gst_element_query_position(play_, &fmt, track_pos);
+	return 0;
+}
+
 static int output_gstreamer_init(void)
 {
 	GstBus *bus;
@@ -344,4 +354,5 @@ struct output_module gstreamer_output = {
 	.play        = output_gstreamer_play,
 	.stop        = output_gstreamer_stop,
 	.pause       = output_gstreamer_pause,
+	.get_position = output_gstreamer_get_position,
 };

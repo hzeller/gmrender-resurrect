@@ -146,7 +146,9 @@ static const char *transport_variables[] = {
 	[TRANSPORT_VAR_UNKNOWN] = NULL
 };
 
-static char *transport_values[] = {
+static char *transport_values[TRANSPORT_VAR_COUNT];
+
+static const char *default_transport_values[] = {
 	[TRANSPORT_VAR_TRANSPORT_STATE] = "STOPPED",
 	[TRANSPORT_VAR_TRANSPORT_STATUS] = "OK",
 	[TRANSPORT_VAR_PLAY_MEDIUM] = "UNKNOWN",
@@ -177,7 +179,7 @@ static char *transport_values[] = {
 	[TRANSPORT_VAR_AAT_SEEK_MODE] = "TRACK_NR",
 	[TRANSPORT_VAR_AAT_SEEK_TARGET] = "",
 	[TRANSPORT_VAR_AAT_INSTANCE_ID] = "0",
-	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] = "Play,Stop",
+	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] = "Play,Stop,Pause",
 	[TRANSPORT_VAR_UNKNOWN] = NULL
 };
 
@@ -604,9 +606,9 @@ static void change_var(struct action_event *event, int varnum,
 		return;
 	}
 
-	//if (transport_values[varnum]) {
-	//      free(transport_values[varnum]);
-	//}
+	if (transport_values[varnum]) {
+		free(transport_values[varnum]);
+	}
 	transport_values[varnum] = strdup(new_value);
 	asprintf(&buf,
 		 "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\"><InstanceID val=\"0\"><%s val=\"%s\"/></InstanceID></Event>",
@@ -764,6 +766,22 @@ static int get_transport_settings(struct action_event *event)
 	return rc;
 }
 
+// Print UPnP formatted time into given buffer. time given in nanoseconds.
+static int divide_leave_remainder(gint64 *val, gint64 divisor) {
+	int result = *val / divisor;
+	*val %= divisor;
+	return result;
+}
+static void print_time_into_buffer(char *buf, size_t size, gint64 t) {
+	const gint64 one_sec = 1000000000LL;
+	const int hour = divide_leave_remainder(&t, 3600 * one_sec);
+	const int minute = divide_leave_remainder(&t, 60 * one_sec);
+	const int second = divide_leave_remainder(&t, one_sec);
+	const int milli_second = t / 1000000;
+	snprintf(buf, size, "%d:%02d:%02d.%03d", hour, minute, second,
+		 milli_second);
+}
+
 static int get_position_info(struct action_event *event)
 {
 	int rc;
@@ -772,6 +790,18 @@ static int get_position_info(struct action_event *event)
 	if (obtain_instanceid(event, NULL)) {
 		rc = -1;
 		goto out;
+	}
+	
+	gint64 duration, position;
+	service_lock();
+	const int pos_result = output_get_position(&duration, &position);
+	service_unlock();
+	if (pos_result == 0) {
+		char tbuf[32];
+		print_time_into_buffer(tbuf, sizeof(tbuf), duration);
+		change_var(event, TRANSPORT_VAR_CUR_TRACK_DUR, tbuf);
+		print_time_into_buffer(tbuf, sizeof(tbuf), position);
+		change_var(event, TRANSPORT_VAR_REL_TIME_POS, tbuf);
 	}
 
 	rc = upnp_append_variable(event, TRANSPORT_VAR_CUR_TRACK, "Track");
@@ -1023,6 +1053,14 @@ static struct action transport_actions[] = {
 	[TRANSPORT_CMD_UNKNOWN] =                  {NULL, NULL}
 };
 
+void upnp_transport_init() {
+	int i;
+	for (i = 0; i < TRANSPORT_VAR_COUNT; ++i) {
+		transport_values[i] = strdup(default_transport_values[i]
+					     ? default_transport_values[i]
+					     : "");
+	}
+}
 
 struct service transport_service = {
         .service_name =         TRANSPORT_SERVICE,

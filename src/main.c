@@ -177,6 +177,8 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
+	upnp_transport_init();
+
 	rc = upnp_device_init(upnp_renderer, ip_address);
 	if (rc != 0) {
 		fprintf(stderr,"ERROR: Failed to initialize UPnP device\n");

@@ -26,6 +26,8 @@
 
 extern struct service transport_service;
 
+void upnp_transport_init(void);
+
 #define UPNP_TRANSPORT_E_TRANSITION_NA	701
 #define UPNP_TRANSPORT_E_NO_CONTENTS	702
 #define UPNP_TRANSPORT_E_READ_ERROR	703
