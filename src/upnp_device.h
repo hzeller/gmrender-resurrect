@@ -44,12 +44,13 @@ struct device {
 };
 
 int upnp_device_init(struct device *device_def, char *ip_address);
-int upnp_add_response(struct action_event *event, char *key, const char *value);
+int upnp_add_response(struct action_event *event,
+		      const char *key, const char *value);
 void upnp_set_error(struct action_event *event, int error_code,
                     const char *format, ...);
 char *upnp_get_string(struct action_event *event, const char *key);
 int upnp_append_variable(struct action_event *event,
-                         int varnum, char *paramname);
+                         int varnum, const char *paramname);
 
 int upnp_device_notify(struct device_private *priv,
                        const char *serviceID,

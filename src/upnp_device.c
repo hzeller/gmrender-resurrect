@@ -60,7 +60,8 @@ struct device_private {
 };
 
 int
-upnp_add_response(struct action_event *event, char *key, const char *value)
+upnp_add_response(struct action_event *event,
+		  const char *key, const char *value)
 {
 	int result = -1;
 	char *val;
@@ -114,7 +115,7 @@ out:
 }
 
 int upnp_append_variable(struct action_event *event,
-			 int varnum, char *paramname)
+			 int varnum, const char *paramname)
 {
 	const char *value;
 	struct service *service = event->service;

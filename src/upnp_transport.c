@@ -146,7 +146,8 @@ static const char *transport_variables[] = {
 	[TRANSPORT_VAR_UNKNOWN] = NULL
 };
 
-static char *transport_values[TRANSPORT_VAR_COUNT];
+// These are writable and changing at runtime.
+static const char *transport_values[TRANSPORT_VAR_COUNT];
 
 static const char *default_transport_values[] = {
 	[TRANSPORT_VAR_TRANSPORT_STATE] = "STOPPED",
@@ -607,7 +608,7 @@ static void change_var(struct action_event *event, int varnum,
 	}
 
 	if (transport_values[varnum]) {
-		free(transport_values[varnum]);
+		free((char*)transport_values[varnum]);
 	}
 	transport_values[varnum] = strdup(new_value);
 	asprintf(&buf,

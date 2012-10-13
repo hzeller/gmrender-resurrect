@@ -202,7 +202,7 @@ static struct var_meta control_var_meta[] = {
 	[CONTROL_VAR_UNKNOWN] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
 };
 
-static char *control_values[] = {
+static const char *control_values[] = {
 	[CONTROL_VAR_LAST_CHANGE] = "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\"/>",
 	[CONTROL_VAR_PRESET_NAME_LIST] = "",
 	[CONTROL_VAR_AAT_CHANNEL] = "",
@@ -462,7 +462,7 @@ static struct argument **argument_list[] = {
 
 
 static int cmd_obtain_variable(struct action_event *event, int varnum,
-			       char *paramname)
+			       const char *paramname)
 {
 	char *value;
 

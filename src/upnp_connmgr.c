@@ -134,7 +134,7 @@ static const char *connmgr_variables[] = {
 	[CONNMGR_VAR_UNKNOWN] = NULL
 };
 
-static char *connmgr_values[] = {
+static const char *connmgr_values[] = {
 	[CONNMGR_VAR_SRC_PROTO_INFO] = "",
 	[CONNMGR_VAR_SINK_PROTO_INFO] = "http-get:*:audio/mpeg:*",
 	[CONNMGR_VAR_CUR_CONN_IDS] = "0",
@@ -274,7 +274,7 @@ static int get_protocol_info(struct action_event *event)
 
 static int get_current_conn_ids(struct action_event *event)
 {
-	int rc;
+	int rc = -1;
 	ENTER();
 	upnp_add_response(event, "ConnectionIDs", "0");
 	///rc = upnp_append_variable(event, CONNMGR_VAR_CUR_CONN_IDS,

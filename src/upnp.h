@@ -88,14 +88,14 @@ struct service {
 	ithread_mutex_t *service_mutex;
 #endif
 	const char *service_name;
-	char *type;
+	const char *type;
 	const char *scpd_url;
 	const char *control_url;
 	const char *event_url;
 	struct action *actions;
 	struct argument ***action_arguments;
 	const char **variable_names;
-	char **variable_values;
+	const char **variable_values;
 	struct var_meta *variable_meta;
 	int variable_count;
 	int command_count;

@@ -209,7 +209,7 @@ int xmlelement_set_attribute(struct xmldoc *doc,
 
 void add_value_element(struct xmldoc *doc,
                        struct xmlelement *parent,
-                       char *tagname, char *value)
+                       const char *tagname, const char *value)
 {
         struct xmlelement *top;
 
@@ -219,7 +219,7 @@ void add_value_element(struct xmldoc *doc,
 }
 void add_value_element_int(struct xmldoc *doc,
                            struct xmlelement *parent,
-                           char *tagname, int value)
+                           const char *tagname, int value)
 {
         char *buf;
 
@@ -229,7 +229,7 @@ void add_value_element_int(struct xmldoc *doc,
 }
 void add_value_element_long(struct xmldoc *doc,
                             struct xmlelement *parent,
-                            char *tagname, long long value)
+                            const char *tagname, long long value)
 {
         char *buf;
 
