@@ -566,13 +566,13 @@ static int get_media_info(struct action_event *event)
 }
 
 
-static void notify_lastchange(struct action_event *event, char *value)
+static void notify_lastchange(struct action_event *event, const char *value)
 {
 	const char *varnames[] = {
 		"LastChange",
 		NULL
 	};
-	char *varvalues[] = {
+	const char *varvalues[] = {
 		NULL, NULL
 	};
 
@@ -586,8 +586,23 @@ static void notify_lastchange(struct action_event *event, char *value)
 	upnp_device_notify(event->device_priv,
 	                   transport_service.service_name,
 	                   varnames,
-	                   (const char **)varvalues,
-	                   1);
+	                   varvalues, 1);
+}
+
+// Replace given variable without sending an state-change event.
+static int replace_var(int varnum, const char *new_value) {
+	if ((varnum < 0) || (varnum >= TRANSPORT_VAR_UNKNOWN)) {
+		return 0;
+	}
+	if (new_value == NULL) {
+		return 0;
+	}
+
+	if (transport_values[varnum]) {
+		free((char*)transport_values[varnum]);
+	}
+	transport_values[varnum] = strdup(new_value);
+	return 1;
 }
 
 /* warning - does not lock service mutex */
@@ -597,20 +612,10 @@ static void change_var(struct action_event *event, int varnum,
 	char *buf;
 
 	ENTER();
-
-	if ((varnum < 0) || (varnum >= TRANSPORT_VAR_UNKNOWN)) {
+	if (!replace_var(varnum, new_value)) {
 		LEAVE();
 		return;
 	}
-	if (new_value == NULL) {
-		LEAVE();
-		return;
-	}
-
-	if (transport_values[varnum]) {
-		free((char*)transport_values[varnum]);
-	}
-	transport_values[varnum] = strdup(new_value);
 	asprintf(&buf,
 		 "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\"><InstanceID val=\"0\"><%s val=\"%s\"/></InstanceID></Event>",
 		 transport_variables[varnum], xmlescape(transport_values[varnum], 1));
@@ -637,7 +642,7 @@ static int obtain_instanceid(struct action_event *event, int *instance)
 #endif
 		return -1;
 	}
-	printf("%s: InstanceID='%s'\n", __FUNCTION__, value);
+	//printf("%s: InstanceID='%s'\n", __FUNCTION__, value);
 	free(value);
 
 	// TODO - parse value, and store in *instance, if instance!=NULL
@@ -820,9 +825,9 @@ static int get_position_info(struct action_event *event)
 	if (pos_result == 0) {
 		char tbuf[32];
 		print_upnp_time_into_buffer(tbuf, sizeof(tbuf), duration);
-		change_var(event, TRANSPORT_VAR_CUR_TRACK_DUR, tbuf);
+		replace_var(TRANSPORT_VAR_CUR_TRACK_DUR, tbuf);
 		print_upnp_time_into_buffer(tbuf, sizeof(tbuf), position);
-		change_var(event, TRANSPORT_VAR_REL_TIME_POS, tbuf);
+		replace_var(TRANSPORT_VAR_REL_TIME_POS, tbuf);
 	}
 
 	rc = upnp_append_variable(event, TRANSPORT_VAR_CUR_TRACK, "Track");
@@ -922,6 +927,12 @@ static int stop(struct action_event *event)
 	return 0;
 }
 
+static void inform_done_playing(void *e) {
+	printf("Done playing....\n");
+	// This should be evented, but I don't know yet how to do this
+	// asynchronously.
+	replace_var(TRANSPORT_VAR_TRANSPORT_STATE, "STOPPED");
+}
 
 static int play(struct action_event *event)
 {
@@ -941,7 +952,7 @@ static int play(struct action_event *event)
 		break;
 	case TRANSPORT_STOPPED:
 	case TRANSPORT_PAUSED_PLAYBACK:
-		if (output_play()) {
+		if (output_play(&inform_done_playing, event)) {
 			upnp_set_error(event, 704, "Playing failed");
 			rc = -1;
 		} else {

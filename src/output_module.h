@@ -22,8 +22,9 @@
  */ 
 
 #ifndef _OUTPUT_MODULE_H
-
 #define _OUTPUT_MODULE_H
+
+#include "output.h"
 
 struct output_module {
         const char *shortname;
@@ -34,7 +35,7 @@ struct output_module {
 	int (*init)(void);
 	void (*set_uri)(const char *uri);
 	void (*set_next_uri)(const char *uri);
-	int (*play)(void);
+	int (*play)(done_cb done_callback, void *param);
 	int (*stop)(void);
 	int (*pause)(void);
 	int (*loop)(void);

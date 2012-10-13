@@ -142,6 +142,9 @@ static GstElement *player_ = NULL;
 static char *gsuri_ = NULL;
 static GstState player_state_ = GST_STATE_NULL;
 
+static done_cb done_callback_ = NULL;
+static void *done_callback_param_ = NULL;
+
 static void output_gstreamer_set_next_uri(const char *uri) {
 	ENTER();
 	printf("%s: setting next uri to '%s' **************************************************************\n", __FUNCTION__, uri);
@@ -162,8 +165,10 @@ static void output_gstreamer_set_uri(const char *uri) {
 	LEAVE();
 }
 
-static int output_gstreamer_play(void) {
+static int output_gstreamer_play(done_cb callback, void *param) {
 	int result = -1;
+	done_callback_ = callback;
+	done_callback_param_ = param;
 	ENTER();
 	if (player_state_ != GST_STATE_PAUSED) {
 		if (gst_element_set_state(player_, GST_STATE_READY) ==
@@ -247,7 +252,9 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 	switch (msgType) {
 	case GST_MESSAGE_EOS:
 		g_print("GStreamer: %s: End-of-stream\n", msgSrcName);
+		if (done_callback_) done_callback_(done_callback_param_);
 		break;
+
 	case GST_MESSAGE_ERROR: {
 		gchar *debug;
 		GError *err;

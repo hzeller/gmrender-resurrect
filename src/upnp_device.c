@@ -59,9 +59,8 @@ struct device_private {
 #endif
 };
 
-int
-upnp_add_response(struct action_event *event,
-		  const char *key, const char *value)
+int upnp_add_response(struct action_event *event,
+		      const char *key, const char *value)
 {
 	int result = -1;
 	char *val;
@@ -157,9 +156,8 @@ out:
 	return retval;
 }
 
-void
-upnp_set_error(struct action_event *event, int error_code,
-	       const char *format, ...)
+void upnp_set_error(struct action_event *event, int error_code,
+		    const char *format, ...)
 {
 	event->status = -1;
 
@@ -298,8 +296,7 @@ out:
 int upnp_device_notify(struct device_private *priv,
                        const char *serviceID,
                        const char **varnames,
-                       const char **varvalues,
-                       int varcount)
+                       const char **varvalues, int varcount)
 {
 #ifdef HAVE_LIBUPNP
         UpnpNotify(priv->device_handle, 
@@ -314,8 +311,7 @@ int upnp_device_notify(struct device_private *priv,
 
 #ifdef HAVE_LIBUPNP
 static int handle_action_request(struct device_private *priv,
-                                 struct Upnp_Action_Request
-					  *ar_event)
+                                 struct Upnp_Action_Request *ar_event)
 {
 	struct service *event_service;
 	struct action *event_action;

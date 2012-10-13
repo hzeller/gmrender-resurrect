@@ -26,6 +26,8 @@
 
 #include <glib.h>
 
+typedef void (*done_cb)(void *);
+
 int output_init(const char *shortname);
 int output_add_options(GOptionContext *ctx);
 void output_dump_modules(void);
@@ -35,9 +37,10 @@ int output_loop(void);
 void output_set_uri(const char *uri);
 void output_set_next_uri(const char *uri);
 
-int output_play(void);
+int output_play(done_cb done_callback, void *param);
 int output_stop(void);
 int output_pause(void);
 int output_get_position(gint64 *track_dur_nanos, gint64 *track_pos_nanos);
 int output_seek(gint64 position_nanos);
+
 #endif /* _OUTPUT_H */

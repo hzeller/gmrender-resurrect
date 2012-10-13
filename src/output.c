@@ -146,10 +146,10 @@ void output_set_next_uri(const char *uri) {
 	}
 }
 
-int output_play(void) {
+int output_play(done_cb done_callback, void *param) {
 	int result = -1;
 	if (output_module && output_module->play) {
-		result = output_module->play();
+		result = output_module->play(done_callback, param);
 	}
 	return result;
 }
