@@ -170,6 +170,14 @@ int output_stop(void) {
 	return result;
 }
 
+int output_seek(gint64 position_nanos) {
+	int result = -1;
+	if (output_module && output_module->seek) {
+		result = output_module->seek(position_nanos);
+	}
+	return result;
+}
+
 int output_get_position(gint64 *track_dur, gint64 *track_pos) {
 	int result = -1;
 	if (output_module && output_module->get_position) {

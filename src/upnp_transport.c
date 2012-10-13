@@ -783,14 +783,24 @@ static int divide_leave_remainder(gint64 *val, gint64 divisor) {
 	*val %= divisor;
 	return result;
 }
-static void print_time_into_buffer(char *buf, size_t size, gint64 t) {
-	const gint64 one_sec = 1000000000LL;
+static void print_upnp_time_into_buffer(char *buf, size_t size, gint64 t) {
+	const gint64 one_sec = 1000000000LL;  // units are in nanoseconds.
 	const int hour = divide_leave_remainder(&t, 3600 * one_sec);
 	const int minute = divide_leave_remainder(&t, 60 * one_sec);
 	const int second = divide_leave_remainder(&t, one_sec);
 	const int milli_second = t / 1000000;
 	snprintf(buf, size, "%d:%02d:%02d.%03d", hour, minute, second,
 		 milli_second);
+}
+
+static gint64 parse_upnp_time(const char *time_string) {
+	int hour = 0;
+	int minute = 0;
+	int second = 0;
+	sscanf(time_string, "%d:%02d:%02d", &hour, &minute, &second);
+	const gint64 one_sec = 1000000000LL;
+	gint64 nanos = (hour * 3600 + minute * 60 + second) * one_sec;
+	return nanos;
 }
 
 static int get_position_info(struct action_event *event)
@@ -809,9 +819,9 @@ static int get_position_info(struct action_event *event)
 	service_unlock();
 	if (pos_result == 0) {
 		char tbuf[32];
-		print_time_into_buffer(tbuf, sizeof(tbuf), duration);
+		print_upnp_time_into_buffer(tbuf, sizeof(tbuf), duration);
 		change_var(event, TRANSPORT_VAR_CUR_TRACK_DUR, tbuf);
-		print_time_into_buffer(tbuf, sizeof(tbuf), position);
+		print_upnp_time_into_buffer(tbuf, sizeof(tbuf), position);
 		change_var(event, TRANSPORT_VAR_REL_TIME_POS, tbuf);
 	}
 
@@ -1008,6 +1018,23 @@ static int seek(struct action_event *event)
 	if (obtain_instanceid(event, NULL)) {
 		rc = -1;
 	}
+
+	char *unit = upnp_get_string(event, "Unit");
+	if (strcmp(unit, "REL_TIME") == 0) {
+		// This is the only thing we support right now.
+		char *target = upnp_get_string(event, "Target");
+		gint64 nanos = parse_upnp_time(target);
+		service_lock();
+		if (output_seek(nanos) == 0) {
+			// Seeking might take some time, pretend to already
+			// be there. Should we go into TRANSITION mode ?
+			// (gstreamer will go into PAUSE, then PLAYING)
+			change_var(event, TRANSPORT_VAR_REL_TIME_POS, target);
+		}
+		service_unlock();
+		free(target);
+	}
+	free(unit);
 
 	LEAVE();
 

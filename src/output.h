@@ -38,5 +38,6 @@ void output_set_next_uri(const char *uri);
 int output_play(void);
 int output_stop(void);
 int output_pause(void);
-int output_get_position(gint64 *track_dur, gint64 *track_pos);
+int output_get_position(gint64 *track_dur_nanos, gint64 *track_pos_nanos);
+int output_seek(gint64 position_nanos);
 #endif /* _OUTPUT_H */

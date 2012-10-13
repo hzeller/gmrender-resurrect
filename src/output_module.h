@@ -38,7 +38,8 @@ struct output_module {
 	int (*stop)(void);
 	int (*pause)(void);
 	int (*loop)(void);
-	
+	int (*seek)(gint64 position_nanos);
+
 	// Query
 	int (*get_position)(gint64 *track_duration, gint64 *track_pos);
 };

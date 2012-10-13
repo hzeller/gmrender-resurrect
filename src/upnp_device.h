@@ -48,7 +48,10 @@ int upnp_add_response(struct action_event *event,
 		      const char *key, const char *value);
 void upnp_set_error(struct action_event *event, int error_code,
                     const char *format, ...);
+
+// Returns a writable copy of the value.
 char *upnp_get_string(struct action_event *event, const char *key);
+
 int upnp_append_variable(struct action_event *event,
                          int varnum, const char *paramname);
 

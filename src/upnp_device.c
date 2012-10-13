@@ -196,7 +196,7 @@ char *upnp_get_string(struct action_event *event, const char *key)
 	}
 	node = ixmlNode_getFirstChild(node);
 
-	for (; node != NULL; node = ixmlNode_getNextSibling(node)) {
+	for (/**/; node != NULL; node = ixmlNode_getNextSibling(node)) {
 		if (strcmp(ixmlNode_getNodeName(node), key) == 0) {
 			node = ixmlNode_getFirstChild(node);
 			if (node == NULL) {

@@ -162,8 +162,7 @@ static void output_gstreamer_set_uri(const char *uri) {
 	LEAVE();
 }
 
-static int output_gstreamer_play(void)
-{
+static int output_gstreamer_play(void) {
 	int result = -1;
 	ENTER();
 	if (player_state_ != GST_STATE_PAUSED) {
@@ -185,8 +184,7 @@ out:
 	return result;
 }
 
-static int output_gstreamer_stop(void)
-{
+static int output_gstreamer_stop(void) {
 	if (gst_element_set_state(player_, GST_STATE_READY) ==
 	    GST_STATE_CHANGE_FAILURE) {
 		return -1;
@@ -195,10 +193,20 @@ static int output_gstreamer_stop(void)
 	}
 }
 
-static int output_gstreamer_pause(void)
-{
+static int output_gstreamer_pause(void) {
 	if (gst_element_set_state(player_, GST_STATE_PAUSED) ==
 	    GST_STATE_CHANGE_FAILURE) {
+		return -1;
+	} else {
+		return 0;
+	}
+}
+
+static int output_gstreamer_seek(gint64 position_nanos) {
+	if (gst_element_seek(player_, 1.0, GST_FORMAT_TIME,
+			     GST_SEEK_FLAG_FLUSH,
+			     GST_SEEK_TYPE_SET, position_nanos,
+			     GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE)) {
 		return -1;
 	} else {
 		return 0;
@@ -311,9 +319,12 @@ static int output_gstreamer_get_position(gint64 *track_duration,
 	*track_duration = 0;
 	*track_pos = 0;
 	GstFormat fmt = GST_FORMAT_TIME;
-	gst_element_query_duration(player_, &fmt, track_duration);
-	gst_element_query_position(player_, &fmt, track_pos);
-	return 0;
+	if (gst_element_query_duration(player_, &fmt, track_duration)
+	    && gst_element_query_position(player_, &fmt, track_pos)) {
+		return 0;
+	} else {
+		return -1;
+	}
 }
 
 static int output_gstreamer_init(void)
@@ -363,5 +374,6 @@ struct output_module gstreamer_output = {
 	.play        = output_gstreamer_play,
 	.stop        = output_gstreamer_stop,
 	.pause       = output_gstreamer_pause,
+	.seek        = output_gstreamer_seek,
 	.get_position = output_gstreamer_get_position,
 };
