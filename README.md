@@ -12,8 +12,8 @@ Added so far
   * Support basic commands:
      - Pause  : Pause current stream.
      - Seek   : Seek to a particular position.
-  * When current track is finisehd, transition to state `STOPPED`
-    so that controllers will send us the next song.
-  * Initial code to support SetNextAVTransportURI, but still have to find
-    a controller that supports it :)
+  * When current track is finished, transition to state `STOPPED`
+    so that the controller sends us the next song (Actively eventing).
+  * Initial code to support SetNextAVTransportURI; looks like the next version
+    of BubbleUPnP supports it.
 

@@ -24,6 +24,9 @@
 #ifndef _XMLESCAPE_H
 #define _XMLESCAPE_H
 
+// XML escape string "str". If "attribute" is 1, then this is considered
+// to be within an xml attribute (i.e. quotes are escaped as well).
+// Returns a malloc()ed string; caller needs to free().
 char *xmlescape(const char *str, int attribute);
 
 #endif /* _XMLESCAPE_H */

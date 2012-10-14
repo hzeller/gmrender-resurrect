@@ -613,9 +613,11 @@ static void change_var(int varnum, const char *new_value)
 		LEAVE();
 		return;
 	}
+	char *xml_value = xmlescape(transport_values[varnum], 1);
 	asprintf(&buf,
 		 "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\"><InstanceID val=\"0\"><%s val=\"%s\"/></InstanceID></Event>",
-		 transport_variables[varnum], xmlescape(transport_values[varnum], 1));
+		 transport_variables[varnum], xml_value);
+	free(xml_value);
 	fprintf(stderr, "HZ: push notification : %s = '%s'\n",
 		transport_variables[varnum], new_value);
 
@@ -631,6 +633,11 @@ static void change_var(int varnum, const char *new_value)
 static void notify_changed_uris() {
 	char *buf;
 	ENTER();
+	char *xml[4];
+	xml[0] = xmlescape(transport_values[TRANSPORT_VAR_AV_URI], 1);
+	xml[1] = xmlescape(transport_values[TRANSPORT_VAR_AV_URI_META], 1);
+	xml[2] = xmlescape(transport_values[TRANSPORT_VAR_NEXT_AV_URI], 1);
+	xml[3] = xmlescape(transport_values[TRANSPORT_VAR_NEXT_AV_URI_META], 1);
 	asprintf(&buf,
 		 "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\">"
 		 "<InstanceID val=\"0\">\n"
@@ -639,18 +646,16 @@ static void notify_changed_uris() {
 		 "\t<%s val=\"%s\"/>\n"
 		 "\t<%s val=\"%s\"/>\n"
 		 "</InstanceID></Event>",
-		 transport_variables[TRANSPORT_VAR_AV_URI],
-		 xmlescape(transport_values[TRANSPORT_VAR_AV_URI], 1),
-		 transport_variables[TRANSPORT_VAR_AV_URI_META],
-		 xmlescape(transport_values[TRANSPORT_VAR_AV_URI_META], 1),
-
-		 transport_variables[TRANSPORT_VAR_NEXT_AV_URI],
-		 xmlescape(transport_values[TRANSPORT_VAR_NEXT_AV_URI], 1),
-		 transport_variables[TRANSPORT_VAR_NEXT_AV_URI_META],
-		 xmlescape(transport_values[TRANSPORT_VAR_NEXT_AV_URI_META], 1));
+		 transport_variables[TRANSPORT_VAR_AV_URI], xml[0],
+		 transport_variables[TRANSPORT_VAR_AV_URI_META], xml[1],
+		 transport_variables[TRANSPORT_VAR_NEXT_AV_URI], xml[2],
+		 transport_variables[TRANSPORT_VAR_NEXT_AV_URI_META], xml[3]);
 	notify_lastchange(buf);
 	fprintf(stderr, "HZ: notify all uris changed ------\n%s\n------\n", buf);
 	free(buf);
+	int i;
+	for (i = 0; i < 4; ++i)
+		free(xml[i]);
 	LEAVE();
 	return;
 }
@@ -1140,7 +1145,7 @@ static struct action transport_actions[] = {
 	[TRANSPORT_CMD_UNKNOWN] =                  {NULL, NULL}
 };
 
-struct service *upnp_transport_get_service() {
+struct service *upnp_transport_get_service(void) {
 	int i;
 	for (i = 0; i < TRANSPORT_VAR_COUNT; ++i) {
 		transport_values[i] = strdup(default_transport_values[i]

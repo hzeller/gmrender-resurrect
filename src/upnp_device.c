@@ -284,7 +284,7 @@ static int handle_subscription_request(struct device_private *priv,
 
 	ithread_mutex_unlock(&(priv->device_mutex));
 
-	for(i=0; i<eventVarCount; i++) {
+	for(i = 0; i < eventVarCount; ++i) {
 		free(eventvar_values[i]);
 	}
 	free(eventvar_names);
