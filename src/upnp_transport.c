@@ -959,6 +959,7 @@ static void inform_done_playing(enum PlayFeedback fb) {
 		change_var(TRANSPORT_VAR_TRANSPORT_STATE, "STOPPED");
 		break;
 	case PLAY_STARTED_NEXT_STREAM:
+		change_var(TRANSPORT_VAR_TRANSPORT_STATE, "STOPPED");
 		replace_var(TRANSPORT_VAR_AV_URI,
 			    transport_values[TRANSPORT_VAR_NEXT_AV_URI]);
 		replace_var(TRANSPORT_VAR_AV_URI_META,
@@ -966,6 +967,7 @@ static void inform_done_playing(enum PlayFeedback fb) {
 		replace_var(TRANSPORT_VAR_NEXT_AV_URI, "");
 		replace_var(TRANSPORT_VAR_NEXT_AV_URI_META, "");
 		notify_changed_uris();
+		change_var(TRANSPORT_VAR_TRANSPORT_STATE, "PLAYING");
 		break;
 	}
 	service_unlock();
