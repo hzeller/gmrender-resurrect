@@ -31,13 +31,13 @@
 #include "xmlescape.h"
 
 
-static void xmlescape_real(const char *str, char *target, int * length,
+static void xmlescape_real(const char *str, char *target, int *length,
                            int attribute)
 {
 	if (target != NULL) {
 		int len = 0;
 
-		for (; *str; str++) {
+		for (/**/; *str; str++) {
 			if (*str == '<') {
 				memcpy(target + len, "&lt;", 4);
 				len += 4;
@@ -61,7 +61,7 @@ static void xmlescape_real(const char *str, char *target, int * length,
 	} else if (length != NULL) {
 		int len = 0;
 
-		for (; *str; str++) {
+		for (/**/; *str; str++) {
 			if (*str == '<') {
 				len += 4;
 			} else if (attribute && (*str == '"')) {

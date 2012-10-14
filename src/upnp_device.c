@@ -263,9 +263,10 @@ static int handle_subscription_request(struct device_private *priv,
 		if (metaEntry->sendevents == SENDEVENT_YES) {
 			eventvar_names[eventVarIdx] = srv->variable_names[i];
 			eventvar_values[eventVarIdx] = xmlescape(srv->variable_values[i], 0);
-			printf("Evented: %s == '%s'\n",
+			printf("Evented: %s == '%s' (Escaped:\n%s\n)\n",
 				eventvar_names[eventVarIdx],
-				eventvar_values[eventVarIdx]);
+			       srv->variable_values[i],
+			       eventvar_values[eventVarIdx]);
 			eventVarIdx++;
 		}
 	}
