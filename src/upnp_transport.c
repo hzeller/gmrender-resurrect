@@ -53,7 +53,6 @@
 #define TRANSPORT_CONTROL_URL "/upnp/control/rendertransport1"
 #define TRANSPORT_EVENT_URL "/upnp/event/rendertransport1"
 
-
 typedef enum {
 	TRANSPORT_VAR_TRANSPORT_STATUS,
 	TRANSPORT_VAR_NEXT_AV_URI,
@@ -176,7 +175,6 @@ static const char *default_transport_values[] = {
 	[TRANSPORT_VAR_REL_CTR_POS] = "2147483647",
 	[TRANSPORT_VAR_ABS_CTR_POS] = "2147483647",
         [TRANSPORT_VAR_LAST_CHANGE] = "<Event xmlns=\"urn:schemas-upnp-org:metadata-1-0/AVT/\"/>",
-
 	[TRANSPORT_VAR_AAT_SEEK_MODE] = "TRACK_NR",
 	[TRANSPORT_VAR_AAT_SEEK_TARGET] = "",
 	[TRANSPORT_VAR_AAT_INSTANCE_ID] = "0",
@@ -478,7 +476,10 @@ enum _transport_state {
 	TRANSPORT_NO_MEDIA_PRESENT	/* optional */
 };
 
-static enum _transport_state transport_state = TRANSPORT_STOPPED;
+// Our 'instance' variables.
+static enum _transport_state transport_state_ = TRANSPORT_STOPPED;
+static struct device_private *upnp_device_ = NULL;
+extern struct service transport_service_;   // Defined below.
 
 /* protects transport_values, and service-specific state */
 
@@ -566,7 +567,7 @@ static int get_media_info(struct action_event *event)
 }
 
 
-static void notify_lastchange(struct action_event *event, const char *value)
+static void notify_lastchange(const char *value)
 {
 	const char *varnames[] = {
 		"LastChange",
@@ -577,14 +578,11 @@ static void notify_lastchange(struct action_event *event, const char *value)
 	};
 
 
-	printf("Event: '%s'\n", value);
 	varvalues[0] = value;
-
-
 	transport_values[TRANSPORT_VAR_LAST_CHANGE] = value;
 
-	upnp_device_notify(event->device_priv,
-	                   transport_service.service_name,
+	upnp_device_notify(upnp_device_,
+	                   transport_service_.service_name,
 	                   varnames,
 	                   varvalues, 1);
 }
@@ -606,8 +604,7 @@ static int replace_var(int varnum, const char *new_value) {
 }
 
 /* warning - does not lock service mutex */
-static void change_var(struct action_event *event, int varnum,
-		       const char *new_value)
+static void change_var(int varnum, const char *new_value)
 {
 	char *buf;
 
@@ -619,11 +616,42 @@ static void change_var(struct action_event *event, int varnum,
 	asprintf(&buf,
 		 "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\"><InstanceID val=\"0\"><%s val=\"%s\"/></InstanceID></Event>",
 		 transport_variables[varnum], xmlescape(transport_values[varnum], 1));
-	notify_lastchange(event, buf);
+	fprintf(stderr, "HZ: push notification : %s = '%s'\n",
+		transport_variables[varnum], new_value);
+
+	notify_lastchange(buf);
 	free(buf);
 
 	LEAVE();
 
+	return;
+}
+
+// Atomic update about all URIs at once.
+static void notify_changed_uris() {
+	char *buf;
+	ENTER();
+	asprintf(&buf,
+		 "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\">"
+		 "<InstanceID val=\"0\">\n"
+		 "\t<%s val=\"%s\"/>\n"
+		 "\t<%s val=\"%s\"/>\n"
+		 "\t<%s val=\"%s\"/>\n"
+		 "\t<%s val=\"%s\"/>\n"
+		 "</InstanceID></Event>",
+		 transport_variables[TRANSPORT_VAR_AV_URI],
+		 xmlescape(transport_values[TRANSPORT_VAR_AV_URI], 1),
+		 transport_variables[TRANSPORT_VAR_AV_URI_META],
+		 xmlescape(transport_values[TRANSPORT_VAR_AV_URI_META], 1),
+
+		 transport_variables[TRANSPORT_VAR_NEXT_AV_URI],
+		 xmlescape(transport_values[TRANSPORT_VAR_NEXT_AV_URI], 1),
+		 transport_variables[TRANSPORT_VAR_NEXT_AV_URI_META],
+		 xmlescape(transport_values[TRANSPORT_VAR_NEXT_AV_URI_META], 1));
+	notify_lastchange(buf);
+	fprintf(stderr, "HZ: notify all uris changed ------\n%s\n------\n", buf);
+	free(buf);
+	LEAVE();
 	return;
 }
 
@@ -676,16 +704,14 @@ static int set_avtransport_uri(struct action_event *event)
 	printf("%s: CurrentURI='%s'\n", __FUNCTION__, value);
 
 	output_set_uri(value);
-	change_var(event, TRANSPORT_VAR_AV_URI, value);
+	change_var(TRANSPORT_VAR_AV_URI, value);
 	free(value);
 
 	value = upnp_get_string(event, "CurrentURIMetaData");
 	if (value == NULL) {
 		rc = -1;
 	} else {
-		printf("%s: CurrentURIMetaData='%s'\n", __FUNCTION__,
-		       value);
-		change_var(event, TRANSPORT_VAR_AV_URI_META, value);
+		change_var(TRANSPORT_VAR_AV_URI_META, value);
 		free(value);
 	}
 
@@ -716,7 +742,7 @@ static int set_next_avtransport_uri(struct action_event *event)
 	service_lock();
 
 	output_set_next_uri(value);
-	replace_var(TRANSPORT_VAR_NEXT_AV_URI, value);
+	change_var(TRANSPORT_VAR_NEXT_AV_URI, value);
 
 	printf("%s: NextURI='%s'\n", __FUNCTION__, value);
 	free(value);
@@ -724,8 +750,7 @@ static int set_next_avtransport_uri(struct action_event *event)
 	if (value == NULL) {
 		rc = -1;
 	} else {
-		printf("%s: NextURIMetaData='%s'\n", __FUNCTION__, value);
-		replace_var(TRANSPORT_VAR_NEXT_AV_URI_META, value);
+		change_var(TRANSPORT_VAR_NEXT_AV_URI_META, value);
 		free(value);
 	}
 
@@ -803,7 +828,7 @@ static gint64 parse_upnp_time(const char *time_string) {
 	int second = 0;
 	sscanf(time_string, "%d:%02d:%02d", &hour, &minute, &second);
 	const gint64 one_sec = 1000000000LL;
-	gint64 nanos = (hour * 3600 + minute * 60 + second) * one_sec;
+	gint64 nanos = one_sec * (hour * 3600 + minute * 60 + second);
 	return nanos;
 }
 
@@ -897,7 +922,7 @@ static int stop(struct action_event *event)
 	}
 
 	service_lock();
-	switch (transport_state) {
+	switch (transport_state_) {
 	case TRANSPORT_STOPPED:
 		break;
 	case TRANSPORT_PLAYING:
@@ -906,9 +931,8 @@ static int stop(struct action_event *event)
 	case TRANSPORT_RECORDING:
 	case TRANSPORT_PAUSED_PLAYBACK:
 		output_stop();
-		transport_state = TRANSPORT_STOPPED;
-		change_var(event, TRANSPORT_VAR_TRANSPORT_STATE,
-			   "STOPPED");
+		transport_state_ = TRANSPORT_STOPPED;
+		change_var(TRANSPORT_VAR_TRANSPORT_STATE, "STOPPED");
 		// Set TransportPlaySpeed to '1'
 		break;
 
@@ -926,11 +950,25 @@ static int stop(struct action_event *event)
 	return 0;
 }
 
-static void inform_done_playing(void *e) {
-	printf("Done playing....\n");
-	// This should be evented, but I don't know yet how to do this
-	// asynchronously.
-	replace_var(TRANSPORT_VAR_TRANSPORT_STATE, "STOPPED");
+static void inform_done_playing(enum PlayFeedback fb) {
+	printf("---------------------------------- Done playing....%d\n", fb);
+	service_lock();
+	switch (fb) {
+	case PLAY_STOPPED:
+		transport_state_ = TRANSPORT_STOPPED;
+		change_var(TRANSPORT_VAR_TRANSPORT_STATE, "STOPPED");
+		break;
+	case PLAY_STARTED_NEXT_STREAM:
+		replace_var(TRANSPORT_VAR_AV_URI,
+			    transport_values[TRANSPORT_VAR_NEXT_AV_URI]);
+		replace_var(TRANSPORT_VAR_AV_URI_META,
+			    transport_values[TRANSPORT_VAR_NEXT_AV_URI_META]);
+		replace_var(TRANSPORT_VAR_NEXT_AV_URI, "");
+		replace_var(TRANSPORT_VAR_NEXT_AV_URI_META, "");
+		notify_changed_uris();
+		break;
+	}
+	service_unlock();
 }
 
 static int play(struct action_event *event)
@@ -945,19 +983,18 @@ static int play(struct action_event *event)
 	}
 
 	service_lock();
-	switch (transport_state) {
+	switch (transport_state_) {
 	case TRANSPORT_PLAYING:
 		// Set TransportPlaySpeed to '1'
 		break;
 	case TRANSPORT_STOPPED:
 	case TRANSPORT_PAUSED_PLAYBACK:
-		if (output_play(&inform_done_playing, event)) {
+		if (output_play(&inform_done_playing)) {
 			upnp_set_error(event, 704, "Playing failed");
 			rc = -1;
 		} else {
-			transport_state = TRANSPORT_PLAYING;
-			change_var(event, TRANSPORT_VAR_TRANSPORT_STATE,
-				   "PLAYING");
+			transport_state_ = TRANSPORT_PLAYING;
+			change_var(TRANSPORT_VAR_TRANSPORT_STATE, "PLAYING");
 
 		}
 		// Set TransportPlaySpeed to '1'
@@ -991,7 +1028,7 @@ static int pause_stream(struct action_event *event)
 	}
 
 	service_lock();
-	switch (transport_state) {
+	switch (transport_state_) {
         case TRANSPORT_PAUSED_PLAYBACK:
 		break;
 
@@ -1000,8 +1037,8 @@ static int pause_stream(struct action_event *event)
 			upnp_set_error(event, 704, "Pause failed");
 			rc = -1;
 		} else {
-			transport_state = TRANSPORT_PAUSED_PLAYBACK;
-			change_var(event, TRANSPORT_VAR_TRANSPORT_STATE,
+			transport_state_ = TRANSPORT_PAUSED_PLAYBACK;
+			change_var(TRANSPORT_VAR_TRANSPORT_STATE,
 				   "PAUSED_PLAYBACK");
 		}
 		// Set TransportPlaySpeed to '1'
@@ -1039,7 +1076,7 @@ static int seek(struct action_event *event)
 			// Seeking might take some time, pretend to already
 			// be there. Should we go into TRANSITION mode ?
 			// (gstreamer will go into PAUSE, then PLAYING)
-			change_var(event, TRANSPORT_VAR_REL_TIME_POS, target);
+			change_var(TRANSPORT_VAR_REL_TIME_POS, target);
 		}
 		service_unlock();
 		free(target);
@@ -1101,30 +1138,34 @@ static struct action transport_actions[] = {
 	[TRANSPORT_CMD_UNKNOWN] =                  {NULL, NULL}
 };
 
-void upnp_transport_init() {
+struct service *upnp_transport_get_service() {
 	int i;
 	for (i = 0; i < TRANSPORT_VAR_COUNT; ++i) {
 		transport_values[i] = strdup(default_transport_values[i]
 					     ? default_transport_values[i]
 					     : "");
 	}
+	return &transport_service_;
 }
 
-struct service transport_service = {
-        .service_name =         TRANSPORT_SERVICE,
-        .type =                 TRANSPORT_TYPE,
+void upnp_transport_init(struct device_private *device) {
+	upnp_device_ = device;
+}
+
+struct service transport_service_ = {
+	.service_name =         TRANSPORT_SERVICE,
+	.type =                 TRANSPORT_TYPE,
 	.scpd_url =		TRANSPORT_SCPD_URL,
-        .control_url =		TRANSPORT_CONTROL_URL,
-        .event_url =		TRANSPORT_EVENT_URL,
-        .actions =              transport_actions,
-        .action_arguments =     argument_list,
-        .variable_names =       transport_variables,
-        .variable_values =      transport_values,
-        .variable_meta =        transport_var_meta,
-        .variable_count =       TRANSPORT_VAR_UNKNOWN,
-        .command_count =        TRANSPORT_CMD_UNKNOWN,
+	.control_url =		TRANSPORT_CONTROL_URL,
+	.event_url =		TRANSPORT_EVENT_URL,
+	.actions =              transport_actions,
+	.action_arguments =     argument_list,
+	.variable_names =       transport_variables,
+	.variable_values =      transport_values,
+	.variable_meta =        transport_var_meta,
+	.variable_count =       TRANSPORT_VAR_UNKNOWN,
+	.command_count =        TRANSPORT_CMD_UNKNOWN,
 #ifdef HAVE_LIBUPNP
-        .service_mutex =        &transport_mutex
+	.service_mutex =        &transport_mutex
 #endif
 };
-

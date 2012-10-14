@@ -25,6 +25,7 @@
 #define _UPNP_DEVICE_H
 
 
+// Misnomer: this should be more device descriptor or something.
 struct device {
 	int (*init_function) (void);
         const char *device_type;
@@ -43,7 +44,12 @@ struct device {
 	struct service **services;
 };
 
-int upnp_device_init(struct device *device_def, char *ip_address);
+// ..  and this 'device'. This is an opaque type containing internals.
+struct device_private;
+
+struct device_private *upnp_device_init(struct device *device_def,
+					char *ip_address);
+
 int upnp_add_response(struct action_event *event,
 		      const char *key, const char *value);
 void upnp_set_error(struct action_event *event, int error_code,
@@ -56,10 +62,10 @@ int upnp_append_variable(struct action_event *event,
                          int varnum, const char *paramname);
 
 int upnp_device_notify(struct device_private *priv,
-                       const char *serviceID,
-                       const char **varnames,
-                       const char **varvalues,
-                       int varcount);
+		       const char *serviceID,
+		       const char **varnames,
+		       const char **varvalues,
+		       int varcount);
 
 struct service *find_service(struct device *device_def,
                              char *service_name);

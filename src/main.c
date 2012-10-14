@@ -183,13 +183,14 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	upnp_transport_init();
-
-	rc = upnp_device_init(upnp_renderer, ip_address);
-	if (rc != 0) {
+	struct device_private *device;
+	device = upnp_device_init(upnp_renderer, ip_address);
+	if (device == NULL) {
 		fprintf(stderr,"ERROR: Failed to initialize UPnP device\n");
 		goto out;
 	}
+
+	upnp_transport_init(device);
 
 	printf("Ready for rendering..\n");
 	output_loop();

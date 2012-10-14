@@ -138,6 +138,9 @@ int upnp_append_variable(struct action_event *event,
 	ithread_mutex_lock(service->service_mutex);
 #endif
 
+	fprintf(stderr, "\tHZ: %s = '%s'\n",
+		service->variable_names[varnum],
+		service->variable_values[varnum]);
 	value = (const char *) service->variable_values[varnum];
 	if (value == NULL) {
 #ifdef HAVE_LIBUPNP
@@ -260,7 +263,7 @@ static int handle_subscription_request(struct device_private *priv,
 		if (metaEntry->sendevents == SENDEVENT_YES) {
 			eventvar_names[eventVarIdx] = srv->variable_names[i];
 			eventvar_values[eventVarIdx] = xmlescape(srv->variable_values[i], 0);
-			printf("Evented: '%s' == '%s'\n",
+			printf("Evented: %s == '%s'\n",
 				eventvar_names[eventVarIdx],
 				eventvar_values[eventVarIdx]);
 			eventVarIdx++;
@@ -367,8 +370,7 @@ static int handle_action_request(struct device_private *priv,
 #endif
 
 #ifdef HAVE_LIBUPNP
-static int event_handler(Upnp_EventType EventType, void *event,
-			    void *Cookie)
+static int event_handler(Upnp_EventType EventType, void *event, void *Cookie)
 {
 	struct device_private *priv = (struct device_private *)Cookie;
 	switch (EventType) {
@@ -392,10 +394,10 @@ static int event_handler(Upnp_EventType EventType, void *event,
 #endif
 
 
-int upnp_device_init(struct device *device_def, char *ip_address)
+struct device_private *upnp_device_init(struct device *device_def,
+					char *ip_address)
 {
 	int rc;
-	int result = -1;
 #ifdef HAVE_LIBUPNP
 	short int port = 0;
 #endif
@@ -475,7 +477,6 @@ int upnp_device_init(struct device *device_def, char *ip_address)
 		fprintf(stderr, "Error sending advertisements: %d\n", rc);
 		goto upnp_err_out;
 	}
-	result = 0;
 #endif
 
 	goto out;
@@ -485,7 +486,7 @@ upnp_err_out:
 	UpnpFinish();
 #endif
 out:
-	return result;
+	return priv;
 }
 
 

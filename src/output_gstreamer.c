@@ -143,8 +143,7 @@ static char *gsuri_ = NULL;
 static char *gs_next_uri_ = NULL;
 static GstState player_state_ = GST_STATE_NULL;
 
-static done_cb done_callback_ = NULL;
-static void *done_callback_param_ = NULL;
+static done_cb play_done_callback_ = NULL;
 
 static void output_gstreamer_set_next_uri(const char *uri) {
 	ENTER();
@@ -162,10 +161,9 @@ static void output_gstreamer_set_uri(const char *uri) {
 	LEAVE();
 }
 
-static int output_gstreamer_play(done_cb callback, void *param) {
+static int output_gstreamer_play(done_cb callback) {
 	int result = -1;
-	done_callback_ = callback;
-	done_callback_param_ = param;
+	play_done_callback_ = callback;
 	ENTER();
 	if (player_state_ != GST_STATE_PAUSED) {
 		if (gst_element_set_state(player_, GST_STATE_READY) ==
@@ -249,7 +247,19 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 	switch (msgType) {
 	case GST_MESSAGE_EOS:
 		g_print("GStreamer: %s: End-of-stream\n", msgSrcName);
-		if (done_callback_) done_callback_(done_callback_param_);
+		if (gs_next_uri_ != NULL) {
+			free(gsuri_);
+			gsuri_ = gs_next_uri_;
+			gs_next_uri_ = NULL;
+			gst_element_set_state(player_, GST_STATE_READY);
+			g_object_set(G_OBJECT(player_), "uri", gsuri_, NULL);
+			gst_element_set_state(player_, GST_STATE_PLAYING);
+			if (play_done_callback_) {
+				play_done_callback_(PLAY_STARTED_NEXT_STREAM);
+			}
+		} else if (play_done_callback_) {
+			play_done_callback_(PLAY_STOPPED);
+		}
 		break;
 
 	case GST_MESSAGE_ERROR: {

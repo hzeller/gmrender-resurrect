@@ -53,13 +53,6 @@
 
 #include "upnp_renderer.h"
 
-static struct service *upnp_services[] = {
-	&transport_service,
-	&connmgr_service,
-	&control_service,
-	NULL
-};
-
 static struct icon icon1 = {
         .width =        64,
         .height =       64,
@@ -98,7 +91,6 @@ static struct device render_device = {
         .upc                    = "",
         .presentation_url       = "/renderpres.html",
         .icons                  = renderer_icon,
-        .services               = upnp_services
 };
 
 void upnp_renderer_dump_connmgr_scpd(void)
@@ -118,13 +110,21 @@ void upnp_renderer_dump_control_scpd(void)
 void upnp_renderer_dump_transport_scpd(void)
 {
 	char *buf;
-	buf = upnp_get_scpd(&transport_service);
+	buf = upnp_get_scpd(upnp_transport_get_service());
 	assert(buf != NULL);
 	fputs(buf, stdout);
 }
 
 static int upnp_renderer_init(void)
 {
+	static struct service *upnp_services[] = {
+		NULL,
+		&connmgr_service,
+		&control_service,
+		NULL
+	};
+	upnp_services[0] = upnp_transport_get_service();
+	render_device.services = upnp_services;
         return connmgr_init();
 }
 

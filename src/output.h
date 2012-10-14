@@ -26,7 +26,11 @@
 
 #include <glib.h>
 
-typedef void (*done_cb)(void *);
+enum PlayFeedback {
+	PLAY_STOPPED,
+	PLAY_STARTED_NEXT_STREAM,
+};
+typedef void (*done_cb)(enum PlayFeedback);
 
 int output_init(const char *shortname);
 int output_add_options(GOptionContext *ctx);
@@ -37,7 +41,7 @@ int output_loop(void);
 void output_set_uri(const char *uri);
 void output_set_next_uri(const char *uri);
 
-int output_play(done_cb done_callback, void *param);
+int output_play(done_cb done_callback);
 int output_stop(void);
 int output_pause(void);
 int output_get_position(gint64 *track_dur_nanos, gint64 *track_pos_nanos);

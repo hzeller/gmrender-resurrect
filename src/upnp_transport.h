@@ -24,9 +24,10 @@
 #ifndef _UPNP_TRANSPORT_H
 #define _UPNP_TRANSPORT_H
 
-extern struct service transport_service;
+struct service;
 
-void upnp_transport_init(void);
+struct service *upnp_transport_get_service();
+void upnp_transport_init(struct device_private *);
 
 #define UPNP_TRANSPORT_E_TRANSITION_NA	701
 #define UPNP_TRANSPORT_E_NO_CONTENTS	702
