@@ -79,7 +79,6 @@ typedef enum {
 	TRANSPORT_VAR_AAT_SEEK_MODE,
 	TRANSPORT_VAR_AV_URI_META,
 	TRANSPORT_VAR_REC_MEDIUM,
-
 	TRANSPORT_VAR_REC_MEDIUM_WR_STATUS,
 	TRANSPORT_VAR_LAST_CHANGE,
 	TRANSPORT_VAR_CUR_TRACK_DUR,
@@ -1147,10 +1146,14 @@ static struct action transport_actions[] = {
 
 struct service *upnp_transport_get_service(void) {
 	int i;
+	fprintf(stderr, "Prepare transport service variables\n");
 	for (i = 0; i < TRANSPORT_VAR_COUNT; ++i) {
 		transport_values[i] = strdup(default_transport_values[i]
 					     ? default_transport_values[i]
 					     : "");
+		fprintf(stderr, "Init var %s = '%s'\n",
+			transport_variables[i],
+			transport_values[i]);
 	}
 	return &transport_service_;
 }
