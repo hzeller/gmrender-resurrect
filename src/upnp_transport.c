@@ -180,7 +180,7 @@ static const char *default_transport_values[] = {
 	[TRANSPORT_VAR_AAT_SEEK_MODE] = "TRACK_NR",
 	[TRANSPORT_VAR_AAT_SEEK_TARGET] = "",
 	[TRANSPORT_VAR_AAT_INSTANCE_ID] = "0",
-	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] = "Play,Stop,Pause",
+	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] = "Play,Stop,Pause,Seek",
 	[TRANSPORT_VAR_UNKNOWN] = NULL
 };
 
@@ -706,6 +706,7 @@ static int set_next_avtransport_uri(struct action_event *event)
 		LEAVE();
 		return -1;
 	}
+
 	value = upnp_get_string(event, "NextURI");
 	if (value == NULL) {
 		LEAVE();
@@ -715,20 +716,18 @@ static int set_next_avtransport_uri(struct action_event *event)
 	service_lock();
 
 	output_set_next_uri(value);
-	change_var(event, TRANSPORT_VAR_NEXT_AV_URI, value);
+	replace_var(TRANSPORT_VAR_NEXT_AV_URI, value);
 
 	printf("%s: NextURI='%s'\n", __FUNCTION__, value);
 	free(value);
 	value = upnp_get_string(event, "NextURIMetaData");
 	if (value == NULL) {
-		LEAVE();
 		rc = -1;
 	} else {
-		change_var(event, TRANSPORT_VAR_NEXT_AV_URI_META, value);
+		printf("%s: NextURIMetaData='%s'\n", __FUNCTION__, value);
+		replace_var(TRANSPORT_VAR_NEXT_AV_URI_META, value);
 		free(value);
 	}
-	printf("%s: NextURIMetaData='%s'\n", __FUNCTION__, value);
-	free(value);
 
 	service_unlock();
 

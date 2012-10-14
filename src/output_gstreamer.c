@@ -140,6 +140,7 @@ static void scan_mime_list(void)
 
 static GstElement *player_ = NULL;
 static char *gsuri_ = NULL;
+static char *gs_next_uri_ = NULL;
 static GstState player_state_ = GST_STATE_NULL;
 
 static done_cb done_callback_ = NULL;
@@ -147,20 +148,16 @@ static void *done_callback_param_ = NULL;
 
 static void output_gstreamer_set_next_uri(const char *uri) {
 	ENTER();
-	printf("%s: setting next uri to '%s' **************************************************************\n", __FUNCTION__, uri);
-	if (gsuri_ != NULL) {
-		free(gsuri_);
-	}
-	gsuri_ = strdup(uri);
+	printf("%s: setting next uri to '%s'\n", __FUNCTION__, uri);
+	free(gs_next_uri_);
+	gs_next_uri_ = strdup(uri);
 	LEAVE();
 }
 
 static void output_gstreamer_set_uri(const char *uri) {
 	ENTER();
 	printf("%s: setting uri to '%s'\n", __FUNCTION__, uri);
-	if (gsuri_ != NULL) {
-		free(gsuri_);
-	}
+	free(gsuri_);
 	gsuri_ = strdup(uri);
 	LEAVE();
 }
