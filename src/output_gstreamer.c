@@ -248,6 +248,8 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 	case GST_MESSAGE_EOS:
 		g_print("GStreamer: %s: End-of-stream\n", msgSrcName);
 		if (gs_next_uri_ != NULL) {
+			// If playbin does not support gapless, then this
+			// will trigger (only playbin2 does).
 			free(gsuri_);
 			gsuri_ = gs_next_uri_;
 			gs_next_uri_ = NULL;
@@ -333,11 +335,29 @@ static int output_gstreamer_get_position(gint64 *track_duration,
 	*track_duration = 0;
 	*track_pos = 0;
 	GstFormat fmt = GST_FORMAT_TIME;
-	if (gst_element_query_duration(player_, &fmt, track_duration)
-	    && gst_element_query_position(player_, &fmt, track_pos)) {
-		return 0;
-	} else {
-		return -1;
+	int rc = 0;
+	if (!gst_element_query_duration(player_, &fmt, track_duration)) {
+		fprintf(stderr, "Failed to get track duration\n");
+		rc = -1;
+	}
+	if (!gst_element_query_position(player_, &fmt, track_pos)) {
+		fprintf(stderr, "Failed to get track pos\n");
+		rc = -1;
+	}
+	return rc;
+}
+
+static void prepare_next_stream(GstElement *obj, gpointer userdata) {
+	free(gsuri_);
+	gsuri_ = gs_next_uri_;
+	gs_next_uri_ = NULL;
+	if (gsuri_ != NULL) {
+		fprintf(stderr, "HZ: about-to-finish cb: setting uri %s\n",
+			gsuri_);
+		g_object_set(G_OBJECT(player_), "uri", gsuri_, NULL);
+		if (play_done_callback_) {
+			play_done_callback_(PLAY_STARTED_NEXT_STREAM);
+		}
 	}
 }
 
@@ -349,7 +369,7 @@ static int output_gstreamer_init(void)
 
 	scan_mime_list();
 
-	player_ = gst_element_factory_make("playbin", "play");
+	player_ = gst_element_factory_make("playbin2", "play");
 
 	bus = gst_pipeline_get_bus(GST_PIPELINE(player_));
 	gst_bus_add_watch(bus, my_bus_callback, NULL);
@@ -373,6 +393,8 @@ static int output_gstreamer_init(void)
 		fprintf(stderr,	"Error: pipeline doesn't want to get ready\n");
 	}
 
+	g_signal_connect(G_OBJECT(player_), "about-to-finish",
+			 G_CALLBACK(prepare_next_stream), NULL);
 	LEAVE();
 
 	return 0;
