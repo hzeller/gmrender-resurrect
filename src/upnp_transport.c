@@ -575,11 +575,11 @@ static void notify_lastchange(const char *value)
 	const char *varvalues[] = {
 		NULL, NULL
 	};
+	
+	free((char*)transport_values[TRANSPORT_VAR_LAST_CHANGE]);
+	transport_values[TRANSPORT_VAR_LAST_CHANGE] = strdup(value);
 
-
-	varvalues[0] = value;
-	transport_values[TRANSPORT_VAR_LAST_CHANGE] = value;
-
+	varvalues[0] = transport_values[TRANSPORT_VAR_LAST_CHANGE];
 	upnp_device_notify(upnp_device_,
 	                   transport_service_.service_name,
 	                   varnames,
@@ -595,9 +595,7 @@ static int replace_var(int varnum, const char *new_value) {
 		return 0;
 	}
 
-	if (transport_values[varnum]) {
-		free((char*)transport_values[varnum]);
-	}
+	free((char*)transport_values[varnum]);
 	transport_values[varnum] = strdup(new_value);
 	return 1;
 }
