@@ -75,7 +75,7 @@ static struct xmlelement *gen_scpd_action(struct xmldoc *doc,
 	top=xmlelement_new(doc, "action");
 
 
-	add_value_element(doc, top, "name", (char *)act->action_name);
+	add_value_element(doc, top, "name", act->action_name);
 	if (arglist) {
 		struct argument *arg;
 		int j;
@@ -83,9 +83,9 @@ static struct xmlelement *gen_scpd_action(struct xmldoc *doc,
 		xmlelement_add_element(doc, top, parent);
 		for(j=0; (arg=arglist[j]); j++) {
 			child=xmlelement_new(doc, "argument");
-			add_value_element(doc,child,"name",(char *)arg->name);
+			add_value_element(doc,child,"name", arg->name);
 			add_value_element(doc,child,"direction",(arg->direction==PARAM_DIR_IN)?"in":"out");
-			add_value_element(doc,child,"relatedStateVariable",(char *)varnames[arg->statevar]);
+			add_value_element(doc,child,"relatedStateVariable", varnames[arg->statevar]);
 			xmlelement_add_element(doc, parent,child);
 		}
 	}
@@ -130,8 +130,8 @@ static struct xmlelement *gen_scpd_statevar(struct xmldoc *doc, const char *name
 	top=xmlelement_new(doc, "stateVariable");
 
 	xmlelement_set_attribute(doc, top, "sendEvents",(meta->sendevents==SENDEVENT_YES)?"yes":"no");
-	add_value_element(doc,top,"name",(char *)name);
-	add_value_element(doc,top,"dataType",(char *)param_datatype_names[meta->datatype]);
+	add_value_element(doc,top,"name", name);
+	add_value_element(doc,top,"dataType", param_datatype_names[meta->datatype]);
 
 	if (valuelist) {
 		const char *allowed_value;
@@ -139,7 +139,7 @@ static struct xmlelement *gen_scpd_statevar(struct xmldoc *doc, const char *name
 		parent=xmlelement_new(doc, "allowedValueList");
 		xmlelement_add_element(doc, top, parent);
 		for(i=0; (allowed_value=valuelist[i]); i++) {
-			add_value_element(doc,parent,"allowedValue",(char *)allowed_value);
+			add_value_element(doc,parent,"allowedValue", allowed_value);
 		} 
 	}
 	if (range) {
@@ -152,7 +152,7 @@ static struct xmlelement *gen_scpd_statevar(struct xmldoc *doc, const char *name
 		}
 	}
 	if (default_value) {
-		add_value_element(doc,top,"defaultValue",(char *)default_value);
+		add_value_element(doc,top,"defaultValue", default_value);
 	}
 	return top;
 }

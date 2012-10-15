@@ -139,8 +139,8 @@ static void scan_mime_list(void)
 
 
 static GstElement *player_ = NULL;
-static char *gsuri_ = NULL;
-static char *gs_next_uri_ = NULL;
+static char *gsuri_ = NULL;         // locally strdup()ed
+static char *gs_next_uri_ = NULL;   // locally strdup()ed
 static GstState player_state_ = GST_STATE_NULL;
 
 static done_cb play_done_callback_ = NULL;
@@ -237,8 +237,8 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 {
 	//GMainLoop *loop = (GMainLoop *) data;
 	GstMessageType msgType;
-	GstObject *msgSrc;
-	gchar *msgSrcName;
+	const GstObject *msgSrc;
+	const gchar *msgSrcName;
 
 	msgType = GST_MESSAGE_TYPE(msg);
 	msgSrc = GST_MESSAGE_SRC(msg);

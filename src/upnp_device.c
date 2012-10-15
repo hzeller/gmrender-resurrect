@@ -141,7 +141,7 @@ int upnp_append_variable(struct action_event *event,
 	fprintf(stderr, "\tHZ: %s = '%s'\n",
 		service->variable_names[varnum],
 		service->variable_values[varnum]);
-	value = (const char *) service->variable_values[varnum];
+	value = service->variable_values[varnum];
 	if (value == NULL) {
 #ifdef HAVE_LIBUPNP
 		upnp_set_error(event, UPNP_E_INTERNAL_ERROR,
@@ -396,7 +396,7 @@ static int event_handler(Upnp_EventType EventType, void *event, void *Cookie)
 
 
 struct device_private *upnp_device_init(struct device *device_def,
-					char *ip_address)
+					const char *ip_address)
 {
 	int rc;
 #ifdef HAVE_LIBUPNP
@@ -536,11 +536,11 @@ static struct xmlelement *gen_desc_iconlist(struct xmldoc *doc, struct icon **ic
 
 	for (i=0; (icon_entry=icons[i]); i++) {
 		parent=xmlelement_new(doc, "icon");
-		add_value_element(doc,parent,"mimetype",(char *)icon_entry->mimetype);
+		add_value_element(doc,parent,"mimetype", icon_entry->mimetype);
 		add_value_element_int(doc,parent,"width",icon_entry->width);
 		add_value_element_int(doc,parent,"height",icon_entry->height);
 		add_value_element_int(doc,parent,"depth",icon_entry->depth);
-		add_value_element(doc,parent,"url",(char *)icon_entry->url);
+		add_value_element(doc,parent,"url",icon_entry->url);
 		xmlelement_add_element(doc, top, parent);
 	}
 
@@ -561,10 +561,10 @@ static struct xmlelement *gen_desc_servicelist(struct device *device_def,
         for (i=0; (srv = device_def->services[i]); i++) {
 		parent=xmlelement_new(doc, "service");
 		add_value_element(doc,parent,"serviceType",srv->type);
-		add_value_element(doc,parent,"serviceId",(char *)srv->service_name);
-		add_value_element(doc,parent,"SCPDURL",(char *)srv->scpd_url);
-		add_value_element(doc,parent,"controlURL",(char *)srv->control_url);
-		add_value_element(doc,parent,"eventSubURL",(char *)srv->event_url);
+		add_value_element(doc,parent,"serviceId", srv->service_name);
+		add_value_element(doc,parent,"SCPDURL", srv->scpd_url);
+		add_value_element(doc,parent,"controlURL", srv->control_url);
+		add_value_element(doc,parent,"eventSubURL", srv->event_url);
 		xmlelement_add_element(doc, top, parent);
         }
 
@@ -588,18 +588,18 @@ static struct xmldoc *generate_desc(struct device *device_def)
 	xmlelement_add_element(doc, root, child);
 	parent=xmlelement_new(doc, "device");
 	xmlelement_add_element(doc, root, parent);
-	add_value_element(doc,parent,"deviceType",(char *)device_def->device_type);
-	add_value_element(doc,parent,"presentationURL",(char *)device_def->presentation_url);
-	add_value_element(doc,parent,"friendlyName",(char *)device_def->friendly_name);
-	add_value_element(doc,parent,"manufacturer",(char *)device_def->manufacturer);
-	add_value_element(doc,parent,"manufacturerURL",(char *)device_def->manufacturer_url);
-	add_value_element(doc,parent,"modelDescription",(char *)device_def->model_description);
-	add_value_element(doc,parent,"modelName",(char *)device_def->model_name);
-	add_value_element(doc,parent,"modelURL",(char *)device_def->model_url);
-	add_value_element(doc,parent,"UDN",(char *)device_def->udn);
-	//add_value_element(doc,parent,"modelNumber",(char *)device_def->model_number);
-	//add_value_element(doc,parent,"serialNumber",(char *)device_def->serial_number);
-	//add_value_element(doc,parent,"UPC",(char *)device_def->upc);
+	add_value_element(doc,parent,"deviceType", device_def->device_type);
+	add_value_element(doc,parent,"presentationURL", device_def->presentation_url);
+	add_value_element(doc,parent,"friendlyName", device_def->friendly_name);
+	add_value_element(doc,parent,"manufacturer", device_def->manufacturer);
+	add_value_element(doc,parent,"manufacturerURL", device_def->manufacturer_url);
+	add_value_element(doc,parent,"modelDescription", device_def->model_description);
+	add_value_element(doc,parent,"modelName", device_def->model_name);
+	add_value_element(doc,parent,"modelURL", device_def->model_url);
+	add_value_element(doc,parent,"UDN", device_def->udn);
+	//add_value_element(doc,parent,"modelNumber", device_def->model_number);
+	//add_value_element(doc,parent,"serialNumber", device_def->serial_number);
+	//add_value_element(doc,parent,"UPC", device_def->upc);
 	if (device_def->icons) {
 		child=gen_desc_iconlist(doc,device_def->icons);
 		xmlelement_add_element(doc,parent,child);

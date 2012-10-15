@@ -50,7 +50,7 @@ static gboolean show_connmgr_scpd = FALSE;
 static gboolean show_control_scpd = FALSE;
 static gboolean show_transport_scpd = FALSE;
 static gboolean show_outputs = FALSE;
-static gchar *ip_address = NULL;
+static const gchar *ip_address = NULL;
 #ifdef GMRENDER_UUID
 // Compile-time uuid.
 static const gchar *uuid = GMRENDER_UUID;

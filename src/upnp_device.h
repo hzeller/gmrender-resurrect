@@ -48,7 +48,7 @@ struct device {
 struct device_private;
 
 struct device_private *upnp_device_init(struct device *device_def,
-					char *ip_address);
+					const char *ip_address);
 
 int upnp_add_response(struct action_event *event,
 		      const char *key, const char *value);
