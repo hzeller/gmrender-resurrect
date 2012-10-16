@@ -587,36 +587,52 @@ static void notify_lastchange(const char *value)
 }
 
 // Replace given variable without sending an state-change event.
-static int replace_var(int varnum, const char *new_value) {
+static void replace_var(transport_variable varnum, const char *new_value) {
 	if ((varnum < 0) || (varnum >= TRANSPORT_VAR_UNKNOWN)) {
-		return 0;
+		fprintf(stderr, "Attempt to set bogus variable '%d' to '%s'\n",
+			varnum, new_value);
+		return;
 	}
 	if (new_value == NULL) {
-		return 0;
+		new_value = "";
 	}
 
 	free((char*)transport_values[varnum]);
 	transport_values[varnum] = strdup(new_value);
-	return 1;
+}
+
+// Transport uri always comes in uri/meta pairs. Set these and also the related
+// track uri/meta variables.
+static void replace_transport_uri_and_meta(const char *uri, const char *meta) {
+	replace_var(TRANSPORT_VAR_AV_URI, uri);
+	replace_var(TRANSPORT_VAR_AV_URI_META, meta);
+
+	// This influences as well the tracks. If there is a non-empty URI,
+	// we have exactly one track.
+	const char *tracks = (uri != NULL && strlen(uri) > 0) ? "1" : "0";
+	replace_var(TRANSPORT_VAR_NR_TRACKS, tracks);
+	replace_var(TRANSPORT_VAR_CUR_TRACK, tracks);
+
+	// Also the current track URI mirrors the transport URI.
+	replace_var(TRANSPORT_VAR_CUR_TRACK_URI, uri);
+	replace_var(TRANSPORT_VAR_CUR_TRACK_META, meta);
 }
 
 /* warning - does not lock service mutex */
-static void change_var(int varnum, const char *new_value)
+static void change_var_and_notify(transport_variable varnum, const char *value)
 {
 	char *buf;
 
 	ENTER();
-	if (!replace_var(varnum, new_value)) {
-		LEAVE();
-		return;
-	}
+	replace_var(varnum, value);
+
 	char *xml_value = xmlescape(transport_values[varnum], 1);
 	asprintf(&buf,
 		 "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\"><InstanceID val=\"0\"><%s val=\"%s\"/></InstanceID></Event>",
 		 transport_variables[varnum], xml_value);
 	free(xml_value);
 	fprintf(stderr, "HZ: push notification : %s = '%s'\n",
-		transport_variables[varnum], new_value);
+		transport_variables[varnum], value);
 
 	notify_lastchange(buf);
 	free(buf);
@@ -686,7 +702,6 @@ static int obtain_instanceid(struct action_event *event, int *instance)
 
 static int set_avtransport_uri(struct action_event *event)
 {
-	char *value;
 	int rc = 0;
 
 	ENTER();
@@ -695,28 +710,24 @@ static int set_avtransport_uri(struct action_event *event)
 		LEAVE();
 		return -1;
 	}
-	value = upnp_get_string(event, "CurrentURI");
-	if (value == NULL) {
+	char *uri = upnp_get_string(event, "CurrentURI");
+	if (uri == NULL) {
 		LEAVE();
 		return -1;
 	}
 
 	service_lock();
 
-	printf("%s: CurrentURI='%s'\n", __FUNCTION__, value);
+	printf("%s: CurrentURI='%s'\n", __FUNCTION__, uri);
 
-	output_set_uri(value);
-	change_var(TRANSPORT_VAR_AV_URI, value);
-	free(value);
+	output_set_uri(uri);
 
-	value = upnp_get_string(event, "CurrentURIMetaData");
-	if (value == NULL) {
-		rc = -1;
-	} else {
-		change_var(TRANSPORT_VAR_AV_URI_META, value);
-		free(value);
-	}
+	char *meta = upnp_get_string(event, "CurrentURIMetaData");
+	replace_transport_uri_and_meta(uri, meta);
+	free(uri);
+	free(meta);
 
+	notify_changed_uris();
 	service_unlock();
 
 	LEAVE();
@@ -744,7 +755,7 @@ static int set_next_avtransport_uri(struct action_event *event)
 	service_lock();
 
 	output_set_next_uri(value);
-	change_var(TRANSPORT_VAR_NEXT_AV_URI, value);
+	change_var_and_notify(TRANSPORT_VAR_NEXT_AV_URI, value);
 
 	printf("%s: NextURI='%s'\n", __FUNCTION__, value);
 	free(value);
@@ -752,7 +763,7 @@ static int set_next_avtransport_uri(struct action_event *event)
 	if (value == NULL) {
 		rc = -1;
 	} else {
-		change_var(TRANSPORT_VAR_NEXT_AV_URI_META, value);
+		change_var_and_notify(TRANSPORT_VAR_NEXT_AV_URI_META, value);
 		free(value);
 	}
 
@@ -934,7 +945,7 @@ static int stop(struct action_event *event)
 	case TRANSPORT_PAUSED_PLAYBACK:
 		output_stop();
 		transport_state_ = TRANSPORT_STOPPED;
-		change_var(TRANSPORT_VAR_TRANSPORT_STATE, "STOPPED");
+		change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE, "STOPPED");
 		// Set TransportPlaySpeed to '1'
 		break;
 
@@ -958,18 +969,17 @@ static void inform_done_playing(enum PlayFeedback fb) {
 	switch (fb) {
 	case PLAY_STOPPED:
 		transport_state_ = TRANSPORT_STOPPED;
-		change_var(TRANSPORT_VAR_TRANSPORT_STATE, "STOPPED");
+		change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE, "STOPPED");
 		break;
 	case PLAY_STARTED_NEXT_STREAM:
-		change_var(TRANSPORT_VAR_TRANSPORT_STATE, "STOPPED");
-		replace_var(TRANSPORT_VAR_AV_URI,
-			    transport_values[TRANSPORT_VAR_NEXT_AV_URI]);
-		replace_var(TRANSPORT_VAR_AV_URI_META,
-			    transport_values[TRANSPORT_VAR_NEXT_AV_URI_META]);
+		change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE, "STOPPED");
+		replace_transport_uri_and_meta(
+			   transport_values[TRANSPORT_VAR_NEXT_AV_URI],
+			   transport_values[TRANSPORT_VAR_NEXT_AV_URI_META]);
 		replace_var(TRANSPORT_VAR_NEXT_AV_URI, "");
 		replace_var(TRANSPORT_VAR_NEXT_AV_URI_META, "");
 		notify_changed_uris();
-		change_var(TRANSPORT_VAR_TRANSPORT_STATE, "PLAYING");
+		change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE, "PLAYING");
 		break;
 	}
 	service_unlock();
@@ -998,7 +1008,8 @@ static int play(struct action_event *event)
 			rc = -1;
 		} else {
 			transport_state_ = TRANSPORT_PLAYING;
-			change_var(TRANSPORT_VAR_TRANSPORT_STATE, "PLAYING");
+			change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE,
+					      "PLAYING");
 
 		}
 		// Set TransportPlaySpeed to '1'
@@ -1042,8 +1053,8 @@ static int pause_stream(struct action_event *event)
 			rc = -1;
 		} else {
 			transport_state_ = TRANSPORT_PAUSED_PLAYBACK;
-			change_var(TRANSPORT_VAR_TRANSPORT_STATE,
-				   "PAUSED_PLAYBACK");
+			change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE,
+					      "PAUSED_PLAYBACK");
 		}
 		// Set TransportPlaySpeed to '1'
 		break;
@@ -1077,10 +1088,12 @@ static int seek(struct action_event *event)
 		gint64 nanos = parse_upnp_time(target);
 		service_lock();
 		if (output_seek(nanos) == 0) {
-			// Seeking might take some time, pretend to already
-			// be there. Should we go into TRANSITION mode ?
+			// TODO(hzeller): Seeking might take some time,
+			// pretend to already be there. Should we go into
+			// TRANSITION mode ?
 			// (gstreamer will go into PAUSE, then PLAYING)
-			change_var(TRANSPORT_VAR_REL_TIME_POS, target);
+			change_var_and_notify(TRANSPORT_VAR_REL_TIME_POS,
+					      target);
 		}
 		service_unlock();
 		free(target);
