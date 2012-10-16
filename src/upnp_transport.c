@@ -988,15 +988,12 @@ static void inform_done_playing(enum PlayFeedback fb) {
 		notify_changed_uris();
 		break;
 	case PLAY_STARTED_NEXT_STREAM:
-		// BubbleUPnP needs a stop/play transition.
-		change_and_notify_transport(TRANSPORT_STOPPED);
 		replace_transport_uri_and_meta(
 			   transport_values[TRANSPORT_VAR_NEXT_AV_URI],
 			   transport_values[TRANSPORT_VAR_NEXT_AV_URI_META]);
 		replace_var(TRANSPORT_VAR_NEXT_AV_URI, "");
 		replace_var(TRANSPORT_VAR_NEXT_AV_URI_META, "");
 		notify_changed_uris();
-		change_and_notify_transport(TRANSPORT_PLAYING);
 		break;
 	}
 	service_unlock();
