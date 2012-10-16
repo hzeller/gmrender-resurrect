@@ -223,7 +223,7 @@ static int handle_subscription_request(struct device_private *priv,
 	int i;
 	int eventVarCount = 0, eventVarIdx = 0;
 	const char **eventvar_names;
-	char **eventvar_values;
+	const char **eventvar_values;
 	int rc;
 	int result = -1;
 
@@ -262,10 +262,10 @@ static int handle_subscription_request(struct device_private *priv,
 		metaEntry = &(srv->variable_meta[i]);
 		if (metaEntry->sendevents == SENDEVENT_YES) {
 			eventvar_names[eventVarIdx] = srv->variable_names[i];
+			// Do these need to be xml-escpaed ?
 			eventvar_values[eventVarIdx] = xmlescape(srv->variable_values[i], 0);
-			printf("Evented: %s == '%s' (Escaped:\n%s\n)\n",
-				eventvar_names[eventVarIdx],
-			       srv->variable_values[i],
+			printf("Subscribe to '%s' == '%s'\n",
+			       eventvar_names[eventVarIdx],
 			       eventvar_values[eventVarIdx]);
 			eventVarIdx++;
 		}
@@ -275,9 +275,7 @@ static int handle_subscription_request(struct device_private *priv,
 
 	rc = UpnpAcceptSubscription(priv->device_handle,
 			       sr_event->UDN, sr_event->ServiceId,
-			       (const char **)eventvar_names,
-			       (const char **)eventvar_values,
-			       eventVarCount,
+			       eventvar_names, eventvar_values, eventVarCount,
 			       sr_event->Sid);
 	if (rc == UPNP_E_SUCCESS) {
 		result = 0;
@@ -285,8 +283,9 @@ static int handle_subscription_request(struct device_private *priv,
 
 	ithread_mutex_unlock(&(priv->device_mutex));
 
-	for(i = 0; i < eventVarCount; ++i) {
-		free(eventvar_values[i]);
+	for (i = 0; i < eventVarCount; ++i) {
+		// Allocated by xmlescape()
+		free((char*)eventvar_values[i]);
 	}
 	free(eventvar_names);
 	free(eventvar_values);
