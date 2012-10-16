@@ -142,14 +142,8 @@ int upnp_append_variable(struct action_event *event,
 		service->variable_names[varnum],
 		service->variable_values[varnum]);
 	value = service->variable_values[varnum];
-	if (value == NULL) {
-#ifdef HAVE_LIBUPNP
-		upnp_set_error(event, UPNP_E_INTERNAL_ERROR,
-			       "Internal Error");
-#endif
-	} else {
-		retval = upnp_add_response(event, paramname, value);
-	}
+	assert(value != NULL);
+	retval = upnp_add_response(event, paramname, value);
 
 #ifdef HAVE_LIBUPNP
 	ithread_mutex_unlock(service->service_mutex);

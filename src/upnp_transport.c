@@ -631,7 +631,7 @@ static void change_var_and_notify(transport_variable varnum, const char *value)
 		 "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\"><InstanceID val=\"0\"><%s val=\"%s\"/></InstanceID></Event>",
 		 transport_variables[varnum], xml_value);
 	free(xml_value);
-	fprintf(stderr, "HZ: push notification : %s = '%s'\n",
+	fprintf(stderr, "HZ: ----------------------------------------------- push notification : %s = '%s'\n",
 		transport_variables[varnum], value);
 
 	notify_lastchange(buf);
