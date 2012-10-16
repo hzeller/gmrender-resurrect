@@ -20,3 +20,9 @@ Added so far
     so that the controller sends us the next song (Actively eventing).
   * Support gapless (via SetNextAVTransportURI to play gapless). Looks like
     the next version of BubbleUPnP will send the right action to support it.
+
+As a controller App, I recommend BubbleUPnP for now - I found it works best so
+far. Other controller apps don't work well yet with this renderer yet, I am
+investigating what is going on.
+
+You can reach me via <h.zeller@acm.org>.
