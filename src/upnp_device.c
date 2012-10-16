@@ -306,7 +306,7 @@ int upnp_device_notify(struct device_private *priv,
         UpnpNotify(priv->device_handle, 
                    priv->upnp_device->udn,
                    serviceID, varnames,
-                   varvalues, 1);
+                   varvalues, varcount);
 #endif
 
 	return 0;

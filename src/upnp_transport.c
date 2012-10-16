@@ -181,6 +181,16 @@ static const char *default_transport_values[] = {
 	[TRANSPORT_VAR_UNKNOWN] = NULL
 };
 
+enum transport_state {
+	TRANSPORT_STOPPED,
+	TRANSPORT_PLAYING,
+	TRANSPORT_TRANSITIONING,	/* optional */
+	TRANSPORT_PAUSED_PLAYBACK,	/* optional */
+	TRANSPORT_PAUSED_RECORDING,	/* optional */
+	TRANSPORT_RECORDING,	/* optional */
+	TRANSPORT_NO_MEDIA_PRESENT	/* optional */
+};
+
 static const char *transport_states[] = {
 	"STOPPED",
 	"PLAYING",
@@ -465,18 +475,8 @@ static struct argument **argument_list[] = {
 };
 
 
-enum _transport_state {
-	TRANSPORT_STOPPED,
-	TRANSPORT_PLAYING,
-	TRANSPORT_TRANSITIONING,	/* optional */
-	TRANSPORT_PAUSED_PLAYBACK,	/* optional */
-	TRANSPORT_PAUSED_RECORDING,	/* optional */
-	TRANSPORT_RECORDING,	/* optional */
-	TRANSPORT_NO_MEDIA_PRESENT	/* optional */
-};
-
 // Our 'instance' variables.
-static enum _transport_state transport_state_ = TRANSPORT_STOPPED;
+static enum transport_state transport_state_ = TRANSPORT_STOPPED;
 static struct device_private *upnp_device_ = NULL;
 extern struct service transport_service_;   // Defined below.
 
@@ -642,6 +642,12 @@ static void change_var_and_notify(transport_variable varnum, const char *value)
 	return;
 }
 
+static void change_and_notify_transport(enum transport_state new_state) {
+	transport_state_ = new_state;
+	change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE,
+			      transport_states[new_state]);
+}
+
 // Atomic update about all URIs at once.
 static void notify_changed_uris() {
 	char *buf;
@@ -658,9 +664,16 @@ static void notify_changed_uris() {
 		 "\t<%s val=\"%s\"/>\n"
 		 "\t<%s val=\"%s\"/>\n"
 		 "\t<%s val=\"%s\"/>\n"
+		 "\t<%s val=\"%s\"/>\n"
+		 "\t<%s val=\"%s\"/>\n"
 		 "</InstanceID></Event>",
+		 // transport uri
 		 transport_variables[TRANSPORT_VAR_AV_URI], xml[0],
 		 transport_variables[TRANSPORT_VAR_AV_URI_META], xml[1],
+		 // current track, same as these
+		 transport_variables[TRANSPORT_VAR_CUR_TRACK_URI], xml[0],
+		 transport_variables[TRANSPORT_VAR_CUR_TRACK_META], xml[1],
+		 // next uri iif any.
 		 transport_variables[TRANSPORT_VAR_NEXT_AV_URI], xml[2],
 		 transport_variables[TRANSPORT_VAR_NEXT_AV_URI_META], xml[3]);
 	notify_lastchange(buf);
@@ -937,6 +950,8 @@ static int stop(struct action_event *event)
 	service_lock();
 	switch (transport_state_) {
 	case TRANSPORT_STOPPED:
+		// For clients that didn't get it.
+		change_and_notify_transport(TRANSPORT_STOPPED);
 		break;
 	case TRANSPORT_PLAYING:
 	case TRANSPORT_TRANSITIONING:
@@ -944,8 +959,7 @@ static int stop(struct action_event *event)
 	case TRANSPORT_RECORDING:
 	case TRANSPORT_PAUSED_PLAYBACK:
 		output_stop();
-		transport_state_ = TRANSPORT_STOPPED;
-		change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE, "STOPPED");
+		change_and_notify_transport(TRANSPORT_STOPPED);
 		// Set TransportPlaySpeed to '1'
 		break;
 
@@ -968,18 +982,20 @@ static void inform_done_playing(enum PlayFeedback fb) {
 	service_lock();
 	switch (fb) {
 	case PLAY_STOPPED:
-		transport_state_ = TRANSPORT_STOPPED;
-		change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE, "STOPPED");
+		replace_transport_uri_and_meta("", "");
+		change_and_notify_transport(TRANSPORT_STOPPED);
+		notify_changed_uris();
 		break;
 	case PLAY_STARTED_NEXT_STREAM:
-		change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE, "STOPPED");
+		// BubbleUPnP needs a stop/play transition.
+		change_and_notify_transport(TRANSPORT_STOPPED);
 		replace_transport_uri_and_meta(
 			   transport_values[TRANSPORT_VAR_NEXT_AV_URI],
 			   transport_values[TRANSPORT_VAR_NEXT_AV_URI_META]);
 		replace_var(TRANSPORT_VAR_NEXT_AV_URI, "");
 		replace_var(TRANSPORT_VAR_NEXT_AV_URI_META, "");
 		notify_changed_uris();
-		change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE, "PLAYING");
+		change_and_notify_transport(TRANSPORT_PLAYING);
 		break;
 	}
 	service_unlock();
@@ -999,6 +1015,8 @@ static int play(struct action_event *event)
 	service_lock();
 	switch (transport_state_) {
 	case TRANSPORT_PLAYING:
+		// For clients that didn't get it.
+		change_and_notify_transport(TRANSPORT_PLAYING);
 		// Set TransportPlaySpeed to '1'
 		break;
 	case TRANSPORT_STOPPED:
@@ -1007,10 +1025,7 @@ static int play(struct action_event *event)
 			upnp_set_error(event, 704, "Playing failed");
 			rc = -1;
 		} else {
-			transport_state_ = TRANSPORT_PLAYING;
-			change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE,
-					      "PLAYING");
-
+			change_and_notify_transport(TRANSPORT_PLAYING);
 		}
 		// Set TransportPlaySpeed to '1'
 		break;
@@ -1045,6 +1060,8 @@ static int pause_stream(struct action_event *event)
 	service_lock();
 	switch (transport_state_) {
         case TRANSPORT_PAUSED_PLAYBACK:
+		// For clients that didn't get it.
+		change_and_notify_transport(TRANSPORT_PAUSED_PLAYBACK);
 		break;
 
 	case TRANSPORT_PLAYING:
@@ -1052,9 +1069,8 @@ static int pause_stream(struct action_event *event)
 			upnp_set_error(event, 704, "Pause failed");
 			rc = -1;
 		} else {
-			transport_state_ = TRANSPORT_PAUSED_PLAYBACK;
-			change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE,
-					      "PAUSED_PLAYBACK");
+			change_and_notify_transport(TRANSPORT_PAUSED_PLAYBACK);
+			change_and_notify_transport(32);
 		}
 		// Set TransportPlaySpeed to '1'
 		break;

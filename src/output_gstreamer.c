@@ -141,9 +141,21 @@ static void scan_mime_list(void)
 static GstElement *player_ = NULL;
 static char *gsuri_ = NULL;         // locally strdup()ed
 static char *gs_next_uri_ = NULL;   // locally strdup()ed
-static GstState player_state_ = GST_STATE_NULL;
 
 static done_cb play_done_callback_ = NULL;
+
+struct track_time_info {
+	gint64 duration;
+	gint64 position;
+};
+static struct track_time_info last_known_time_ = {0, 0};
+
+static GstState get_current_player_state() {
+	GstState state = GST_STATE_PLAYING;
+	GstState pending = GST_STATE_NULL;
+	gst_element_get_state(player_, &state, &pending, 0);
+	return state;
+}
 
 static void output_gstreamer_set_next_uri(const char *uri) {
 	ENTER();
@@ -165,7 +177,7 @@ static int output_gstreamer_play(done_cb callback) {
 	int result = -1;
 	play_done_callback_ = callback;
 	ENTER();
-	if (player_state_ != GST_STATE_PAUSED) {
+	if (get_current_player_state() != GST_STATE_PAUSED) {
 		if (gst_element_set_state(player_, GST_STATE_READY) ==
 		    GST_STATE_CHANGE_FAILURE) {
 			printf("setting play state failed\n");
@@ -214,6 +226,7 @@ static int output_gstreamer_seek(gint64 position_nanos) {
 }
 
 
+#if 0
 static const char *gststate_get_name(GstState state)
 {
 	switch(state) {
@@ -231,6 +244,7 @@ static const char *gststate_get_name(GstState state)
 		return "Unknown";
 	}
 }
+#endif
 
 static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 				gpointer data)
@@ -280,14 +294,20 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 		GstState oldstate, newstate, pending;
 		gst_message_parse_state_changed(msg, &oldstate, &newstate,
 						&pending);
+		/*
 		g_print("GStreamer: %s: State change: '%s' -> '%s', "
 			"PENDING: '%s'\n", msgSrcName,
 			gststate_get_name(oldstate),
 			gststate_get_name(newstate),
 			gststate_get_name(pending));
-		player_state_ = newstate;
+		*/
 		break;
 	}
+
+	case GST_MESSAGE_BUFFERING:
+	case GST_MESSAGE_TAG:
+		/* not caring about these right now */
+		break;
 	default:
 		g_print("GStreamer: %s: unhandled message type %d (%s)\n",
 		        msgSrcName, msgType, gst_message_type_get_name(msgType));
@@ -332,10 +352,14 @@ static int output_gstreamer_add_options(GOptionContext *ctx)
 
 static int output_gstreamer_get_position(gint64 *track_duration,
 					 gint64 *track_pos) {
-	*track_duration = 0;
-	*track_pos = 0;
-	GstFormat fmt = GST_FORMAT_TIME;
+	*track_duration = last_known_time_.duration;
+	*track_pos = last_known_time_.position;
+
 	int rc = 0;
+	if (get_current_player_state() != GST_STATE_PLAYING) {
+		return rc;  // playbin2 only returns valid values then.
+	}
+	GstFormat fmt = GST_FORMAT_TIME;
 	if (!gst_element_query_duration(player_, &fmt, track_duration)) {
 		fprintf(stderr, "Failed to get track duration\n");
 		rc = -1;
@@ -344,6 +368,10 @@ static int output_gstreamer_get_position(gint64 *track_duration,
 		fprintf(stderr, "Failed to get track pos\n");
 		rc = -1;
 	}
+	// playbin2 does not allow to query while paused. Remember in case
+	// we're asked then (it actually returns something, but it is bogus).
+	last_known_time_.duration = *track_duration;
+	last_known_time_.position = *track_pos;
 	return rc;
 }
 
