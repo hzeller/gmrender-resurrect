@@ -644,6 +644,7 @@ static void change_var_and_notify(transport_variable varnum, const char *value)
 
 static void change_and_notify_transport(enum transport_state new_state) {
 	transport_state_ = new_state;
+	assert(new_state >= TRANSPORT_STOPPED && new_state < TRANSPORT_NO_MEDIA_PRESENT);
 	change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE,
 			      transport_states[new_state]);
 }
@@ -1070,7 +1071,6 @@ static int pause_stream(struct action_event *event)
 			rc = -1;
 		} else {
 			change_and_notify_transport(TRANSPORT_PAUSED_PLAYBACK);
-			change_and_notify_transport(32);
 		}
 		// Set TransportPlaySpeed to '1'
 		break;
