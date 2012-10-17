@@ -565,27 +565,6 @@ static int get_media_info(struct action_event *event)
 	return rc;
 }
 
-
-static void notify_lastchange(const char *value)
-{
-	const char *varnames[] = {
-		"LastChange",
-		NULL
-	};
-	const char *varvalues[] = {
-		NULL, NULL
-	};
-	
-	free((char*)transport_values[TRANSPORT_VAR_LAST_CHANGE]);
-	transport_values[TRANSPORT_VAR_LAST_CHANGE] = strdup(value);
-
-	varvalues[0] = transport_values[TRANSPORT_VAR_LAST_CHANGE];
-	upnp_device_notify(upnp_device_,
-	                   transport_service_.service_name,
-	                   varnames,
-	                   varvalues, 1);
-}
-
 // Replace given variable without sending an state-change event.
 static void replace_var(transport_variable varnum, const char *new_value) {
 	if ((varnum < 0) || (varnum >= TRANSPORT_VAR_UNKNOWN)) {
@@ -599,6 +578,26 @@ static void replace_var(transport_variable varnum, const char *new_value) {
 
 	free((char*)transport_values[varnum]);
 	transport_values[varnum] = strdup(new_value);
+}
+
+static void notify_lastchange(const char *value)
+{
+	const char *varnames[] = {
+		"LastChange",
+		NULL
+	};
+	const char *varvalues[] = {
+		NULL, NULL
+	};
+
+	replace_var(TRANSPORT_VAR_LAST_CHANGE, value);
+
+	varvalues[0] = xmlescape(value, 1);
+	upnp_device_notify(upnp_device_,
+	                   transport_service_.service_name,
+	                   varnames,
+	                   varvalues, 1);
+	free((char*) varvalues[0]);
 }
 
 // Transport uri always comes in uri/meta pairs. Set these and also the related
