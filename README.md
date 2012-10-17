@@ -23,5 +23,6 @@ Added so far
 
 TBD
   * Volume control.
+  * go into TRANSITIONING while seeking.
 
 You can reach me via <h.zeller@acm.org>.

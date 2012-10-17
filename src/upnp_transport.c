@@ -25,13 +25,12 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <assert.h>
 
 #include <glib.h>
 
@@ -857,8 +856,11 @@ static gint64 parse_upnp_time(const char *time_string) {
 	int minute = 0;
 	int second = 0;
 	sscanf(time_string, "%d:%02d:%02d", &hour, &minute, &second);
-	const gint64 one_sec = 1000000000LL;
-	gint64 nanos = one_sec * (hour * 3600 + minute * 60 + second);
+	const gint64 seconds = (hour * 3600 + minute * 60 + second);
+	const gint64 one_sec_unit = 1000000000LL;
+	const gint64 nanos = one_sec_unit * seconds;
+	printf("Parse time: '%s' -> %llds (%lld ns)\n", time_string,
+	       (long long int) seconds, (long long int) nanos);
 	return nanos;
 }
 
