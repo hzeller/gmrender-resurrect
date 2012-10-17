@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <assert.h>
 
 #include <glib.h>
 
@@ -590,14 +591,15 @@ static void notify_lastchange(const char *value)
 		NULL, NULL
 	};
 
+
 	replace_var(TRANSPORT_VAR_LAST_CHANGE, value);
 
-	varvalues[0] = xmlescape(value, 1);
+	varvalues[0] = xmlescape(value, 0);
 	upnp_device_notify(upnp_device_,
 	                   transport_service_.service_name,
 	                   varnames,
 	                   varvalues, 1);
-	free((char*) varvalues[0]);
+	free((char*)varvalues[0]);
 }
 
 // Transport uri always comes in uri/meta pairs. Set these and also the related
@@ -840,8 +842,8 @@ static int divide_leave_remainder(gint64 *val, gint64 divisor) {
 }
 static void print_upnp_time_into_buffer(char *buf, size_t size, gint64 t) {
 	const gint64 one_sec = 1000000000LL;  // units are in nanoseconds.
-	const int hour = divide_leave_remainder(&t, 3600 * one_sec);
-	const int minute = divide_leave_remainder(&t, 60 * one_sec);
+	const int hour = divide_leave_remainder(&t, 3600LL * one_sec);
+	const int minute = divide_leave_remainder(&t, 60LL * one_sec);
 	const int second = divide_leave_remainder(&t, one_sec);
 	const int milli_second = t / 1000000;
 	snprintf(buf, size, "%d:%02d:%02d.%03d", hour, minute, second,
@@ -853,8 +855,11 @@ static gint64 parse_upnp_time(const char *time_string) {
 	int minute = 0;
 	int second = 0;
 	sscanf(time_string, "%d:%02d:%02d", &hour, &minute, &second);
-	const gint64 one_sec = 1000000000LL;
-	gint64 nanos = one_sec * (hour * 3600 + minute * 60 + second);
+	const gint64 seconds = (hour * 3600 + minute * 60 + second);
+	const gint64 one_sec_unit = 1000000000LL;
+	const gint64 nanos = one_sec_unit * seconds;
+	printf("Parse time: '%s' -> %llds (%lld ns)\n", time_string,
+	       (long long int) seconds, (long long int) nanos);
 	return nanos;
 }
 
