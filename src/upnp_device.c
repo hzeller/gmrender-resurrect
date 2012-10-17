@@ -138,9 +138,10 @@ int upnp_append_variable(struct action_event *event,
 	ithread_mutex_lock(service->service_mutex);
 #endif
 
-	fprintf(stderr, "\tHZ: %s = '%s'\n",
-		service->variable_names[varnum],
+#if 0
+	fprintf(stderr, "\tHZ: %s = '%s'\n", service->variable_names[varnum],
 		service->variable_values[varnum]);
+#endif
 	value = service->variable_values[varnum];
 	assert(value != NULL);
 	retval = upnp_add_response(event, paramname, value);
@@ -333,9 +334,14 @@ static int handle_action_request(struct device_private *priv,
 
 		rc = (event_action->callback) (&event);
 		if (rc == 0) {
+			char buf[128];
+			// mmh, looks like IP address is only IPv4 ?
+			const char *ip = inet_ntop(AF_INET,
+						   &ar_event->CtrlPtIPAddr,
+						   buf, sizeof(buf));
 			ar_event->ErrCode = UPNP_E_SUCCESS;
-			printf("Action '%s' was a success!\n",
-                               ar_event->ActionName);
+			printf("%s: Action '%s' was a success!\n",
+                               ip, ar_event->ActionName);
 		}
 		if (ar_event->ActionResult == NULL) {
 			ar_event->ActionResult =
