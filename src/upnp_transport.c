@@ -843,8 +843,8 @@ static int divide_leave_remainder(gint64 *val, gint64 divisor) {
 }
 static void print_upnp_time_into_buffer(char *buf, size_t size, gint64 t) {
 	const gint64 one_sec = 1000000000LL;  // units are in nanoseconds.
-	const int hour = divide_leave_remainder(&t, 3600 * one_sec);
-	const int minute = divide_leave_remainder(&t, 60 * one_sec);
+	const int hour = divide_leave_remainder(&t, 3600LL * one_sec);
+	const int minute = divide_leave_remainder(&t, 60LL * one_sec);
 	const int second = divide_leave_remainder(&t, one_sec);
 	const int milli_second = t / 1000000;
 	snprintf(buf, size, "%d:%02d:%02d.%03d", hour, minute, second,
