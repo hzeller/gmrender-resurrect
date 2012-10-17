@@ -579,11 +579,12 @@ static void notify_lastchange(const char *value)
 	free((char*)transport_values[TRANSPORT_VAR_LAST_CHANGE]);
 	transport_values[TRANSPORT_VAR_LAST_CHANGE] = strdup(value);
 
-	varvalues[0] = transport_values[TRANSPORT_VAR_LAST_CHANGE];
+	varvalues[0] = xmlescape(transport_values[TRANSPORT_VAR_LAST_CHANGE], 0);
 	upnp_device_notify(upnp_device_,
 	                   transport_service_.service_name,
 	                   varnames,
 	                   varvalues, 1);
+	free((char*)varvalues[0]);
 }
 
 // Replace given variable without sending an state-change event.
