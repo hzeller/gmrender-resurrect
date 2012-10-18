@@ -25,9 +25,11 @@
 #include "config.h"
 #endif
 
+#define _GNU_SOURCE         /* See feature_test_macros(7) */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <math.h>
 
 #ifdef HAVE_LIBUPNP
 #include <upnp/upnp.h>
@@ -38,6 +40,8 @@
 #include "upnp.h"
 #include "upnp_control.h"
 #include "upnp_device.h"
+#include "output.h"
+#include "xmlescape.h"
 
 //#define CONTROL_SERVICE "urn:upnp-org:serviceId:RenderingControl"
 #define CONTROL_SERVICE "urn:schemas-upnp-org:service:RenderingControl"
@@ -167,6 +171,10 @@ static const char *aat_channels[] =
 	NULL
 };
 
+static struct param_range volume_range = { 0, 100, 1 };
+static struct param_range volume_db_range = { -60 * 256, 0, 0 };
+
+// The following are not really relevant for a sound renderer.
 static struct param_range brightness_range = { 0, 100, 1 };
 static struct param_range contrast_range = { 0, 100, 1 };
 static struct param_range sharpness_range = { 0, 100, 1 };
@@ -174,8 +182,6 @@ static struct param_range vid_gain_range = { 0, 100, 1 };
 static struct param_range vid_black_range = { 0, 100, 1 };
 static struct param_range colortemp_range = { 0, 65535, 1 };
 static struct param_range keystone_range = { -32768, 32767, 1 };
-static struct param_range volume_range = { 0, 100, 1 };
-static struct param_range volume_db_range = { -32768, 32767, 0 };
 
 static struct var_meta control_var_meta[] = {
 	[CONTROL_VAR_LAST_CHANGE] =		{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
@@ -202,7 +208,8 @@ static struct var_meta control_var_meta[] = {
 	[CONTROL_VAR_UNKNOWN] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
 };
 
-static const char *control_values[] = {
+static const char *control_values[CONTROL_VAR_COUNT];
+static const char *default_control_values[] = {
 	[CONTROL_VAR_LAST_CHANGE] = "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\"/>",
 	[CONTROL_VAR_PRESET_NAME_LIST] = "",
 	[CONTROL_VAR_AAT_CHANNEL] = "",
@@ -227,11 +234,25 @@ static const char *control_values[] = {
 	[CONTROL_VAR_UNKNOWN] = NULL
 };
 
+extern struct service control_service_;   // Defined below.
+
 #ifdef HAVE_LIBUPNP
 static ithread_mutex_t control_mutex;
 #endif
 
+static void service_lock(void)
+{
+#ifdef HAVE_LIBUPNP
+	ithread_mutex_lock(&control_mutex);
+#endif
+}
 
+static void service_unlock(void)
+{
+#ifdef HAVE_LIBUPNP
+	ithread_mutex_unlock(&control_mutex);
+#endif
+}
 
 static struct argument *arguments_list_presets[] = {
 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
@@ -460,6 +481,66 @@ static struct argument **argument_list[] = {
 };
 
 
+// Replace given variable without sending an state-change event.
+static void replace_var(control_variable varnum, const char *new_value) {
+	if ((varnum < 0) || (varnum >= CONTROL_VAR_UNKNOWN)) {
+		fprintf(stderr, "Attempt to set bogus variable '%d' to '%s'\n",
+			varnum, new_value);
+		return;
+	}
+	if (new_value == NULL) {
+		new_value = "";
+	}
+	fprintf(stderr, "control: setting %s = '%s'\n",
+		control_variables[varnum], new_value);
+	free((char*)control_values[varnum]);
+	control_values[varnum] = strdup(new_value);
+}
+
+// TODO: this code is somewhat duplicate in upnp_transport.
+static void notify_lastchange(struct action_event *event,
+			      const char *value)
+{
+	const char *varnames[] = {
+		"LastChange",
+		NULL
+	};
+	const char *varvalues[] = {
+		NULL, NULL
+	};
+
+
+	replace_var(CONTROL_VAR_LAST_CHANGE, value);
+
+	varvalues[0] = xmlescape(value, 0);
+	upnp_device_notify(event->device_priv,
+	                   control_service_.service_name,
+	                   varnames,
+	                   varvalues, 1);
+	free((char*)varvalues[0]);
+}
+
+static void change_var_and_notify(struct action_event *event,
+				  control_variable varnum, const char *value)
+{
+	char *buf;
+
+	replace_var(varnum, value);
+
+	char *xml_value = xmlescape(control_values[varnum], 1);
+	asprintf(&buf,
+		 "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\"><InstanceID val=\"0\">"
+		 "<%s val=\"%s\"/></InstanceID></Event>",
+		 control_variables[varnum], xml_value);
+	free(xml_value);
+	fprintf(stderr, "HZ: ----------------------------------------------- push notification : %s = '%s'\n",
+		control_variables[varnum], value);
+
+	notify_lastchange(event, buf);
+	free(buf);
+
+	return;
+}
 
 static int cmd_obtain_variable(struct action_event *event, int varnum,
 			       const char *paramname)
@@ -560,11 +641,57 @@ static int get_mute(struct action_event *event)
 	return cmd_obtain_variable(event, CONTROL_VAR_MUTE, "CurrentMute");
 }
 
+static void set_mute_toggle(int do_mute) {
+	replace_var(CONTROL_VAR_MUTE, do_mute ? "1" : "0");
+	output_set_mute(do_mute);
+}
+
+static int set_mute(struct action_event *event) {
+	const char *value = upnp_get_string(event, "DesiredMute");
+	service_lock();
+	const int do_mute = atoi(value);
+	set_mute_toggle(do_mute);
+	change_var_and_notify(event, CONTROL_VAR_MUTE, do_mute ? "1" : "0");
+	service_unlock();
+	return 0;
+}
+
 static int get_volume(struct action_event *event)
 {
 	/* FIXME - Channel */
 	return cmd_obtain_variable(event, CONTROL_VAR_VOLUME,
 				   "CurrentVolume");
+}
+
+// TODO: set volume db.
+static int set_volume(struct action_event *event) {
+	const char *value = upnp_get_string(event, "DesiredVolume");
+	service_lock();
+	const int control_value = atoi(value);
+	float decibel;
+	// todo: fiddle that a bit.
+	if (control_value < 50) {
+		// between 1 .. 49, we change dB between -60 .. -20
+		decibel = (60 - 20)/49.0 * control_value - 60.0;
+	}
+	else {
+		// between 51 .. 100 we change dB between -20 .. 0
+		decibel = 20.0/50.0 * (control_value - 50) - 20.0;
+	}
+	char buf_db[10];
+	snprintf(buf_db, sizeof(buf_db), "%d", (int) (256 * decibel));
+
+	const double fraction = exp(decibel / 20 * log(10));
+	fprintf(stderr, "Setting volume to %s, %.2f -> %.4f\n",
+		value, decibel, fraction);
+
+	change_var_and_notify(event, CONTROL_VAR_VOLUME_DB, buf_db);
+	change_var_and_notify(event, CONTROL_VAR_VOLUME, value);
+	output_set_volume(fraction);
+	set_mute_toggle(control_value == 0);
+	service_unlock();
+
+	return 0;
 }
 
 static int get_volume_db(struct action_event *event)
@@ -610,9 +737,9 @@ static struct action control_actions[] = {
 	[CONTROL_CMD_GET_VERT_KEYSTONE] =   	{"GetVerticalKeystone", get_vertical_keystone}, /* optional */
 	[CONTROL_CMD_SET_VERT_KEYSTONE] =   	{"SetVerticalKeystone", NULL}, /* optional */
 	[CONTROL_CMD_GET_MUTE] =            	{"GetMute", get_mute}, /* optional */
-	[CONTROL_CMD_SET_MUTE] =            	{"SetMute", NULL}, /* optional */
+	[CONTROL_CMD_SET_MUTE] =            	{"SetMute", set_mute}, /* optional */
 	[CONTROL_CMD_GET_VOL] =             	{"GetVolume", get_volume}, /* optional */
-	[CONTROL_CMD_SET_VOL] =             	{"SetVolume", NULL}, /* optional */
+	[CONTROL_CMD_SET_VOL] =             	{"SetVolume", set_volume}, /* optional */
 	[CONTROL_CMD_GET_VOL_DB] =          	{"GetVolumeDB", get_volume_db}, /* optional */
 	[CONTROL_CMD_SET_VOL_DB] =          	{"SetVolumeDB", NULL}, /* optional */
 	[CONTROL_CMD_GET_VOL_DBRANGE] =     	{"GetVolumeDBRange", NULL}, /* optional */
@@ -621,8 +748,21 @@ static struct action control_actions[] = {
 	[CONTROL_CMD_UNKNOWN] =			{NULL, NULL}
 };
 
+struct service *upnp_control_get_service(void) {
+	int i;
+	fprintf(stderr, "Prepare control service variables\n");
+	for (i = 0; i < CONTROL_VAR_COUNT; ++i) {
+		control_values[i] = strdup(default_control_values[i]
+					   ? default_control_values[i]
+					   : "");
+		fprintf(stderr, "Init var %s = '%s'\n",
+			control_variables[i],
+			control_values[i]);
+	}
+	return &control_service_;
+}
 
-struct service control_service = {
+struct service control_service_ = {
 	.service_name =	CONTROL_SERVICE,
 	.type =	CONTROL_TYPE,
         .scpd_url = CONTROL_SCPD_URL,
@@ -640,6 +780,5 @@ struct service control_service = {
 #endif
 };
 
-void control_init(void)
-{
+void upnp_control_init(void) {
 }

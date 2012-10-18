@@ -375,6 +375,29 @@ static int output_gstreamer_get_position(gint64 *track_duration,
 	return rc;
 }
 
+static int output_gstreamer_get_volume(float *v) {
+	double volume;
+	g_object_get(player_, "volume", &volume, NULL);
+	*v = volume;
+	return 0;
+}
+static int output_gstreamer_set_volume(float value) {
+	fprintf(stderr, "gstreamer, got %f\n", value);
+	g_object_set(player_, "volume", (double) value, NULL);
+	return 0;
+}
+static int output_gstreamer_get_mute(int *m) {
+	gboolean val;
+	g_object_get(player_, "mute", &val, NULL);
+	*m = val;
+	return 0;
+}
+static int output_gstreamer_set_mute(int m) {
+	fprintf(stderr, "gstreamer, got mute %d\n", m);
+	g_object_set(player_, "mute", (gboolean) m, NULL);
+	return 0;
+}
+
 static void prepare_next_stream(GstElement *obj, gpointer userdata) {
 	free(gsuri_);
 	gsuri_ = gs_next_uri_;
@@ -440,4 +463,8 @@ struct output_module gstreamer_output = {
 	.pause       = output_gstreamer_pause,
 	.seek        = output_gstreamer_seek,
 	.get_position = output_gstreamer_get_position,
+	.get_volume  = output_gstreamer_get_volume,
+	.set_volume  = output_gstreamer_set_volume,
+	.get_mute  = output_gstreamer_get_mute,
+	.set_mute  = output_gstreamer_set_mute,
 };

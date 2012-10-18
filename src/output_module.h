@@ -41,8 +41,12 @@ struct output_module {
 	int (*loop)(void);
 	int (*seek)(gint64 position_nanos);
 
-	// Query
+	// parameters
 	int (*get_position)(gint64 *track_duration, gint64 *track_pos);
+	int (*get_volume)(float *);
+	int (*set_volume)(float);
+	int (*get_mute)(int *);
+	int (*set_mute)(int);
 };
 
 #endif

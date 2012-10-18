@@ -47,4 +47,9 @@ int output_pause(void);
 int output_get_position(gint64 *track_dur_nanos, gint64 *track_pos_nanos);
 int output_seek(gint64 position_nanos);
 
+int output_get_volume(float *v);
+int output_set_volume(float v);
+int output_get_mute(int *m);
+int output_set_mute(int m);
+
 #endif /* _OUTPUT_H */

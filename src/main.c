@@ -43,6 +43,7 @@
 #include "upnp_device.h"
 #include "upnp_renderer.h"
 #include "upnp_transport.h"
+#include "upnp_control.h"
 
 static gboolean show_version = FALSE;
 static gboolean show_devicedesc = FALSE;
@@ -191,6 +192,7 @@ int main(int argc, char **argv)
 	}
 
 	upnp_transport_init(device);
+	upnp_control_init();
 
 	printf("Ready for rendering..\n");
 	output_loop();

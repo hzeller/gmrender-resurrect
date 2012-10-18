@@ -103,7 +103,7 @@ void upnp_renderer_dump_connmgr_scpd(void)
 void upnp_renderer_dump_control_scpd(void)
 {
 	char *buf;
-	buf = upnp_get_scpd(&control_service);
+	buf = upnp_get_scpd(upnp_control_get_service());
 	assert(buf != NULL);
 	fputs(buf, stdout);
 }
@@ -120,10 +120,11 @@ static int upnp_renderer_init(void)
 	static struct service *upnp_services[] = {
 		NULL,
 		&connmgr_service,
-		&control_service,
+		NULL,
 		NULL
 	};
 	upnp_services[0] = upnp_transport_get_service();
+	upnp_services[2] = upnp_control_get_service();
 	render_device.services = upnp_services;
         return connmgr_init();
 }

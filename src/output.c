@@ -185,3 +185,28 @@ int output_get_position(gint64 *track_dur, gint64 *track_pos) {
 	}
 	return result;
 }
+
+int output_get_volume(float *value) {
+	if (output_module && output_module->get_volume) {
+		return output_module->get_volume(value);
+	}
+	return -1;
+}
+int output_set_volume(float value) {
+	if (output_module && output_module->set_volume) {
+		return output_module->set_volume(value);
+	}
+	return -1;
+}
+int output_get_mute(int *value) {
+	if (output_module && output_module->get_mute) {
+		return output_module->get_mute(value);
+	}
+	return -1;
+}
+int output_set_mute(int value) {
+	if (output_module && output_module->set_mute) {
+		return output_module->set_mute(value);
+	}
+	return -1;
+}

@@ -24,8 +24,7 @@
 #ifndef _UPNP_CONTROL_H
 #define _UPNP_CONTROL_H
 
-void control_init(void);
-
-extern struct service control_service;
+void upnp_control_init(void);
+struct service *upnp_control_get_service(void);
 
 #endif /* _UPNP_CONTROL_H */
