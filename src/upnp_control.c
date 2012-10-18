@@ -656,9 +656,12 @@ static int set_mute(struct action_event *event) {
 	return 0;
 }
 
+// TODO(hzeller): we might need to add read the initial value
+// from gstreamer and push-notify the real variable.
 static int get_volume(struct action_event *event)
 {
 	/* FIXME - Channel */
+	fprintf(stderr, "GetVolume() -> %s\n", control_values[CONTROL_VAR_VOLUME]);
 	return cmd_obtain_variable(event, CONTROL_VAR_VOLUME,
 				   "CurrentVolume");
 }
