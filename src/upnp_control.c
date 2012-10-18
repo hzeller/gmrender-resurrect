@@ -542,6 +542,34 @@ static void change_var_and_notify(struct action_event *event,
 	return;
 }
 
+// Volume and Volume DB change both at once. Only send one event.
+static void change_volume_and_notify(struct action_event *event,
+				     const char *volume, const char *db_volume) {
+	char *buf;
+
+	replace_var(CONTROL_VAR_VOLUME, volume);
+	replace_var(CONTROL_VAR_VOLUME_DB, db_volume);
+
+	char *xml[2];
+	xml[0] = xmlescape(control_values[CONTROL_VAR_VOLUME], 1);
+	xml[1] = xmlescape(control_values[CONTROL_VAR_VOLUME_DB], 1);
+	asprintf(&buf,
+		 "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\">"
+		 "<InstanceID val=\"0\">\n"
+		 "\t<%s val=\"%s\"/>\n"
+		 "\t<%s val=\"%s\"/>\n"
+		 "</InstanceID></Event>",
+		 control_variables[CONTROL_VAR_VOLUME], xml[0],
+		 control_variables[CONTROL_VAR_VOLUME_DB], xml[1]);
+	notify_lastchange(event, buf);
+	free(buf);
+	int i;
+	for (i = 0; i < 2; ++i)
+		free(xml[i]);
+
+	return;
+}
+
 static int cmd_obtain_variable(struct action_event *event, int varnum,
 			       const char *paramname)
 {
@@ -667,10 +695,11 @@ static int get_volume(struct action_event *event)
 }
 
 // TODO: set volume db.
+// TODO: get initial setting and push-notify.
 static int set_volume(struct action_event *event) {
-	const char *value = upnp_get_string(event, "DesiredVolume");
+	const char *volume = upnp_get_string(event, "DesiredVolume");
 	service_lock();
-	int normalized_range = atoi(value);  // range 0..100
+	int normalized_range = atoi(volume);  // range 0..100
 	if (normalized_range < 0) normalized_range = 0;
 	if (normalized_range > 100) normalized_range = 100;
 	float decibel;
@@ -683,15 +712,14 @@ static int set_volume(struct action_event *event) {
 		// between 51 .. 100 we change dB between -20 .. 0
 		decibel = 20.0/50.0 * (normalized_range - 50) - 20.0;
 	}
-	char buf_db[10];
-	snprintf(buf_db, sizeof(buf_db), "%d", (int) (256 * decibel));
+	char db_volume[10];
+	snprintf(db_volume, sizeof(db_volume), "%d", (int) (256 * decibel));
 
 	const double fraction = exp(decibel / 20 * log(10));
 	fprintf(stderr, "Setting volume to %s, %.2f -> %.4f\n",
-		value, decibel, fraction);
+		volume, decibel, fraction);
 
-	change_var_and_notify(event, CONTROL_VAR_VOLUME_DB, buf_db);
-	change_var_and_notify(event, CONTROL_VAR_VOLUME, value);
+	change_volume_and_notify(event, volume, db_volume);
 	output_set_volume(fraction);
 	set_mute_toggle(normalized_range == 0);
 	service_unlock();
