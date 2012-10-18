@@ -667,16 +667,18 @@ static int get_volume(struct action_event *event)
 static int set_volume(struct action_event *event) {
 	const char *value = upnp_get_string(event, "DesiredVolume");
 	service_lock();
-	const int control_value = atoi(value);
+	int normalized_range = atoi(value);  // range 0..100
+	if (normalized_range < 0) normalized_range = 0;
+	if (normalized_range > 100) normalized_range = 100;
 	float decibel;
 	// todo: fiddle that a bit.
-	if (control_value < 50) {
+	if (normalized_range < 50) {
 		// between 1 .. 49, we change dB between -60 .. -20
-		decibel = (60 - 20)/49.0 * control_value - 60.0;
+		decibel = (60 - 20)/49.0 * normalized_range - 60.0;
 	}
 	else {
 		// between 51 .. 100 we change dB between -20 .. 0
-		decibel = 20.0/50.0 * (control_value - 50) - 20.0;
+		decibel = 20.0/50.0 * (normalized_range - 50) - 20.0;
 	}
 	char buf_db[10];
 	snprintf(buf_db, sizeof(buf_db), "%d", (int) (256 * decibel));
@@ -688,7 +690,7 @@ static int set_volume(struct action_event *event) {
 	change_var_and_notify(event, CONTROL_VAR_VOLUME_DB, buf_db);
 	change_var_and_notify(event, CONTROL_VAR_VOLUME, value);
 	output_set_volume(fraction);
-	set_mute_toggle(control_value == 0);
+	set_mute_toggle(normalized_range == 0);
 	service_unlock();
 
 	return 0;
