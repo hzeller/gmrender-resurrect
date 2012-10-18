@@ -22,9 +22,10 @@ Added so far
     so that the controller sends us the next song (Actively eventing).
   * Support gapless (via SetNextAVTransportURI to play gapless). Looks like
     the next version of BubbleUPnP will send the right action to support it.
+  * Volume/Mute control.
 
 TBD
-  * Volume control.
+
   * go into TRANSITIONING while seeking.
 
 You can reach me via <h.zeller@acm.org>.
