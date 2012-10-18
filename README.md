@@ -10,6 +10,8 @@ So this is a fork of those sources to resurrect this renderer and add the
 missing features. (Original sources at
 http://cvs.savannah.gnu.org/viewvc/gmrender/?root=gmrender )
 
+I consider this fork GMediaRender 0.0.7 (license to trill).
+
 Added so far
   * Support to get duration and position of current stream. This allows
     controllers to show a progress bar.
