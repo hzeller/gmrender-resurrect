@@ -171,8 +171,17 @@ static const char *aat_channels[] =
 	NULL
 };
 
+// We split our volume range into two ranges with different slope.
+// The first half goes from min_db ... mid_db, the second half
+// from mid_db .. max_db.
+static const float vol_min_db = -60.0;
+static const float vol_mid_db = -20.0;
+static const float vol_max_db = 0.0;
+static const int vol_mid_point = 50;  // volume_range.max / 2
+
 static struct param_range volume_range = { 0, 100, 1 };
-static struct param_range volume_db_range = { -60 * 256, 0, 0 };
+static struct param_range volume_db_range = { -60 * 256, 0, 0 };  // volume_min_db
+
 
 // The following are not really relevant for a sound renderer.
 static struct param_range brightness_range = { 0, 100, 1 };
@@ -542,9 +551,10 @@ static void change_var_and_notify(struct action_event *event,
 	return;
 }
 
-// Volume and Volume DB change both at once. Only send one event.
-static void change_volume_and_notify(struct action_event *event,
-				     const char *volume, const char *db_volume) {
+// Change volume. Also for setting the initial volume that we read from the
+// output device. This prepares a LastChange variable that can be send as an
+// initial change.
+static void change_volume(const char *volume, const char *db_volume) {
 	char *buf;
 
 	replace_var(CONTROL_VAR_VOLUME, volume);
@@ -561,13 +571,22 @@ static void change_volume_and_notify(struct action_event *event,
 		 "</InstanceID></Event>",
 		 control_variables[CONTROL_VAR_VOLUME], xml[0],
 		 control_variables[CONTROL_VAR_VOLUME_DB], xml[1]);
-	notify_lastchange(event, buf);
+	replace_var(CONTROL_VAR_LAST_CHANGE, buf);
 	free(buf);
 	int i;
-	for (i = 0; i < 2; ++i)
+	for (i = 0; i < 2; ++i) {
 		free(xml[i]);
+	}
+}
 
-	return;
+// Volume and Volume DB change both at once. Only send one event.
+// Event can be NULL in which case only the variable is changed.
+static void change_volume_and_notify(struct action_event *event,
+				     const char *volume, const char *db_volume) {
+	change_volume(volume, db_volume);
+	if (event) {
+		notify_lastchange(event, strdup(control_values[CONTROL_VAR_LAST_CHANGE]));
+	}
 }
 
 static int cmd_obtain_variable(struct action_event *event, int varnum,
@@ -694,34 +713,83 @@ static int get_volume(struct action_event *event)
 				   "CurrentVolume");
 }
 
-// TODO: set volume db.
-// TODO: get initial setting and push-notify.
+static float volume_level_to_decibel(int volume) {
+	if (volume < volume_range.min) volume = volume_range.min;
+	if (volume > volume_range.max) volume = volume_range.max;
+	if (volume < volume_range.max / 2) {
+		return vol_min_db
+			+ (vol_mid_db - vol_min_db) / vol_mid_point * volume;
+	}
+	else {
+		const int range = volume_range.max - vol_mid_point;
+		return vol_mid_db
+			+ ((vol_max_db - vol_mid_db) / range
+			   * (volume - vol_mid_point));
+	}
+}
+
+static int volume_decibel_to_level(float decibel) {
+	if (decibel < vol_min_db) return volume_range.min;
+	if (decibel > vol_max_db) return volume_range.max;
+	if (decibel < vol_mid_db) {
+		return (decibel - vol_min_db) * vol_mid_point / (vol_mid_db - vol_min_db);
+	}
+	else {
+		const int range = volume_range.max - vol_mid_point;
+		return (decibel - vol_mid_db) * range / (vol_max_db - vol_mid_db) + vol_mid_point;
+	}
+}
+
+// Change volume variables from the given decibel. Quantize value according to
+// our ranges.
+static float change_volume_decibel(struct action_event *event, float raw_decibel) {
+	int volume_level = volume_decibel_to_level(raw_decibel);
+	// Since we quantize it to the level, lets calculate the
+	// actual level.
+	float decibel = volume_level_to_decibel(volume_level);
+
+	char volume[10];
+	snprintf(volume, sizeof(volume), "%d", volume_level);
+	char db_volume[10];
+	snprintf(db_volume, sizeof(db_volume), "%d", (int) (256 * decibel));
+
+	fprintf(stderr, "Setting volume-db to %.2f == level %d\n",
+		decibel, volume_level);
+
+	change_volume_and_notify(event, volume, db_volume);
+	return decibel;
+}
+
+static int set_volume_db(struct action_event *event) {
+	const char *str_decibel_in = upnp_get_string(event, "DesiredVolume");
+	service_lock();
+	float raw_decibel_in = atof(str_decibel_in);
+	float decibel = change_volume_decibel(event, raw_decibel_in);
+
+	output_set_volume(exp(decibel / 20 * log(10)));
+	service_unlock();
+
+	return 0;
+}
+
 static int set_volume(struct action_event *event) {
 	const char *volume = upnp_get_string(event, "DesiredVolume");
 	service_lock();
-	int normalized_range = atoi(volume);  // range 0..100
-	if (normalized_range < 0) normalized_range = 0;
-	if (normalized_range > 100) normalized_range = 100;
-	float decibel;
-	// todo: fiddle that a bit.
-	if (normalized_range < 50) {
-		// between 1 .. 49, we change dB between -60 .. -20
-		decibel = (60 - 20)/49.0 * normalized_range - 60.0;
-	}
-	else {
-		// between 51 .. 100 we change dB between -20 .. 0
-		decibel = 20.0/50.0 * (normalized_range - 50) - 20.0;
-	}
+	int volume_level = atoi(volume);  // range 0..100
+	if (volume_level < volume_range.min) volume_level = volume_range.min;
+	if (volume_level > volume_range.max) volume_level = volume_range.max;
+	const float decibel = volume_level_to_decibel(volume_level);
+
 	char db_volume[10];
 	snprintf(db_volume, sizeof(db_volume), "%d", (int) (256 * decibel));
 
 	const double fraction = exp(decibel / 20 * log(10));
-	fprintf(stderr, "Setting volume to %s, %.2f -> %.4f\n",
-		volume, decibel, fraction);
+	fprintf(stderr, "Setting volume to %s, %.2f -> %.4f (%d)\n",
+		volume, decibel, fraction, volume_decibel_to_level(decibel));
 
 	change_volume_and_notify(event, volume, db_volume);
 	output_set_volume(fraction);
-	set_mute_toggle(normalized_range == 0);
+	set_mute_toggle(volume_level == 0);
 	service_unlock();
 
 	return 0;
@@ -783,7 +851,7 @@ static struct action control_actions[] = {
 	[CONTROL_CMD_GET_VOL] =             	{"GetVolume", get_volume}, /* optional */
 	[CONTROL_CMD_SET_VOL] =             	{"SetVolume", set_volume}, /* optional */
 	[CONTROL_CMD_GET_VOL_DB] =          	{"GetVolumeDB", get_volume_db}, /* optional */
-	[CONTROL_CMD_SET_VOL_DB] =          	{"SetVolumeDB", NULL}, /* optional */
+	[CONTROL_CMD_SET_VOL_DB] =          	{"SetVolumeDB", set_volume_db}, /* optional */
 	[CONTROL_CMD_GET_VOL_DBRANGE] =     	{"GetVolumeDBRange", get_volume_dbrange}, /* optional */
 	[CONTROL_CMD_GET_LOUDNESS] =        	{"GetLoudness", get_loudness}, /* optional */
 	[CONTROL_CMD_SET_LOUDNESS] =        	{"SetLoudness", NULL}, /* optional */
@@ -791,15 +859,19 @@ static struct action control_actions[] = {
 };
 
 struct service *upnp_control_get_service(void) {
-	int i;
-	fprintf(stderr, "Prepare control service variables\n");
-	for (i = 0; i < CONTROL_VAR_COUNT; ++i) {
-		control_values[i] = strdup(default_control_values[i]
-					   ? default_control_values[i]
-					   : "");
-		fprintf(stderr, "Init var %s = '%s'\n",
-			control_variables[i],
-			control_values[i]);
+	static int service_initialized = 0;
+	if (!service_initialized) {
+		int i;
+		fprintf(stderr, "Prepare control service variables\n");
+		for (i = 0; i < CONTROL_VAR_COUNT; ++i) {
+			control_values[i] = strdup(default_control_values[i]
+						   ? default_control_values[i]
+						   : "");
+			fprintf(stderr, "Init var %s = '%s'\n",
+				control_variables[i],
+				control_values[i]);
+		}
+		service_initialized = 1;
 	}
 	return &control_service_;
 }
@@ -823,4 +895,12 @@ struct service control_service_ = {
 };
 
 void upnp_control_init(void) {
+	upnp_control_get_service();
+	// This doesn't seem to work: asking gmstreamer initially will always
+	// return 1.0.
+	float volume_fraction = 0;
+	if (output_get_volume(&volume_fraction) == 0) {
+		fprintf(stderr, "Got fraction %f\n", volume_fraction);
+		change_volume_decibel(NULL, 20 * log(volume_fraction) / log(10));
+	}
 }

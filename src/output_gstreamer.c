@@ -33,6 +33,7 @@
 #include <string.h>
 
 #include <gst/gst.h>
+#include <assert.h>
 
 //#define ENABLE_TRACING
 
@@ -421,6 +422,7 @@ static int output_gstreamer_init(void)
 	scan_mime_list();
 
 	player_ = gst_element_factory_make("playbin2", "play");
+	assert(player_ != NULL);
 
 	bus = gst_pipeline_get_bus(GST_PIPELINE(player_));
 	gst_bus_add_watch(bus, my_bus_callback, NULL);
@@ -446,6 +448,7 @@ static int output_gstreamer_init(void)
 
 	g_signal_connect(G_OBJECT(player_), "about-to-finish",
 			 G_CALLBACK(prepare_next_stream), NULL);
+	output_gstreamer_set_mute(0);
 	LEAVE();
 
 	return 0;
