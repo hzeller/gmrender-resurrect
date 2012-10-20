@@ -28,4 +28,5 @@ TBD
 
   * go into TRANSITIONING while seeking.
 
+(Tested the following control points: BubbleUPnP, 2Player, DK Player, eezUPnP)
 You can reach me via <h.zeller@acm.org>.

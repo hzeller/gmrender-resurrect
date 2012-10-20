@@ -96,13 +96,13 @@ typedef enum {
 	TRANSPORT_CMD_GETPOSITIONINFO,
 	TRANSPORT_CMD_GETTRANSPORTINFO,
 	TRANSPORT_CMD_GETTRANSPORTSETTINGS,
-	TRANSPORT_CMD_NEXT,
+	//TRANSPORT_CMD_NEXT,
 	TRANSPORT_CMD_PAUSE,
 	TRANSPORT_CMD_PLAY,
-	TRANSPORT_CMD_PREVIOUS,
+	//TRANSPORT_CMD_PREVIOUS,
 	TRANSPORT_CMD_SEEK,
 	TRANSPORT_CMD_SETAVTRANSPORTURI,             
-	TRANSPORT_CMD_SETPLAYMODE,
+	//TRANSPORT_CMD_SETPLAYMODE,
 	TRANSPORT_CMD_STOP,
 	TRANSPORT_CMD_SETNEXTAVTRANSPORTURI,
 	//TRANSPORT_CMD_RECORD,
@@ -141,7 +141,7 @@ static const char *transport_variables[] = {
 	[TRANSPORT_VAR_AAT_SEEK_MODE] = "A_ARG_TYPE_SeekMode",
 	[TRANSPORT_VAR_AAT_SEEK_TARGET] = "A_ARG_TYPE_SeekTarget",
 	[TRANSPORT_VAR_AAT_INSTANCE_ID] = "A_ARG_TYPE_InstanceID",
-	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] = "CurrentTransportActions",	/* optional */
+	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] = "CurrentTransportActions",
 	[TRANSPORT_VAR_UNKNOWN] = NULL
 };
 
@@ -178,7 +178,7 @@ static const char *default_transport_values[] = {
 	[TRANSPORT_VAR_AAT_SEEK_MODE] = "TRACK_NR",
 	[TRANSPORT_VAR_AAT_SEEK_TARGET] = "",
 	[TRANSPORT_VAR_AAT_INSTANCE_ID] = "0",
-	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] = "Play,Stop,Pause,Seek",
+	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] = "PLAY",
 	[TRANSPORT_VAR_UNKNOWN] = NULL
 };
 
@@ -429,19 +429,19 @@ static struct argument *arguments_seek[] = {
         & (struct argument) { "Target", PARAM_DIR_IN, TRANSPORT_VAR_AAT_SEEK_TARGET },
 	NULL
 };
-static struct argument *arguments_next[] = {
-        & (struct argument) { "InstanceID", PARAM_DIR_IN, TRANSPORT_VAR_AAT_INSTANCE_ID },
-	NULL
-};
-static struct argument *arguments_previous[] = {
-        & (struct argument) { "InstanceID", PARAM_DIR_IN, TRANSPORT_VAR_AAT_INSTANCE_ID },
-	NULL
-};
-static struct argument *arguments_setplaymode[] = {
-        & (struct argument) { "InstanceID", PARAM_DIR_IN, TRANSPORT_VAR_AAT_INSTANCE_ID },
-        & (struct argument) { "NewPlayMode", PARAM_DIR_IN, TRANSPORT_VAR_CUR_PLAY_MODE },
-	NULL
-};
+//static struct argument *arguments_next[] = {
+//        & (struct argument) { "InstanceID", PARAM_DIR_IN, TRANSPORT_VAR_AAT_INSTANCE_ID },
+//	NULL
+//};
+//static struct argument *arguments_previous[] = {
+//        & (struct argument) { "InstanceID", PARAM_DIR_IN, TRANSPORT_VAR_AAT_INSTANCE_ID },
+//	NULL
+//};
+//static struct argument *arguments_setplaymode[] = {
+//        & (struct argument) { "InstanceID", PARAM_DIR_IN, TRANSPORT_VAR_AAT_INSTANCE_ID },
+//        & (struct argument) { "NewPlayMode", PARAM_DIR_IN, TRANSPORT_VAR_CUR_PLAY_MODE },
+//	NULL
+//};
 //static struct argument *arguments_setrecordqualitymode[] = {
 //        & (struct argument) { "InstanceID", PARAM_DIR_IN, TRANSPORT_VAR_AAT_INSTANCE_ID },
 //        & (struct argument) { "NewRecordQualityMode", PARAM_DIR_IN, TRANSPORT_VAR_CUR_REC_QUAL_MODE },
@@ -467,9 +467,9 @@ static struct argument **argument_list[] = {
 	[TRANSPORT_CMD_PAUSE] =                     arguments_pause,
 	//[TRANSPORT_CMD_RECORD] =                    arguments_record,
 	[TRANSPORT_CMD_SEEK] =                      arguments_seek,
-	[TRANSPORT_CMD_NEXT] =                      arguments_next,
-	[TRANSPORT_CMD_PREVIOUS] =                  arguments_previous,
-	[TRANSPORT_CMD_SETPLAYMODE] =               arguments_setplaymode,
+	//[TRANSPORT_CMD_NEXT] =                      arguments_next,
+	//[TRANSPORT_CMD_PREVIOUS] =                  arguments_previous,
+	//[TRANSPORT_CMD_SETPLAYMODE] =               arguments_setplaymode,
 	//[TRANSPORT_CMD_SETRECORDQUALITYMODE] =      arguments_setrecordqualitymode,
 	[TRANSPORT_CMD_GETCURRENTTRANSPORTACTIONS] = arguments_getcurrenttransportactions,
 	[TRANSPORT_CMD_UNKNOWN] =	NULL
@@ -644,10 +644,33 @@ static void change_var_and_notify(transport_variable varnum, const char *value)
 }
 
 static void change_and_notify_transport(enum transport_state new_state) {
+	const int state_different = (transport_state_ != new_state);
 	transport_state_ = new_state;
 	assert(new_state >= TRANSPORT_STOPPED && new_state < TRANSPORT_NO_MEDIA_PRESENT);
 	change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE,
 			      transport_states[new_state]);
+	if (!state_different)
+		return;
+	switch (new_state) {
+	case TRANSPORT_STOPPED:
+		if (strlen(transport_values[TRANSPORT_VAR_AV_URI]) == 0) {
+			replace_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS, "PLAY");
+		} else {
+			replace_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS, "PLAY,SEEK");
+		}
+		break;
+	case TRANSPORT_PLAYING:
+		replace_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS, "PAUSE,STOP,SEEK");
+		break;
+	case TRANSPORT_PAUSED_PLAYBACK:
+		replace_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS, "PLAY,STOP,SEEK");
+		break;
+	case TRANSPORT_TRANSITIONING:
+	case TRANSPORT_PAUSED_RECORDING:
+	case TRANSPORT_RECORDING:
+	case TRANSPORT_NO_MEDIA_PRESENT:
+		break;
+	}
 }
 
 // Atomic update about all URIs at once.
@@ -814,6 +837,25 @@ static int get_transport_info(struct action_event *event)
 	if (rc)
 		goto out;
 
+      out:
+	LEAVE();
+	return rc;
+}
+
+static int get_current_transportactions(struct action_event *event)
+{
+	int rc;
+	ENTER();
+
+	if (obtain_instanceid(event, NULL)) {
+		rc = -1;
+		goto out;
+	}
+
+	rc = upnp_append_variable(event, TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS,
+				  "Actions");
+	if (rc)
+		goto out;
       out:
 	LEAVE();
 	return rc;
@@ -1122,37 +1164,8 @@ static int seek(struct action_event *event)
 	return rc;
 }
 
-static int next(struct action_event *event)
-{
-	int rc = 0;
-
-	ENTER();
-
-	if (obtain_instanceid(event, NULL)) {
-		rc = -1;
-	}
-
-	LEAVE();
-
-	return rc;
-}
-
-static int previous(struct action_event *event)
-{
-	ENTER();
-
-	if (obtain_instanceid(event, NULL)) {
-		return -1;
-	}
-
-	LEAVE();
-
-	return 0;
-}
-
-
 static struct action transport_actions[] = {
-	[TRANSPORT_CMD_GETCURRENTTRANSPORTACTIONS] = {"GetCurrentTransportActions", NULL},	/* optional */
+	[TRANSPORT_CMD_GETCURRENTTRANSPORTACTIONS] = {"GetCurrentTransportActions", get_current_transportactions},
 	[TRANSPORT_CMD_GETDEVICECAPABILITIES] =     {"GetDeviceCapabilities", get_device_caps},
 	[TRANSPORT_CMD_GETMEDIAINFO] =              {"GetMediaInfo", get_media_info},
 	[TRANSPORT_CMD_SETAVTRANSPORTURI] =         {"SetAVTransportURI", set_avtransport_uri},	/* RC9800i */
@@ -1165,9 +1178,9 @@ static struct action transport_actions[] = {
 	[TRANSPORT_CMD_PAUSE] =                     {"Pause", pause_stream},
 	//[TRANSPORT_CMD_RECORD] =                    {"Record", NULL},	/* optional */
 	[TRANSPORT_CMD_SEEK] =                      {"Seek", seek},
-	[TRANSPORT_CMD_NEXT] =                      {"Next", next},
-	[TRANSPORT_CMD_PREVIOUS] =                  {"Previous", previous},
-	[TRANSPORT_CMD_SETPLAYMODE] =               {"SetPlayMode", NULL},	/* optional */
+	//[TRANSPORT_CMD_NEXT] =                      {"Next", next},
+	//[TRANSPORT_CMD_PREVIOUS] =                  {"Previous", previous},
+	//[TRANSPORT_CMD_SETPLAYMODE] =               {"SetPlayMode", NULL},	/* optional */
 	//[TRANSPORT_CMD_SETRECORDQUALITYMODE] =      {"SetRecordQualityMode", NULL},	/* optional */
 	[TRANSPORT_CMD_UNKNOWN] =                  {NULL, NULL}
 };
