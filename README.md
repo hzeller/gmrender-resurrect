@@ -25,8 +25,9 @@ Added so far
   * Volume/Mute control.
 
 TBD
-
   * go into TRANSITIONING while seeking.
 
-(Tested the following control points: BubbleUPnP, 2Player, DK Player, eezUPnP)
+Tested the following control points: BubbleUPnP, 2Player, DK Player, eezUPnP;
+Please report what other control-points worked for you.
+
 You can reach me via <h.zeller@acm.org>.
