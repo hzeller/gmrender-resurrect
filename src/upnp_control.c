@@ -476,7 +476,7 @@ static struct argument **argument_list[] = {
 	[CONTROL_CMD_SET_VOL_DB] =          	arguments_set_vol_db,
 	[CONTROL_CMD_GET_VOL_DBRANGE] =     	arguments_get_vol_dbrange,
 	[CONTROL_CMD_GET_LOUDNESS] =        	arguments_get_loudness,
-	[CONTROL_CMD_SET_LOUDNESS] =        	arguments_set_loudness,           
+	[CONTROL_CMD_SET_LOUDNESS] =        	arguments_set_loudness,
 	[CONTROL_CMD_UNKNOWN] =			NULL
 };
 
@@ -734,6 +734,15 @@ static int get_volume_db(struct action_event *event)
 				   "CurrentVolumeDB");
 }
 
+static int get_volume_dbrange(struct action_event *event) {
+	// Ignoring instanceID and Channel
+	char minval[16];
+	snprintf(minval, sizeof(minval), "%lld", volume_db_range.min);
+	upnp_add_response(event, "MinValue", minval);
+	upnp_add_response(event, "MaxValue", "0");
+	return 0;
+}
+
 static int get_loudness(struct action_event *event)
 {
 	/* FIXME - Channel */
@@ -775,7 +784,7 @@ static struct action control_actions[] = {
 	[CONTROL_CMD_SET_VOL] =             	{"SetVolume", set_volume}, /* optional */
 	[CONTROL_CMD_GET_VOL_DB] =          	{"GetVolumeDB", get_volume_db}, /* optional */
 	[CONTROL_CMD_SET_VOL_DB] =          	{"SetVolumeDB", NULL}, /* optional */
-	[CONTROL_CMD_GET_VOL_DBRANGE] =     	{"GetVolumeDBRange", NULL}, /* optional */
+	[CONTROL_CMD_GET_VOL_DBRANGE] =     	{"GetVolumeDBRange", get_volume_dbrange}, /* optional */
 	[CONTROL_CMD_GET_LOUDNESS] =        	{"GetLoudness", get_loudness}, /* optional */
 	[CONTROL_CMD_SET_LOUDNESS] =        	{"SetLoudness", NULL}, /* optional */
 	[CONTROL_CMD_UNKNOWN] =			{NULL, NULL}

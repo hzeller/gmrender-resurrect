@@ -195,11 +195,10 @@ char *upnp_get_string(struct action_event *event, const char *key)
 	for (/**/; node != NULL; node = ixmlNode_getNextSibling(node)) {
 		if (strcmp(ixmlNode_getNodeName(node), key) == 0) {
 			node = ixmlNode_getFirstChild(node);
-			if (node == NULL) {
-				/* Are we sure empty arguments are reported like this? */
-				return strdup("");
-			}
-			return strdup(ixmlNode_getNodeValue(node));
+			const char *node_value = (node != NULL
+						  ? ixmlNode_getNodeValue(node)
+						  : NULL);
+			return strdup(node_value != NULL ? node_value : "");
 		}
 	}
 
