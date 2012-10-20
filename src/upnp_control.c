@@ -500,8 +500,7 @@ static void replace_var(control_variable varnum, const char *new_value) {
 	if (new_value == NULL) {
 		new_value = "";
 	}
-	fprintf(stderr, "control: setting %s = '%s'\n",
-		control_variables[varnum], new_value);
+	//fprintf(stderr, "control: setting %s = '%s'\n", control_variables[varnum], new_value);
 	free((char*)control_values[varnum]);
 	control_values[varnum] = strdup(new_value);
 }
@@ -753,7 +752,7 @@ static float change_volume_decibel(struct action_event *event, float raw_decibel
 	char db_volume[10];
 	snprintf(db_volume, sizeof(db_volume), "%d", (int) (256 * decibel));
 
-	fprintf(stderr, "Setting volume-db to %.2f == level %d\n",
+	fprintf(stderr, "Setting volume-db to %.2fdb == #%d\n",
 		decibel, volume_level);
 
 	change_volume_and_notify(event, volume, db_volume);
@@ -784,8 +783,8 @@ static int set_volume(struct action_event *event) {
 	snprintf(db_volume, sizeof(db_volume), "%d", (int) (256 * decibel));
 
 	const double fraction = exp(decibel / 20 * log(10));
-	fprintf(stderr, "Setting volume to %s, %.2f -> %.4f (%d)\n",
-		volume, decibel, fraction, volume_decibel_to_level(decibel));
+	fprintf(stderr, "Setting volume to #%d = %.2fdb (%.4f)\n",
+		volume_level, decibel, fraction);
 
 	change_volume_and_notify(event, volume, db_volume);
 	output_set_volume(fraction);
