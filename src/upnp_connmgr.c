@@ -68,7 +68,7 @@ typedef enum {
 	CONNMGR_CMD_GETCURRENTCONNECTIONIDS,
 	CONNMGR_CMD_SETCURRENTCONNECTIONINFO,
 	CONNMGR_CMD_GETPROTOCOLINFO,           
-	//CONNMGR_CMD_PREPAREFORCONNECTION,
+	CONNMGR_CMD_PREPAREFORCONNECTION,
 	//CONNMGR_CMD_CONNECTIONCOMPLETE,
 	CONNMGR_CMD_UNKNOWN,                  
 	CONNMGR_CMD_COUNT 
@@ -96,16 +96,16 @@ static struct argument *arguments_setcurrentconnectioninfo[] = {
 	& (struct argument) { "Status", PARAM_DIR_OUT, CONNMGR_VAR_AAT_CONN_STATUS },
         NULL
 };
-//static struct argument *arguments_prepareforconnection[] = {
-//	& (struct argument) { "RemoteProtocolInfo", PARAM_DIR_IN, CONNMGR_VAR_AAT_PROTO_INFO },
-//	& (struct argument) { "PeerConnectionManager", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_MGR },
-//	& (struct argument) { "PeerConnectionID", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_ID },
-//	& (struct argument) { "Direction", PARAM_DIR_IN, CONNMGR_VAR_AAT_DIR },
-//	& (struct argument) { "ConnectionID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_CONN_ID },
-//	& (struct argument) { "AVTransportID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_AVT_ID },
-//	& (struct argument) { "RcsID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_RCS_ID },
-//	NULL
-//};
+static struct argument *arguments_prepareforconnection[] = {
+	& (struct argument) { "RemoteProtocolInfo", PARAM_DIR_IN, CONNMGR_VAR_AAT_PROTO_INFO },
+	& (struct argument) { "PeerConnectionManager", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_MGR },
+	& (struct argument) { "PeerConnectionID", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_ID },
+	& (struct argument) { "Direction", PARAM_DIR_IN, CONNMGR_VAR_AAT_DIR },
+	& (struct argument) { "ConnectionID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_CONN_ID },
+	& (struct argument) { "AVTransportID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_AVT_ID },
+	& (struct argument) { "RcsID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_RCS_ID },
+	NULL
+};
 //static struct argument *arguments_connectioncomplete[] = {
 //	& (struct argument) { "ConnectionID", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_ID },
 //        NULL
@@ -115,7 +115,7 @@ static struct argument **argument_list[] = {
 	[CONNMGR_CMD_GETPROTOCOLINFO] =			arguments_getprotocolinfo,           
 	[CONNMGR_CMD_GETCURRENTCONNECTIONIDS] =		arguments_getcurrentconnectionids,
 	[CONNMGR_CMD_SETCURRENTCONNECTIONINFO] =	arguments_setcurrentconnectioninfo,
-	//[CONNMGR_CMD_PREPAREFORCONNECTION] =		arguments_prepareforconnection,
+	[CONNMGR_CMD_PREPAREFORCONNECTION] =		arguments_prepareforconnection,
 	//[CONNMGR_CMD_CONNECTIONCOMPLETE] =		arguments_connectioncomplete,
 	[CONNMGR_CMD_UNKNOWN]	=	NULL
 };
@@ -283,12 +283,37 @@ static int get_current_conn_ids(struct action_event *event)
 	return rc;
 }
 
-//static int prepare_for_connection(struct action_event *event)
-//{
-//	ENTER();
-//	LEAVE();
-//	return 0;
-//}
+static int prepare_for_connection(struct action_event *event) {
+	int rc;
+	char *value;
+
+	ENTER();
+	value = upnp_get_string(event, "ConnectionID");
+	if (value == NULL) {
+		rc = -1;
+		goto out;
+	}
+	printf("%s: ConnectionID='%s'\n", __FUNCTION__, value);
+
+	free(value);
+
+	// This will be 0
+	rc = upnp_append_variable(event, CONNMGR_VAR_CUR_CONN_IDS,
+				  "ConnectionID");
+	if (rc)
+		goto out;
+	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_AVT_ID,
+				  "AVTransportID");
+	if (rc)
+		goto out;
+	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_RCS_ID, "RcsID");
+	if (rc)
+		goto out;
+
+      out:
+	LEAVE();
+	return rc;
+}
 
 static int get_current_conn_info(struct action_event *event)
 {
@@ -341,7 +366,7 @@ static struct action connmgr_actions[] = {
 	[CONNMGR_CMD_GETPROTOCOLINFO] =		{"GetProtocolInfo", get_protocol_info},
 	[CONNMGR_CMD_GETCURRENTCONNECTIONIDS] =	{"GetCurrentConnectionIDs", get_current_conn_ids},
 	[CONNMGR_CMD_SETCURRENTCONNECTIONINFO] ={"GetCurrentConnectionInfo", get_current_conn_info},
-	//[CONNMGR_CMD_PREPAREFORCONNECTION] =	{"PrepareForConnection", prepare_for_connection}, /* optional */
+	[CONNMGR_CMD_PREPAREFORCONNECTION] =	{"PrepareForConnection", prepare_for_connection}, /* optional */
 	//[CONNMGR_CMD_CONNECTIONCOMPLETE] =	{"ConnectionComplete", NULL},	/* optional */
 	[CONNMGR_CMD_UNKNOWN] =			{NULL, NULL}
 };
