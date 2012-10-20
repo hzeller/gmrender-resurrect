@@ -96,21 +96,21 @@ typedef enum {
 	CONTROL_CMD_GET_VOL_DB,
 	CONTROL_CMD_GET_VOL_DBRANGE,
 	CONTROL_CMD_LIST_PRESETS,      
-	CONTROL_CMD_SELECT_PRESET,
-	CONTROL_CMD_SET_BLUE_BLACK,
-	CONTROL_CMD_SET_BLUE_GAIN,
-	CONTROL_CMD_SET_BRIGHTNESS,
-	CONTROL_CMD_SET_COLOR_TEMP,
-	CONTROL_CMD_SET_CONTRAST,
-	CONTROL_CMD_SET_GREEN_BLACK,
-	CONTROL_CMD_SET_GREEN_GAIN,
-	CONTROL_CMD_SET_HOR_KEYSTONE,
-	CONTROL_CMD_SET_LOUDNESS,       
+	//CONTROL_CMD_SELECT_PRESET,
+	//CONTROL_CMD_SET_BLUE_BLACK,
+	//CONTROL_CMD_SET_BLUE_GAIN,
+	//CONTROL_CMD_SET_BRIGHTNESS,
+	//CONTROL_CMD_SET_COLOR_TEMP,
+	//CONTROL_CMD_SET_CONTRAST,
+	//CONTROL_CMD_SET_GREEN_BLACK,
+	//CONTROL_CMD_SET_GREEN_GAIN,
+	//CONTROL_CMD_SET_HOR_KEYSTONE,
+	//CONTROL_CMD_SET_LOUDNESS,       
 	CONTROL_CMD_SET_MUTE,
-	CONTROL_CMD_SET_RED_BLACK,
-	CONTROL_CMD_SET_RED_GAIN,
-	CONTROL_CMD_SET_SHARPNESS,
-	CONTROL_CMD_SET_VERT_KEYSTONE,
+	//CONTROL_CMD_SET_RED_BLACK,
+	//CONTROL_CMD_SET_RED_GAIN,
+	//CONTROL_CMD_SET_SHARPNESS,
+	//CONTROL_CMD_SET_VERT_KEYSTONE,
 	CONTROL_CMD_SET_VOL,
 	CONTROL_CMD_SET_VOL_DB,
 	CONTROL_CMD_UNKNOWN,
@@ -270,131 +270,131 @@ static struct argument *arguments_list_presets[] = {
 	& (struct argument) { "CurrentPresetNameList", PARAM_DIR_OUT, CONTROL_VAR_PRESET_NAME_LIST },
 	NULL
 };
-static struct argument *arguments_select_preset[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "PresetName", PARAM_DIR_IN, CONTROL_VAR_AAT_PRESET_NAME },
-	NULL
-};
+// static struct argument *arguments_select_preset[] = {
+// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	& (struct argument) { "PresetName", PARAM_DIR_IN, CONTROL_VAR_AAT_PRESET_NAME },
+// 	NULL
+// };
 static struct argument *arguments_get_brightness[] = {        
 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
 	& (struct argument) { "CurrentBrightness", PARAM_DIR_OUT, CONTROL_VAR_BRIGHTNESS },
 	NULL
 };
-static struct argument *arguments_set_brightness[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "DesiredBrightness", PARAM_DIR_IN, CONTROL_VAR_BRIGHTNESS },
-	NULL
-};
+// static struct argument *arguments_set_brightness[] = {
+// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	& (struct argument) { "DesiredBrightness", PARAM_DIR_IN, CONTROL_VAR_BRIGHTNESS },
+// 	NULL
+// };
 static struct argument *arguments_get_contrast[] = {
 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
 	& (struct argument) { "CurrentContrast", PARAM_DIR_OUT, CONTROL_VAR_CONTRAST },
 	NULL
 };
-static struct argument *arguments_set_contrast[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "DesiredContrast", PARAM_DIR_IN, CONTROL_VAR_CONTRAST },
-	NULL
-};
+// static struct argument *arguments_set_contrast[] = {
+// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	& (struct argument) { "DesiredContrast", PARAM_DIR_IN, CONTROL_VAR_CONTRAST },
+// 	NULL
+// };
 static struct argument *arguments_get_sharpness[] = {
 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
 	& (struct argument) { "CurrentSharpness", PARAM_DIR_OUT, CONTROL_VAR_SHARPNESS },
 	NULL
 };
-static struct argument *arguments_set_sharpness[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "DesiredSharpness", PARAM_DIR_IN, CONTROL_VAR_SHARPNESS },
-	NULL
-};
+// static struct argument *arguments_set_sharpness[] = {
+// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	& (struct argument) { "DesiredSharpness", PARAM_DIR_IN, CONTROL_VAR_SHARPNESS },
+// 	NULL
+// };
 static struct argument *arguments_get_red_gain[] = {
 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
 	& (struct argument) { "CurrentRedVideoGain", PARAM_DIR_OUT, CONTROL_VAR_R_GAIN },
 	NULL
 };
-static struct argument *arguments_set_red_gain[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "DesiredRedVideoGain", PARAM_DIR_IN, CONTROL_VAR_R_GAIN },
-	NULL
-};
+// static struct argument *arguments_set_red_gain[] = {
+// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	& (struct argument) { "DesiredRedVideoGain", PARAM_DIR_IN, CONTROL_VAR_R_GAIN },
+// 	NULL
+// };
 static struct argument *arguments_get_green_gain[] = {
 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
 	& (struct argument) { "CurrentGreenVideoGain", PARAM_DIR_OUT, CONTROL_VAR_G_GAIN },
 	NULL
 };
-static struct argument *arguments_set_green_gain[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "DesiredGreenVideoGain", PARAM_DIR_IN, CONTROL_VAR_G_GAIN },
-	NULL
-};
+// static struct argument *arguments_set_green_gain[] = {
+// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	& (struct argument) { "DesiredGreenVideoGain", PARAM_DIR_IN, CONTROL_VAR_G_GAIN },
+// 	NULL
+// };
 static struct argument *arguments_get_blue_gain[] = {
 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
 	& (struct argument) { "CurrentBlueVideoGain", PARAM_DIR_OUT, CONTROL_VAR_B_GAIN },
 	NULL
 };
-static struct argument *arguments_set_blue_gain[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "DesiredBlueVideoGain", PARAM_DIR_IN, CONTROL_VAR_B_GAIN },
-	NULL
-};
+// static struct argument *arguments_set_blue_gain[] = {
+// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	& (struct argument) { "DesiredBlueVideoGain", PARAM_DIR_IN, CONTROL_VAR_B_GAIN },
+// 	NULL
+// };
 static struct argument *arguments_get_red_black[] = {
 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
 	& (struct argument) { "CurrentRedVideoBlackLevel", PARAM_DIR_OUT, CONTROL_VAR_R_BLACK },
 	NULL
 };
-static struct argument *arguments_set_red_black[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "DesiredRedVideoBlackLevel", PARAM_DIR_IN, CONTROL_VAR_R_BLACK },
-	NULL
-};
+// static struct argument *arguments_set_red_black[] = {
+// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	& (struct argument) { "DesiredRedVideoBlackLevel", PARAM_DIR_IN, CONTROL_VAR_R_BLACK },
+// 	NULL
+// };
 static struct argument *arguments_get_green_black[] = {
 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
 	& (struct argument) { "CurrentGreenVideoBlackLevel", PARAM_DIR_OUT, CONTROL_VAR_G_BLACK },
 	NULL
 };
-static struct argument *arguments_set_green_black[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "DesiredGreenVideoBlackLevel", PARAM_DIR_IN, CONTROL_VAR_G_BLACK },
-	NULL
-};
+// static struct argument *arguments_set_green_black[] = {
+// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	& (struct argument) { "DesiredGreenVideoBlackLevel", PARAM_DIR_IN, CONTROL_VAR_G_BLACK },
+// 	NULL
+// };
 static struct argument *arguments_get_blue_black[] = {
 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
 	& (struct argument) { "CurrentBlueVideoBlackLevel", PARAM_DIR_OUT, CONTROL_VAR_B_BLACK },
 	NULL
 };
-static struct argument *arguments_set_blue_black[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "DesiredBlueVideoBlackLevel", PARAM_DIR_IN, CONTROL_VAR_B_BLACK },
-	NULL
-};
+// static struct argument *arguments_set_blue_black[] = {
+// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	& (struct argument) { "DesiredBlueVideoBlackLevel", PARAM_DIR_IN, CONTROL_VAR_B_BLACK },
+// 	NULL
+// };
 static struct argument *arguments_get_color_temp[] = {
 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
 	& (struct argument) { "CurrentColorTemperature", PARAM_DIR_OUT, CONTROL_VAR_COLOR_TEMP },
 	NULL
 };
-static struct argument *arguments_set_color_temp[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "DesiredColorTemperature", PARAM_DIR_IN, CONTROL_VAR_COLOR_TEMP },
-	NULL
-};
+// static struct argument *arguments_set_color_temp[] = {
+// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	& (struct argument) { "DesiredColorTemperature", PARAM_DIR_IN, CONTROL_VAR_COLOR_TEMP },
+// 	NULL
+// };
 static struct argument *arguments_get_hor_keystone[] = {
 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
 	& (struct argument) { "CurrentHorizontalKeystone", PARAM_DIR_OUT, CONTROL_VAR_HOR_KEYSTONE },
 	NULL
 };
-static struct argument *arguments_set_hor_keystone[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "DesiredHorizontalKeystone", PARAM_DIR_IN, CONTROL_VAR_HOR_KEYSTONE },
-	NULL
-};
+// static struct argument *arguments_set_hor_keystone[] = {
+// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	& (struct argument) { "DesiredHorizontalKeystone", PARAM_DIR_IN, CONTROL_VAR_HOR_KEYSTONE },
+// 	NULL
+// };
 static struct argument *arguments_get_vert_keystone[] = {
 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
 	& (struct argument) { "CurrentVerticalKeystone", PARAM_DIR_OUT, CONTROL_VAR_VER_KEYSTONE },
 	NULL
 };
-static struct argument *arguments_set_vert_keystone[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "DesiredVerticalKeystone", PARAM_DIR_IN, CONTROL_VAR_VER_KEYSTONE },
-	NULL
-};
+// static struct argument *arguments_set_vert_keystone[] = {
+// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	& (struct argument) { "DesiredVerticalKeystone", PARAM_DIR_IN, CONTROL_VAR_VER_KEYSTONE },
+// 	NULL
+// };
 static struct argument *arguments_get_mute[] = {
 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
 	& (struct argument) { "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
@@ -444,41 +444,41 @@ static struct argument *arguments_get_loudness[] = {
 	& (struct argument) { "CurrentLoudness", PARAM_DIR_OUT, CONTROL_VAR_LOUDNESS },
 	NULL
 };
-static struct argument *arguments_set_loudness[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
-	& (struct argument) { "DesiredLoudness", PARAM_DIR_IN, CONTROL_VAR_LOUDNESS },
-	NULL
-};
+// static struct argument *arguments_set_loudness[] = {
+// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	& (struct argument) { "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
+// 	& (struct argument) { "DesiredLoudness", PARAM_DIR_IN, CONTROL_VAR_LOUDNESS },
+// 	NULL
+// };
 
 
 static struct argument **argument_list[] = {
 	[CONTROL_CMD_LIST_PRESETS] =        	arguments_list_presets,
-	[CONTROL_CMD_SELECT_PRESET] =       	arguments_select_preset, 
+	//[CONTROL_CMD_SELECT_PRESET] =       	arguments_select_preset, 
 	[CONTROL_CMD_GET_BRIGHTNESS] =      	arguments_get_brightness,        
-	[CONTROL_CMD_SET_BRIGHTNESS] =      	arguments_set_brightness,
+	//[CONTROL_CMD_SET_BRIGHTNESS] =      	arguments_set_brightness,
 	[CONTROL_CMD_GET_CONTRAST] =        	arguments_get_contrast,
-	[CONTROL_CMD_SET_CONTRAST] =        	arguments_set_contrast,
+	//[CONTROL_CMD_SET_CONTRAST] =        	arguments_set_contrast,
 	[CONTROL_CMD_GET_SHARPNESS] =       	arguments_get_sharpness,
-	[CONTROL_CMD_SET_SHARPNESS] =       	arguments_set_sharpness,
+	//[CONTROL_CMD_SET_SHARPNESS] =       	arguments_set_sharpness,
 	[CONTROL_CMD_GET_RED_GAIN] =        	arguments_get_red_gain,
-	[CONTROL_CMD_SET_RED_GAIN] =        	arguments_set_red_gain,
+	//[CONTROL_CMD_SET_RED_GAIN] =        	arguments_set_red_gain,
 	[CONTROL_CMD_GET_GREEN_GAIN] =      	arguments_get_green_gain,
-	[CONTROL_CMD_SET_GREEN_GAIN] =      	arguments_set_green_gain,
+	//[CONTROL_CMD_SET_GREEN_GAIN] =      	arguments_set_green_gain,
 	[CONTROL_CMD_GET_BLUE_GAIN] =       	arguments_get_blue_gain,
-	[CONTROL_CMD_SET_BLUE_GAIN] =       	arguments_set_blue_gain,
+	//[CONTROL_CMD_SET_BLUE_GAIN] =       	arguments_set_blue_gain,
 	[CONTROL_CMD_GET_RED_BLACK] =       	arguments_get_red_black,
-	[CONTROL_CMD_SET_RED_BLACK] =       	arguments_set_red_black,
+	//[CONTROL_CMD_SET_RED_BLACK] =       	arguments_set_red_black,
 	[CONTROL_CMD_GET_GREEN_BLACK] =     	arguments_get_green_black,
-	[CONTROL_CMD_SET_GREEN_BLACK] =     	arguments_set_green_black,
+	//[CONTROL_CMD_SET_GREEN_BLACK] =     	arguments_set_green_black,
 	[CONTROL_CMD_GET_BLUE_BLACK] =      	arguments_get_blue_black,
-	[CONTROL_CMD_SET_BLUE_BLACK] =      	arguments_set_blue_black,
+	//[CONTROL_CMD_SET_BLUE_BLACK] =      	arguments_set_blue_black,
 	[CONTROL_CMD_GET_COLOR_TEMP] =      	arguments_get_color_temp,
-	[CONTROL_CMD_SET_COLOR_TEMP] =      	arguments_set_color_temp,
+	//[CONTROL_CMD_SET_COLOR_TEMP] =      	arguments_set_color_temp,
 	[CONTROL_CMD_GET_HOR_KEYSTONE] =    	arguments_get_hor_keystone,
-	[CONTROL_CMD_SET_HOR_KEYSTONE] =    	arguments_set_hor_keystone,
+	//[CONTROL_CMD_SET_HOR_KEYSTONE] =    	arguments_set_hor_keystone,
 	[CONTROL_CMD_GET_VERT_KEYSTONE] =   	arguments_get_vert_keystone,
-	[CONTROL_CMD_SET_VERT_KEYSTONE] =   	arguments_set_vert_keystone,
+	//[CONTROL_CMD_SET_VERT_KEYSTONE] =   	arguments_set_vert_keystone,
 	[CONTROL_CMD_GET_MUTE] =            	arguments_get_mute,
 	[CONTROL_CMD_SET_MUTE] =            	arguments_set_mute,
 	[CONTROL_CMD_GET_VOL] =             	arguments_get_vol,
@@ -487,7 +487,7 @@ static struct argument **argument_list[] = {
 	[CONTROL_CMD_SET_VOL_DB] =          	arguments_set_vol_db,
 	[CONTROL_CMD_GET_VOL_DBRANGE] =     	arguments_get_vol_dbrange,
 	[CONTROL_CMD_GET_LOUDNESS] =        	arguments_get_loudness,
-	[CONTROL_CMD_SET_LOUDNESS] =        	arguments_set_loudness,
+	//[CONTROL_CMD_SET_LOUDNESS] =        	arguments_set_loudness,
 	[CONTROL_CMD_UNKNOWN] =			NULL
 };
 
@@ -822,31 +822,31 @@ static int get_loudness(struct action_event *event)
 
 static struct action control_actions[] = {
 	[CONTROL_CMD_LIST_PRESETS] =        	{"ListPresets", list_presets},
-	[CONTROL_CMD_SELECT_PRESET] =       	{"SelectPreset", NULL},
+	//[CONTROL_CMD_SELECT_PRESET] =       	{"SelectPreset", NULL},
 	[CONTROL_CMD_GET_BRIGHTNESS] =      	{"GetBrightness", get_brightness}, /* optional */
-	[CONTROL_CMD_SET_BRIGHTNESS] =      	{"SetBrightness", NULL}, /* optional */
+	//[CONTROL_CMD_SET_BRIGHTNESS] =      	{"SetBrightness", NULL}, /* optional */
 	[CONTROL_CMD_GET_CONTRAST] =        	{"GetContrast", get_contrast}, /* optional */
-	[CONTROL_CMD_SET_CONTRAST] =        	{"SetContrast", NULL}, /* optional */
+	//[CONTROL_CMD_SET_CONTRAST] =        	{"SetContrast", NULL}, /* optional */
 	[CONTROL_CMD_GET_SHARPNESS] =       	{"GetSharpness", get_sharpness}, /* optional */
-	[CONTROL_CMD_SET_SHARPNESS] =       	{"SetSharpness", NULL}, /* optional */
+	//[CONTROL_CMD_SET_SHARPNESS] =       	{"SetSharpness", NULL}, /* optional */
 	[CONTROL_CMD_GET_RED_GAIN] =        	{"GetRedVideoGain", get_red_videogain}, /* optional */
-	[CONTROL_CMD_SET_RED_GAIN] =        	{"SetRedVideoGain", NULL}, /* optional */
+	//[CONTROL_CMD_SET_RED_GAIN] =        	{"SetRedVideoGain", NULL}, /* optional */
 	[CONTROL_CMD_GET_GREEN_GAIN] =      	{"GetGreenVideoGain", get_green_videogain}, /* optional */
-	[CONTROL_CMD_SET_GREEN_GAIN] =      	{"SetGreenVideoGain", NULL}, /* optional */
+	//[CONTROL_CMD_SET_GREEN_GAIN] =      	{"SetGreenVideoGain", NULL}, /* optional */
 	[CONTROL_CMD_GET_BLUE_GAIN] =       	{"GetBlueVideoGain", get_blue_videogain}, /* optional */
-	[CONTROL_CMD_SET_BLUE_GAIN] =       	{"SetBlueVideoGain", NULL}, /* optional */
+	//[CONTROL_CMD_SET_BLUE_GAIN] =       	{"SetBlueVideoGain", NULL}, /* optional */
 	[CONTROL_CMD_GET_RED_BLACK] =       	{"GetRedVideoBlackLevel", get_red_videoblacklevel}, /* optional */
-	[CONTROL_CMD_SET_RED_BLACK] =       	{"SetRedVideoBlackLevel", NULL}, /* optional */
+	//[CONTROL_CMD_SET_RED_BLACK] =       	{"SetRedVideoBlackLevel", NULL}, /* optional */
 	[CONTROL_CMD_GET_GREEN_BLACK] =     	{"GetGreenVideoBlackLevel", get_green_videoblacklevel}, /* optional */
-	[CONTROL_CMD_SET_GREEN_BLACK] =     	{"SetGreenVideoBlackLevel", NULL}, /* optional */
+	//[CONTROL_CMD_SET_GREEN_BLACK] =     	{"SetGreenVideoBlackLevel", NULL}, /* optional */
 	[CONTROL_CMD_GET_BLUE_BLACK] =      	{"GetBlueVideoBlackLevel", get_blue_videoblacklevel}, /* optional */
-	[CONTROL_CMD_SET_BLUE_BLACK] =      	{"SetBlueVideoBlackLevel", NULL}, /* optional */
+	//[CONTROL_CMD_SET_BLUE_BLACK] =      	{"SetBlueVideoBlackLevel", NULL}, /* optional */
 	[CONTROL_CMD_GET_COLOR_TEMP] =      	{"GetColorTemperature", get_colortemperature}, /* optional */
-	[CONTROL_CMD_SET_COLOR_TEMP] =      	{"SetColorTemperature", NULL}, /* optional */
+	//[CONTROL_CMD_SET_COLOR_TEMP] =      	{"SetColorTemperature", NULL}, /* optional */
 	[CONTROL_CMD_GET_HOR_KEYSTONE] =    	{"GetHorizontalKeystone", get_horizontal_keystone}, /* optional */
-	[CONTROL_CMD_SET_HOR_KEYSTONE] =    	{"SetHorizontalKeystone", NULL}, /* optional */
+	//[CONTROL_CMD_SET_HOR_KEYSTONE] =    	{"SetHorizontalKeystone", NULL}, /* optional */
 	[CONTROL_CMD_GET_VERT_KEYSTONE] =   	{"GetVerticalKeystone", get_vertical_keystone}, /* optional */
-	[CONTROL_CMD_SET_VERT_KEYSTONE] =   	{"SetVerticalKeystone", NULL}, /* optional */
+	//[CONTROL_CMD_SET_VERT_KEYSTONE] =   	{"SetVerticalKeystone", NULL}, /* optional */
 	[CONTROL_CMD_GET_MUTE] =            	{"GetMute", get_mute}, /* optional */
 	[CONTROL_CMD_SET_MUTE] =            	{"SetMute", set_mute}, /* optional */
 	[CONTROL_CMD_GET_VOL] =             	{"GetVolume", get_volume}, /* optional */
@@ -855,7 +855,7 @@ static struct action control_actions[] = {
 	[CONTROL_CMD_SET_VOL_DB] =          	{"SetVolumeDB", set_volume_db}, /* optional */
 	[CONTROL_CMD_GET_VOL_DBRANGE] =     	{"GetVolumeDBRange", get_volume_dbrange}, /* optional */
 	[CONTROL_CMD_GET_LOUDNESS] =        	{"GetLoudness", get_loudness}, /* optional */
-	[CONTROL_CMD_SET_LOUDNESS] =        	{"SetLoudness", NULL}, /* optional */
+	//[CONTROL_CMD_SET_LOUDNESS] =        	{"SetLoudness", NULL}, /* optional */
 	[CONTROL_CMD_UNKNOWN] =			{NULL, NULL}
 };
 

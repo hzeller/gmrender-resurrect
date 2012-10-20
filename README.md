@@ -28,6 +28,6 @@ TBD
   * go into TRANSITIONING while seeking.
 
 Tested the following control points: BubbleUPnP, 2Player, DK Player, eezUPnP;
-Please report what other control-points worked for you.
+Please report what other control-points worked for you - and which didn't.
 
 You can reach me via <h.zeller@acm.org>.
