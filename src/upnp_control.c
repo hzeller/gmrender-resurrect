@@ -179,6 +179,8 @@ static const float vol_mid_db = -20.0;
 static const float vol_max_db = 0.0;
 static const int vol_mid_point = 50;  // volume_range.max / 2
 
+// Note, some players don't read the range and assume 0..100. So better leave
+// it like this.
 static struct param_range volume_range = { 0, 100, 1 };
 static struct param_range volume_db_range = { -60 * 256, 0, 0 };  // volume_min_db
 
