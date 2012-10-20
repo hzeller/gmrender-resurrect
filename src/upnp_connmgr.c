@@ -285,17 +285,8 @@ static int get_current_conn_ids(struct action_event *event)
 
 static int prepare_for_connection(struct action_event *event) {
 	int rc;
-	char *value;
 
 	ENTER();
-	value = upnp_get_string(event, "ConnectionID");
-	if (value == NULL) {
-		rc = -1;
-		goto out;
-	}
-	printf("%s: ConnectionID='%s'\n", __FUNCTION__, value);
-
-	free(value);
 
 	// This will be 0
 	rc = upnp_append_variable(event, CONNMGR_VAR_CUR_CONN_IDS,
