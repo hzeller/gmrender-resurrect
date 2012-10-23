@@ -703,6 +703,7 @@ static void notify_changed_uris() {
 		 transport_variables[TRANSPORT_VAR_NEXT_AV_URI_META], xml[3]);
 	notify_lastchange(buf);
 	fprintf(stderr, "HZ: notify all uris changed ------\n%s\n------\n", buf);
+	fprintf(stderr, "HZ: \n%s\n", transport_values[TRANSPORT_VAR_AV_URI_META]);
 	free(buf);
 	int i;
 	for (i = 0; i < 4; ++i)
@@ -736,6 +737,19 @@ static int obtain_instanceid(struct action_event *event, int *instance)
 	return rc;
 }
 
+static void update_meta_from_stream(const struct SongMetaData *meta) {
+	fprintf(stderr, "Got meta-data\n");
+	// TODO: merge.
+	if (meta->title == NULL || strlen(meta->title) == 0) {
+		return;
+	}
+	char *didl = SongMetaData_to_DIDL(meta);
+	replace_var(TRANSPORT_VAR_AV_URI_META, didl);
+	replace_var(TRANSPORT_VAR_CUR_TRACK_META, didl);
+	notify_changed_uris();
+	free(didl);
+}
+
 /* UPnP action handlers */
 
 static int set_avtransport_uri(struct action_event *event)
@@ -758,7 +772,7 @@ static int set_avtransport_uri(struct action_event *event)
 
 	printf("%s: CurrentURI='%s'\n", __FUNCTION__, uri);
 
-	output_set_uri(uri);
+	output_set_uri(uri, update_meta_from_stream);
 
 	char *meta = upnp_get_string(event, "CurrentURIMetaData");
 	replace_transport_uri_and_meta(uri, meta);

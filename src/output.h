@@ -32,13 +32,30 @@ enum PlayFeedback {
 };
 typedef void (*done_cb)(enum PlayFeedback);
 
+// In case the stream gets to know details about the song...
+struct SongMetaData {
+	char *title;
+	char *artist;
+	char *album;
+	char *genre;
+};
+void SongMetaData_init(struct SongMetaData *value);
+void SongMetaData_clear(struct SongMetaData *value);
+
+// Returns a newly allocated xml string with the song meta data encoded as
+// DIDL-Lite.
+char *SongMetaData_to_DIDL(const struct SongMetaData *value);
+
+// Callback with changes
+typedef void (*update_meta_cb)(const struct SongMetaData *);
+
 int output_init(const char *shortname);
 int output_add_options(GOptionContext *ctx);
 void output_dump_modules(void);
 
 int output_loop(void);
 
-void output_set_uri(const char *uri);
+void output_set_uri(const char *uri, update_meta_cb meta_info);
 void output_set_next_uri(const char *uri);
 
 int output_play(done_cb done_callback);

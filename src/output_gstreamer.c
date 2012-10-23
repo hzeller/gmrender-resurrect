@@ -142,8 +142,10 @@ static void scan_mime_list(void)
 static GstElement *player_ = NULL;
 static char *gsuri_ = NULL;         // locally strdup()ed
 static char *gs_next_uri_ = NULL;   // locally strdup()ed
+static struct SongMetaData song_meta_;
 
 static done_cb play_done_callback_ = NULL;
+static update_meta_cb meta_update_callback_ = NULL;
 
 struct track_time_info {
 	gint64 duration;
@@ -166,11 +168,12 @@ static void output_gstreamer_set_next_uri(const char *uri) {
 	LEAVE();
 }
 
-static void output_gstreamer_set_uri(const char *uri) {
+static void output_gstreamer_set_uri(const char *uri, update_meta_cb meta_cb) {
 	ENTER();
 	printf("%s: setting uri to '%s'\n", __FUNCTION__, uri);
 	free(gsuri_);
 	gsuri_ = strdup(uri);
+	meta_update_callback_ = meta_cb;
 	LEAVE();
 }
 
@@ -247,6 +250,40 @@ static const char *gststate_get_name(GstState state)
 }
 #endif
 
+// This is crazy. I want C++ :)
+struct MetaModify {
+	struct SongMetaData *meta;
+	int any_change;
+};
+
+static void MetaModify_add_tag(const GstTagList *list, const gchar *tag,
+			       gpointer user_data) {
+	struct MetaModify *data = (struct MetaModify*) user_data;
+	char **destination = NULL;
+	if (strcmp(tag, GST_TAG_TITLE) == 0) {
+		destination = &data->meta->title;
+	} else if (strcmp(tag, GST_TAG_ARTIST) == 0) {
+		destination = &data->meta->artist;
+	} else if (strcmp(tag, GST_TAG_ALBUM) == 0) {
+		destination = &data->meta->album;
+	} else if (strcmp(tag, GST_TAG_GENRE) == 0) {
+		destination = &data->meta->genre;
+	}
+	if (destination != NULL) {
+		char *replace = NULL;
+		gst_tag_list_get_string(list, tag, &replace);
+		if (replace != NULL &&
+		    (*destination == NULL
+		     || strcmp(replace, *destination) != 0)) {
+			free(*destination);
+			*destination = replace;
+			data->any_change++;
+		} else {
+			free(replace);
+		}
+	}
+}
+
 static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 				gpointer data)
 {
@@ -305,8 +342,26 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 		break;
 	}
 
+	case GST_MESSAGE_TAG: {
+		GstTagList *tags = NULL;
+    
+		if (meta_update_callback_ != NULL) {
+			gst_message_parse_tag(msg, &tags);
+			g_print("GStreamer: Got tags from element %s\n",
+				GST_OBJECT_NAME (msg->src));
+			struct MetaModify modify;
+			modify.meta = &song_meta_;
+			modify.any_change = 0;
+			gst_tag_list_foreach(tags, &MetaModify_add_tag, &modify);
+			gst_tag_list_free(tags);
+			if (modify.any_change) {
+				meta_update_callback_(&song_meta_);
+			}
+		}
+		break;
+	}
+
 	case GST_MESSAGE_BUFFERING:
-	case GST_MESSAGE_TAG:
 		/* not caring about these right now */
 		break;
 	default:
@@ -419,6 +474,7 @@ static int output_gstreamer_init(void)
 
 	ENTER();
 
+	SongMetaData_init(&song_meta_);
 	scan_mime_list();
 
 	player_ = gst_element_factory_make("playbin2", "play");

@@ -33,7 +33,7 @@ struct output_module {
 
 	// Commands.
 	int (*init)(void);
-	void (*set_uri)(const char *uri);
+	void (*set_uri)(const char *uri, update_meta_cb meta_info);
 	void (*set_next_uri)(const char *uri);
 	int (*play)(done_cb done_callback);
 	int (*stop)(void);

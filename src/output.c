@@ -25,8 +25,10 @@
 #include "config.h"
 #endif
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <glib.h>
 
@@ -37,6 +39,8 @@
 #endif
 #include "output.h"
 
+#include "xmlescape.h"
+\
 static struct output_module *modules[] = {
 #ifdef HAVE_GST
 	&gstreamer_output,
@@ -45,6 +49,50 @@ static struct output_module *modules[] = {
 };
 
 static struct output_module *output_module = NULL;
+
+void SongMetaData_init(struct SongMetaData *value) {
+	memset(value, 0, sizeof(struct SongMetaData));
+}
+void SongMetaData_clear(struct SongMetaData *value) {
+	free(value->title);
+	value->title = NULL;
+	free(value->artist);
+	value->artist = NULL;
+	free(value->album);
+	value->album = NULL;
+	free(value->genre);
+	value->genre = NULL;
+}
+
+static const char kDidlHeader[] = "<DIDL-Lite "
+	"xmlns=\"urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/\" "
+	"xmlns:dc=\"http://purl.org/dc/elements/1.1/\" "
+	"xmlns:upnp=\"urn:schemas-upnp-org:metadata-1-0/upnp/\">";
+static const char kDidlFooter[] = "</DIDL-Lite>";
+
+char *SongMetaData_to_DIDL(const struct SongMetaData *value) {
+	char *result;
+	char *title, *artist, *album, *genre;
+	title = value->title ? xmlescape(value->title, 0) : NULL;
+	artist = value->artist ? xmlescape(value->artist, 0) : NULL;
+	album = value->album ? xmlescape(value->album, 0) : NULL;
+	genre = value->genre ? xmlescape(value->genre, 0) : NULL;
+	asprintf(&result, "%s\n<item id=\"generated%lx\">\n"
+		 "\t<dc:title>%s</dc:title>\n"
+		 "\t<upnp:artist>%s</upnp:artist>\n"
+		 "\t<upnp:album>%s</upnp:album>\n"
+		 "\t<upnp:genre>%s</upnp:genre>\n</item>\n%s",
+		 kDidlHeader,
+		 (long)title ^ (long)artist ^ (long)album ^ (long)genre,
+		 title ? title : "", artist ? artist : "",
+		 album ? album : "", genre ? genre : "",
+		 kDidlFooter);
+	free(title);
+	free(artist);
+	free(album);
+	free(genre);
+	return result;
+}
 
 void output_dump_modules(void)
 {
@@ -135,9 +183,9 @@ out:
 	return result;
 }
 
-void output_set_uri(const char *uri) {
+void output_set_uri(const char *uri, update_meta_cb meta_cb) {
 	if (output_module && output_module->set_uri) {
-		output_module->set_uri(uri);
+		output_module->set_uri(uri, meta_cb);
 	}
 }
 void output_set_next_uri(const char *uri) {
