@@ -55,14 +55,10 @@ static void scan_caps(const GstCaps * caps)
 		return;
 	}
 
-	static const char mime_prefix[] = "audio/";
-	static int mime_prefix_len = sizeof(mime_prefix) - 1;
 	for (i = 0; i < gst_caps_get_size(caps); i++) {
 		GstStructure *structure = gst_caps_get_structure(caps, i);
 		const char *mime_type = gst_structure_get_name(structure);
-		if (strncmp(mime_type, mime_prefix, mime_prefix_len) == 0) {
-			register_mime_type(mime_type);
-		}
+		register_mime_type(mime_type);
 	}
 
 }
