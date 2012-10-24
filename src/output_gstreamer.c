@@ -174,6 +174,7 @@ static void output_gstreamer_set_uri(const char *uri, update_meta_cb meta_cb) {
 	free(gsuri_);
 	gsuri_ = strdup(uri);
 	meta_update_callback_ = meta_cb;
+	SongMetaData_clear(&song_meta_);
 	LEAVE();
 }
 

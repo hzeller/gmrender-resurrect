@@ -567,18 +567,24 @@ static int get_media_info(struct action_event *event)
 }
 
 // Replace given variable without sending an state-change event.
-static void replace_var(transport_variable varnum, const char *new_value) {
+static int replace_var(transport_variable varnum, const char *new_value) {
 	if ((varnum < 0) || (varnum >= TRANSPORT_VAR_UNKNOWN)) {
 		fprintf(stderr, "Attempt to set bogus variable '%d' to '%s'\n",
 			varnum, new_value);
-		return;
+		return 0;
 	}
 	if (new_value == NULL) {
 		new_value = "";
 	}
 
+	if (strcmp(transport_values[varnum], new_value) == 0) {
+		return 0;  // same value.
+	}
+
 	free((char*)transport_values[varnum]);
 	transport_values[varnum] = strdup(new_value);
+
+	return 1;
 }
 
 static void notify_lastchange(const char *value)
@@ -592,7 +598,8 @@ static void notify_lastchange(const char *value)
 	};
 
 
-	replace_var(TRANSPORT_VAR_LAST_CHANGE, value);
+	if (!replace_var(TRANSPORT_VAR_LAST_CHANGE, value))
+		return;  // nothing to notify.
 
 	varvalues[0] = xmlescape(value, 0);
 	upnp_device_notify(upnp_device_,
@@ -604,7 +611,7 @@ static void notify_lastchange(const char *value)
 
 // Transport uri always comes in uri/meta pairs. Set these and also the related
 // track uri/meta variables.
-static void replace_transport_uri_and_meta(const char *uri, const char *meta) {
+static int replace_transport_uri_and_meta(const char *uri, const char *meta) {
 	replace_var(TRANSPORT_VAR_AV_URI, uri);
 	replace_var(TRANSPORT_VAR_AV_URI_META, meta);
 
@@ -617,6 +624,9 @@ static void replace_transport_uri_and_meta(const char *uri, const char *meta) {
 	// Also the current track URI mirrors the transport URI.
 	replace_var(TRANSPORT_VAR_CUR_TRACK_URI, uri);
 	replace_var(TRANSPORT_VAR_CUR_TRACK_META, meta);
+	int requires_stream_meta_callback = (strlen(meta) == 0)
+		|| strstr(meta, "object.item.audioItem.audioBroadcast");
+	return requires_stream_meta_callback;
 }
 
 /* warning - does not lock service mutex */
@@ -737,16 +747,21 @@ static int obtain_instanceid(struct action_event *event, int *instance)
 	return rc;
 }
 
+// Callback from our output if the song meta data changed.
 static void update_meta_from_stream(const struct SongMetaData *meta) {
 	fprintf(stderr, "Got meta-data\n");
 	// TODO: merge.
 	if (meta->title == NULL || strlen(meta->title) == 0) {
 		return;
 	}
-	char *didl = SongMetaData_to_DIDL(meta);
+	char *didl = SongMetaData_to_DIDL(
+                      transport_values[TRANSPORT_VAR_AV_URI_META],
+		      meta);
+	service_lock();
 	replace_var(TRANSPORT_VAR_AV_URI_META, didl);
 	replace_var(TRANSPORT_VAR_CUR_TRACK_META, didl);
 	notify_changed_uris();
+	service_unlock();
 	free(didl);
 }
 
@@ -772,10 +787,13 @@ static int set_avtransport_uri(struct action_event *event)
 
 	printf("%s: CurrentURI='%s'\n", __FUNCTION__, uri);
 
-	output_set_uri(uri, update_meta_from_stream);
-
 	char *meta = upnp_get_string(event, "CurrentURIMetaData");
-	replace_transport_uri_and_meta(uri, meta);
+	int requires_meta_update = replace_transport_uri_and_meta(uri, meta);
+
+	output_set_uri(uri, (requires_meta_update
+			     ? update_meta_from_stream
+			     : NULL));
+
 	free(uri);
 	free(meta);
 
