@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
+#include <limits.h>
 
 #include <glib.h>
 
@@ -51,6 +52,7 @@ static gboolean show_connmgr_scpd = FALSE;
 static gboolean show_control_scpd = FALSE;
 static gboolean show_transport_scpd = FALSE;
 static gboolean show_outputs = FALSE;
+static gboolean daemon_mode = FALSE;
 static const gchar *ip_address = NULL;
 #ifdef GMRENDER_UUID
 // Compile-time uuid.
@@ -60,30 +62,34 @@ static const gchar *uuid = "GMediaRender-1_0-000-000-002";
 #endif
 static const gchar *friendly_name = PACKAGE_NAME;
 static const gchar *output = NULL;
-
+static const gchar *pid_file = NULL;
  
 /* Generic GMediaRender options */
 static GOptionEntry option_entries[] = {
 	{ "version", 0, 0, G_OPTION_ARG_NONE, &show_version,
 	  "Output version information and exit", NULL },
 	{ "ip-address", 'I', 0, G_OPTION_ARG_STRING, &ip_address,
-	  "IP address on which to listen", NULL },
+	  "IP address on which to listen.", NULL },
 	{ "uuid", 'u', 0, G_OPTION_ARG_STRING, &uuid,
 	  "UUID to advertise", NULL },
 	{ "friendly-name", 'f', 0, G_OPTION_ARG_STRING, &friendly_name,
-	  "Friendly name to advertise", NULL },
+	  "Friendly name to advertise.", NULL },
 	{ "output", 'o', 0, G_OPTION_ARG_STRING, &output,
-	  "Output module to use", NULL },
+	  "Output module to use.", NULL },
+	{ "pid-file", 'P', 0, G_OPTION_ARG_STRING, &pid_file,
+	  "File the process ID should be written to.", NULL },
+	{ "daemon", 'd', 0, G_OPTION_ARG_NONE, &daemon_mode,
+	  "Run as daemon.", NULL },
 	{ "list-outputs", 0, 0, G_OPTION_ARG_NONE, &show_outputs,
 	  "List available output modules and exit", NULL },
 	{ "dump-devicedesc", 0, 0, G_OPTION_ARG_NONE, &show_devicedesc,
-	  "Dump device descriptor XML and exit", NULL },
+	  "Dump device descriptor XML and exit.", NULL },
 	{ "dump-connmgr-scpd", 0, 0, G_OPTION_ARG_NONE, &show_connmgr_scpd,
-	  "Dump Connection Manager service description XML and exit", NULL },
+	  "Dump Connection Manager service description XML and exit.", NULL },
 	{ "dump-control-scpd", 0, 0, G_OPTION_ARG_NONE, &show_control_scpd,
-	  "Dump Rendering Control service description XML and exit", NULL },
+	  "Dump Rendering Control service description XML and exit.", NULL },
 	{ "dump-transport-scpd", 0, 0, G_OPTION_ARG_NONE, &show_transport_scpd,
-	  "Dump A/V Transport service description XML and exit", NULL },
+	  "Dump A/V Transport service description XML and exit.", NULL },
 	{ NULL }
 };
 
@@ -124,7 +130,6 @@ static int process_cmdline(int argc, char **argv)
 	result = 0;
 
 out:
-	LEAVE();
 	return result;
 }
 
@@ -133,10 +138,6 @@ int main(int argc, char **argv)
 	int rc;
 	int result = EXIT_FAILURE;
 	struct device *upnp_renderer;
-
-	if (!g_thread_supported()) {
-		g_thread_init(NULL);
-	}
 
 	rc = process_cmdline(argc, argv);
 	if (rc != 0) {
@@ -163,6 +164,23 @@ int main(int argc, char **argv)
 	if (show_outputs) {
 		output_dump_modules();
 		exit(EXIT_SUCCESS);
+	}
+
+	if (pid_file) {
+		// We need to make this filename absolute, because our
+		// cwd() will change after become_daemon().
+		pid_file = realpath(pid_file, NULL);
+	}
+	if (daemon_mode) {
+		daemon(0, 0);  // TODO: check for daemon() in configure.
+	}
+	if (pid_file) {
+		FILE *p = fopen(pid_file, "w+");
+		fprintf(p, "%d\n", getpid());
+		fclose(p);
+	}
+	if (g_thread_supported() == 0) {
+		g_thread_init(NULL);
 	}
 
 	upnp_renderer = upnp_renderer_new(friendly_name, uuid);

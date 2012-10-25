@@ -864,14 +864,10 @@ struct service *upnp_control_get_service(void) {
 	static int service_initialized = 0;
 	if (!service_initialized) {
 		int i;
-		fprintf(stderr, "Prepare control service variables\n");
 		for (i = 0; i < CONTROL_VAR_COUNT; ++i) {
 			control_values[i] = strdup(default_control_values[i]
 						   ? default_control_values[i]
 						   : "");
-			fprintf(stderr, "Init var %s = '%s'\n",
-				control_variables[i],
-				control_values[i]);
 		}
 		service_initialized = 1;
 	}

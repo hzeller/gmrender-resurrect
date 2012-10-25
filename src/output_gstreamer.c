@@ -395,7 +395,6 @@ static GOptionEntry option_entries[] = {
 static int output_gstreamer_add_options(GOptionContext *ctx)
 {
 	GOptionGroup *option_group;
-	ENTER();
 	option_group = g_option_group_new("gstout", "GStreamer Output Options",
 	                                  "Show GStreamer Output Options",
 	                                  NULL, NULL);
@@ -404,7 +403,6 @@ static int output_gstreamer_add_options(GOptionContext *ctx)
 	g_option_context_add_group (ctx, option_group);
 	
 	g_option_context_add_group (ctx, gst_init_get_option_group ());
-	LEAVE();
 	return 0;
 }
 

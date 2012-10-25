@@ -1219,14 +1219,11 @@ struct service *upnp_transport_get_service(void) {
 	static int service_initialized = 0;
 	if (!service_initialized) {
 		int i;
-		fprintf(stderr, "Prepare transport service variables\n");
 		for (i = 0; i < TRANSPORT_VAR_COUNT; ++i) {
-			transport_values[i] = strdup(default_transport_values[i]
-						     ? default_transport_values[i]
-						     : "");
-			fprintf(stderr, "Init var %s = '%s'\n",
-				transport_variables[i],
-				transport_values[i]);
+			transport_values[i] 
+				= strdup(default_transport_values[i]
+					 ? default_transport_values[i]
+					 : "");
 		}
 		service_initialized = 1;
 	}
