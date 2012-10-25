@@ -43,8 +43,8 @@ void SongMetaData_init(struct SongMetaData *value);
 void SongMetaData_clear(struct SongMetaData *value);
 
 // Returns a newly allocated xml string with the song meta data encoded as
-// DIDL-Lite. If we get an original xml document, returns an edited version of
-// that document.
+// DIDL-Lite. If we get a non-empty original xml document, returns an
+// edited version of that document.
 char *SongMetaData_to_DIDL(const char *original_xml,
 			   const struct SongMetaData *value);
 

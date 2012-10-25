@@ -611,6 +611,8 @@ static void notify_lastchange(const char *value)
 
 // Transport uri always comes in uri/meta pairs. Set these and also the related
 // track uri/meta variables.
+// Returns 1, if this meta-data likely needs to be updated while the stream
+// is playing (e.g. radio broadcast).
 static int replace_transport_uri_and_meta(const char *uri, const char *meta) {
 	replace_var(TRANSPORT_VAR_AV_URI, uri);
 	replace_var(TRANSPORT_VAR_AV_URI_META, meta);
@@ -624,6 +626,7 @@ static int replace_transport_uri_and_meta(const char *uri, const char *meta) {
 	// Also the current track URI mirrors the transport URI.
 	replace_var(TRANSPORT_VAR_CUR_TRACK_URI, uri);
 	replace_var(TRANSPORT_VAR_CUR_TRACK_META, meta);
+
 	int requires_stream_meta_callback = (strlen(meta) == 0)
 		|| strstr(meta, "object.item.audioItem.audioBroadcast");
 	return requires_stream_meta_callback;
@@ -749,14 +752,11 @@ static int obtain_instanceid(struct action_event *event, int *instance)
 
 // Callback from our output if the song meta data changed.
 static void update_meta_from_stream(const struct SongMetaData *meta) {
-	fprintf(stderr, "Got meta-data\n");
-	// TODO: merge.
 	if (meta->title == NULL || strlen(meta->title) == 0) {
 		return;
 	}
-	char *didl = SongMetaData_to_DIDL(
-                      transport_values[TRANSPORT_VAR_AV_URI_META],
-		      meta);
+	const char *original_xml = transport_values[TRANSPORT_VAR_AV_URI_META];
+	char *didl = SongMetaData_to_DIDL(original_xml, meta);
 	service_lock();
 	replace_var(TRANSPORT_VAR_AV_URI_META, didl);
 	replace_var(TRANSPORT_VAR_CUR_TRACK_META, didl);
@@ -785,8 +785,6 @@ static int set_avtransport_uri(struct action_event *event)
 
 	service_lock();
 
-	printf("%s: CurrentURI='%s'\n", __FUNCTION__, uri);
-
 	char *meta = upnp_get_string(event, "CurrentURIMetaData");
 	int requires_meta_update = replace_transport_uri_and_meta(uri, meta);
 
@@ -794,11 +792,11 @@ static int set_avtransport_uri(struct action_event *event)
 			     ? update_meta_from_stream
 			     : NULL));
 
-	free(uri);
-	free(meta);
-
 	notify_changed_uris();
 	service_unlock();
+
+	free(uri);
+	free(meta);
 
 	LEAVE();
 	return rc;
