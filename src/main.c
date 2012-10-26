@@ -166,10 +166,13 @@ int main(int argc, char **argv)
 		exit(EXIT_SUCCESS);
 	}
 
-	if (pid_file) {
-		// We need to make this filename absolute, because our
-		// cwd() will change after become_daemon().
-		pid_file = realpath(pid_file, NULL);
+	if (pid_file && pid_file[0] != '/') {
+		// We need to canonicalize the filename because our
+		// cwd will change after becoming a daemon.
+		char *buf = (char*) malloc(PATH_MAX);  // will leak. Ok.
+		char *result = getcwd(buf, PATH_MAX);
+		result = strcat(result, "/");
+		pid_file = strcat(result, pid_file);
 	}
 	if (daemon_mode) {
 		daemon(0, 0);  // TODO: check for daemon() in configure.
