@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <limits.h>
+#include <string.h>
 
 #include <glib.h>
 
@@ -179,8 +180,12 @@ int main(int argc, char **argv)
 	}
 	if (pid_file) {
 		FILE *p = fopen(pid_file, "w+");
-		fprintf(p, "%d\n", getpid());
-		fclose(p);
+		if (p) {
+			fprintf(p, "%d\n", getpid());
+			fclose(p);
+		} else {
+			perror("Failed to write pid file");
+		}
 	}
 	if (g_thread_supported() == 0) {
 		g_thread_init(NULL);
