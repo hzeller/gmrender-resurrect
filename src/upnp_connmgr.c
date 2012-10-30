@@ -207,6 +207,14 @@ void register_mime_type(const char *mime_type)
 	register_mime_type_internal(mime_type);
 	if (strcmp("audio/mpeg", mime_type) == 0) {
 		register_mime_type_internal("audio/x-mpeg");
+
+		// BubbleUPnP uses audio/x-scpl as an indicator to know if the
+		// renderer can handle it (otherwise it will proxy).
+		// Simple claim: if we can handle mpeg, then we can handle
+		// shoutcast.
+		// (For more accurate answer: we'd to check if all of
+		// mpeg, aac, aacp, ogg are supported).
+		register_mime_type_internal("audio/x-scpls");
 	}
 }
 
