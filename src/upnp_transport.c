@@ -627,8 +627,10 @@ static int replace_transport_uri_and_meta(const char *uri, const char *meta) {
 	replace_var(TRANSPORT_VAR_CUR_TRACK_URI, uri);
 	replace_var(TRANSPORT_VAR_CUR_TRACK_META, meta);
 
-	int requires_stream_meta_callback = (strlen(meta) == 0)
-		|| strstr(meta, "object.item.audioItem.audioBroadcast");
+	// We only really want to send back meta data if we didn't get anything
+	// useful or if this is an audio item.
+	const int requires_stream_meta_callback = (strlen(meta) == 0)
+		|| strstr(meta, "object.item.audioItem");
 	return requires_stream_meta_callback;
 }
 

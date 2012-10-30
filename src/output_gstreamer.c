@@ -186,14 +186,14 @@ static int output_gstreamer_play(done_cb callback) {
 	if (get_current_player_state() != GST_STATE_PAUSED) {
 		if (gst_element_set_state(player_, GST_STATE_READY) ==
 		    GST_STATE_CHANGE_FAILURE) {
-			printf("setting play state failed\n");
-			goto out;
+			printf("setting play state failed (1)\n");
+			// Error, but continue; can't get worse :)
 		}
 		g_object_set(G_OBJECT(player_), "uri", gsuri_, NULL);
 	}
 	if (gst_element_set_state(player_, GST_STATE_PLAYING) ==
 	    GST_STATE_CHANGE_FAILURE) {
-		printf("setting play state failed\n");
+		printf("setting play state failed (2)\n");
 		goto out;
 	} 
 	result = 0;
