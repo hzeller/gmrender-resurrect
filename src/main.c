@@ -30,7 +30,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <limits.h>
-
+#include <string.h>
 #include <glib.h>
 
 #ifdef HAVE_LIBUPNP
