@@ -24,7 +24,7 @@ provides the name under which the UPnP renderer advertises:
 
 .. then install it:
 
-   sudo make install
+    sudo make install
 
 The final binary is in `/usr/local/bin/gmediarender` (unless you changed the
 PREFIX in the configure step).
