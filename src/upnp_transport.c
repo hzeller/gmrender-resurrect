@@ -661,30 +661,37 @@ static void change_var_and_notify(transport_variable varnum, const char *value)
 static void change_and_notify_transport(enum transport_state new_state) {
 	const int state_different = (transport_state_ != new_state);
 	transport_state_ = new_state;
-	assert(new_state >= TRANSPORT_STOPPED && new_state < TRANSPORT_NO_MEDIA_PRESENT);
+	assert(new_state >= TRANSPORT_STOPPED
+	       && new_state < TRANSPORT_NO_MEDIA_PRESENT);
 	change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE,
 			      transport_states[new_state]);
 	if (!state_different)
 		return;
+	const char *available_actions = NULL;
 	switch (new_state) {
 	case TRANSPORT_STOPPED:
 		if (strlen(transport_values[TRANSPORT_VAR_AV_URI]) == 0) {
-			replace_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS, "PLAY");
+			available_actions = "PLAY";
 		} else {
-			replace_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS, "PLAY,SEEK");
+			available_actions = "PLAY,SEEK";
 		}
 		break;
 	case TRANSPORT_PLAYING:
-		replace_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS, "PAUSE,STOP,SEEK");
+		available_actions = "PAUSE,STOP,SEEK";
 		break;
 	case TRANSPORT_PAUSED_PLAYBACK:
-		replace_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS, "PLAY,STOP,SEEK");
+		available_actions = "PLAY,STOP,SEEK";
 		break;
 	case TRANSPORT_TRANSITIONING:
 	case TRANSPORT_PAUSED_RECORDING:
 	case TRANSPORT_RECORDING:
 	case TRANSPORT_NO_MEDIA_PRESENT:
+		// We should not switch to this state.
 		break;
+	}
+	if (available_actions) {
+		change_var_and_notify(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS,
+				      available_actions);
 	}
 }
 
