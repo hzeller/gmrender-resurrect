@@ -38,6 +38,7 @@ struct SongMetaData {
 	char *artist;
 	char *album;
 	char *genre;
+	char *composer;
 };
 void SongMetaData_init(struct SongMetaData *value);
 void SongMetaData_clear(struct SongMetaData *value);

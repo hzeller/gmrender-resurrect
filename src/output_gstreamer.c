@@ -231,7 +231,6 @@ static int output_gstreamer_seek(gint64 position_nanos) {
 	}
 }
 
-
 #if 0
 static const char *gststate_get_name(GstState state)
 {
@@ -270,6 +269,8 @@ static void MetaModify_add_tag(const GstTagList *list, const gchar *tag,
 		destination = &data->meta->album;
 	} else if (strcmp(tag, GST_TAG_GENRE) == 0) {
 		destination = &data->meta->genre;
+	} else if (strcmp(tag, GST_TAG_COMPOSER) == 0) {
+		destination = &data->meta->composer;
 	}
 	if (destination != NULL) {
 		char *replace = NULL;

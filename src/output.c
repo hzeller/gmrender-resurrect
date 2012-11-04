@@ -72,16 +72,20 @@ static const char kDidlFooter[] = "</DIDL-Lite>";
 
 static char *generate_DIDL(const char *id,
 			   const char *title, const char *artist,
-			   const char *album, const char *genre) {
+			   const char *album, const char *genre,
+			   const char *composer) {
 	char *result = NULL;
 	asprintf(&result, "%s\n<item id=\"%s\">\n"
 		 "\t<dc:title>%s</dc:title>\n"
 		 "\t<upnp:artist>%s</upnp:artist>\n"
 		 "\t<upnp:album>%s</upnp:album>\n"
-		 "\t<upnp:genre>%s</upnp:genre>\n</item>\n%s",
+		 "\t<upnp:genre>%s</upnp:genre>\n"
+		 "\t<upnp:creator>%s</upnp:creator>\n"
+		 "</item>\n%s",
 		 kDidlHeader, id,
 		 title ? title : "", artist ? artist : "",
 		 album ? album : "", genre ? genre : "",
+		 composer ? composer : "",
 		 kDidlFooter);
 	return result;
 }
@@ -135,13 +139,15 @@ char *SongMetaData_to_DIDL(const char *original_xml,
 	snprintf(unique_id, sizeof(unique_id), "gmr-%08x", xml_id++);
 
 	char *result;
-	char *title, *artist, *album, *genre;
+	char *title, *artist, *album, *genre, *composer;
 	title = value->title ? xmlescape(value->title, 0) : NULL;
 	artist = value->artist ? xmlescape(value->artist, 0) : NULL;
 	album = value->album ? xmlescape(value->album, 0) : NULL;
 	genre = value->genre ? xmlescape(value->genre, 0) : NULL;
+	composer = value->composer ? xmlescape(value->composer, 0) : NULL;
 	if (original_xml == NULL || strlen(original_xml) == 0) {
-		result = generate_DIDL(unique_id, title, artist, album, genre);
+		result = generate_DIDL(unique_id, title, artist, album,
+				       genre, composer);
 	} else {
 		// Otherwise, surgically edit the original document to give
 		// control points as close as possible what they sent themself.
@@ -155,12 +161,16 @@ char *SongMetaData_to_DIDL(const char *original_xml,
 				       album);
 		result = replace_range(result, "<upnp:genre>", "</upnp:genre>",
 				       genre);
+		result = replace_range(result,
+				       "<upnp:creator>", "</upnp:creator>",
+				       composer);
 		result = replace_range(result, "id=\"", "\"", unique_id);
 	}
 	free(title);
 	free(artist);
 	free(album);
 	free(genre);
+	free(composer);
 	return result;
 }
 
