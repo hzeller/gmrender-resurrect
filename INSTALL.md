@@ -1,3 +1,5 @@
+# Installing
+
 On a typical ubuntu system, you need tools to be able to bootstrap the
 compilation configuration:
 
@@ -17,14 +19,43 @@ Then configure and build
     ./configure
     make
 
-You then can run gmrender directly from the sources. The `-f` option
+You then can run gmrender directly from here if you want. The `-f` option
 provides the name under which the UPnP renderer advertises:
 
     ./src/gmediarender -f "My Renderer"
 
-.. then install it:
+.. to install, run
 
     sudo make install
 
 The final binary is in `/usr/local/bin/gmediarender` (unless you changed the
 PREFIX in the configure step).
+
+# Running
+If you write an init script for your gmediarender, then the following options
+are particularly useful:
+
+## -f, --friendly-name
+Friendly name to advertise. Usually, you want your renderer show up in your
+controller under a nice name. This is the option to set that name.
+
+## -u, --uuid
+UUID to advertise. Usually, gmediarender comes with a built-in unique id, that
+is advertiesed. That means as well that if you have running multiple renderers
+in your network, they all have the same ID.
+With this option, you can give the renderer its own id.
+Best way is to create a UUID once by running the `uuid` tool:
+
+    $ uuid
+    a07e8dfe-26a4-11e2-9dd1-5404a632c90e
+
+You take the generated number and hard-code it in your script you use to start
+gmediarender.
+
+## Running as daemon.
+
+If you want to run gmediarender as daemon, the follwing two options are for
+you:
+    -d, --daemon                      Run as daemon.
+    -P, --pid-file                    File the process ID should be written to.
+
