@@ -3,7 +3,7 @@ compilation configuration:
 
     sudo aptitude install autoconf automake libtool
 
-.. and the libraries needed for gmrender
+.. and the libraries needed for gmrender:
 
     sudo apt-get install libupnp-dev libgstreamer0.10-dev \
                 gstreamer0.10-plugins-base gstreamer0.10-plugins-good \
