@@ -40,22 +40,24 @@ Friendly name to advertise. Usually, you want your renderer show up in your
 controller under a nice name. This is the option to set that name.
 
 ## -u, --uuid
-UUID to advertise. Usually, gmediarender comes with a built-in unique id, that
-is advertiesed. That means as well that if you have running multiple renderers
-in your network, they all have the same ID.
-With this option, you can give the renderer its own id.
+UUID to advertise. Usually, gmediarender comes with a built-in static id, that
+is advertised and used by controllers to distinguish different renderers.
+If you have multiple renderers running in your network, they will all share the
+same static ID.
+With this option, you can give each renderer its own id.
 Best way is to create a UUID once by running the `uuid` tool:
 
     $ uuid
     a07e8dfe-26a4-11e2-9dd1-5404a632c90e
 
-You take the generated number and hard-code it in your script you use to start
-gmediarender.
+You take different generated numbers and hard-code it in each script
+starting an instance of gmediarender.
 
 ## Running as daemon.
 
 If you want to run gmediarender as daemon, the follwing two options are for
 you:
+
     -d, --daemon                      Run as daemon.
     -P, --pid-file                    File the process ID should be written to.
 
