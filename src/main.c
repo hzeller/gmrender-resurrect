@@ -182,7 +182,7 @@ int main(int argc, char **argv)
 		fprintf(p, "%d\n", getpid());
 		fclose(p);
 	}
-	if (g_thread_supported() == 0) {
+	if (!g_thread_get_initialized()) {
 		g_thread_init(NULL);
 	}
 
