@@ -186,7 +186,7 @@ int main(int argc, char **argv)
 			perror("Failed to write pid file");
 		}
 	}
-	if (g_thread_supported() == 0) {
+	if (!g_thread_get_initialized()) {
 		g_thread_init(NULL);
 	}
 
