@@ -173,6 +173,15 @@ void upnp_set_error(struct action_event *event, int error_code,
 }
 
 
+static const char *print_ip(const struct sockaddr_storage* addr,
+			    char *buffer, size_t buf_len) {
+  const struct sockaddr* sa = (const struct sockaddr*) addr;
+  void *src = sa->sa_family == AF_INET
+    ? &((const struct sockaddr_in*)sa)->sin_addr
+    : &((const struct sockaddr_in6*)sa)->sin6_addr;
+  return inet_ntop(sa->sa_family, src, buffer, buf_len);
+}
+
 char *upnp_get_string(struct action_event *event, const char *key)
 {
 #ifdef HAVE_LIBUPNP
@@ -334,13 +343,11 @@ static int handle_action_request(struct device_private *priv,
 		rc = (event_action->callback) (&event);
 		if (rc == 0) {
 			char buf[128];
-			// mmh, looks like IP address is only IPv4 ?
-			const char *ip = inet_ntop(AF_INET,
-						   &ar_event->CtrlPtIPAddr,
-						   buf, sizeof(buf));
 			ar_event->ErrCode = UPNP_E_SUCCESS;
 			printf("%s: Action '%s' was a success!\n",
-                               ip, ar_event->ActionName);
+                               print_ip(&ar_event->CtrlPtIPAddr,
+					buf, sizeof(buf)),
+			       ar_event->ActionName);
 		}
 		if (ar_event->ActionResult == NULL) {
 			ar_event->ActionResult =
