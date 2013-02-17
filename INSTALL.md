@@ -37,7 +37,8 @@ If you're installing gmrender-resurrect on the Raspberry Pi, there have
 been reports of bad sound quality. For one, the 3.5mm output is very low
 quality, so don't expect wonders.
 But also it is important to have pulseaudio running. Stephen Phillips made
-a nice blog-post about what to do for installation.
+a nice comprehensive blog-post about installing gmrender-resurrect on the
+Rapsberry Pi:
 
 http://blog.scphillips.com/2013/01/using-a-raspberry-pi-with-android-phones-for-media-streaming/
 
