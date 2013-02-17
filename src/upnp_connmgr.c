@@ -208,6 +208,13 @@ void register_mime_type(const char *mime_type)
 	if (strcmp("audio/mpeg", mime_type) == 0) {
 		register_mime_type_internal("audio/x-mpeg");
 
+		// BubbleUPnP does not seem to match generic "audio/*" types,
+		// but only matches mime-types _exactly_, so we add some here.
+		// TODO(hzeller): we already add the "audio/*" mime-type
+		// output_gstream.c:scan_caps() which should just work once
+		// BubbleUPnP allows for  matching "audio/*". Remove the code
+		// here.
+
 		// BubbleUPnP uses audio/x-scpl as an indicator to know if the
 		// renderer can handle it (otherwise it will proxy).
 		// Simple claim: if we can handle mpeg, then we can handle
@@ -215,6 +222,10 @@ void register_mime_type(const char *mime_type)
 		// (For more accurate answer: we'd to check if all of
 		// mpeg, aac, aacp, ogg are supported).
 		register_mime_type_internal("audio/x-scpls");
+
+		// This is apparently something sent by the spotifyd
+		// https://gitorious.org/spotifyd
+		register_mime_type("audio/L16;rate=44100;channels=2");
 	}
 }
 
