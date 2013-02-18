@@ -3,11 +3,11 @@ in a Raspberry Pi or CuBox), but there does not seem to be much small stuff
 around.
 
 Found: GMediaRender http://gmrender.nongnu.org/
-but it was incomplete, several basic features missing and the project seems to
-have been abandoned some time ago.
+but it was incomplete, several basic features missing and the project
+has been abandoned several years ago.
 
 So this is a fork of those sources to resurrect this renderer and add the
-missing features. (Original sources at
+missing features to be useful (Original sources at
 http://cvs.savannah.gnu.org/viewvc/gmrender/?root=gmrender )
 
 I consider this fork GMediaRender 0.0.7 (license to trill).
