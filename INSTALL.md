@@ -12,6 +12,10 @@ compilation configuration:
                 gstreamer0.10-plugins-bad gstreamer0.10-plugins-ugly \
                 gstreamer0.10-pulseaudio gstreamer0.10-ffmpeg
 
+Get the source. If this is your first time using git, here is how you do it:
+
+    sudo apt-get install git
+    git clone https://github.com/hzeller/gmrender-resurrect.git
 
 Then configure and build
 
