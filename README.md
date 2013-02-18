@@ -24,21 +24,11 @@ Added so far
     the next version of BubbleUPnP will send the right action to support it.
   * Volume/Mute control.
 
-TBD
-  * go into TRANSITIONING while seeking.
-
 Tested the following control points: BubbleUPnP, 2Player, DK Player, eezUPnP;
 Please report what other control-points worked for you - and which didn't.
 
-Needed
-------
-
-There are reports, that the sound output is flaky in recent versions of
-Raspbian Wheezy on Raspberry Pi, probably due to pulseaudio, missing gbus or
-gbus-session or something -- I don't know since I don't have a Raspberry Pi
-(yet).
-So if someone gets it to work properly, please send me an init-script for other
-people to try.
-And of course, debian packages for Raspberry Pi would be probably the best.
+Install
+-------
+For installation instructions, see INSTALL.md
 
 You can reach me via <h.zeller@acm.org>.
