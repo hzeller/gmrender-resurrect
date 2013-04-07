@@ -48,7 +48,7 @@
 #include "upnp_transport.h"
 
 //#define TRANSPORT_SERVICE "urn:upnp-org:serviceId:AVTransport"
-#define TRANSPORT_SERVICE "urn:schemas-upnp-org:service:AVTransport"
+#define TRANSPORT_SERVICE "urn:schemas-upnp-org:service:AVTransport:1"
 #define TRANSPORT_TYPE "urn:schemas-upnp-org:service:AVTransport:1"
 #define TRANSPORT_SCPD_URL "/upnp/rendertransportSCPD.xml"
 #define TRANSPORT_CONTROL_URL "/upnp/control/rendertransport1"
