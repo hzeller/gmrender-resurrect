@@ -80,6 +80,10 @@ add these options:
 
     gmediarenderer --gstout-audiosink=alsasink --gstout-audiodevice=iec958
 
+The options are described via
+
+    gmediarender --help-gstout
+
 There are other ways to define the default gstreamer output devices via
 some global system settings, but in particular if you are on some embedded
 device, setting these directly via a commandline option is the very best.
