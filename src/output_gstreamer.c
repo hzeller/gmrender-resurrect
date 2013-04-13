@@ -376,14 +376,18 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 	return TRUE;
 }
 
-static gchar *audiosink = NULL;
+static gchar *audio_sink = NULL;
+static gchar *audio_device = NULL;
 static gchar *videosink = NULL;
 
 /* Options specific to output_gstreamer */
 static GOptionEntry option_entries[] = {
-        { "gstout-audiosink", 0, 0, G_OPTION_ARG_STRING, &audiosink,
+        { "gstout-audiosink", 0, 0, G_OPTION_ARG_STRING, &audio_sink,
           "GStreamer audio sink to use "
 	  "(autoaudiosink, alsasink, osssink, esdsink, ...)",
+	  NULL },
+        { "gstout-audiodevice", 0, 0, G_OPTION_ARG_STRING, &audio_device,
+          "GStreamer device for the given audiosink. ",
 	  NULL },
         { "gstout-videosink", 0, 0, G_OPTION_ARG_STRING, &videosink,
           "GStreamer video sink to use "
@@ -485,11 +489,19 @@ static int output_gstreamer_init(void)
 	gst_bus_add_watch(bus, my_bus_callback, NULL);
 	gst_object_unref(bus);
 
-	if (audiosink != NULL) {
+	if (audio_sink != NULL) {
 		GstElement *sink = NULL;
-		printf("Setting audio sink to %s\n", audiosink);
-		sink = gst_element_factory_make (audiosink, "sink");
-		g_object_set (G_OBJECT (player_), "audio-sink", sink, NULL);
+		printf("Setting audio sink to %s; device=%s\n",
+		       audio_sink, audio_device ? audio_device : "");
+		sink = gst_element_factory_make (audio_sink, "sink");
+		if (sink == NULL) {
+		  fprintf(stderr, "Couldn't create sink '%s'\n", audio_sink);
+		} else {
+		  if (audio_device != NULL) {
+		    g_object_set (G_OBJECT(sink), "device", audio_device, NULL);
+		  }
+		  g_object_set (G_OBJECT (player_), "audio-sink", sink, NULL);
+		}
 	}
 	if (videosink != NULL) {
 		GstElement *sink = NULL;
