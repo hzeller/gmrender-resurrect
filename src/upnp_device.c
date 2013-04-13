@@ -172,7 +172,6 @@ void upnp_set_error(struct action_event *event, int error_code,
 #endif
 }
 
-
 char *upnp_get_string(struct action_event *event, const char *key)
 {
 #ifdef HAVE_LIBUPNP
@@ -333,14 +332,9 @@ static int handle_action_request(struct device_private *priv,
 
 		rc = (event_action->callback) (&event);
 		if (rc == 0) {
-			char buf[128];
-			// mmh, looks like IP address is only IPv4 ?
-			const char *ip = inet_ntop(AF_INET,
-						   &ar_event->CtrlPtIPAddr,
-						   buf, sizeof(buf));
 			ar_event->ErrCode = UPNP_E_SUCCESS;
-			printf("%s: Action '%s' was a success!\n",
-                               ip, ar_event->ActionName);
+			printf("Action '%s' was a success!\n",
+			       ar_event->ActionName);
 		}
 		if (ar_event->ActionResult == NULL) {
 			ar_event->ActionResult =

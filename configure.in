@@ -24,6 +24,7 @@ if test -n "$GCC"; then
 fi  
 
 AC_CHECK_FUNCS([asprintf])
+AC_CHECK_LIB([m],[exp])
 
 # Debugging
 AC_ARG_ENABLE(debug,

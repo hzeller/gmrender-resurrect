@@ -60,7 +60,11 @@ static void scan_caps(const GstCaps * caps)
 		const char *mime_type = gst_structure_get_name(structure);
 		register_mime_type(mime_type);
 	}
-
+	// There seem to be all kinds of mime types out there that start with
+	// "audio/" but are not explicitly supported by gstreamer. Let's just
+	// tell the controller that we can handle everything "audio/*" and hope
+	// for the best.
+	register_mime_type("audio/*");
 }
 
 static void scan_pad_templates_info(GstElement *element,
