@@ -12,9 +12,14 @@ compilation configuration:
                 gstreamer0.10-plugins-bad gstreamer0.10-plugins-ugly \
                 gstreamer0.10-pulseaudio gstreamer0.10-ffmpeg
 
-Get the source. If this is your first time using git, here is how you do it:
+
+Get the source. If this is your first time using git, you first need to install
+it:
 
     sudo apt-get install git
+
+.. Then check out the source:
+
     git clone https://github.com/hzeller/gmrender-resurrect.git
 
 Then configure and build
@@ -67,6 +72,21 @@ Best way is to create a UUID once by running the `uuid` tool:
 
 You take different generated numbers and hard-code it in each script
 starting an instance of gmediarender.
+
+## --gstout-audiosink, --gstout-audiodevice
+You can set the audio sink and audio device with these commandline
+options. Say you have an alsa device `iec958` you want to use, then you can
+add these options:
+
+    gmediarenderer --gstout-audiosink=alsasink --gstout-audiodevice=iec958
+
+There are other ways to define the default gstreamer output devices via
+some global system settings, but in particular if you are on some embedded
+device, setting these directly via a commandline option is the very best.
+
+In this example, for the alsa sink to work, you need the package:
+
+    sudo apt-get install gstreamer0.10-alsa
 
 ## Running as daemon.
 
