@@ -186,9 +186,13 @@ int main(int argc, char **argv)
 			perror("Failed to write pid file");
 		}
 	}
+
+#if !GLIB_CHECK_VERSION(2, 32, 0)
+	// Only older version of glib require this.
 	if (!g_thread_get_initialized()) {
 		g_thread_init(NULL);
 	}
+#endif
 
 	upnp_renderer = upnp_renderer_new(friendly_name, uuid);
 	if (upnp_renderer == NULL) {

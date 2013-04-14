@@ -65,13 +65,17 @@ is advertised and used by controllers to distinguish different renderers.
 If you have multiple renderers running in your network, they will all share the
 same static ID.
 With this option, you can give each renderer its own id.
-Best way is to create a UUID once by running the `uuid` tool:
+Best way is to create a UUID once by running the `uuidgen` tool:
 
-    $ uuid
+    $ uuidgen
     a07e8dfe-26a4-11e2-9dd1-5404a632c90e
 
 You take different generated numbers and hard-code it in each script
 starting an instance of gmediarender.
+
+Also, you can do this already at compile time, when running configure
+
+    ./configure CPPFLAGS="-DGMRENDER_UUID='\"`uuidgen`\"'"
 
 ## --gstout-audiosink, --gstout-audiodevice
 You can set the audio sink and audio device with these commandline
