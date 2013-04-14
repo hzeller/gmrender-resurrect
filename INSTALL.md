@@ -67,6 +67,7 @@ same static ID.
 With this option, you can give each renderer its own id.
 Best way is to create a UUID once by running the `uuidgen` tool:
 
+    $ sudo apt-get install uuid-runtime
     $ uuidgen
     a07e8dfe-26a4-11e2-9dd1-5404a632c90e
 
@@ -77,7 +78,7 @@ Also, you can do this already at compile time, when running configure
 
     ./configure CPPFLAGS="-DGMRENDER_UUID='\"`uuidgen`\"'"
 
-## --gstout-audiosink, --gstout-audiodevice
+## --gstout-audiosink and --gstout-audiodevice
 You can set the audio sink and audio device with these commandline
 options. Say you have an alsa device `iec958` you want to use, then you can
 add these options:
