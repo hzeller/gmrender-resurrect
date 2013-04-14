@@ -81,15 +81,15 @@ static struct device render_device = {
         .device_type            = "urn:schemas-upnp-org:device:MediaRenderer:1",
         .friendly_name          = "GMediaRender",
         .manufacturer           = "Ivo Clarysse, Henner Zeller",
-        .manufacturer_url       = "http://gmrender.nongnu.org/",
+        .manufacturer_url       = "http://github.com/hzeller/gmrender-resurrect",
         .model_description      = PACKAGE_STRING,
         .model_name             = PACKAGE_NAME,
         .model_number           = PACKAGE_VERSION,
-        .model_url              = "http://gmrender.nongnu.org/",
+        .model_url              = "http://github.com/hzeller/gmrender-resurrect",
         .serial_number          = "1",
         .udn                    = "uuid:GMediaRender-1_0-000-000-002",
         .upc                    = "",
-        .presentation_url       = "/renderpres.html",
+        .presentation_url       = "",  // TODO(hzeller) show something useful.
         .icons                  = renderer_icon,
 };
 
