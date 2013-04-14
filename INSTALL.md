@@ -10,7 +10,7 @@ compilation configuration:
     sudo apt-get install libupnp-dev libxml2-dev libgstreamer0.10-dev \
                 gstreamer0.10-plugins-base gstreamer0.10-plugins-good \
                 gstreamer0.10-plugins-bad gstreamer0.10-plugins-ugly \
-                gstreamer0.10-pulseaudio gstreamer0.10-ffmpeg
+                gstreamer0.10-ffmpeg gstreamer0.10-pulseaudio 
 
 
 Get the source. If this is your first time using git, you first need to install
@@ -96,7 +96,7 @@ In this example, for the alsa sink to work, you need the package:
 
     sudo apt-get install gstreamer0.10-alsa
 
-## Running as daemon.
+## Running as daemon
 
 If you want to run gmediarender as daemon, the follwing two options are for
 you:
@@ -111,6 +111,10 @@ on newer distributions. This is the preferred version as the older 0.10 version
 is not supported anymore. Instead of the 0.10 versions above, just install
 these:
 
-    sudo aptitude install libgstreamer1.0-dev gstreamer1.0-alsa \
+    sudo aptitude install libgstreamer1.0-dev \
              gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
-	     gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly 
+             gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \
+             gstreamer1.0-libav \
+             gstreamer1.0-pulseaudio gstreamer1.0-alsa
+
+(pulseaudio or alsa depending on what output you prefer)
