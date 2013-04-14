@@ -100,12 +100,16 @@ static void scan_pad_templates_info(GstElement *element,
 
 static void scan_mime_list(void)
 {
-	GList *plugins;
-	GstRegistry *registry = gst_registry_get_default();
+	GstRegistry *registry = NULL;
+	GList *plugins = NULL;
 
-	ENTER();
-
+#if (GST_VERSION_MAJOR < 1)
+	registry = gst_registry_get_default();
 	plugins = gst_default_registry_get_plugin_list();
+#else
+	registry = gst_registry_get();
+	plugins = gst_registry_get_plugin_list(registry);
+#endif
 
 	while (plugins) {
 		GList *features;
@@ -139,8 +143,6 @@ static void scan_mime_list(void)
 			features = g_list_next(features);
 		}
 	}
-
-	LEAVE();
 }
 
 
@@ -427,12 +429,17 @@ static int output_gstreamer_get_position(gint64 *track_duration,
 	if (get_current_player_state() != GST_STATE_PLAYING) {
 		return rc;  // playbin2 only returns valid values then.
 	}
+#if (GST_VERSION_MAJOR < 1)
 	GstFormat fmt = GST_FORMAT_TIME;
-	if (!gst_element_query_duration(player_, &fmt, track_duration)) {
+	GstFormat* query_type = &fmt;
+#else
+	GstFormat query_type = GST_FORMAT_TIME;
+#endif	
+	if (!gst_element_query_duration(player_, query_type, track_duration)) {
 		fprintf(stderr, "Failed to get track duration\n");
 		rc = -1;
 	}
-	if (!gst_element_query_position(player_, &fmt, track_pos)) {
+	if (!gst_element_query_position(player_, query_type, track_pos)) {
 		fprintf(stderr, "Failed to get track pos\n");
 		rc = -1;
 	}
@@ -488,7 +495,12 @@ static int output_gstreamer_init(void)
 	SongMetaData_init(&song_meta_);
 	scan_mime_list();
 
-	player_ = gst_element_factory_make("playbin2", "play");
+#if (GST_VERSION_MAJOR < 1)
+	const char player_element_name[] = "playbin2";
+#else
+	const char player_element_name[] = "playbin";
+#endif
+	player_ = gst_element_factory_make(player_element_name, "play");
 	assert(player_ != NULL);
 
 	bus = gst_pipeline_get_bus(GST_PIPELINE(player_));

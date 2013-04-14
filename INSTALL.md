@@ -7,7 +7,7 @@ compilation configuration:
 
 .. and the libraries needed for gmrender:
 
-    sudo apt-get install libupnp-dev libgstreamer0.10-dev \
+    sudo apt-get install libupnp-dev libxml2-dev libgstreamer0.10-dev \
                 gstreamer0.10-plugins-base gstreamer0.10-plugins-good \
                 gstreamer0.10-plugins-bad gstreamer0.10-plugins-ugly \
                 gstreamer0.10-pulseaudio gstreamer0.10-ffmpeg
@@ -100,3 +100,13 @@ you:
     -d, --daemon                      Run as daemon.
     -P, --pid-file                    File the process ID should be written to.
 
+
+# GStreamer 1.0
+gmrender-resurrect is prepared to compile with gstreamer 1.0, already available
+on newer distributions. This is the preferred version as the older 0.10 version
+is not supported anymore. Instead of the 0.10 versions above, just install
+these:
+
+    sudo aptitude install libgstreamer1.0-dev gstreamer1.0-alsa \
+             gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+	     gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly 
