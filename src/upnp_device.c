@@ -333,8 +333,10 @@ static int handle_action_request(struct device_private *priv,
 		rc = (event_action->callback) (&event);
 		if (rc == 0) {
 			ar_event->ErrCode = UPNP_E_SUCCESS;
+#ifdef ENABLE_ACTION_LOGGING
 			printf("Action '%s' was a success!\n",
 			       ar_event->ActionName);
+#endif
 		}
 		if (ar_event->ActionResult == NULL) {
 			ar_event->ActionResult =

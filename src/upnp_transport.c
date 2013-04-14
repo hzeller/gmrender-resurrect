@@ -587,7 +587,8 @@ static int replace_var(transport_variable varnum, const char *new_value) {
 	return 1;
 }
 
-static void notify_lastchange(const char *value)
+// Notify about change and return if the value had to be sent.
+static int notify_lastchange(const char *value)
 {
 	const char *varnames[] = {
 		"LastChange",
@@ -599,7 +600,7 @@ static void notify_lastchange(const char *value)
 
 
 	if (!replace_var(TRANSPORT_VAR_LAST_CHANGE, value))
-		return;  // nothing to notify.
+		return 0;  // nothing to notify.
 
 	varvalues[0] = xmlescape(value, 0);
 	upnp_device_notify(upnp_device_,
@@ -607,6 +608,7 @@ static void notify_lastchange(const char *value)
 	                   varnames,
 	                   varvalues, 1);
 	free((char*)varvalues[0]);
+	return 1;
 }
 
 // Transport uri always comes in uri/meta pairs. Set these and also the related
@@ -634,10 +636,11 @@ static int replace_transport_uri_and_meta(const char *uri, const char *meta) {
 	return requires_stream_meta_callback;
 }
 
-/* warning - does not lock service mutex */
-static void change_var_and_notify(transport_variable varnum, const char *value)
+/* Expects service-lock mutex to be locked */
+static void change_var_and_notify_locked(transport_variable varnum,
+					 const char *value)
 {
-	char *buf;
+	char *buf = NULL;
 
 	ENTER();
 	replace_var(varnum, value);
@@ -647,10 +650,10 @@ static void change_var_and_notify(transport_variable varnum, const char *value)
 		 "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\"><InstanceID val=\"0\"><%s val=\"%s\"/></InstanceID></Event>",
 		 transport_variables[varnum], xml_value);
 	free(xml_value);
-	fprintf(stderr, "HZ: ----------------------------------------------- push notification : %s = '%s'\n",
-		transport_variables[varnum], value);
-
-	notify_lastchange(buf);
+	if (notify_lastchange(buf)) {
+		fprintf(stderr, "HZ: -----> push notification : %s = '%s'\n",
+			transport_variables[varnum], value);
+	}
 	free(buf);
 
 	LEAVE();
@@ -658,13 +661,13 @@ static void change_var_and_notify(transport_variable varnum, const char *value)
 	return;
 }
 
-static void change_and_notify_transport(enum transport_state new_state) {
+static void change_and_notify_transport_locked(enum transport_state new_state) {
 	const int state_different = (transport_state_ != new_state);
 	transport_state_ = new_state;
 	assert(new_state >= TRANSPORT_STOPPED
 	       && new_state < TRANSPORT_NO_MEDIA_PRESENT);
-	change_var_and_notify(TRANSPORT_VAR_TRANSPORT_STATE,
-			      transport_states[new_state]);
+	change_var_and_notify_locked(TRANSPORT_VAR_TRANSPORT_STATE,
+				     transport_states[new_state]);
 	if (!state_different)
 		return;
 	const char *available_actions = NULL;
@@ -690,14 +693,14 @@ static void change_and_notify_transport(enum transport_state new_state) {
 		break;
 	}
 	if (available_actions) {
-		change_var_and_notify(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS,
-				      available_actions);
+		change_var_and_notify_locked(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS,
+					     available_actions);
 	}
 }
 
 // Atomic update about all URIs at once.
 static void notify_changed_uris() {
-	char *buf;
+	char *buf = NULL;
 	ENTER();
 	char *xml[4];
 	xml[0] = xmlescape(transport_values[TRANSPORT_VAR_AV_URI], 1);
@@ -723,9 +726,9 @@ static void notify_changed_uris() {
 		 // next uri iif any.
 		 transport_variables[TRANSPORT_VAR_NEXT_AV_URI], xml[2],
 		 transport_variables[TRANSPORT_VAR_NEXT_AV_URI_META], xml[3]);
-	notify_lastchange(buf);
-	fprintf(stderr, "HZ: notify all uris changed ------\n%s\n------\n", buf);
-	fprintf(stderr, "HZ: \n%s\n", transport_values[TRANSPORT_VAR_AV_URI_META]);
+	if (notify_lastchange(buf)) {
+		printf("HZ: notify all uris changed ------\n%s\n------\n", buf);
+	}
 	free(buf);
 	int i;
 	for (i = 0; i < 4; ++i)
@@ -832,7 +835,7 @@ static int set_next_avtransport_uri(struct action_event *event)
 	service_lock();
 
 	output_set_next_uri(value);
-	change_var_and_notify(TRANSPORT_VAR_NEXT_AV_URI, value);
+	change_var_and_notify_locked(TRANSPORT_VAR_NEXT_AV_URI, value);
 
 	printf("%s: NextURI='%s'\n", __FUNCTION__, value);
 	free(value);
@@ -840,7 +843,8 @@ static int set_next_avtransport_uri(struct action_event *event)
 	if (value == NULL) {
 		rc = -1;
 	} else {
-		change_var_and_notify(TRANSPORT_VAR_NEXT_AV_URI_META, value);
+		change_var_and_notify_locked(TRANSPORT_VAR_NEXT_AV_URI_META,
+					     value);
 		free(value);
 	}
 
@@ -1037,7 +1041,7 @@ static int stop(struct action_event *event)
 	switch (transport_state_) {
 	case TRANSPORT_STOPPED:
 		// For clients that didn't get it.
-		change_and_notify_transport(TRANSPORT_STOPPED);
+		change_and_notify_transport_locked(TRANSPORT_STOPPED);
 		break;
 	case TRANSPORT_PLAYING:
 	case TRANSPORT_TRANSITIONING:
@@ -1045,7 +1049,7 @@ static int stop(struct action_event *event)
 	case TRANSPORT_RECORDING:
 	case TRANSPORT_PAUSED_PLAYBACK:
 		output_stop();
-		change_and_notify_transport(TRANSPORT_STOPPED);
+		change_and_notify_transport_locked(TRANSPORT_STOPPED);
 		// Set TransportPlaySpeed to '1'
 		break;
 
@@ -1064,12 +1068,11 @@ static int stop(struct action_event *event)
 }
 
 static void inform_done_playing(enum PlayFeedback fb) {
-	printf("---------------------------------- Done playing....%d\n", fb);
 	service_lock();
 	switch (fb) {
 	case PLAY_STOPPED:
 		replace_transport_uri_and_meta("", "");
-		change_and_notify_transport(TRANSPORT_STOPPED);
+		change_and_notify_transport_locked(TRANSPORT_STOPPED);
 		notify_changed_uris();
 		break;
 	case PLAY_STARTED_NEXT_STREAM:
@@ -1099,7 +1102,7 @@ static int play(struct action_event *event)
 	switch (transport_state_) {
 	case TRANSPORT_PLAYING:
 		// For clients that didn't get it.
-		change_and_notify_transport(TRANSPORT_PLAYING);
+		change_and_notify_transport_locked(TRANSPORT_PLAYING);
 		// Set TransportPlaySpeed to '1'
 		break;
 	case TRANSPORT_STOPPED:
@@ -1108,7 +1111,7 @@ static int play(struct action_event *event)
 			upnp_set_error(event, 704, "Playing failed");
 			rc = -1;
 		} else {
-			change_and_notify_transport(TRANSPORT_PLAYING);
+			change_and_notify_transport_locked(TRANSPORT_PLAYING);
 		}
 		// Set TransportPlaySpeed to '1'
 		break;
@@ -1144,7 +1147,7 @@ static int pause_stream(struct action_event *event)
 	switch (transport_state_) {
         case TRANSPORT_PAUSED_PLAYBACK:
 		// For clients that didn't get it.
-		change_and_notify_transport(TRANSPORT_PAUSED_PLAYBACK);
+		change_and_notify_transport_locked(TRANSPORT_PAUSED_PLAYBACK);
 		break;
 
 	case TRANSPORT_PLAYING:
@@ -1152,7 +1155,8 @@ static int pause_stream(struct action_event *event)
 			upnp_set_error(event, 704, "Pause failed");
 			rc = -1;
 		} else {
-			change_and_notify_transport(TRANSPORT_PAUSED_PLAYBACK);
+			change_and_notify_transport_locked(
+					     TRANSPORT_PAUSED_PLAYBACK);
 		}
 		// Set TransportPlaySpeed to '1'
 		break;
@@ -1190,8 +1194,8 @@ static int seek(struct action_event *event)
 			// pretend to already be there. Should we go into
 			// TRANSITION mode ?
 			// (gstreamer will go into PAUSE, then PLAYING)
-			change_var_and_notify(TRANSPORT_VAR_REL_TIME_POS,
-					      target);
+			change_var_and_notify_locked(TRANSPORT_VAR_REL_TIME_POS,
+						     target);
 		}
 		service_unlock();
 		free(target);

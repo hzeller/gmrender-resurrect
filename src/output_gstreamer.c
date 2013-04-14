@@ -354,8 +354,9 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
     
 		if (meta_update_callback_ != NULL) {
 			gst_message_parse_tag(msg, &tags);
-			g_print("GStreamer: Got tags from element %s\n",
+			/*g_print("GStreamer: Got tags from element %s\n",
 				GST_OBJECT_NAME (msg->src));
+			*/
 			struct MetaModify modify;
 			modify.meta = &song_meta_;
 			modify.any_change = 0;
@@ -372,8 +373,10 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 		/* not caring about these right now */
 		break;
 	default:
+		/*
 		g_print("GStreamer: %s: unhandled message type %d (%s)\n",
 		        msgSrcName, msgType, gst_message_type_get_name(msgType));
+		*/
 		break;
 	}
 
@@ -464,12 +467,11 @@ static int output_gstreamer_set_mute(int m) {
 }
 
 static void prepare_next_stream(GstElement *obj, gpointer userdata) {
+	printf("HZ: about-to-finish cb: setting uri %s\n", gs_next_uri_);
 	free(gsuri_);
 	gsuri_ = gs_next_uri_;
 	gs_next_uri_ = NULL;
 	if (gsuri_ != NULL) {
-		fprintf(stderr, "HZ: about-to-finish cb: setting uri %s\n",
-			gsuri_);
 		g_object_set(G_OBJECT(player_), "uri", gsuri_, NULL);
 		if (play_done_callback_) {
 			play_done_callback_(PLAY_STARTED_NEXT_STREAM);
