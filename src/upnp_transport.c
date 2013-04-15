@@ -768,7 +768,7 @@ static void update_meta_from_stream(const struct SongMetaData *meta) {
 		return;
 	}
 	const char *original_xml = transport_values[TRANSPORT_VAR_AV_URI_META];
-	char *didl = SongMetaData_to_DIDL(original_xml, meta);
+	char *didl = SongMetaData_to_DIDL(meta, original_xml);
 	service_lock();
 	replace_var(TRANSPORT_VAR_AV_URI_META, didl);
 	replace_var(TRANSPORT_VAR_CUR_TRACK_META, didl);

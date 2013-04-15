@@ -1,6 +1,6 @@
 /* output.h - Output module frontend
  *
- * Copyright (C) 2007   Ivo Clarysse
+ * Copyright (C) 2007 Ivo Clarysse,  (C) 2012 Henner Zeller
  *
  * This file is part of GMediaRender.
  *
@@ -25,31 +25,18 @@
 #define _OUTPUT_H
 
 #include <glib.h>
+#include "song-meta-data.h"
 
+// Feedback for the controlling part what is happening with the
+// output.
 enum PlayFeedback {
 	PLAY_STOPPED,
 	PLAY_STARTED_NEXT_STREAM,
 };
 typedef void (*done_cb)(enum PlayFeedback);
 
-// In case the stream gets to know details about the song...
-struct SongMetaData {
-	char *title;
-	char *artist;
-	char *album;
-	char *genre;
-	char *composer;
-};
-void SongMetaData_init(struct SongMetaData *value);
-void SongMetaData_clear(struct SongMetaData *value);
-
-// Returns a newly allocated xml string with the song meta data encoded as
-// DIDL-Lite. If we get a non-empty original xml document, returns an
-// edited version of that document.
-char *SongMetaData_to_DIDL(const char *original_xml,
-			   const struct SongMetaData *value);
-
-// Callback with changes
+// In case the stream gets to know details about the song, this is a
+// callback with changes we send back to the controlling layer.
 typedef void (*update_meta_cb)(const struct SongMetaData *);
 
 int output_init(const char *shortname);
