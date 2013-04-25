@@ -500,6 +500,7 @@ static int output_gstreamer_init(void)
 #else
 	const char player_element_name[] = "playbin";
 #endif
+
 	player_ = gst_element_factory_make(player_element_name, "play");
 	assert(player_ != NULL);
 

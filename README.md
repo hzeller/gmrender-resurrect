@@ -27,6 +27,15 @@ Added so far
 Tested the following control points: BubbleUPnP, 2Player, DK Player, eezUPnP;
 Please report what other control-points worked for you - and which didn't.
 
+Note, with gapless playing, some troubles came up with the underlying
+gstreamer. Bugs are filed, watch
+   - gstreamer-0.1: "playbin2" leaks threads playing gapless from network URIs
+         https://bugzilla.gnome.org/show_bug.cgi?id=698750
+
+   - gstreamer-1.0: Gapless playing using 'about-to-finish' callback fails
+                 with HTTP-URIs
+        https://bugzilla.gnome.org/show_bug.cgi?id=698306
+
 Install
 -------
 For installation instructions, see INSTALL.md
