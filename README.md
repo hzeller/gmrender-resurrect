@@ -53,7 +53,6 @@ For installation instructions, see [INSTALL.md](./INSTALL.md)
 You can reach me via <h.zeller@acm.org>.
 
 
-
 [orig-project]: http://gmrender.nongnu.org/
 [orig-cvs]:http://cvs.savannah.gnu.org/viewvc/gmrender/?root=gmrender
 [gst-bug-698750]: https://bugzilla.gnome.org/show_bug.cgi?id=698750
