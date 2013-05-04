@@ -40,8 +40,9 @@ gstreamer; most notably this results in 'not responding' after a couple of
 hours or days of use. This might go away by using gstreamer-1.0, please try
 to compile gmrender-resurrect with that version and see if it goes away.
 
-This behavior has been traced to gstreamer; the following bugs have been
-filed, watch
+This behavior has been traced to gstreamer; there is actually a problem with
+gstreamer 1.0 as well :(
+The following bugs have been filed, watch
    - gstreamer-0.1: ["playbin2" leaks threads playing gapless from
           network URIs][gst-bug-698750]
 
