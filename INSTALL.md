@@ -80,12 +80,14 @@ Also, you can do this already at compile time, when running configure
 
 ## --gstout-audiosink and --gstout-audiodevice
 You can set the audio sink and audio device with these commandline
-options. Say you have an alsa device `iec958` you want to use, then you can
-add these options:
+options.
+Say, you want to use an ALSA device. You can see the available devices
+with `aplay -L`. On my raspberry, this ALSA device is sysdefault:CARD=ALSA,
+so this is how you select it on the command line:
 
-    gmediarenderer --gstout-audiosink=alsasink --gstout-audiodevice=iec958
+    gmediarenderer --gstout-audiosink=alsasink --gstout-audiodevice=sysdefault:CARD=ALSA
 
-The options are described via
+The options are described with
 
     gmediarender --help-gstout
 
