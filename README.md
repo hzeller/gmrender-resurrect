@@ -27,6 +27,7 @@ Added so far
     the next version of BubbleUPnP will send the right action to support it.
   * Volume/Mute control.
   * Compiles with gstreamer-0.10 and gstreamer-1.0
+  * ...
 
 Tested the following control points: BubbleUPnP, 2Player, DK Player, eezUPnP;
 Please report what other control-points worked for you - and which didn't.
@@ -36,7 +37,8 @@ Issues
 
 With gapless playing, some troubles came up with the underlying
 gstreamer; most notably this results in 'not responding' after a couple of
-hours or days of use. This might go away by using gstreamer-1.0, please.
+hours or days of use. This might go away by using gstreamer-1.0, please try
+to compile gmrender-resurrect with that version and see if it goes away.
 
 This behavior has been traced to gstreamer; the following bugs have been
 filed, watch
