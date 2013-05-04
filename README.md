@@ -40,9 +40,11 @@ hours or days of use. This might go away by using gstreamer-1.0, please.
 
 This behavior has been traced to gstreamer; the following bugs have been
 filed, watch
-   - gstreamer-0.1: ["playbin2" leaks threads playing gapless from network URIs](https://bugzilla.gnome.org/show_bug.cgi?id=698750)
+   - gstreamer-0.1: ["playbin2" leaks threads playing gapless from
+          network URIs][gst-bug-698750]
 
-   - gstreamer-1.0: [Gapless playing using 'about-to-finish' callback fails with HTTP-URIs](https://bugzilla.gnome.org/show_bug.cgi?id=698306)
+   - gstreamer-1.0: [Gapless playing using 'about-to-finish' callback fails
+              with HTTP-URIs][gst-bug-698306]
 
 Installation
 ------------
@@ -54,4 +56,5 @@ You can reach me via <h.zeller@acm.org>.
 
 [orig-project]: http://gmrender.nongnu.org/
 [orig-cvs]:http://cvs.savannah.gnu.org/viewvc/gmrender/?root=gmrender
-
+[gst-bug-698750]: https://bugzilla.gnome.org/show_bug.cgi?id=698750
+[gst-bug-698306]: https://bugzilla.gnome.org/show_bug.cgi?id=698306
