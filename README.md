@@ -38,6 +38,6 @@ gstreamer. Bugs are filed, watch
 
 Install
 -------
-For installation instructions, see INSTALL.md
+For installation instructions, see [INSTALL.md](./INSTALL.md)
 
 You can reach me via <h.zeller@acm.org>.
