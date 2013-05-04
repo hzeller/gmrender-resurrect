@@ -30,7 +30,7 @@ if [ -n "$ALSA_DEVICE" ] ; then
 	GS_DEVICE_PARAM="--gstout-audiodevice=$ALSA_DEVICE"
 fi
 
-# A simple UUID, stable on this systems first ethernet devices MAC address,
+# A simple stable UUID, based on this systems' first ethernet devices MAC address,
 # only using tools readily available to generate.
 UPNP_UUID=`ip link show | awk '/ether/ {print "salt:)-" $2}' | head -1 | md5sum | awk '{print $1}'`
 
