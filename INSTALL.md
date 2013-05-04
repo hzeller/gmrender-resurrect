@@ -41,16 +41,6 @@ provides the name under which the UPnP renderer advertises:
 The final binary is in `/usr/local/bin/gmediarender` (unless you changed the
 PREFIX in the configure step).
 
-# Raspberry Pi
-If you're installing gmrender-resurrect on the Raspberry Pi, there have
-been reports of bad sound quality. For one, the 3.5mm output is very low
-quality, so don't expect wonders.
-But apparently it is also important to have pulseaudio running. Stephen Phillips
-wrote a nice comprehensive blog-post about installing gmrender-resurrect on the
-Raspberry Pi:
-
-http://blog.scphillips.com/2013/01/using-a-raspberry-pi-with-android-phones-for-media-streaming/
-
 # Running
 If you write an init script for your gmediarender, then the following options
 are particularly useful:
@@ -121,3 +111,13 @@ these:
              gstreamer1.0-pulseaudio gstreamer1.0-alsa
 
 (pulseaudio or alsa depending on what output you prefer)
+
+# Raspberry Pi
+If you're installing gmrender-resurrect on the Raspberry Pi, there have
+been reports of bad sound quality. For one, the 3.5mm output is very low
+quality, so don't expect wonders.
+But apparently it is also important to have pulseaudio running. Stephen Phillips
+wrote a nice comprehensive blog-post about installing gmrender-resurrect on the
+Raspberry Pi:
+
+http://blog.scphillips.com/2013/01/using-a-raspberry-pi-with-android-phones-for-media-streaming/
