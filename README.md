@@ -56,6 +56,6 @@ You can reach me via <h.zeller@acm.org>.
 References
 ----------
 
-[orig-project] http://gmrender.nongnu.org/
-[orig-cvs] http://cvs.savannah.gnu.org/viewvc/gmrender/?root=gmrender
+[orig-project]: http://gmrender.nongnu.org/
+[orig-cvs]:http://cvs.savannah.gnu.org/viewvc/gmrender/?root=gmrender
 
