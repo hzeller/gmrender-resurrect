@@ -5,7 +5,7 @@ I needed a small headless UPnP media renderer for Linux (for small footprint-use
 in a Raspberry Pi or CuBox), but there does not seem to be much small stuff
 around.
 
-Found a partially ready project [GMediaRender][orig-project] - but it
+Found this old project [GMediaRender][orig-project] - but it
 was incomplete, several basic features missing and the project has been
 abandoned several years ago.
 
@@ -53,8 +53,7 @@ For installation instructions, see [INSTALL.md](./INSTALL.md)
 
 You can reach me via <h.zeller@acm.org>.
 
-References
-----------
+
 
 [orig-project]: http://gmrender.nongnu.org/
 [orig-cvs]:http://cvs.savannah.gnu.org/viewvc/gmrender/?root=gmrender
