@@ -3,7 +3,7 @@ AC_INIT(gmediarender, 0.0.7, http://gmrender.nongnu.org)
 AC_CONFIG_AUX_DIR(config)
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
 AC_CONFIG_SRCDIR(src/main.c)
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE([1.8 dist-bzip2 no-dist-gzip check-news])
 
 AC_SYS_LARGEFILE
