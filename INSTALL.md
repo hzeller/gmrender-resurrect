@@ -10,7 +10,8 @@ compilation configuration:
     sudo apt-get install libupnp-dev libxml2-dev libgstreamer0.10-dev \
                 gstreamer0.10-plugins-base gstreamer0.10-plugins-good \
                 gstreamer0.10-plugins-bad gstreamer0.10-plugins-ugly \
-                gstreamer0.10-ffmpeg gstreamer0.10-pulseaudio 
+                gstreamer0.10-ffmpeg \
+                gstreamer0.10-pulseaudio gstreamer0.10-alsa
 
 
 Get the source. If this is your first time using git, you first need to install
@@ -62,7 +63,8 @@ Best way is to create a UUID once by running the `uuidgen` tool:
     a07e8dfe-26a4-11e2-9dd1-5404a632c90e
 
 You take different generated numbers and hard-code it in each script
-starting an instance of gmediarender.
+starting an instance of gmediarender (In my init script, I just generate
+some stable value based on the ethernet MAC address; see "Init Script" below).
 
 Also, you can do this already at compile time, when running configure
 
@@ -72,22 +74,27 @@ Also, you can do this already at compile time, when running configure
 You can set the audio sink and audio device with these commandline
 options.
 Say, you want to use an ALSA device. You can see the available devices
-with `aplay -L`. On my raspberry, this ALSA device is sysdefault:CARD=ALSA,
+with `aplay -L`. The main ALSA device is typically called `sysdefault`,
 so this is how you select it on the command line:
 
-    gmediarenderer --gstout-audiosink=alsasink --gstout-audiodevice=sysdefault:CARD=ALSA
+    gmediarenderer --gstout-audiosink=alsasink --gstout-audiodevice=sysdefault
 
 The options are described with
 
     gmediarender --help-gstout
 
-There are other ways to define the default gstreamer output devices via
+There are other ways to configure the default gstreamer output devices via
 some global system settings, but in particular if you are on some embedded
 device, setting these directly via a commandline option is the very best.
 
-In this example, for the alsa sink to work, you need the package:
+## Init Script
 
-    sudo apt-get install gstreamer0.10-alsa
+There is a sample init script in `scripts/init.d/gmediarenderer` that could be
+a good start if you install things on your system.
+
+(To Linux distribution packagers: please let me know if you have some
+common changes that might be useful to have in upstream; other than that, just
+do what makes most sense in your distribution)
 
 ## Running as daemon
 
@@ -112,12 +119,21 @@ these:
 
 (pulseaudio or alsa depending on what output you prefer)
 
-# Raspberry Pi
+# Other installation resources
+## Raspberry Pi
 If you're installing gmrender-resurrect on the Raspberry Pi, there have
 been reports of bad sound quality. For one, the 3.5mm output is very low
-quality, so don't expect wonders.
-But apparently it is also important to have pulseaudio running. Stephen Phillips
-wrote a nice comprehensive blog-post about installing gmrender-resurrect on the
-Raspberry Pi:
+quality, so don't expect wonders (though it seems that driver changes improved
+this quality a lot).
+
+Some people found that they gets better quality with pulseaudio running
+(Personally, I just use straight ALSA, sound quality seems to be good to
+me and it is less hassle keeping pulseaudio running stably),
+
+Stephen Phillips wrote a comprehensive blog-post about installing
+gmrender-resurrect on the Raspberry Pi (January 2013):
 
 http://blog.scphillips.com/2013/01/using-a-raspberry-pi-with-android-phones-for-media-streaming/
+
+## Arch Linux
+I have not tried yet to compile things on Arch Linux. Reports welcome.
