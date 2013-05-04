@@ -31,8 +31,8 @@ Added so far
 Tested the following control points: BubbleUPnP, 2Player, DK Player, eezUPnP;
 Please report what other control-points worked for you - and which didn't.
 
-Bugs
-----
+Issues
+------
 
 With gapless playing, some troubles came up with the underlying
 gstreamer; most notably this results in 'not responding' after a couple of
