@@ -43,14 +43,26 @@ The final binary is in `/usr/local/bin/gmediarender` (unless you changed the
 PREFIX in the configure step).
 
 # Running
-If you write an init script for your gmediarender, then the following options
-are particularly useful:
 
-## -f, --friendly-name
+## Init Script
+
+There is a sample init script in `scripts/init.d/gmediarenderer` that could be
+a good start if you install things on your system.
+
+(To Linux distribution packagers: please let me know if you have some
+common changes that might be useful to have in upstream; other than that, just
+do what makes most sense in your distribution)
+
+## Commandline Options
+
+If you write your own init script for your gmediarender, then the following
+options are particularly useful.
+
+### -f, --friendly-name
 Friendly name to advertise. Usually, you want your renderer show up in your
 controller under a nice name. This is the option to set that name.
 
-## -u, --uuid
+### -u, --uuid
 UUID to advertise. Usually, gmediarender comes with a built-in static id, that
 is advertised and used by controllers to distinguish different renderers.
 If you have multiple renderers running in your network, they will all share the
@@ -70,7 +82,7 @@ Also, you can do this already at compile time, when running configure
 
     ./configure CPPFLAGS="-DGMRENDER_UUID='\"`uuidgen`\"'"
 
-## --gstout-audiosink and --gstout-audiodevice
+### --gstout-audiosink and --gstout-audiodevice
 You can set the audio sink and audio device with these commandline
 options.
 Say, you want to use an ALSA device. You can see the available devices
@@ -87,16 +99,7 @@ There are other ways to configure the default gstreamer output devices via
 some global system settings, but in particular if you are on some embedded
 device, setting these directly via a commandline option is the very best.
 
-## Init Script
-
-There is a sample init script in `scripts/init.d/gmediarenderer` that could be
-a good start if you install things on your system.
-
-(To Linux distribution packagers: please let me know if you have some
-common changes that might be useful to have in upstream; other than that, just
-do what makes most sense in your distribution)
-
-## Running as daemon
+### Running as daemon
 
 If you want to run gmediarender as daemon, the follwing two options are for
 you:
