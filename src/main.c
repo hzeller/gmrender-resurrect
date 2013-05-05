@@ -34,7 +34,9 @@
 #include <glib.h>
 
 #ifdef HAVE_LIBUPNP
-#include <upnp/ithread.h>
+# include <upnp/ithread.h>
+#else
+# error "To have gmrender any useful, you need to have libupnp installed."
 #endif
 
 #include "logging.h"

@@ -33,11 +33,6 @@
 
 #ifdef HAVE_LIBUPNP
 #include <upnp/ixml.h>
-#else
-#ifdef HAVE_LIBXML
-#include <libxml/parser.h>
-#include <libxml/tree.h>
-#endif
 #endif
 
 #include "xmldoc.h"
@@ -45,10 +40,6 @@
 struct xmldoc {
 #ifdef HAVE_LIBUPNP
 	IXML_Document *doc;
-#else
-#ifdef HAVE_LIBXML
-	xmlDocPtr doc;
-#endif
 #endif
 };
 struct xmlelement {
@@ -65,12 +56,6 @@ struct xmldoc *xmldoc_new(void)
 	IXML_Document *doc;
 	doc = ixmlDocument_createDocument();
 	result->doc = doc;
-#else
-#ifdef HAVE_LIBXML
-	xmlDocPtr doc;
-	doc = xmlNewDoc(BAD_CAST "1.0");
-	result->doc = doc;
-#endif
 #endif
 	return result;
 }
@@ -81,10 +66,6 @@ int xmldoc_free(struct xmldoc *doc)
 	assert(doc != NULL);
 #ifdef HAVE_LIBUPNP
 	ixmlDocument_free(doc->doc);
-#else
-#ifdef HAVE_LIBXML
-	xmlFreeDoc(doc->doc);
-#endif
 #endif
 	free(doc);
 	result = 0;
@@ -97,11 +78,6 @@ char *xmldoc_tostring(struct xmldoc *doc)
 	assert(doc != NULL);
 #ifdef HAVE_LIBUPNP
 	result = ixmlDocumenttoString(doc->doc);
-#else
-#ifdef HAVE_LIBXML
-	int buffersize;
-	xmlDocDumpFormatMemory(doc->doc, (xmlChar **)&result, &buffersize, 1);
-#endif
 #endif
 	return result;
 }
@@ -126,12 +102,6 @@ struct xmlelement *xmldoc_new_topelement(struct xmldoc *doc,
 	}
 	ixmlNode_appendChild((IXML_Node *)(doc->doc),(IXML_Node *)element);
 	result->element = element;
-#else
-#ifdef HAVE_LIBXML
-	xmlNodePtr root_node;
-	root_node = xmlNewNode(NULL, BAD_CAST "root");
-	xmlDocSetRootElement(doc->doc, root_node);
-#endif
 #endif
 	return result;
 }

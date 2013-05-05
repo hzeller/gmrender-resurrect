@@ -103,53 +103,6 @@ if test x$HAVE_LIBUPNP = xyes; then
 fi
 AC_SUBST(HAVE_LIBUPNP)
 
-LIBXML_REQUIRED=2.6.0
-AC_ARG_WITH( libxml,
-  AC_HELP_STRING([--without-libxml],[compile without libxml support]),
-  try_libxml=$withval, try_libxml=yes )
-HAVE_LIBXML=no
-if test x$try_libxml = xyes; then
-  dnl check for libxml
-  PKG_CHECK_MODULES(LIBXML, libxml-2.0 >= $LIBXML_REQUIRED,
-    [
-      HAVE_LIBXML=yes
-      AC_SUBST(LIBXML_CFLAGS)
-      AC_SUBST(LIBXML_LIBS)
-
-    ],
-    [
-      HAVE_LIBXML=no
-    ])
-fi
-if test x$HAVE_LIBXML = xyes; then
-  AC_DEFINE(HAVE_LIBXML, , [Use libxml])
-fi
-AC_SUBST(HAVE_LIBXML)
-
-
-#LIBGUPNP_REQUIRED=0.6
-#AC_ARG_WITH( libgupnp,
-#  AC_HELP_STRING([--without-libgupnp],[compile without libgupnp support]),
-#  try_libgupnp=$withval, try_libgupnp=yes )
-#HAVE_LIBGUPNP=no
-#if test x$try_libgupnp = xyes; then
-#  dnl check for libgupnp
-#  PKG_CHECK_MODULES(LIBGUPNP, gupnp-1.0 >= $LIBGUPNP_REQUIRED,
-#    [
-#      HAVE_LIBGUPNP=yes
-#      AC_SUBST(LIBGUPNP_CFLAGS)
-#      AC_SUBST(LIBGUPNP_LIBS)
-#
-#    ],
-#    [
-#      HAVE_LIBGUPNP=no
-#    ])
-#fi
-#if test x$HAVE_LIBGUPNP = xyes; then
-#  AC_DEFINE(HAVE_LIBGUPNP, , [Use libgupnp])
-#fi
-#AC_SUBST(HAVE_LIBGUPNP)
-
 # Checks for header files.
 AC_HEADER_STDC
 
