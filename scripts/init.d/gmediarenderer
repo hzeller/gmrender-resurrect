@@ -25,6 +25,9 @@ UPNP_DEVICE_NAME="Raspberry"
 ALSA_DEVICE="sysdefault"
 #ALSA_DEVICE="iec958"
 
+# Path to the gmediarender binary.
+BINARY_PATH=/usr/local/bin/gmediarender
+
 if [ -n "$ALSA_DEVICE" ] ; then
 	GS_SINK_PARAM="--gstout-audiosink=alsasink"
 	GS_DEVICE_PARAM="--gstout-audiodevice=$ALSA_DEVICE"
@@ -40,12 +43,12 @@ export USER HOME
 case "$1" in
 	start)
 		echo "Starting GMediaRender"
-		start-stop-daemon -x /usr/local/bin/gmediarender -c "$DAEMON_USER" -S -- -f "$UPNP_DEVICE_NAME" -d -u "$UPNP_UUID" $GS_SINK_PARAM $GS_DEVICE_PARAM 
+		start-stop-daemon -x $BINARY_PATH -c "$DAEMON_USER" -S -- -f "$UPNP_DEVICE_NAME" -d -u "$UPNP_UUID" $GS_SINK_PARAM $GS_DEVICE_PARAM 
 		;;
 
 	stop)
 		echo "Stopping GMediaRender"
-		start-stop-daemon -x /usr/local/bin/gmediarender -K
+		start-stop-daemon -x $BINARY_PATH -K
 		;;
 
 	*)

@@ -38,6 +38,9 @@ PKG_PROG_PKG_CONFIG
 
 PKG_CHECK_MODULES(GLIB, glib-2.0 gthread-2.0, HAVE_GLIB=yes, HAVE_GLIB=no)
 
+# This is a bit crude, someone with more configure-fu please fix :)
+# We want either the new, or if that fails, the old version of gstreamer.
+# There must be a better way than my attempt of having a nested test.
 GST_REQS=0.10.1
 GSTPLUG_REQS=0.10.1
 GST_OLD_MAJORMINOR=0.10
