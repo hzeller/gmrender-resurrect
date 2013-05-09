@@ -139,4 +139,6 @@ gmrender-resurrect on the Raspberry Pi (January 2013):
 http://blog.scphillips.com/2013/01/using-a-raspberry-pi-with-android-phones-for-media-streaming/
 
 ## Arch Linux
-I have not tried yet to compile things on Arch Linux. Reports welcome.
+There is an Arch package available here
+ https://aur.archlinux.org/packages/gmrender-resurrect-git/
+
