@@ -37,17 +37,11 @@ Issues
 
 With gapless playing, some troubles came up with the underlying
 gstreamer; most notably this results in 'not responding' after a couple of
-hours or days of use. This might go away by using gstreamer-1.0, please try
-to compile gmrender-resurrect with that version and see if it goes away.
-
-This behavior has been traced to gstreamer; there is actually a problem with
-gstreamer 1.0 as well :(
-The following bugs have been filed, watch
-   - gstreamer-0.1: ["playbin2" leaks threads playing gapless from
-          network URIs][gst-bug-698750]
-
-   - gstreamer-1.0: [Gapless playing using 'about-to-finish' callback fails
-              with HTTP-URIs][gst-bug-698306]
+hours or days of use; this is with gstreamer 0.10 up to 1.0.7. There was a
+[leaking thread bug][gst-bug-699794] whose fix will probably show up in
+GStreamer 1.0.8 and might fix this issue. There is still another open
+[race condition bug][gst-bug-698750] in gstreamer that affects gapless playing
+with gstreamer 1.0 though.
 
 Installation
 ------------
@@ -59,4 +53,4 @@ You can reach me via <h.zeller@acm.org>.
 [orig-project]: http://gmrender.nongnu.org/
 [orig-cvs]:http://cvs.savannah.gnu.org/viewvc/gmrender/?root=gmrender
 [gst-bug-698750]: https://bugzilla.gnome.org/show_bug.cgi?id=698750
-[gst-bug-698306]: https://bugzilla.gnome.org/show_bug.cgi?id=698306
+[gst-bug-699794]: https://bugzilla.gnome.org/show_bug.cgi?id=699794
