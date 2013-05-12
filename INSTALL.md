@@ -99,6 +99,26 @@ There are other ways to configure the default gstreamer output devices via
 some global system settings, but in particular if you are on some embedded
 device, setting these directly via a commandline option is the very best.
 
+## --gstout-initial-volume-db
+This sets the initial volume on startup in decibel. The level 0.0 decibel
+is 'full volume', -20db would show on the UPnP controller as '50%'. In the
+following table you see the non-linear relationship:
+
+     [decibel]  [level shown in player]
+           0db    100     # this is the default if option not set
+          -6db    85
+         -10db    75
+         -20db    50
+         -40db    25
+         -60db    0
+
+So with --gstout-initial-volume-db=-10 the player would show up as being set
+to #75.
+
+Note, as always with the volume level in this renderer, this does not
+influence the hardware level (e.g. Alsa), but only the internal attenuation.
+So it is advised to always set the hardware output to 100% by system means.
+
 ### Running as daemon
 
 If you want to run gmediarender as daemon, the follwing two options are for
