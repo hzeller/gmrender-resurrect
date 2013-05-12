@@ -27,13 +27,13 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+#include <gst/gst.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-
-#include <gst/gst.h>
-#include <assert.h>
+#include <unistd.h>
 
 //#define ENABLE_TRACING
 
@@ -388,6 +388,7 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 static gchar *audio_sink = NULL;
 static gchar *audio_device = NULL;
 static gchar *videosink = NULL;
+static double initial_db = 0.0;
 
 /* Options specific to output_gstreamer */
 static GOptionEntry option_entries[] = {
@@ -401,6 +402,9 @@ static GOptionEntry option_entries[] = {
         { "gstout-videosink", 0, 0, G_OPTION_ARG_STRING, &videosink,
           "GStreamer video sink to use "
 	  "(autovideosink, xvimagesink, ximagesink, ...)",
+	  NULL },
+        { "gstout-initial-volume-db", 0, 0, G_OPTION_ARG_DOUBLE, &initial_db,
+          "GStreamer inital volume in decibel (e.g. 0.0 = max; -6 = 1/2 max) ",
 	  NULL },
         { NULL }
 };
@@ -453,11 +457,12 @@ static int output_gstreamer_get_position(gint64 *track_duration,
 static int output_gstreamer_get_volume(float *v) {
 	double volume;
 	g_object_get(player_, "volume", &volume, NULL);
+	fprintf(stderr, "gstreamer: %f current volume fraction.\n", volume);
 	*v = volume;
 	return 0;
 }
 static int output_gstreamer_set_volume(float value) {
-	fprintf(stderr, "gstreamer, got %f\n", value);
+	fprintf(stderr, "gstreamer: set volume fraction to %f\n", value);
 	g_object_set(player_, "volume", (double) value, NULL);
 	return 0;
 }
@@ -537,6 +542,9 @@ static int output_gstreamer_init(void)
 	g_signal_connect(G_OBJECT(player_), "about-to-finish",
 			 G_CALLBACK(prepare_next_stream), NULL);
 	output_gstreamer_set_mute(0);
+	if (initial_db < 0) {
+		output_gstreamer_set_volume(exp(initial_db / 20 * log(10)));
+	}
 	LEAVE();
 
 	return 0;

@@ -894,11 +894,10 @@ struct service control_service_ = {
 
 void upnp_control_init(void) {
 	upnp_control_get_service();
-	// This doesn't seem to work: asking gmstreamer initially will always
-	// return 1.0.
+	// Get the initial volume and set the corresponding decibel and 'steps'
 	float volume_fraction = 0;
 	if (output_get_volume(&volume_fraction) == 0) {
-		fprintf(stderr, "Got fraction %f\n", volume_fraction);
+		fprintf(stderr, "Initial volume: %f\n", volume_fraction);
 		change_volume_decibel(NULL, 20 * log(volume_fraction) / log(10));
 	}
 }
