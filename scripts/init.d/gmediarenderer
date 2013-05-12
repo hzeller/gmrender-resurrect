@@ -18,6 +18,11 @@ DAEMON_USER="pi:audio"
 # Some string that helps you recognize the player, e.g. "Livingroom Player"
 UPNP_DEVICE_NAME="Raspberry"
 
+# Initial volume in decibel. 0.0 is 'full volume', -10 correspondents to '75' on
+# the exported volume scale (Note, this does not change the ALSA volume, only
+# internal to gmrender. So make sure to leave the ALSA volume always to 100%).
+INITIAL_VOLUME_DB=-10
+
 # If you explicitly choose a specific ALSA device here (find them with 'aplay -L'), then
 # gmediarenderer will use that ALSA device to play audio.
 # Otherwise, whatever default is configured for gstreamer for the '$DAEMON_USER' is
@@ -43,7 +48,7 @@ export USER HOME
 case "$1" in
 	start)
 		echo "Starting GMediaRender"
-		start-stop-daemon -x $BINARY_PATH -c "$DAEMON_USER" -S -- -f "$UPNP_DEVICE_NAME" -d -u "$UPNP_UUID" $GS_SINK_PARAM $GS_DEVICE_PARAM 
+		start-stop-daemon -x $BINARY_PATH -c "$DAEMON_USER" -S -- -f "$UPNP_DEVICE_NAME" -d -u "$UPNP_UUID" $GS_SINK_PARAM $GS_DEVICE_PARAM --gstout-initial-volume-db=$INITIAL_VOLUME_DB
 		;;
 
 	stop)
