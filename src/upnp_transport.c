@@ -47,49 +47,13 @@
 #include "output.h"
 #include "upnp_transport.h"
 
-//#define TRANSPORT_SERVICE "urn:upnp-org:serviceId:AVTransport"
 #define TRANSPORT_SERVICE "urn:schemas-upnp-org:service:AVTransport:1"
 #define TRANSPORT_TYPE "urn:schemas-upnp-org:service:AVTransport:1"
 #define TRANSPORT_SCPD_URL "/upnp/rendertransportSCPD.xml"
 #define TRANSPORT_CONTROL_URL "/upnp/control/rendertransport1"
 #define TRANSPORT_EVENT_URL "/upnp/event/rendertransport1"
 
-typedef enum {
-	TRANSPORT_VAR_TRANSPORT_STATUS,
-	TRANSPORT_VAR_NEXT_AV_URI,
-	TRANSPORT_VAR_NEXT_AV_URI_META,
-	TRANSPORT_VAR_CUR_TRACK_META,
-	TRANSPORT_VAR_REL_CTR_POS,
-	TRANSPORT_VAR_AAT_INSTANCE_ID,
-	TRANSPORT_VAR_AAT_SEEK_TARGET,
-	TRANSPORT_VAR_PLAY_MEDIUM,
-	TRANSPORT_VAR_REL_TIME_POS,
-	TRANSPORT_VAR_REC_MEDIA,
-	TRANSPORT_VAR_CUR_PLAY_MODE,
-	TRANSPORT_VAR_TRANSPORT_PLAY_SPEED,
-	TRANSPORT_VAR_PLAY_MEDIA,
-	TRANSPORT_VAR_ABS_TIME_POS,
-	TRANSPORT_VAR_CUR_TRACK,
-	TRANSPORT_VAR_CUR_TRACK_URI,
-	TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS,
-	TRANSPORT_VAR_NR_TRACKS,
-	TRANSPORT_VAR_AV_URI,
-	TRANSPORT_VAR_ABS_CTR_POS,
-	TRANSPORT_VAR_CUR_REC_QUAL_MODE,
-	TRANSPORT_VAR_CUR_MEDIA_DUR,
-	TRANSPORT_VAR_AAT_SEEK_MODE,
-	TRANSPORT_VAR_AV_URI_META,
-	TRANSPORT_VAR_REC_MEDIUM,
-	TRANSPORT_VAR_REC_MEDIUM_WR_STATUS,
-	TRANSPORT_VAR_LAST_CHANGE,
-	TRANSPORT_VAR_CUR_TRACK_DUR,
-	TRANSPORT_VAR_TRANSPORT_STATE,
-	TRANSPORT_VAR_POS_REC_QUAL_MODE,
-	TRANSPORT_VAR_UNKNOWN,
-	TRANSPORT_VAR_COUNT
-} transport_variable;
-
-typedef enum {
+enum {
 	TRANSPORT_CMD_GETCURRENTTRANSPORTACTIONS,
 	TRANSPORT_CMD_GETDEVICECAPABILITIES,
 	TRANSPORT_CMD_GETMEDIAINFO,
@@ -109,7 +73,28 @@ typedef enum {
 	//TRANSPORT_CMD_SETRECORDQUALITYMODE,
 	TRANSPORT_CMD_UNKNOWN,                   
 	TRANSPORT_CMD_COUNT
-} transport_cmd ;
+};
+
+enum UPNPTransportError {
+	UPNP_TRANSPORT_E_TRANSITION_NA	= 701,
+	UPNP_TRANSPORT_E_NO_CONTENTS	= 702,
+	UPNP_TRANSPORT_E_READ_ERROR	= 703,
+	UPNP_TRANSPORT_E_PLAY_FORMAT_NS	= 704,
+	UPNP_TRANSPORT_E_TRANSPORT_LOCKED	= 705,
+	UPNP_TRANSPORT_E_WRITE_ERROR	= 706,
+	UPNP_TRANSPORT_E_REC_MEDIA_WP	= 707,
+	UPNP_TRANSPORT_E_REC_FORMAT_NS	= 708,
+	UPNP_TRANSPORT_E_REC_MEDIA_FULL	= 709,
+	UPNP_TRANSPORT_E_SEEKMODE_NS	= 710,
+	UPNP_TRANSPORT_E_ILL_SEEKTARGET	= 711,
+	UPNP_TRANSPORT_E_PLAYMODE_NS	= 712,
+	UPNP_TRANSPORT_E_RECQUAL_NS	= 713,
+	UPNP_TRANSPORT_E_ILLEGAL_MIME	= 714,
+	UPNP_TRANSPORT_E_CONTENT_BUSY	= 715,
+	UPNP_TRANSPORT_E_RES_NOT_FOUND	= 716,
+	UPNP_TRANSPORT_E_PLAYSPEED_NS	= 717,
+	UPNP_TRANSPORT_E_INVALID_IID	= 718,
+};
 
 static const char *transport_variables[] = {
 	[TRANSPORT_VAR_TRANSPORT_STATE] = "TransportState",
@@ -480,6 +465,7 @@ static struct argument **argument_list[] = {
 static enum transport_state transport_state_ = TRANSPORT_STOPPED;
 static struct device_private *upnp_device_ = NULL;
 extern struct service transport_service_;   // Defined below.
+static variable_change_callback_t variable_change_cb_ = NULL;
 
 /* protects transport_values, and service-specific state */
 
@@ -513,7 +499,7 @@ static int get_media_info(struct action_event *event)
 		rc = -1;
 		goto out;
 	}
-	printf("%s: InstanceID='%s'\n", __FUNCTION__, value);
+
 	free(value);
 
 	rc = upnp_append_variable(event, TRANSPORT_VAR_NR_TRACKS,
@@ -567,7 +553,7 @@ static int get_media_info(struct action_event *event)
 }
 
 // Replace given variable without sending an state-change event.
-static int replace_var(transport_variable varnum, const char *new_value) {
+static int replace_var(transport_variable_t varnum, const char *new_value) {
 	if ((varnum < 0) || (varnum >= TRANSPORT_VAR_UNKNOWN)) {
 		fprintf(stderr, "Attempt to set bogus variable '%d' to '%s'\n",
 			varnum, new_value);
@@ -583,11 +569,16 @@ static int replace_var(transport_variable varnum, const char *new_value) {
 
 	free((char*)transport_values[varnum]);
 	transport_values[varnum] = strdup(new_value);
-
+	if (variable_change_cb_) {
+		variable_change_cb_(varnum, transport_variables[varnum],
+				    transport_values[varnum]);
+	}
 	return 1;
 }
 
 // Notify about change and return if the value had to be sent.
+// This pushes the LastChange variable, that encodes recent changes in one
+// XML document.
 static int notify_lastchange(const char *value)
 {
 	const char *varnames[] = {
@@ -637,7 +628,7 @@ static int replace_transport_uri_and_meta(const char *uri, const char *meta) {
 }
 
 /* Expects service-lock mutex to be locked */
-static void change_var_and_notify_locked(transport_variable varnum,
+static void change_var_and_notify_locked(transport_variable_t varnum,
 					 const char *value)
 {
 	char *buf = NULL;
@@ -650,10 +641,7 @@ static void change_var_and_notify_locked(transport_variable varnum,
 		 "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\"><InstanceID val=\"0\"><%s val=\"%s\"/></InstanceID></Event>",
 		 transport_variables[varnum], xml_value);
 	free(xml_value);
-	if (notify_lastchange(buf)) {
-		fprintf(stderr, "HZ: -----> push notification : %s = '%s'\n",
-			transport_variables[varnum], value);
-	}
+	notify_lastchange(buf);
 	free(buf);
 
 	LEAVE();
@@ -726,9 +714,7 @@ static void notify_changed_uris() {
 		 // next uri iif any.
 		 transport_variables[TRANSPORT_VAR_NEXT_AV_URI], xml[2],
 		 transport_variables[TRANSPORT_VAR_NEXT_AV_URI_META], xml[3]);
-	if (notify_lastchange(buf)) {
-		printf("HZ: notify all uris changed ------\n%s\n------\n", buf);
-	}
+	notify_lastchange(buf);
 	free(buf);
 	int i;
 	for (i = 0; i < 4; ++i)
@@ -752,7 +738,6 @@ static int obtain_instanceid(struct action_event *event, int *instance)
 #endif
 		return -1;
 	}
-	//printf("%s: InstanceID='%s'\n", __FUNCTION__, value);
 	free(value);
 
 	// TODO - parse value, and store in *instance, if instance!=NULL
@@ -837,7 +822,6 @@ static int set_next_avtransport_uri(struct action_event *event)
 	output_set_next_uri(value);
 	change_var_and_notify_locked(TRANSPORT_VAR_NEXT_AV_URI, value);
 
-	printf("%s: NextURI='%s'\n", __FUNCTION__, value);
 	free(value);
 	value = upnp_get_string(event, "NextURIMetaData");
 	if (value == NULL) {
@@ -1245,6 +1229,12 @@ struct service *upnp_transport_get_service(void) {
 
 void upnp_transport_init(struct device_private *device) {
 	upnp_device_ = device;
+}
+
+void upnp_tranport_register_variable_listener(variable_change_callback_t cb) {
+	// Can only register once.
+	assert(cb == NULL || variable_change_cb_ == NULL);
+	variable_change_cb_ = cb;
 }
 
 struct service transport_service_ = {

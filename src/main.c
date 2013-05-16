@@ -135,6 +135,32 @@ out:
 	return result;
 }
 
+// Sample variable change display code. Eventually to push out changes
+// on a socket for further consumption.
+static void sample_variable_change_cb(transport_variable_t var_num,
+				      const char *variable_name,
+				      const char *variable_value) {
+	const time_t now = time(NULL);
+	char time_buf[128];
+	ctime_r(&now, time_buf);
+	time_buf[strlen(time_buf) - 1] = '\0';
+	switch (var_num) {
+	case TRANSPORT_VAR_LAST_CHANGE:
+	case TRANSPORT_VAR_NEXT_AV_URI_META:
+	case TRANSPORT_VAR_CUR_TRACK_META:
+	case TRANSPORT_VAR_AV_URI_META:
+		// Noisy XML, don't print fully.
+		// TODO(hzeller): add parser in song-meta-data and print that.
+		fprintf(stderr, "[%s] %03d %s: <...>\n", time_buf,
+			var_num, variable_name);
+		break;
+	default:
+		fprintf(stderr, "[%s] %03d %s: %s\n",
+			time_buf, var_num,
+			variable_name, variable_value);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	int rc;
@@ -223,6 +249,7 @@ int main(int argc, char **argv)
 	}
 
 	upnp_transport_init(device);
+	upnp_tranport_register_variable_listener(sample_variable_change_cb);
 	upnp_control_init();
 
 	printf("Ready for rendering..\n");

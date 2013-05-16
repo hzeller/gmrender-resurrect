@@ -33,11 +33,11 @@ enum PlayFeedback {
 	PLAY_STOPPED,
 	PLAY_STARTED_NEXT_STREAM,
 };
-typedef void (*done_cb)(enum PlayFeedback);
+typedef void (*output_done_cb_t)(enum PlayFeedback);
 
 // In case the stream gets to know details about the song, this is a
 // callback with changes we send back to the controlling layer.
-typedef void (*update_meta_cb)(const struct SongMetaData *);
+typedef void (*output_update_meta_cb_t)(const struct SongMetaData *);
 
 int output_init(const char *shortname);
 int output_add_options(GOptionContext *ctx);
@@ -45,10 +45,10 @@ void output_dump_modules(void);
 
 int output_loop(void);
 
-void output_set_uri(const char *uri, update_meta_cb meta_info);
+void output_set_uri(const char *uri, output_update_meta_cb_t meta_info);
 void output_set_next_uri(const char *uri);
 
-int output_play(done_cb done_callback);
+int output_play(output_done_cb_t done_callback);
 int output_stop(void);
 int output_pause(void);
 int output_get_position(gint64 *track_dur_nanos, gint64 *track_pos_nanos);

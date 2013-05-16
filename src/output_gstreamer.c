@@ -151,8 +151,8 @@ static char *gsuri_ = NULL;         // locally strdup()ed
 static char *gs_next_uri_ = NULL;   // locally strdup()ed
 static struct SongMetaData song_meta_;
 
-static done_cb play_done_callback_ = NULL;
-static update_meta_cb meta_update_callback_ = NULL;
+static output_done_cb_t play_done_callback_ = NULL;
+static output_update_meta_cb_t meta_update_callback_ = NULL;
 
 struct track_time_info {
 	gint64 duration;
@@ -169,13 +169,14 @@ static GstState get_current_player_state() {
 
 static void output_gstreamer_set_next_uri(const char *uri) {
 	ENTER();
-	printf("%s: setting next uri to '%s'\n", __FUNCTION__, uri);
+	//printf("%s: setting next uri to '%s'\n", __FUNCTION__, uri);
 	free(gs_next_uri_);
 	gs_next_uri_ = strdup(uri);
 	LEAVE();
 }
 
-static void output_gstreamer_set_uri(const char *uri, update_meta_cb meta_cb) {
+static void output_gstreamer_set_uri(const char *uri,
+				     output_update_meta_cb_t meta_cb) {
 	ENTER();
 	printf("%s: setting uri to '%s'\n", __FUNCTION__, uri);
 	free(gsuri_);
@@ -185,7 +186,7 @@ static void output_gstreamer_set_uri(const char *uri, update_meta_cb meta_cb) {
 	LEAVE();
 }
 
-static int output_gstreamer_play(done_cb callback) {
+static int output_gstreamer_play(output_done_cb_t callback) {
 	int result = -1;
 	play_done_callback_ = callback;
 	ENTER();
