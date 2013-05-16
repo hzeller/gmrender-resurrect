@@ -51,8 +51,8 @@
 #include "upnp.h"
 #include "upnp_device.h"
 
-struct device_private {
-	struct device *upnp_device;
+struct upnp_device {
+	struct upnp_device_descriptor *upnp_device_descriptor;
 #ifdef HAVE_LIBUPNP
 	ithread_mutex_t device_mutex;
         UpnpDevice_Handle device_handle;
@@ -138,10 +138,6 @@ int upnp_append_variable(struct action_event *event,
 	ithread_mutex_lock(service->service_mutex);
 #endif
 
-#if 0
-	fprintf(stderr, "\tHZ: %s = '%s'\n", service->variable_names[varnum],
-		service->variable_values[varnum]);
-#endif
 	value = service->variable_values[varnum];
 	assert(value != NULL);
 	retval = upnp_add_response(event, paramname, value);
@@ -208,7 +204,7 @@ char *upnp_get_string(struct action_event *event, const char *key)
 }
 
 #ifdef HAVE_LIBUPNP
-static int handle_subscription_request(struct device_private *priv,
+static int handle_subscription_request(struct upnp_device *priv,
                                        struct Upnp_Subscription_Request
                                               *sr_event)
 {
@@ -229,7 +225,7 @@ static int handle_subscription_request(struct device_private *priv,
 	printf("  %s\n", sr_event->UDN);
 	printf("  %s\n", sr_event->ServiceId);
 
-	srv = find_service(priv->upnp_device, sr_event->ServiceId);
+	srv = find_service(priv->upnp_device_descriptor, sr_event->ServiceId);
 	if (srv == NULL) {
 		fprintf(stderr, "%s: Unknown service '%s'\n", __FUNCTION__,
 			sr_event->ServiceId);
@@ -289,14 +285,14 @@ out:
 }
 #endif
 
-int upnp_device_notify(struct device_private *priv,
+int upnp_device_notify(struct upnp_device *device,
                        const char *serviceID,
                        const char **varnames,
                        const char **varvalues, int varcount)
 {
 #ifdef HAVE_LIBUPNP
-        UpnpNotify(priv->device_handle, 
-                   priv->upnp_device->udn,
+        UpnpNotify(device->device_handle, 
+                   device->upnp_device_descriptor->udn,
                    serviceID, varnames,
                    varvalues, varcount);
 #endif
@@ -306,13 +302,14 @@ int upnp_device_notify(struct device_private *priv,
 
 
 #ifdef HAVE_LIBUPNP
-static int handle_action_request(struct device_private *priv,
+static int handle_action_request(struct upnp_device *priv,
                                  struct Upnp_Action_Request *ar_event)
 {
 	struct service *event_service;
 	struct action *event_action;
 
-	event_service = find_service(priv->upnp_device, ar_event->ServiceID);
+	event_service = find_service(priv->upnp_device_descriptor,
+				     ar_event->ServiceID);
 	event_action = find_action(event_service, ar_event->ActionName);
 
 	if (event_action == NULL) {
@@ -367,7 +364,7 @@ static int handle_action_request(struct device_private *priv,
 #ifdef HAVE_LIBUPNP
 static int event_handler(Upnp_EventType EventType, void *event, void *Cookie)
 {
-	struct device_private *priv = (struct device_private *)Cookie;
+	struct upnp_device *priv = (struct upnp_device *)Cookie;
 	switch (EventType) {
 	case UPNP_CONTROL_ACTION_REQUEST:
 		handle_action_request(priv, event);
@@ -389,8 +386,8 @@ static int event_handler(Upnp_EventType EventType, void *event, void *Cookie)
 #endif
 
 
-struct device_private *upnp_device_init(struct device *device_def,
-					const char *ip_address)
+struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
+				     const char *ip_address)
 {
 	int rc;
 #ifdef HAVE_LIBUPNP
@@ -399,7 +396,7 @@ struct device_private *upnp_device_init(struct device *device_def,
 	struct service *srv;
 	struct icon *icon_entry;
 	char *buf;
-	struct device_private *priv = NULL;
+	struct upnp_device *priv = NULL;
 	int i;
 
 	assert(device_def != NULL);
@@ -413,12 +410,10 @@ struct device_private *upnp_device_init(struct device *device_def,
 	}
 
 	priv = malloc(sizeof(*priv));
-	priv->upnp_device = device_def;
+	priv->upnp_device_descriptor = device_def;
 #ifdef HAVE_LIBUPNP
 	ithread_mutex_init(&(priv->device_mutex), NULL);
 #endif
-
-	//upnp_device = device_def;
 
 	/* register icons in web server */
         for (i=0; (icon_entry = device_def->icons[i]); i++) {
@@ -485,7 +480,7 @@ out:
 }
 
 
-struct service *find_service(struct device *device_def,
+struct service *find_service(struct upnp_device_descriptor *device_def,
                              char *service_name)
 {
 	struct service *event_service;
@@ -542,8 +537,9 @@ static struct xmlelement *gen_desc_iconlist(struct xmldoc *doc, struct icon **ic
 }
 
 
-static struct xmlelement *gen_desc_servicelist(struct device *device_def,
-                                          struct xmldoc *doc)
+static struct xmlelement *
+gen_desc_servicelist(struct upnp_device_descriptor *device_def,
+		     struct xmldoc *doc)
 {
 	int i;
 	struct service *srv;
@@ -567,7 +563,7 @@ static struct xmlelement *gen_desc_servicelist(struct device *device_def,
 
 
 
-static struct xmldoc *generate_desc(struct device *device_def)
+static struct xmldoc *generate_desc(struct upnp_device_descriptor *device_def)
 {
 	struct xmldoc *doc;
 	struct xmlelement *root;
@@ -604,7 +600,7 @@ static struct xmldoc *generate_desc(struct device *device_def)
 	return doc;
 }
 
-char *upnp_get_device_desc(struct device *device_def)
+char *upnp_get_device_desc(struct upnp_device_descriptor *device_def)
 {
         char *result = NULL;
         struct xmldoc *doc;

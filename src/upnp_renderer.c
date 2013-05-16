@@ -76,7 +76,7 @@ static struct icon *renderer_icon[] = {
 
 static int upnp_renderer_init(void);
 
-static struct device render_device = {
+static struct upnp_device_descriptor render_device = {
 	.init_function          = upnp_renderer_init,
         .device_type            = "urn:schemas-upnp-org:device:MediaRenderer:1",
         .friendly_name          = "GMediaRender",

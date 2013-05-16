@@ -107,7 +107,7 @@ struct action_event {
 	struct Upnp_Action_Request *request;
 	int status;
 	struct service *service;
-	struct device_private *device_priv;
+	struct upnp_device *device_priv;  // TODO(hzeller) : rename
 };
 
 struct action *find_action(struct service *event_service,

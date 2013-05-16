@@ -463,7 +463,7 @@ static struct argument **argument_list[] = {
 
 // Our 'instance' variables.
 static enum transport_state transport_state_ = TRANSPORT_STOPPED;
-static struct device_private *upnp_device_ = NULL;
+static struct upnp_device *upnp_device_ = NULL;
 extern struct service transport_service_;   // Defined below.
 static variable_change_callback_t variable_change_cb_ = NULL;
 
@@ -1227,7 +1227,7 @@ struct service *upnp_transport_get_service(void) {
 	return &transport_service_;
 }
 
-void upnp_transport_init(struct device_private *device) {
+void upnp_transport_init(struct upnp_device *device) {
 	upnp_device_ = device;
 }
 

@@ -24,6 +24,9 @@
 #ifndef _XMLDOC_H
 #define _XMLDOC_H
 
+struct xmldoc;
+struct xmlelement;
+
 struct xmldoc *xmldoc_new(void);
 
 int xmldoc_free(struct xmldoc *doc);

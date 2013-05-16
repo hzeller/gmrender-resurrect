@@ -27,7 +27,7 @@
 struct service;
 
 struct service *upnp_transport_get_service(void);
-void upnp_transport_init(struct device_private *);
+void upnp_transport_init(struct upnp_device *);
 
 typedef enum {
 	TRANSPORT_VAR_TRANSPORT_STATUS,

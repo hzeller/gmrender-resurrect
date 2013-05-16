@@ -165,7 +165,7 @@ int main(int argc, char **argv)
 {
 	int rc;
 	int result = EXIT_FAILURE;
-	struct device *upnp_renderer;
+	struct upnp_device_descriptor *upnp_renderer;
 
 	rc = process_cmdline(argc, argv);
 	if (rc != 0) {
@@ -241,7 +241,7 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	struct device_private *device;
+	struct upnp_device *device;
 	device = upnp_device_init(upnp_renderer, ip_address);
 	if (device == NULL) {
 		fprintf(stderr,"ERROR: Failed to initialize UPnP device\n");
