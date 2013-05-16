@@ -325,7 +325,7 @@ static int handle_action_request(struct upnp_device *priv,
 		event.request = ar_event;
 		event.status = 0;
 		event.service = event_service;
-                event.device_priv = priv;
+                event.device = priv;
 
 		rc = (event_action->callback) (&event);
 		if (rc == 0) {

@@ -129,8 +129,9 @@ static int upnp_renderer_init(void)
         return connmgr_init();
 }
 
-struct device *upnp_renderer_new(const char *friendly_name,
-                                 const char *uuid)
+struct upnp_device_descriptor *
+upnp_renderer_descriptor(const char *friendly_name,
+			 const char *uuid)
 {
 	ENTER();
 	char *udn;

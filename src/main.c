@@ -222,7 +222,7 @@ int main(int argc, char **argv)
 	}
 #endif
 
-	upnp_renderer = upnp_renderer_new(friendly_name, uuid);
+	upnp_renderer = upnp_renderer_descriptor(friendly_name, uuid);
 	if (upnp_renderer == NULL) {
 		goto out;
 	}

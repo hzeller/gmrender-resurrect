@@ -524,7 +524,7 @@ static void notify_lastchange(struct action_event *event,
 	replace_var(CONTROL_VAR_LAST_CHANGE, value);
 
 	varvalues[0] = xmlescape(value, 0);
-	upnp_device_notify(event->device_priv,
+	upnp_device_notify(event->device,
 	                   control_service_.service_name,
 	                   varnames,
 	                   varvalues, 1);

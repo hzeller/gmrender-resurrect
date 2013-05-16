@@ -28,7 +28,8 @@ void upnp_renderer_dump_connmgr_scpd(void);
 void upnp_renderer_dump_control_scpd(void);
 void upnp_renderer_dump_transport_scpd(void);
 
-struct device *upnp_renderer_new(const char *friendly_name,
-                                 const char *uuid);
+// Returned pointer not owned.
+struct upnp_device_descriptor *upnp_renderer_descriptor(const char *name,
+							const char *uuid);
 
 #endif /* _UPNP_RENDERER_H */
