@@ -137,15 +137,16 @@ out:
 
 // Sample variable change display code. Eventually to push out changes
 // on a socket for further consumption.
-static void sample_variable_change_cb(transport_variable_t var_num,
+static void sample_variable_change_cb(void *notused, int var_num,
 				      const char *variable_name,
+				      const char *old_value,
 				      const char *variable_value) {
 	const time_t now = time(NULL);
 	char time_buf[128];
 	ctime_r(&now, time_buf);
 	time_buf[strlen(time_buf) - 1] = '\0';
 	switch (var_num) {
-	case TRANSPORT_VAR_LAST_CHANGE:
+		//case TRANSPORT_VAR_LAST_CHANGE:
 	case TRANSPORT_VAR_NEXT_AV_URI_META:
 	case TRANSPORT_VAR_CUR_TRACK_META:
 	case TRANSPORT_VAR_AV_URI_META:
@@ -249,7 +250,8 @@ int main(int argc, char **argv)
 	}
 
 	upnp_transport_init(device);
-	upnp_tranport_register_variable_listener(sample_variable_change_cb);
+	upnp_tranport_register_variable_listener(sample_variable_change_cb,
+						 NULL);
 	upnp_control_init();
 
 	printf("Ready for rendering..\n");

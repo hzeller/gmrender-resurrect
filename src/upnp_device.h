@@ -45,6 +45,7 @@ struct upnp_device_descriptor {
 
 // ..  and this 'device'. This is an opaque type containing internals.
 struct upnp_device;
+struct action_event;
 
 struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 				     const char *ip_address);

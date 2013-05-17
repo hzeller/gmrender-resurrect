@@ -53,6 +53,13 @@ int xmlelement_set_attribute(struct xmldoc *doc,
 void add_value_element(struct xmldoc *doc,
                        struct xmlelement *parent,
                        const char *tagname, const char *value);
+
+struct xmlelement *add_attributevalue_element(struct xmldoc *doc,
+					      struct xmlelement *parent,
+					      const char *tagname,
+					      const char *attribute_name,
+					      const char *value);
+
 void add_value_element_int(struct xmldoc *doc,
                            struct xmlelement *parent,
                            const char *tagname, int value);

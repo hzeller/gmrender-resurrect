@@ -46,6 +46,7 @@
 #include "upnp_device.h"
 #include "output.h"
 #include "upnp_transport.h"
+#include "variable-container.h"
 
 #define TRANSPORT_SERVICE "urn:schemas-upnp-org:service:AVTransport:1"
 #define TRANSPORT_TYPE "urn:schemas-upnp-org:service:AVTransport:1"
@@ -129,9 +130,6 @@ static const char *transport_variables[] = {
 	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] = "CurrentTransportActions",
 	[TRANSPORT_VAR_UNKNOWN] = NULL
 };
-
-// These are writable and changing at runtime.
-static const char *transport_values[TRANSPORT_VAR_COUNT];
 
 static const char *default_transport_values[] = {
 	[TRANSPORT_VAR_TRANSPORT_STATE] = "STOPPED",
@@ -465,7 +463,9 @@ static struct argument **argument_list[] = {
 static enum transport_state transport_state_ = TRANSPORT_STOPPED;
 static struct upnp_device *upnp_device_ = NULL;
 extern struct service transport_service_;   // Defined below.
-static variable_change_callback_t variable_change_cb_ = NULL;
+static variable_container_t *state_variables_ = NULL;
+static upnp_last_change_collector_t *upnp_collector_ = NULL;
+static const char **hack_variables_ = NULL;  // tmp access.
 
 /* protects transport_values, and service-specific state */
 
@@ -478,10 +478,16 @@ static void service_lock(void)
 #ifdef HAVE_LIBUPNP
 	ithread_mutex_lock(&transport_mutex);
 #endif
+	if (upnp_collector_) {
+		UPnPLastChangeCollector_start_transaction(upnp_collector_);
+	}
 }
 
 static void service_unlock(void)
 {
+	if (upnp_collector_) {
+		UPnPLastChangeCollector_commit(upnp_collector_);
+	}
 #ifdef HAVE_LIBUPNP
 	ithread_mutex_unlock(&transport_mutex);
 #endif
@@ -554,52 +560,7 @@ static int get_media_info(struct action_event *event)
 
 // Replace given variable without sending an state-change event.
 static int replace_var(transport_variable_t varnum, const char *new_value) {
-	if ((varnum < 0) || (varnum >= TRANSPORT_VAR_UNKNOWN)) {
-		fprintf(stderr, "Attempt to set bogus variable '%d' to '%s'\n",
-			varnum, new_value);
-		return 0;
-	}
-	if (new_value == NULL) {
-		new_value = "";
-	}
-
-	if (strcmp(transport_values[varnum], new_value) == 0) {
-		return 0;  // same value.
-	}
-
-	free((char*)transport_values[varnum]);
-	transport_values[varnum] = strdup(new_value);
-	if (variable_change_cb_) {
-		variable_change_cb_(varnum, transport_variables[varnum],
-				    transport_values[varnum]);
-	}
-	return 1;
-}
-
-// Notify about change and return if the value had to be sent.
-// This pushes the LastChange variable, that encodes recent changes in one
-// XML document.
-static int notify_lastchange(const char *value)
-{
-	const char *varnames[] = {
-		"LastChange",
-		NULL
-	};
-	const char *varvalues[] = {
-		NULL, NULL
-	};
-
-
-	if (!replace_var(TRANSPORT_VAR_LAST_CHANGE, value))
-		return 0;  // nothing to notify.
-
-	varvalues[0] = xmlescape(value, 0);
-	upnp_device_notify(upnp_device_,
-	                   transport_service_.service_name,
-	                   varnames,
-	                   varvalues, 1);
-	free((char*)varvalues[0]);
-	return 1;
+	return VariableContainer_change(state_variables_, varnum, new_value);
 }
 
 // Transport uri always comes in uri/meta pairs. Set these and also the related
@@ -627,41 +588,18 @@ static int replace_transport_uri_and_meta(const char *uri, const char *meta) {
 	return requires_stream_meta_callback;
 }
 
-/* Expects service-lock mutex to be locked */
-static void change_var_and_notify_locked(transport_variable_t varnum,
-					 const char *value)
-{
-	char *buf = NULL;
-
-	ENTER();
-	replace_var(varnum, value);
-
-	char *xml_value = xmlescape(transport_values[varnum], 1);
-	asprintf(&buf,
-		 "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\"><InstanceID val=\"0\"><%s val=\"%s\"/></InstanceID></Event>",
-		 transport_variables[varnum], xml_value);
-	free(xml_value);
-	notify_lastchange(buf);
-	free(buf);
-
-	LEAVE();
-
-	return;
-}
-
 static void change_and_notify_transport_locked(enum transport_state new_state) {
-	const int state_different = (transport_state_ != new_state);
 	transport_state_ = new_state;
 	assert(new_state >= TRANSPORT_STOPPED
 	       && new_state < TRANSPORT_NO_MEDIA_PRESENT);
-	change_var_and_notify_locked(TRANSPORT_VAR_TRANSPORT_STATE,
-				     transport_states[new_state]);
-	if (!state_different)
-		return;
+	if (!replace_var(TRANSPORT_VAR_TRANSPORT_STATE,
+			 transport_states[new_state])) {
+		return;  // no change.
+	}
 	const char *available_actions = NULL;
 	switch (new_state) {
 	case TRANSPORT_STOPPED:
-		if (strlen(transport_values[TRANSPORT_VAR_AV_URI]) == 0) {
+		if (strlen(hack_variables_[TRANSPORT_VAR_AV_URI]) == 0) {
 			available_actions = "PLAY";
 		} else {
 			available_actions = "PLAY,SEEK";
@@ -681,46 +619,9 @@ static void change_and_notify_transport_locked(enum transport_state new_state) {
 		break;
 	}
 	if (available_actions) {
-		change_var_and_notify_locked(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS,
-					     available_actions);
+		replace_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS,
+			    available_actions);
 	}
-}
-
-// Atomic update about all URIs at once.
-static void notify_changed_uris() {
-	char *buf = NULL;
-	ENTER();
-	char *xml[4];
-	xml[0] = xmlescape(transport_values[TRANSPORT_VAR_AV_URI], 1);
-	xml[1] = xmlescape(transport_values[TRANSPORT_VAR_AV_URI_META], 1);
-	xml[2] = xmlescape(transport_values[TRANSPORT_VAR_NEXT_AV_URI], 1);
-	xml[3] = xmlescape(transport_values[TRANSPORT_VAR_NEXT_AV_URI_META], 1);
-	asprintf(&buf,
-		 "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\">"
-		 "<InstanceID val=\"0\">\n"
-		 "\t<%s val=\"%s\"/>\n"
-		 "\t<%s val=\"%s\"/>\n"
-		 "\t<%s val=\"%s\"/>\n"
-		 "\t<%s val=\"%s\"/>\n"
-		 "\t<%s val=\"%s\"/>\n"
-		 "\t<%s val=\"%s\"/>\n"
-		 "</InstanceID></Event>",
-		 // transport uri
-		 transport_variables[TRANSPORT_VAR_AV_URI], xml[0],
-		 transport_variables[TRANSPORT_VAR_AV_URI_META], xml[1],
-		 // current track, same as these
-		 transport_variables[TRANSPORT_VAR_CUR_TRACK_URI], xml[0],
-		 transport_variables[TRANSPORT_VAR_CUR_TRACK_META], xml[1],
-		 // next uri iif any.
-		 transport_variables[TRANSPORT_VAR_NEXT_AV_URI], xml[2],
-		 transport_variables[TRANSPORT_VAR_NEXT_AV_URI_META], xml[3]);
-	notify_lastchange(buf);
-	free(buf);
-	int i;
-	for (i = 0; i < 4; ++i)
-		free(xml[i]);
-	LEAVE();
-	return;
 }
 
 static int obtain_instanceid(struct action_event *event, int *instance)
@@ -752,12 +653,11 @@ static void update_meta_from_stream(const struct SongMetaData *meta) {
 	if (meta->title == NULL || strlen(meta->title) == 0) {
 		return;
 	}
-	const char *original_xml = transport_values[TRANSPORT_VAR_AV_URI_META];
+	const char *original_xml = hack_variables_[TRANSPORT_VAR_AV_URI_META];
 	char *didl = SongMetaData_to_DIDL(meta, original_xml);
 	service_lock();
 	replace_var(TRANSPORT_VAR_AV_URI_META, didl);
 	replace_var(TRANSPORT_VAR_CUR_TRACK_META, didl);
-	notify_changed_uris();
 	service_unlock();
 	free(didl);
 }
@@ -781,15 +681,12 @@ static int set_avtransport_uri(struct action_event *event)
 	}
 
 	service_lock();
-
 	char *meta = upnp_get_string(event, "CurrentURIMetaData");
 	int requires_meta_update = replace_transport_uri_and_meta(uri, meta);
 
 	output_set_uri(uri, (requires_meta_update
 			     ? update_meta_from_stream
 			     : NULL));
-
-	notify_changed_uris();
 	service_unlock();
 
 	free(uri);
@@ -820,15 +717,14 @@ static int set_next_avtransport_uri(struct action_event *event)
 	service_lock();
 
 	output_set_next_uri(value);
-	change_var_and_notify_locked(TRANSPORT_VAR_NEXT_AV_URI, value);
-
+	replace_var(TRANSPORT_VAR_NEXT_AV_URI, value);
 	free(value);
+
 	value = upnp_get_string(event, "NextURIMetaData");
 	if (value == NULL) {
 		rc = -1;
 	} else {
-		change_var_and_notify_locked(TRANSPORT_VAR_NEXT_AV_URI_META,
-					     value);
+		replace_var(TRANSPORT_VAR_NEXT_AV_URI_META, value);
 		free(value);
 	}
 
@@ -1024,8 +920,7 @@ static int stop(struct action_event *event)
 	service_lock();
 	switch (transport_state_) {
 	case TRANSPORT_STOPPED:
-		// For clients that didn't get it.
-		change_and_notify_transport_locked(TRANSPORT_STOPPED);
+		// nothing to change.
 		break;
 	case TRANSPORT_PLAYING:
 	case TRANSPORT_TRANSITIONING:
@@ -1057,15 +952,13 @@ static void inform_done_playing(enum PlayFeedback fb) {
 	case PLAY_STOPPED:
 		replace_transport_uri_and_meta("", "");
 		change_and_notify_transport_locked(TRANSPORT_STOPPED);
-		notify_changed_uris();
 		break;
 	case PLAY_STARTED_NEXT_STREAM:
 		replace_transport_uri_and_meta(
-			   transport_values[TRANSPORT_VAR_NEXT_AV_URI],
-			   transport_values[TRANSPORT_VAR_NEXT_AV_URI_META]);
+			   hack_variables_[TRANSPORT_VAR_NEXT_AV_URI],
+			   hack_variables_[TRANSPORT_VAR_NEXT_AV_URI_META]);
 		replace_var(TRANSPORT_VAR_NEXT_AV_URI, "");
 		replace_var(TRANSPORT_VAR_NEXT_AV_URI_META, "");
-		notify_changed_uris();
 		break;
 	}
 	service_unlock();
@@ -1085,9 +978,8 @@ static int play(struct action_event *event)
 	service_lock();
 	switch (transport_state_) {
 	case TRANSPORT_PLAYING:
-		// For clients that didn't get it.
-		change_and_notify_transport_locked(TRANSPORT_PLAYING);
-		// Set TransportPlaySpeed to '1'
+		// nothing to change.
+		// TODO: Set TransportPlaySpeed to '1'
 		break;
 	case TRANSPORT_STOPPED:
 	case TRANSPORT_PAUSED_PLAYBACK:
@@ -1130,8 +1022,7 @@ static int pause_stream(struct action_event *event)
 	service_lock();
 	switch (transport_state_) {
         case TRANSPORT_PAUSED_PLAYBACK:
-		// For clients that didn't get it.
-		change_and_notify_transport_locked(TRANSPORT_PAUSED_PLAYBACK);
+		// Nothing to change.
 		break;
 
 	case TRANSPORT_PLAYING:
@@ -1178,8 +1069,7 @@ static int seek(struct action_event *event)
 			// pretend to already be there. Should we go into
 			// TRANSITION mode ?
 			// (gstreamer will go into PAUSE, then PLAYING)
-			change_var_and_notify_locked(TRANSPORT_VAR_REL_TIME_POS,
-						     target);
+			replace_var(TRANSPORT_VAR_REL_TIME_POS, target);
 		}
 		service_unlock();
 		free(target);
@@ -1213,28 +1103,30 @@ static struct action transport_actions[] = {
 };
 
 struct service *upnp_transport_get_service(void) {
-	static int service_initialized = 0;
-	if (!service_initialized) {
-		int i;
-		for (i = 0; i < TRANSPORT_VAR_COUNT; ++i) {
-			transport_values[i] 
-				= strdup(default_transport_values[i]
-					 ? default_transport_values[i]
-					 : "");
-		}
-		service_initialized = 1;
+	if (transport_service_.variable_values == NULL) {
+		state_variables_ =
+			VariableContainer_new(TRANSPORT_VAR_COUNT,
+					      transport_variables,
+					      default_transport_values);
+
+		transport_service_.variable_values =
+			VariableContainer_get_values_hack(state_variables_);
+		hack_variables_ = transport_service_.variable_values;	    
 	}
 	return &transport_service_;
 }
 
 void upnp_transport_init(struct upnp_device *device) {
 	upnp_device_ = device;
+	assert(upnp_collector_ == NULL);
+	upnp_collector_ = UPnPLastChangeCollector_new(state_variables_,
+						      TRANSPORT_VAR_LAST_CHANGE,
+						      device, TRANSPORT_SERVICE);
 }
 
-void upnp_tranport_register_variable_listener(variable_change_callback_t cb) {
-	// Can only register once.
-	assert(cb == NULL || variable_change_cb_ == NULL);
-	variable_change_cb_ = cb;
+void upnp_tranport_register_variable_listener(variable_change_listener_t cb,
+					      void *userdata) {
+	VariableContainer_register_callback(state_variables_, cb, userdata);
 }
 
 struct service transport_service_ = {
@@ -1246,7 +1138,7 @@ struct service transport_service_ = {
 	.actions =              transport_actions,
 	.action_arguments =     argument_list,
 	.variable_names =       transport_variables,
-	.variable_values =      transport_values,
+	.variable_values =      NULL, // set later.
 	.variable_meta =        transport_var_meta,
 	.variable_count =       TRANSPORT_VAR_UNKNOWN,
 	.command_count =        TRANSPORT_CMD_UNKNOWN,

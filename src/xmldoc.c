@@ -165,6 +165,21 @@ void add_value_element(struct xmldoc *doc,
         xmlelement_add_text(doc, top, value);
         xmlelement_add_element(doc, parent, top);
 }
+
+struct xmlelement *add_attributevalue_element(struct xmldoc *doc,
+					      struct xmlelement *parent,
+					      const char *tagname,
+					      const char *attribute_name,
+					      const char *value)
+{
+        struct xmlelement *top;
+
+        top = xmlelement_new(doc, tagname);
+        xmlelement_set_attribute(doc, top, attribute_name, value);
+        xmlelement_add_element(doc, parent, top);
+	return top;
+}
+
 void add_value_element_int(struct xmldoc *doc,
                            struct xmlelement *parent,
                            const char *tagname, int value)

@@ -425,7 +425,7 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
        		buf = upnp_get_scpd(srv);
 		assert(buf != NULL);
                 printf("registering '%s'\n", srv->scpd_url);
-		webserver_register_buf(srv->scpd_url,buf,"text/xml");
+		webserver_register_buf(srv->scpd_url, buf, "text/xml");
 	}
 
 #ifdef HAVE_LIBUPNP

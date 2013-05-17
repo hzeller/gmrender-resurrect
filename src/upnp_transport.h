@@ -24,6 +24,8 @@
 #ifndef _UPNP_TRANSPORT_H
 #define _UPNP_TRANSPORT_H
 
+#include "variable-container.h"
+
 struct service;
 
 struct service *upnp_transport_get_service(void);
@@ -64,12 +66,9 @@ typedef enum {
 	TRANSPORT_VAR_COUNT
 } transport_variable_t;
 
-typedef void (*variable_change_callback_t)(transport_variable_t var_num,
-					   const char *variable_name,
-					   const char *variable_value);
-
 // Register a callback to get informed when variables change. This should
 // return quickly.
-void upnp_tranport_register_variable_listener(variable_change_callback_t cb);
+void upnp_tranport_register_variable_listener(variable_change_listener_t cb,
+					      void *userdata);
 
 #endif /* _UPNP_TRANSPORT_H */
