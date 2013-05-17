@@ -811,7 +811,7 @@ static void print_upnp_time_into_buffer(char *buf, size_t size, gint64 t) {
 	const int second = divide_leave_remainder(&t, one_sec);
 	const int milli_second = t / 1000000;
 	snprintf(buf, size, "%d:%02d:%02d.%03d", hour, minute, second,
-		 milli_second);
+		 milli_second / 100 * 100);  // quantize to 100
 }
 
 static gint64 parse_upnp_time(const char *time_string) {
