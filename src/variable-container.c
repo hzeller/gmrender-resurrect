@@ -159,6 +159,9 @@ static void UPnPLastChangeCollector_notify(upnp_last_change_collector_t *obj) {
 	free(xml_document);
 }
 
+// The actual callback collecting changes by building an <Event/> XML document.
+// This is not very robust if in the same transaction, we get the same variable
+// changed twice -- it emits two changes.
 static void UPnPLastChangeCollector_callback(void *userdata,
 					     int var_num, const char *var_name,
 					     const char *old_value,
@@ -173,6 +176,7 @@ static void UPnPLastChangeCollector_callback(void *userdata,
 		struct xmlelement *toplevel =
 			xmldoc_new_topelement(object->change_event_doc, "Event",
 				     "urn:schemas-upnp-org:metadata-1-0/AVT/");
+		// Right now, we only have exactly one instance.
 		object->instance_element =
 			add_attributevalue_element(object->change_event_doc,
 						   toplevel,
