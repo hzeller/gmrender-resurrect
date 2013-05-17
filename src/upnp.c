@@ -115,8 +115,9 @@ static struct xmlelement *gen_scpd_actionlist(struct xmldoc *doc,
 	return top;
 }
 
-static struct xmlelement *gen_scpd_statevar(struct xmldoc *doc, const char *name, struct var_meta *meta)
-{
+static struct xmlelement *gen_scpd_statevar(struct xmldoc *doc,
+					    const char *name,
+					    struct var_meta *meta) {
 	struct xmlelement *top,*parent;
 	const char **valuelist;
 	const char *default_value;
@@ -125,7 +126,6 @@ static struct xmlelement *gen_scpd_statevar(struct xmldoc *doc, const char *name
 	valuelist = meta->allowed_values;
 	range = meta->allowed_range;
 	default_value = meta->default_value;
-
 
 	top=xmlelement_new(doc, "stateVariable");
 

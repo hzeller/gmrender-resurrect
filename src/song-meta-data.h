@@ -1,6 +1,6 @@
 /* song-meta-data - Object holding meta data for a song.
  *
- * Copyright (C) 2012 Henner Zellre
+ * Copyright (C) 2012 Henner Zeller
  *
  * This file is part of GMediaRender.
  *
