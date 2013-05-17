@@ -43,7 +43,6 @@ struct variable_container {
 	const char **variable_names;
 	char **values;
 	struct cb_list *callbacks;
-	// TODO: mutex.
 };
 
 variable_container_t *VariableContainer_new(int variable_num,
@@ -65,7 +64,11 @@ variable_container_t *VariableContainer_new(int variable_num,
 }
 
 void VariableContainer_delete(variable_container_t *object) {
+	for (int i = 0; i < object->variable_num; ++i) {
+		free(object->values[i]);
+	}
 	free(object->values);
+
 	for (struct cb_list *list = object->callbacks; list; /**/) {
 		struct cb_list *next = list->next;
 		free(list);
