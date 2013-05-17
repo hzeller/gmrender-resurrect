@@ -25,7 +25,10 @@
 #include "config.h"
 #endif
 
+#include "upnp_control.h"
+
 #define _GNU_SOURCE         /* See feature_test_macros(7) */
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -39,12 +42,11 @@
 
 #include "webserver.h"
 #include "upnp.h"
-#include "upnp_control.h"
 #include "upnp_device.h"
 #include "output.h"
 #include "xmlescape.h"
+#include "variable-container.h"
 
-//#define CONTROL_SERVICE "urn:upnp-org:serviceId:RenderingControl"
 #define CONTROL_SERVICE "urn:schemas-upnp-org:service:RenderingControl"
 #define CONTROL_TYPE "urn:schemas-upnp-org:service:RenderingControl:1"
 #define CONTROL_SCPD_URL "/upnp/rendercontrolSCPD.xml"
@@ -220,7 +222,6 @@ static struct var_meta control_var_meta[] = {
 	[CONTROL_VAR_UNKNOWN] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
 };
 
-static const char *control_values[CONTROL_VAR_COUNT];
 static const char *default_control_values[] = {
 	[CONTROL_VAR_LAST_CHANGE] = "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\"/>",
 	[CONTROL_VAR_PRESET_NAME_LIST] = "",
@@ -247,6 +248,8 @@ static const char *default_control_values[] = {
 };
 
 extern struct service control_service_;   // Defined below.
+static variable_container_t *state_variables_ = NULL;
+static upnp_last_change_collector_t *upnp_collector_ = NULL;
 
 #ifdef HAVE_LIBUPNP
 static ithread_mutex_t control_mutex;
@@ -257,10 +260,16 @@ static void service_lock(void)
 #ifdef HAVE_LIBUPNP
 	ithread_mutex_lock(&control_mutex);
 #endif
+	if (upnp_collector_) {
+		UPnPLastChangeCollector_start_transaction(upnp_collector_);
+	}
 }
 
 static void service_unlock(void)
 {
+	if (upnp_collector_) {
+		UPnPLastChangeCollector_commit(upnp_collector_);
+	}
 #ifdef HAVE_LIBUPNP
 	ithread_mutex_unlock(&control_mutex);
 #endif
@@ -495,100 +504,12 @@ static struct argument **argument_list[] = {
 
 // Replace given variable without sending an state-change event.
 static void replace_var(control_variable varnum, const char *new_value) {
-	if ((varnum < 0) || (varnum >= CONTROL_VAR_UNKNOWN)) {
-		fprintf(stderr, "Attempt to set bogus variable '%d' to '%s'\n",
-			varnum, new_value);
-		return;
-	}
-	if (new_value == NULL) {
-		new_value = "";
-	}
-	//fprintf(stderr, "control: setting %s = '%s'\n", control_variables[varnum], new_value);
-	free((char*)control_values[varnum]);
-	control_values[varnum] = strdup(new_value);
+	VariableContainer_change(state_variables_, varnum, new_value);
 }
 
-// TODO: this code is somewhat duplicate in upnp_transport.
-static void notify_lastchange(struct action_event *event,
-			      const char *value)
-{
-	const char *varnames[] = {
-		"LastChange",
-		NULL
-	};
-	const char *varvalues[] = {
-		NULL, NULL
-	};
-
-
-	replace_var(CONTROL_VAR_LAST_CHANGE, value);
-
-	varvalues[0] = xmlescape(value, 0);
-	upnp_device_notify(event->device,
-	                   control_service_.service_name,
-	                   varnames,
-	                   varvalues, 1);
-	free((char*)varvalues[0]);
-}
-
-static void change_var_and_notify(struct action_event *event,
-				  control_variable varnum, const char *value)
-{
-	char *buf;
-
-	replace_var(varnum, value);
-
-	char *xml_value = xmlescape(control_values[varnum], 1);
-	asprintf(&buf,
-		 "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\"><InstanceID val=\"0\">"
-		 "<%s val=\"%s\"/></InstanceID></Event>",
-		 control_variables[varnum], xml_value);
-	free(xml_value);
-	fprintf(stderr, "HZ: ----------------------------------------------- push notification : %s = '%s'\n",
-		control_variables[varnum], value);
-
-	notify_lastchange(event, buf);
-	free(buf);
-
-	return;
-}
-
-// Change volume. Also for setting the initial volume that we read from the
-// output device. This prepares a LastChange variable that can be send as an
-// initial change.
 static void change_volume(const char *volume, const char *db_volume) {
-	char *buf;
-
 	replace_var(CONTROL_VAR_VOLUME, volume);
 	replace_var(CONTROL_VAR_VOLUME_DB, db_volume);
-
-	char *xml[2];
-	xml[0] = xmlescape(control_values[CONTROL_VAR_VOLUME], 1);
-	xml[1] = xmlescape(control_values[CONTROL_VAR_VOLUME_DB], 1);
-	asprintf(&buf,
-		 "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\">"
-		 "<InstanceID val=\"0\">\n"
-		 "\t<%s val=\"%s\"/>\n"
-		 "\t<%s val=\"%s\"/>\n"
-		 "</InstanceID></Event>",
-		 control_variables[CONTROL_VAR_VOLUME], xml[0],
-		 control_variables[CONTROL_VAR_VOLUME_DB], xml[1]);
-	replace_var(CONTROL_VAR_LAST_CHANGE, buf);
-	free(buf);
-	int i;
-	for (i = 0; i < 2; ++i) {
-		free(xml[i]);
-	}
-}
-
-// Volume and Volume DB change both at once. Only send one event.
-// Event can be NULL in which case only the variable is changed.
-static void change_volume_and_notify(struct action_event *event,
-				     const char *volume, const char *db_volume) {
-	change_volume(volume, db_volume);
-	if (event) {
-		notify_lastchange(event, strdup(control_values[CONTROL_VAR_LAST_CHANGE]));
-	}
 }
 
 static int cmd_obtain_variable(struct action_event *event, int varnum,
@@ -700,7 +621,7 @@ static int set_mute(struct action_event *event) {
 	service_lock();
 	const int do_mute = atoi(value);
 	set_mute_toggle(do_mute);
-	change_var_and_notify(event, CONTROL_VAR_MUTE, do_mute ? "1" : "0");
+	replace_var(CONTROL_VAR_MUTE, do_mute ? "1" : "0");
 	service_unlock();
 	return 0;
 }
@@ -710,7 +631,6 @@ static int set_mute(struct action_event *event) {
 static int get_volume(struct action_event *event)
 {
 	/* FIXME - Channel */
-	fprintf(stderr, "GetVolume() -> %s\n", control_values[CONTROL_VAR_VOLUME]);
 	return cmd_obtain_variable(event, CONTROL_VAR_VOLUME,
 				   "CurrentVolume");
 }
@@ -744,7 +664,7 @@ static int volume_decibel_to_level(float decibel) {
 
 // Change volume variables from the given decibel. Quantize value according to
 // our ranges.
-static float change_volume_decibel(struct action_event *event, float raw_decibel) {
+static float change_volume_decibel(float raw_decibel) {
 	int volume_level = volume_decibel_to_level(raw_decibel);
 	// Since we quantize it to the level, lets calculate the
 	// actual level.
@@ -758,7 +678,7 @@ static float change_volume_decibel(struct action_event *event, float raw_decibel
 	fprintf(stderr, "Setting volume-db to %.2fdb == #%d\n",
 		decibel, volume_level);
 
-	change_volume_and_notify(event, volume, db_volume);
+	change_volume(volume, db_volume);
 	return decibel;
 }
 
@@ -766,7 +686,7 @@ static int set_volume_db(struct action_event *event) {
 	const char *str_decibel_in = upnp_get_string(event, "DesiredVolume");
 	service_lock();
 	float raw_decibel_in = atof(str_decibel_in);
-	float decibel = change_volume_decibel(event, raw_decibel_in);
+	float decibel = change_volume_decibel(raw_decibel_in);
 
 	output_set_volume(exp(decibel / 20 * log(10)));
 	service_unlock();
@@ -789,7 +709,7 @@ static int set_volume(struct action_event *event) {
 	fprintf(stderr, "Setting volume to #%d = %.2fdb (%.4f)\n",
 		volume_level, decibel, fraction);
 
-	change_volume_and_notify(event, volume, db_volume);
+	change_volume(volume, db_volume);
 	output_set_volume(fraction);
 	set_mute_toggle(volume_level == 0);
 	service_unlock();
@@ -861,16 +781,15 @@ static struct action control_actions[] = {
 };
 
 struct service *upnp_control_get_service(void) {
-	static int service_initialized = 0;
-	if (!service_initialized) {
-		int i;
-		for (i = 0; i < CONTROL_VAR_COUNT; ++i) {
-			control_values[i] = strdup(default_control_values[i]
-						   ? default_control_values[i]
-						   : "");
-		}
-		service_initialized = 1;
+	if (control_service_.variable_values == NULL) {
+		state_variables_ =
+			VariableContainer_new(CONTROL_VAR_COUNT,
+					      control_variables,
+					      default_control_values);
+		control_service_.variable_values =
+			VariableContainer_get_values_hack(state_variables_);
 	}
+
 	return &control_service_;
 }
 
@@ -883,7 +802,7 @@ struct service control_service_ = {
 	.actions =	control_actions,
 	.action_arguments =	argument_list,
 	.variable_names =	control_variables,
-	.variable_values =	control_values,
+	.variable_values =	NULL,
 	.variable_meta =	control_var_meta,
 	.variable_count =	CONTROL_VAR_UNKNOWN,
 	.command_count =	CONTROL_CMD_UNKNOWN,
@@ -892,12 +811,16 @@ struct service control_service_ = {
 #endif
 };
 
-void upnp_control_init(void) {
+void upnp_control_init(struct upnp_device *device) {
 	upnp_control_get_service();
 	// Get the initial volume and set the corresponding decibel and 'steps'
 	float volume_fraction = 0;
 	if (output_get_volume(&volume_fraction) == 0) {
 		fprintf(stderr, "Initial volume: %f\n", volume_fraction);
-		change_volume_decibel(NULL, 20 * log(volume_fraction) / log(10));
+		change_volume_decibel(20 * log(volume_fraction) / log(10));
 	}
+	assert(upnp_collector_ == NULL);
+	upnp_collector_ = UPnPLastChangeCollector_new(state_variables_,
+						      CONTROL_VAR_LAST_CHANGE,
+						      device, CONTROL_SERVICE);
 }

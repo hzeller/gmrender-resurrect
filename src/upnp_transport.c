@@ -25,6 +25,8 @@
 #include "config.h"
 #endif
 
+#include "upnp_transport.h"
+
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,13 +42,11 @@
 #endif
 
 #include "logging.h"
-
-#include "xmlescape.h"
+#include "output.h"
 #include "upnp.h"
 #include "upnp_device.h"
-#include "output.h"
-#include "upnp_transport.h"
 #include "variable-container.h"
+#include "xmlescape.h"
 
 #define TRANSPORT_SERVICE "urn:schemas-upnp-org:service:AVTransport:1"
 #define TRANSPORT_TYPE "urn:schemas-upnp-org:service:AVTransport:1"
@@ -461,7 +461,6 @@ static struct argument **argument_list[] = {
 
 // Our 'instance' variables.
 static enum transport_state transport_state_ = TRANSPORT_STOPPED;
-static struct upnp_device *upnp_device_ = NULL;
 extern struct service transport_service_;   // Defined below.
 static variable_container_t *state_variables_ = NULL;
 static upnp_last_change_collector_t *upnp_collector_ = NULL;
@@ -1117,7 +1116,6 @@ struct service *upnp_transport_get_service(void) {
 }
 
 void upnp_transport_init(struct upnp_device *device) {
-	upnp_device_ = device;
 	assert(upnp_collector_ == NULL);
 	upnp_collector_ = UPnPLastChangeCollector_new(state_variables_,
 						      TRANSPORT_VAR_LAST_CHANGE,

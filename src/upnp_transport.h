@@ -27,6 +27,7 @@
 #include "variable-container.h"
 
 struct service;
+struct upnp_device;
 
 struct service *upnp_transport_get_service(void);
 void upnp_transport_init(struct upnp_device *);

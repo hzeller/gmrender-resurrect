@@ -252,7 +252,7 @@ int main(int argc, char **argv)
 	upnp_transport_init(device);
 	upnp_tranport_register_variable_listener(sample_variable_change_cb,
 						 NULL);
-	upnp_control_init();
+	upnp_control_init(device);
 
 	printf("Ready for rendering..\n");
 	output_loop();

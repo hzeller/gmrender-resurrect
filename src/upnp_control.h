@@ -24,7 +24,9 @@
 #ifndef _UPNP_CONTROL_H
 #define _UPNP_CONTROL_H
 
-void upnp_control_init(void);
+struct upnp_device;
+
+void upnp_control_init(struct upnp_device *device);
 struct service *upnp_control_get_service(void);
 
 #endif /* _UPNP_CONTROL_H */
