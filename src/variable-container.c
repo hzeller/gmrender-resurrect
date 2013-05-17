@@ -118,6 +118,8 @@ struct upnp_last_change_collector {
 	struct xmlelement *instance_element;
 };
 
+// TODO(hzeller): add rate limiting. The standard talks about some limited
+// amount of events per time-unit.
 static void UPnPLastChangeCollector_notify(upnp_last_change_collector_t *obj) {
 	if (obj->open_transactions != 0)
 		return;

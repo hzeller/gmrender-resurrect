@@ -69,7 +69,7 @@ typedef enum {
 
 // Register a callback to get informed when variables change. This should
 // return quickly.
-void upnp_tranport_register_variable_listener(variable_change_listener_t cb,
-					      void *userdata);
+void upnp_transport_register_variable_listener(variable_change_listener_t cb,
+						       void *userdata);
 
 #endif /* _UPNP_TRANSPORT_H */

@@ -24,28 +24,6 @@
  * MA 02110-1301, USA.
  *
  */ 
-
-/*
-2)
- - provide a UPnP variable change collector, that reacts on callbacks and
-   builds a LastChange document.
- - the collector can have a OpenTransaction(), Commit() to keep collect
-   updates before it changes the LastChange. If no transaction is open, it
-   changes right away. assert(): only one transaction can be open at a time.
- - (future: add rate limiting: only fire if last commit is older than x time)
- - provide a way to register callbacks when transaction commits.
-
-[ note: the LastChange variable should probably be not stored in the original
-  set to avoid recursive calls ]
-
-3) use
- - create transport variable list with defaults and store them in variable
-   container.
- - create variable change collector with proper namespace.
- - in upnp_device, handle_subscription_request(): register callback at
-   upnp variable cange collector.
-*/
-
 #ifndef VARIABLE_CONTAINER_H
 #define VARIABLE_CONTAINER_H
 

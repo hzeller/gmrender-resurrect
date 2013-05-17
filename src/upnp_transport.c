@@ -1122,8 +1122,8 @@ void upnp_transport_init(struct upnp_device *device) {
 						      device, TRANSPORT_SERVICE);
 }
 
-void upnp_tranport_register_variable_listener(variable_change_listener_t cb,
-					      void *userdata) {
+void upnp_transport_register_variable_listener(variable_change_listener_t cb,
+					       void *userdata) {
 	VariableContainer_register_callback(state_variables_, cb, userdata);
 }
 

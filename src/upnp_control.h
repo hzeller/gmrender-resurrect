@@ -20,13 +20,16 @@
  * MA 02110-1301, USA.
  *
  */
-
 #ifndef _UPNP_CONTROL_H
 #define _UPNP_CONTROL_H
+
+#include "variable-container.h"
 
 struct upnp_device;
 
 void upnp_control_init(struct upnp_device *device);
 struct service *upnp_control_get_service(void);
+void upnp_control_register_variable_listener(variable_change_listener_t cb,
+					     void *userdata);
 
 #endif /* _UPNP_CONTROL_H */

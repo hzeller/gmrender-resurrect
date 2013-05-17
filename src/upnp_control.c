@@ -793,6 +793,25 @@ struct service *upnp_control_get_service(void) {
 	return &control_service_;
 }
 
+void upnp_control_init(struct upnp_device *device) {
+	upnp_control_get_service();
+	assert(upnp_collector_ == NULL);
+	upnp_collector_ = UPnPLastChangeCollector_new(state_variables_,
+						      CONTROL_VAR_LAST_CHANGE,
+						      device, CONTROL_SERVICE);
+	// Get the initial volume and set the corresponding decibel and 'steps'
+	float volume_fraction = 0;
+	if (output_get_volume(&volume_fraction) == 0) {
+		fprintf(stderr, "Initial volume: %f\n", volume_fraction);
+		change_volume_decibel(20 * log(volume_fraction) / log(10));
+	}
+}
+
+void upnp_control_register_variable_listener(variable_change_listener_t cb,
+					     void *userdata) {
+	VariableContainer_register_callback(state_variables_, cb, userdata);
+}
+
 struct service control_service_ = {
 	.service_name =	CONTROL_SERVICE,
 	.type =	CONTROL_TYPE,
@@ -810,17 +829,3 @@ struct service control_service_ = {
 	.service_mutex =	&control_mutex
 #endif
 };
-
-void upnp_control_init(struct upnp_device *device) {
-	upnp_control_get_service();
-	// Get the initial volume and set the corresponding decibel and 'steps'
-	float volume_fraction = 0;
-	if (output_get_volume(&volume_fraction) == 0) {
-		fprintf(stderr, "Initial volume: %f\n", volume_fraction);
-		change_volume_decibel(20 * log(volume_fraction) / log(10));
-	}
-	assert(upnp_collector_ == NULL);
-	upnp_collector_ = UPnPLastChangeCollector_new(state_variables_,
-						      CONTROL_VAR_LAST_CHANGE,
-						      device, CONTROL_SERVICE);
-}
