@@ -145,7 +145,7 @@ static const char *default_transport_values[] = {
 	[TRANSPORT_VAR_POS_REC_QUAL_MODE] = "NOT_IMPLEMENTED",
 	[TRANSPORT_VAR_NR_TRACKS] = "0",
 	[TRANSPORT_VAR_CUR_TRACK] = "0",
-	[TRANSPORT_VAR_CUR_TRACK_DUR] = "00:00:00",
+	[TRANSPORT_VAR_CUR_TRACK_DUR] = "0:00:00.000",
 	[TRANSPORT_VAR_CUR_MEDIA_DUR] = "",
 	[TRANSPORT_VAR_CUR_TRACK_META] = "",
 	[TRANSPORT_VAR_CUR_TRACK_URI] = "",
@@ -153,7 +153,7 @@ static const char *default_transport_values[] = {
 	[TRANSPORT_VAR_AV_URI_META] = "",
 	[TRANSPORT_VAR_NEXT_AV_URI] = "",
 	[TRANSPORT_VAR_NEXT_AV_URI_META] = "",
-	[TRANSPORT_VAR_REL_TIME_POS] = "00:00:00",
+	[TRANSPORT_VAR_REL_TIME_POS] = "0:00:00.000",
 	[TRANSPORT_VAR_ABS_TIME_POS] = "NOT_IMPLEMENTED",
 	[TRANSPORT_VAR_REL_CTR_POS] = "2147483647",
 	[TRANSPORT_VAR_ABS_CTR_POS] = "2147483647",
@@ -804,13 +804,13 @@ static int divide_leave_remainder(gint64 *val, gint64 divisor) {
 	*val %= divisor;
 	return result;
 }
-static void print_upnp_time_into_buffer(char *buf, size_t size, gint64 t) {
+static void print_upnp_time(char *result, size_t size, gint64 t) {
 	const gint64 one_sec = 1000000000LL;  // units are in nanoseconds.
 	const int hour = divide_leave_remainder(&t, 3600LL * one_sec);
 	const int minute = divide_leave_remainder(&t, 60LL * one_sec);
 	const int second = divide_leave_remainder(&t, one_sec);
 	const int milli_second = t / 1000000;
-	snprintf(buf, size, "%d:%02d:%02d.%03d", hour, minute, second,
+	snprintf(result, size, "%d:%02d:%02d.%03d", hour, minute, second,
 		 milli_second / 100 * 100);  // quantize to 100
 }
 
@@ -827,6 +827,32 @@ static gint64 parse_upnp_time(const char *time_string) {
 	return nanos;
 }
 
+// We constantly update the track time to event about it to our clients.
+static void *thread_update_track_time(void *userdata) {
+	char tbuf[32];
+	gint64 last_duration = -1, last_position = -1;
+	for (;;) {
+		usleep(500000);  // 500ms
+		service_lock();
+		gint64 duration, position;
+		const int pos_result = output_get_position(&duration, &position);
+		if (pos_result == 0) {
+			if (duration != last_duration) {
+				print_upnp_time(tbuf, sizeof(tbuf), duration);
+				replace_var(TRANSPORT_VAR_CUR_TRACK_DUR, tbuf);
+				last_duration = duration;
+			}
+			if (position != last_position) {
+				print_upnp_time(tbuf, sizeof(tbuf), position);
+				replace_var(TRANSPORT_VAR_REL_TIME_POS, tbuf);
+				last_position = position;
+			}
+		}
+		service_unlock();
+	}
+	return NULL;  // not reached.
+}
+
 static int get_position_info(struct action_event *event)
 {
 	int rc;
@@ -837,18 +863,9 @@ static int get_position_info(struct action_event *event)
 		goto out;
 	}
 	
-	gint64 duration, position;
+	// Variables are changed by update thread in parallel, so we need
+	// the lock.
 	service_lock();
-	const int pos_result = output_get_position(&duration, &position);
-	service_unlock();
-	if (pos_result == 0) {
-		char tbuf[32];
-		print_upnp_time_into_buffer(tbuf, sizeof(tbuf), duration);
-		replace_var(TRANSPORT_VAR_CUR_TRACK_DUR, tbuf);
-		print_upnp_time_into_buffer(tbuf, sizeof(tbuf), position);
-		replace_var(TRANSPORT_VAR_REL_TIME_POS, tbuf);
-	}
-
 	rc = upnp_append_variable(event, TRANSPORT_VAR_CUR_TRACK, "Track");
 	if (rc)
 		goto out;
@@ -890,6 +907,7 @@ static int get_position_info(struct action_event *event)
 
       out:
 	LEAVE();
+	service_unlock();
 	return rc;
 }
 
@@ -1116,10 +1134,12 @@ struct service *upnp_transport_get_service(void) {
 }
 
 void upnp_transport_init(struct upnp_device *device) {
-	assert(upnp_collector_ == NULL);
+	assert(upnp_collector_ == NULL);   // only initialize once.
 	upnp_collector_ = UPnPLastChangeCollector_new(state_variables_,
 						      TRANSPORT_VAR_LAST_CHANGE,
 						      device, TRANSPORT_SERVICE);
+	pthread_t thread;
+	pthread_create(&thread, NULL, thread_update_track_time, NULL);
 }
 
 void upnp_transport_register_variable_listener(variable_change_listener_t cb,
