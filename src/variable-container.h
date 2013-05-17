@@ -1,9 +1,4 @@
-/* variable_container - handling a bunch of variables containting NUL
- *   terminated strings, allowing callbacks to be called on changes.
- *
- * upnp_last_change_collector - handling of the LastChange variable in UPnP.
- *   Collects the last changes and notifies device.
- *
+/*
  * Copyright (C) 2013 Henner Zeller
  *
  * This file is part of GMediaRender.
@@ -22,6 +17,26 @@
  * along with GMediaRender; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
  * MA 02110-1301, USA.
+ *
+ * -----------------
+ *
+ * Helpers for keeping track of server state variables. UPnP is about syncing
+ * state between server and connected controllers and it does so by variables
+ * (such as 'CurrentTrackDuration') that can be queried and whose changes
+ * can be actively sent to parties that have registered for updates.
+ * However, changes are not sent individually when a variable changes
+ * but instead encapsulated in XML in a 'LastChange' variable, that contains
+ * recent changes since the last update.
+ *
+ * These utility classes are here to help getting this done:
+ *
+ * variable_container - handling a bunch of variables containting NUL
+ *   terminated strings, allowing C-callbacks to be called when content changes
+ *   and differs from previous value.
+ *
+ * upnp_last_change_collector - handling of the LastChange variable in UPnP.
+ *   Hooks into the callback mechanism of the variable_container to assemble
+ *   the LastChange variable to be sent over.
  *
  */ 
 #ifndef VARIABLE_CONTAINER_H
