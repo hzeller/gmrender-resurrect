@@ -131,6 +131,7 @@ static const char *transport_variables[] = {
 	[TRANSPORT_VAR_UNKNOWN] = NULL
 };
 
+static const char kZeroTime[] = "0:00:00.000";
 static const char *default_transport_values[] = {
 	[TRANSPORT_VAR_TRANSPORT_STATE] = "STOPPED",
 	[TRANSPORT_VAR_TRANSPORT_STATUS] = "OK",
@@ -145,7 +146,7 @@ static const char *default_transport_values[] = {
 	[TRANSPORT_VAR_POS_REC_QUAL_MODE] = "NOT_IMPLEMENTED",
 	[TRANSPORT_VAR_NR_TRACKS] = "0",
 	[TRANSPORT_VAR_CUR_TRACK] = "0",
-	[TRANSPORT_VAR_CUR_TRACK_DUR] = "0:00:00.000",
+	[TRANSPORT_VAR_CUR_TRACK_DUR] = kZeroTime,
 	[TRANSPORT_VAR_CUR_MEDIA_DUR] = "",
 	[TRANSPORT_VAR_CUR_TRACK_META] = "",
 	[TRANSPORT_VAR_CUR_TRACK_URI] = "",
@@ -153,7 +154,7 @@ static const char *default_transport_values[] = {
 	[TRANSPORT_VAR_AV_URI_META] = "",
 	[TRANSPORT_VAR_NEXT_AV_URI] = "",
 	[TRANSPORT_VAR_NEXT_AV_URI_META] = "",
-	[TRANSPORT_VAR_REL_TIME_POS] = "0:00:00.000",
+	[TRANSPORT_VAR_REL_TIME_POS] = kZeroTime,
 	[TRANSPORT_VAR_ABS_TIME_POS] = "NOT_IMPLEMENTED",
 	[TRANSPORT_VAR_REL_CTR_POS] = "2147483647",
 	[TRANSPORT_VAR_ABS_CTR_POS] = "2147483647",
@@ -587,7 +588,7 @@ static int replace_transport_uri_and_meta(const char *uri, const char *meta) {
 	return requires_stream_meta_callback;
 }
 
-static void change_and_notify_transport_locked(enum transport_state new_state) {
+static void change_transport_state(enum transport_state new_state) {
 	transport_state_ = new_state;
 	assert(new_state >= TRANSPORT_STOPPED
 	       && new_state < TRANSPORT_NO_MEDIA_PRESENT);
@@ -829,6 +830,7 @@ static gint64 parse_upnp_time(const char *time_string) {
 
 // We constantly update the track time to event about it to our clients.
 static void *thread_update_track_time(void *userdata) {
+	const gint64 one_sec_unit = 1000000000LL;
 	char tbuf[32];
 	gint64 last_duration = -1, last_position = -1;
 	for (;;) {
@@ -842,10 +844,10 @@ static void *thread_update_track_time(void *userdata) {
 				replace_var(TRANSPORT_VAR_CUR_TRACK_DUR, tbuf);
 				last_duration = duration;
 			}
-			if (position != last_position) {
+			if (position / one_sec_unit != last_position) {
 				print_upnp_time(tbuf, sizeof(tbuf), position);
 				replace_var(TRANSPORT_VAR_REL_TIME_POS, tbuf);
-				last_position = position;
+				last_position = position / one_sec_unit;
 			}
 		}
 		service_unlock();
@@ -865,7 +867,6 @@ static int get_position_info(struct action_event *event)
 	
 	// Variables are changed by update thread in parallel, so we need
 	// the lock.
-	service_lock();
 	rc = upnp_append_variable(event, TRANSPORT_VAR_CUR_TRACK, "Track");
 	if (rc)
 		goto out;
@@ -907,7 +908,6 @@ static int get_position_info(struct action_event *event)
 
       out:
 	LEAVE();
-	service_unlock();
 	return rc;
 }
 
@@ -945,7 +945,7 @@ static int stop(struct action_event *event)
 	case TRANSPORT_RECORDING:
 	case TRANSPORT_PAUSED_PLAYBACK:
 		output_stop();
-		change_and_notify_transport_locked(TRANSPORT_STOPPED);
+		change_transport_state(TRANSPORT_STOPPED);
 		// Set TransportPlaySpeed to '1'
 		break;
 
@@ -968,7 +968,7 @@ static void inform_done_playing(enum PlayFeedback fb) {
 	switch (fb) {
 	case PLAY_STOPPED:
 		replace_transport_uri_and_meta("", "");
-		change_and_notify_transport_locked(TRANSPORT_STOPPED);
+		change_transport_state(TRANSPORT_STOPPED);
 		break;
 	case PLAY_STARTED_NEXT_STREAM:
 		replace_transport_uri_and_meta(
@@ -999,12 +999,18 @@ static int play(struct action_event *event)
 		// TODO: Set TransportPlaySpeed to '1'
 		break;
 	case TRANSPORT_STOPPED:
+		// If we were stopped before, we start ar new song, so just
+		// set the time to zero now; otherwise it will be updated only
+		// a fraction of a second later when it actually starts playing.
+		replace_var(TRANSPORT_VAR_REL_TIME_POS, kZeroTime);
+		/* fall through */
+
 	case TRANSPORT_PAUSED_PLAYBACK:
 		if (output_play(&inform_done_playing)) {
 			upnp_set_error(event, 704, "Playing failed");
 			rc = -1;
 		} else {
-			change_and_notify_transport_locked(TRANSPORT_PLAYING);
+			change_transport_state(TRANSPORT_PLAYING);
 		}
 		// Set TransportPlaySpeed to '1'
 		break;
@@ -1047,8 +1053,7 @@ static int pause_stream(struct action_event *event)
 			upnp_set_error(event, 704, "Pause failed");
 			rc = -1;
 		} else {
-			change_and_notify_transport_locked(
-					     TRANSPORT_PAUSED_PLAYBACK);
+			change_transport_state(TRANSPORT_PAUSED_PLAYBACK);
 		}
 		// Set TransportPlaySpeed to '1'
 		break;
