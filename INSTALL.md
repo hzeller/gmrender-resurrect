@@ -128,6 +128,12 @@ you:
     -P, --pid-file                    File the process ID should be written to.
 
 
+### Misc options
+
+    --logfile <logfile>               Write a logfile of variable changes.
+      If you want this on the terminal use --logfile /dev/stdout
+      This can be big over time, so only do it for debugging.
+
 # GStreamer 1.0
 gmrender-resurrect is prepared to compile with gstreamer 1.0, already available
 on newer distributions. This is the preferred version as the older 0.10 version

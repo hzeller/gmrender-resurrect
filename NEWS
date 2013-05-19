@@ -1,7 +1,11 @@
 2013-...  Ongoing changes in git.
-2013-05-17:
-	- Improved handling of variable state change handling.
-	- Active eventing of current track position
+2013-05-18: (there are ongoing changes in git, but these are notable features)
+	- Various state variable handling that should improve robustness and
+	   compatibility with various clients:
+		- Improved eventing of state variable changes.
+		- Active eventing of current track position (relative time)
+		- Subscription of a new client syncs all available variables.
+	- Provide a way to write a logfile with --logfile
 	- provide callbacks for user-hooks (scrobbling ? LCD display ?)
 
 2012-10-12: GMediaRender 0.0.7dev (Henner Zeller)
