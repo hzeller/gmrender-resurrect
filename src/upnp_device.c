@@ -352,9 +352,9 @@ static int handle_action_request(struct upnp_device *priv,
 #endif
 
 #ifdef HAVE_LIBUPNP
-static int event_handler(Upnp_EventType EventType, void *event, void *Cookie)
+static int event_handler(Upnp_EventType EventType, void *event, void *userdata)
 {
-	struct upnp_device *priv = (struct upnp_device *)Cookie;
+	struct upnp_device *priv = (struct upnp_device *) userdata;
 	switch (EventType) {
 	case UPNP_CONTROL_ACTION_REQUEST:
 		handle_action_request(priv, event);

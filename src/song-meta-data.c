@@ -73,10 +73,12 @@ static char *generate_DIDL(const char *id,
 // Takes input, if it finds the given tag, then replaces the content between
 // these with 'content'. It might re-allocate the original string; only the
 // returned string is valid.
+// updates "edit_count" if there was a change.
 // Very crude way to edit XML.
 static char *replace_range(char *input,
 			   const char *tag_start, const char *tag_end,
-			   const char *content) {
+			   const char *content,
+			   int *edit_count) {
 	if (content == NULL)  // unknown content; document unchanged.
 		return input;
 	//fprintf(stderr, "------- Before ------\n%s\n-------------\n", input);
@@ -96,10 +98,15 @@ static char *replace_range(char *input,
 		strncpy(result + (start_pos - input), content, new_content_len);
 		strcpy(result + (start_pos - input) + new_content_len, end_pos);
 		free(input);
+		++*edit_count;
 	} else {
 		// Typically, we replace the same content with itself - same
 		// length. No realloc in this case.
-		strncpy(input + (start_pos - input), content, new_content_len);
+		if (strncmp(start_pos, content, new_content_len) != 0) {
+			const int offset = start_pos - input;
+			strncpy(input + offset, content, new_content_len);
+			++*edit_count;
+		}
 		result = input;
 	}
 	//fprintf(stderr, "------- After ------\n%s\n-------------\n", result);
@@ -129,22 +136,28 @@ char *SongMetaData_to_DIDL(const struct SongMetaData *object,
 		result = generate_DIDL(unique_id, title, artist, album,
 				       genre, composer);
 	} else {
+		int edits = 0;
 		// Otherwise, surgically edit the original document to give
 		// control points as close as possible what they sent themself.
 		result = strdup(original_xml);
 		result = replace_range(result, "<dc:title>", "</dc:title>",
-				       title);
+				       title, &edits);
 		result = replace_range(result,
 				       "<upnp:artist>", "</upnp:artist>",
-				       artist);
+				       artist, &edits);
 		result = replace_range(result, "<upnp:album>", "</upnp:album>",
-				       album);
+				       album, &edits);
 		result = replace_range(result, "<upnp:genre>", "</upnp:genre>",
-				       genre);
+				       genre, &edits);
 		result = replace_range(result,
 				       "<upnp:creator>", "</upnp:creator>",
-				       composer);
-		result = replace_range(result, "id=\"", "\"", unique_id);
+				       composer, &edits);
+		if (edits) {
+			// Only if we changed the content, we generate a new
+			// unique id.
+			result = replace_range(result, "id=\"", "\"", unique_id,
+					       &edits);
+		}
 	}
 	free(title);
 	free(artist);
