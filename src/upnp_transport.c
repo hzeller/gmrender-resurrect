@@ -999,9 +999,10 @@ static int play(struct action_event *event)
 		// TODO: Set TransportPlaySpeed to '1'
 		break;
 	case TRANSPORT_STOPPED:
-		// If we were stopped before, we start ar new song, so just
-		// set the time to zero now; otherwise it will be updated only
-		// a fraction of a second later when it actually starts playing.
+		// If we were stopped before, we start a new song now. So just
+		// set the time to zero now; otherwise we will see the old
+		// value of the previous song until it updates some fractions
+		// of a second later.
 		replace_var(TRANSPORT_VAR_REL_TIME_POS, kZeroTime);
 		/* fall through */
 
