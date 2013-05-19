@@ -34,15 +34,19 @@
  *   terminated strings, allowing C-callbacks to be called when content changes
  *   and differs from previous value.
  *
+ * upnp_last_change_builder - a builder for the LastChange XML document
+ *   containing recently changed variables.
+ *
  * upnp_last_change_collector - handling of the LastChange variable in UPnP.
  *   Hooks into the callback mechanism of the variable_container to assemble
- *   the LastChange variable to be sent over.
+ *   the LastChange variable to be sent over (using the last change builder).
  *
  */ 
 #ifndef VARIABLE_CONTAINER_H
 #define VARIABLE_CONTAINER_H
 
 // -- VariableContainer
+struct variable_container;
 typedef struct variable_container variable_container_t;
 
 // Create a new variable container. The variable_names need to be valid for the
@@ -71,10 +75,29 @@ typedef void (*variable_change_listener_t)(void *userdata,
 void VariableContainer_register_callback(variable_container_t *object,
 					 variable_change_listener_t callback,
 					 void *userdata);
-// No unregister yet; needed ?
+
+// Iterate through all variables.
+typedef void (*variable_iterator_t)(void *userdata, int var_num,
+				    const char *var_name, const char *var_value);
+void VariableContainer_iterate(variable_container_t *object,
+			       variable_iterator_t cb, void *userdata);
+
+// -- UPnP LastChange Builder - builds a LastChange XML document from
+// added name/value pairs.
+struct upnp_last_change_builder;
+typedef struct upnp_last_change_builder upnp_last_change_builder_t;
+upnp_last_change_builder_t *UPnPLastChangeBuilder_new(void);
+void UPnPLastChangeBuilder_delete(upnp_last_change_builder_t *builder);
+
+void UPnPLastChangeBuilder_add(upnp_last_change_builder_t *builder,
+			       const char *name, const char *value);
+// Returns a newly allocated XML string that needs to be free()'d by the caller.
+// Resets the document. If no changes have been added, NULL is returned.
+char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder);
 
 // -- UPnP LastChange collector
 struct upnp_device;  // forward declare.
+struct upnp_last_change_collector;
 typedef struct upnp_last_change_collector upnp_last_change_collector_t;
 upnp_last_change_collector_t *
 UPnPLastChangeCollector_new(variable_container_t *variable_container,

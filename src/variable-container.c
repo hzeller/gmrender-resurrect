@@ -32,6 +32,7 @@
 #include "xmlescape.h"
 #include "xmldoc.h"
 
+// -- VariableContainer
 struct cb_list {
 	variable_change_listener_t callback;
 	void *userdata;
@@ -111,15 +112,109 @@ void VariableContainer_register_callback(variable_container_t *object,
 	object->callbacks = item;
 }
 
+void VariableContainer_iterate(variable_container_t *object,
+			      variable_iterator_t cb, void *userdata) {
+	for (int i = 0; i < object->variable_num; ++i) {
+		cb(userdata, i, object->variable_names[i], object->values[i]);
+	}
+}
+
+// -- UPnPLastChangeBuilder
+struct upnp_last_change_builder {
+	struct xmldoc *change_event_doc;
+	struct xmlelement *instance_element;
+};
+
+upnp_last_change_builder_t *UPnPLastChangeBuilder_new(void) {
+	upnp_last_change_builder_t *result = (upnp_last_change_builder_t*)
+		malloc(sizeof(upnp_last_change_builder_t));
+	result->change_event_doc = NULL;
+	result->instance_element = NULL;
+	return result;
+}
+
+void UPnPLastChangeBuilder_delete(upnp_last_change_builder_t *builder) {
+	if (builder->change_event_doc != NULL) {
+		xmldoc_free(builder->change_event_doc);
+	}
+	free(builder);
+}
+
+void UPnPLastChangeBuilder_add(upnp_last_change_builder_t *builder,
+			       const char *name, const char *value) {
+	if (builder->change_event_doc == NULL) {
+		builder->change_event_doc = xmldoc_new();
+		struct xmlelement *toplevel =
+			xmldoc_new_topelement(builder->change_event_doc, "Event",
+				     "urn:schemas-upnp-org:metadata-1-0/AVT/");
+		// Right now, we only have exactly one instance.
+		builder->instance_element =
+			add_attributevalue_element(builder->change_event_doc,
+						   toplevel,
+						   "InstanceID", "val", "0");
+	}
+	add_attributevalue_element(builder->change_event_doc,
+				   builder->instance_element,
+				   name, "val", value);
+}
+
+char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder) {
+	if (builder->change_event_doc == NULL)
+		return NULL;
+
+	char *xml_document = xmldoc_tostring(builder->change_event_doc);
+	xmldoc_free(builder->change_event_doc);
+	builder->change_event_doc = NULL;
+	builder->instance_element = NULL;
+	return xml_document;
+}
+
+// -- UPnPLastChangeCollector
 struct upnp_last_change_collector {
 	variable_container_t *variables;
 	int last_change_variable_num;  // the variable we manipulate.
 	struct upnp_device *upnp_device;
 	const char *service_name;
 	int open_transactions;
-	struct xmldoc *change_event_doc;
-	struct xmlelement *instance_element;
+	upnp_last_change_builder_t *builder;
 };
+
+static void UPnPLastChangeCollector_notify(upnp_last_change_collector_t *obj);
+static void UPnPLastChangeCollector_callback(void *userdata,
+					     int var_num, const char *var_name,
+					     const char *old_value,
+					     const char *new_value);
+
+upnp_last_change_collector_t *
+UPnPLastChangeCollector_new(variable_container_t *variable_container,
+			    int last_change_var_num,
+			    struct upnp_device *upnp_device,
+			    const char *service_name) {
+	upnp_last_change_collector_t *result = (upnp_last_change_collector_t*)
+		malloc(sizeof(upnp_last_change_collector_t));
+	result->variables = variable_container;
+	result->last_change_variable_num = last_change_var_num;
+	result->upnp_device = upnp_device;
+	result->service_name = service_name;
+	result->open_transactions = 0;
+	result->builder = UPnPLastChangeBuilder_new();
+	VariableContainer_register_callback(variable_container,
+					    UPnPLastChangeCollector_callback,
+					    result);
+	return result;
+}
+
+void UPnPLastChangeCollector_start_transaction(
+	   upnp_last_change_collector_t *object) {
+	assert(object->open_transactions == 0);
+	object->open_transactions = 1;
+}
+
+void UPnPLastChangeCollector_commit(upnp_last_change_collector_t *object) {
+	assert(object->open_transactions == 1);
+	object->open_transactions = 0;
+	UPnPLastChangeCollector_notify(object);	
+}
 
 // TODO(hzeller): add rate limiting. The standard talks about some limited
 // amount of events per time-unit.
@@ -127,13 +222,9 @@ static void UPnPLastChangeCollector_notify(upnp_last_change_collector_t *obj) {
 	if (obj->open_transactions != 0)
 		return;
 
-	if (obj->change_event_doc == NULL)
+	char *xml_document = UPnPLastChangeBuilder_to_xml(obj->builder);
+	if (xml_document == NULL)
 		return;
-
-	char *xml_document = xmldoc_tostring(obj->change_event_doc);
-	xmldoc_free(obj->change_event_doc);
-	obj->change_event_doc = NULL;
-	obj->instance_element = NULL;
 
 	// Only if there is actually a change, send it over.
 	if (VariableContainer_change(obj->variables,
@@ -168,54 +259,10 @@ static void UPnPLastChangeCollector_callback(void *userdata,
 					     const char *new_value) {
 	upnp_last_change_collector_t *object = 
 		(upnp_last_change_collector_t*) userdata;
+
 	if (var_num == object->last_change_variable_num)
-		return;  // ignore self change :)
+		return;  // ignore change of LastChange variable.
 
-	if (object->change_event_doc == NULL) {
-		object->change_event_doc = xmldoc_new();
-		struct xmlelement *toplevel =
-			xmldoc_new_topelement(object->change_event_doc, "Event",
-				     "urn:schemas-upnp-org:metadata-1-0/AVT/");
-		// Right now, we only have exactly one instance.
-		object->instance_element =
-			add_attributevalue_element(object->change_event_doc,
-						   toplevel,
-						   "InstanceID", "val", "0");
-	}
-	add_attributevalue_element(object->change_event_doc,
-				   object->instance_element,
-				   var_name, "val", new_value);
+	UPnPLastChangeBuilder_add(object->builder, var_name, new_value);
 	UPnPLastChangeCollector_notify(object);
-}
-
-upnp_last_change_collector_t *
-UPnPLastChangeCollector_new(variable_container_t *variable_container,
-			    int last_change_var_num,
-			    struct upnp_device *upnp_device,
-			    const char *service_name) {
-	upnp_last_change_collector_t *result = (upnp_last_change_collector_t*)
-		malloc(sizeof(upnp_last_change_collector_t));
-	result->variables = variable_container;
-	result->last_change_variable_num = last_change_var_num;
-	result->upnp_device = upnp_device;
-	result->service_name = service_name;
-	result->open_transactions = 0;
-	result->change_event_doc = NULL;
-	result->instance_element = NULL;
-	VariableContainer_register_callback(variable_container,
-					    UPnPLastChangeCollector_callback,
-					    result);
-	return result;
-}
-
-void UPnPLastChangeCollector_start_transaction(
-	   upnp_last_change_collector_t *object) {
-	assert(object->open_transactions == 0);
-	object->open_transactions = 1;
-}
-
-void UPnPLastChangeCollector_commit(upnp_last_change_collector_t *object) {
-	assert(object->open_transactions == 1);
-	object->open_transactions = 0;
-	UPnPLastChangeCollector_notify(object);	
 }
