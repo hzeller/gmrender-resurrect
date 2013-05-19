@@ -259,7 +259,7 @@ int main(int argc, char **argv)
 
 	struct LogInfo transport_log, control_log;
 	if (log_file_stream) {
-		fprintf(log_file_stream, "[Log file contains terminal "
+		fprintf(log_file_stream, "[Log contains terminal "
 			"characters; use 'less -r' for best viewing]\n");
 		transport_log.out = log_file_stream;
 		transport_log.category = "transport";

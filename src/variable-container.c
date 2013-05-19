@@ -82,6 +82,20 @@ const char **VariableContainer_get_values_hack(variable_container_t *object) {
 	return (const char **) object->values;
 }
 
+// Get number of variables.
+int VariableContainer_get_num_vars(variable_container_t *object) {
+	return object->variable_num;
+}
+// Get variable name/value. Returns 1 if variable exists.
+int VariableContainer_get(variable_container_t *object,
+			    int var, const char **name, const char **value) {
+	if (var < 0 || var >= object->variable_num)
+		return 0;
+	*name = object->variable_names[var];
+	*value = object->values[var];
+	return *name ? 1 : 0;  // Names of not used variables are set to NULL.
+}
+
 // Change content of variable with given number to NUL terminated content.
 int VariableContainer_change(variable_container_t *object,
 			     int var_num, const char *value) {
@@ -112,13 +126,6 @@ void VariableContainer_register_callback(variable_container_t *object,
 	object->callbacks = item;
 }
 
-void VariableContainer_iterate(variable_container_t *object,
-			      variable_iterator_t cb, void *userdata) {
-	for (int i = 0; i < object->variable_num; ++i) {
-		cb(userdata, i, object->variable_names[i], object->values[i]);
-	}
-}
-
 // -- UPnPLastChangeBuilder
 struct upnp_last_change_builder {
 	struct xmldoc *change_event_doc;
@@ -142,6 +149,8 @@ void UPnPLastChangeBuilder_delete(upnp_last_change_builder_t *builder) {
 
 void UPnPLastChangeBuilder_add(upnp_last_change_builder_t *builder,
 			       const char *name, const char *value) {
+	assert(name != NULL);
+	assert(value != NULL);
 	if (builder->change_event_doc == NULL) {
 		builder->change_event_doc = xmldoc_new();
 		struct xmlelement *toplevel =

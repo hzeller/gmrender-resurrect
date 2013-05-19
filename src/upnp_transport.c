@@ -1134,6 +1134,7 @@ struct service *upnp_transport_get_service(void) {
 
 		transport_service_.variable_values =
 			VariableContainer_get_values_hack(state_variables_);
+		transport_service_.variable_container = state_variables_;
 		hack_variables_ = transport_service_.variable_values;	    
 	}
 	return &transport_service_;
@@ -1163,6 +1164,7 @@ struct service transport_service_ = {
 	.action_arguments =     argument_list,
 	.variable_names =       transport_variables,
 	.variable_values =      NULL, // set later.
+	.variable_container =   NULL, // set later.
 	.variable_meta =        transport_var_meta,
 	.variable_count =       TRANSPORT_VAR_UNKNOWN,
 	.command_count =        TRANSPORT_CMD_UNKNOWN,

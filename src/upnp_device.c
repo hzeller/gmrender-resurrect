@@ -50,6 +50,7 @@
 #include "xmldoc.h"
 #include "upnp.h"
 #include "upnp_device.h"
+#include "variable-container.h"
 
 struct upnp_device {
 	struct upnp_device_descriptor *upnp_device_descriptor;
@@ -209,10 +210,6 @@ static int handle_subscription_request(struct upnp_device *priv,
                                               *sr_event)
 {
 	struct service *srv;
-	int i;
-	int eventVarCount = 0, eventVarIdx = 0;
-	const char **eventvar_names;
-	const char **eventvar_values;
 	int rc;
 	int result = -1;
 
@@ -221,9 +218,8 @@ static int handle_subscription_request(struct upnp_device *priv,
 	assert(priv != NULL);
 
 
-	printf("Subscription request\n");
-	printf("  %s\n", sr_event->UDN);
-	printf("  %s\n", sr_event->ServiceId);
+	printf("Subscription request for %s (%s)\n",
+	       sr_event->ServiceId, sr_event->UDN);
 
 	srv = find_service(priv->upnp_device_descriptor, sr_event->ServiceId);
 	if (srv == NULL) {
@@ -234,37 +230,36 @@ static int handle_subscription_request(struct upnp_device *priv,
 
 	ithread_mutex_lock(&(priv->device_mutex));
 
-	/* generate list of eventable variables */
-	for(i=0; i<srv->variable_count; i++) {
-		struct var_meta *metaEntry;
-		metaEntry = &(srv->variable_meta[i]);
-		if (metaEntry->sendevents == SENDEVENT_YES) {
-			eventVarCount++;
-		}
-	}
-	eventvar_names = malloc((eventVarCount+1) * sizeof(const char *));
-	eventvar_values = malloc((eventVarCount+1) * sizeof(const char *));
-	printf("%d evented variables\n", eventVarCount);
+	// There is really only one variable evented: LastChange
+	const char *eventvar_names[] = {
+		"LastChange",
+		NULL
+	};
+	const char *eventvar_values[] = {
+		NULL, NULL
+	};
 
-	for(i=0; i<srv->variable_count; i++) {
-		struct var_meta *metaEntry;
-		metaEntry = &(srv->variable_meta[i]);
-		if (metaEntry->sendevents == SENDEVENT_YES) {
-			eventvar_names[eventVarIdx] = srv->variable_names[i];
-			// Do these need to be xml-escpaed ?
-			eventvar_values[eventVarIdx] = xmlescape(srv->variable_values[i], 0);
-			printf("Subscribe to '%s' == '%s'\n",
-			       eventvar_names[eventVarIdx],
-			       eventvar_values[eventVarIdx]);
-			eventVarIdx++;
+	// Build the current state of the variables as one gigantic initial
+	// LastChange update.
+	const int var_count =
+		VariableContainer_get_num_vars(srv->variable_container);
+	upnp_last_change_builder_t *builder = UPnPLastChangeBuilder_new();
+	for (int i = 0; i < var_count; ++i) {
+		const char *name, *value;
+		// Send over all variables except "LastChange" itself.
+		if (VariableContainer_get(srv->variable_container, i,
+					  &name, &value)
+		    && strcmp("LastChange", name) != 0) {
+			UPnPLastChangeBuilder_add(builder, name, value);
 		}
 	}
-	eventvar_names[eventVarIdx] = NULL;
-	eventvar_values[eventVarIdx] = NULL;
+	eventvar_values[0] = UPnPLastChangeBuilder_to_xml(builder);
+	UPnPLastChangeBuilder_delete(builder);
+	printf("Initial variable sync: %s", eventvar_values[0]);
 
 	rc = UpnpAcceptSubscription(priv->device_handle,
 			       sr_event->UDN, sr_event->ServiceId,
-			       eventvar_names, eventvar_values, eventVarCount,
+			       eventvar_names, eventvar_values, 1,
 			       sr_event->Sid);
 	if (rc == UPNP_E_SUCCESS) {
 		result = 0;
@@ -272,12 +267,7 @@ static int handle_subscription_request(struct upnp_device *priv,
 
 	ithread_mutex_unlock(&(priv->device_mutex));
 
-	for (i = 0; i < eventVarCount; ++i) {
-		// Allocated by xmlescape()
-		free((char*)eventvar_values[i]);
-	}
-	free(eventvar_names);
-	free(eventvar_values);
+	free((char*)eventvar_values[0]);
 
 out:
 	LEAVE();
@@ -373,7 +363,6 @@ static int event_handler(Upnp_EventType EventType, void *event, void *Cookie)
 		printf("NOT IMPLEMENTED: control get variable request\n");
 		break;
 	case UPNP_EVENT_SUBSCRIPTION_REQUEST:
-		printf("event subscription request\n");
 		handle_subscription_request(priv, event);
 		break;
 

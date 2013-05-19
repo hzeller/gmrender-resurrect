@@ -788,6 +788,7 @@ struct service *upnp_control_get_service(void) {
 					      default_control_values);
 		control_service_.variable_values =
 			VariableContainer_get_values_hack(state_variables_);
+		control_service_.variable_container = state_variables_;
 	}
 
 	return &control_service_;
@@ -821,7 +822,8 @@ struct service control_service_ = {
 	.actions =	control_actions,
 	.action_arguments =	argument_list,
 	.variable_names =	control_variables,
-	.variable_values =	NULL,
+	.variable_values =	NULL,  // set later.
+	.variable_container =   NULL,  // set later.
 	.variable_meta =	control_var_meta,
 	.variable_count =	CONTROL_VAR_UNKNOWN,
 	.command_count =	CONTROL_CMD_UNKNOWN,

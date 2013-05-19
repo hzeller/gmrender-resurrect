@@ -59,6 +59,13 @@ void VariableContainer_delete(variable_container_t *object);
 // Only temporary while refactoring.
 const char **VariableContainer_get_values_hack(variable_container_t *object);
 
+// Get number of variables.
+int VariableContainer_get_num_vars(variable_container_t *object);
+
+// Get variable name/value (var [0..num_vars)). Returns if variable exists.
+int VariableContainer_get(variable_container_t *object,
+			   int var, const char **name, const char **value);
+
 // Change content of variable with given number to NUL terminated content.
 // Returns '1' if value actually changed and all callbacks were called,
 // '0' if no change was detected.
@@ -75,12 +82,6 @@ typedef void (*variable_change_listener_t)(void *userdata,
 void VariableContainer_register_callback(variable_container_t *object,
 					 variable_change_listener_t callback,
 					 void *userdata);
-
-// Iterate through all variables.
-typedef void (*variable_iterator_t)(void *userdata, int var_num,
-				    const char *var_name, const char *var_value);
-void VariableContainer_iterate(variable_container_t *object,
-			       variable_iterator_t cb, void *userdata);
 
 // -- UPnP LastChange Builder - builds a LastChange XML document from
 // added name/value pairs.

@@ -27,6 +27,7 @@
 struct action;
 struct service;
 struct action_event;
+struct variable_container;
 
 struct action {
 	const char *action_name;
@@ -94,8 +95,9 @@ struct service {
 	const char *event_url;
 	struct action *actions;
 	struct argument ***action_arguments;
-	const char **variable_names;
-	const char **variable_values;
+	const char **variable_names;   // TODO: iterate through ..
+	const char **variable_values;  // ..  variable container instead.
+	struct variable_container *variable_container;
 	struct var_meta *variable_meta;
 	int variable_count;
 	int command_count;
