@@ -95,8 +95,7 @@ struct service {
 	const char *event_url;
 	struct action *actions;
 	struct argument ***action_arguments;
-	const char **variable_names;   // TODO: iterate through ..
-	const char **variable_values;  // ..  variable container instead.
+	const char **variable_names;
 	struct variable_container *variable_container;
 	struct var_meta *variable_meta;
 	int variable_count;

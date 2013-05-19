@@ -96,7 +96,7 @@ static struct upnp_device_descriptor render_device = {
 void upnp_renderer_dump_connmgr_scpd(void)
 {
 	char *buf;
-	buf = upnp_get_scpd(&connmgr_service);
+	buf = upnp_get_scpd(upnp_connmgr_get_service());
 	assert(buf != NULL);
 	fputs(buf, stdout);
 }
@@ -117,14 +117,11 @@ void upnp_renderer_dump_transport_scpd(void)
 
 static int upnp_renderer_init(void)
 {
-	static struct service *upnp_services[] = {
-		NULL,
-		&connmgr_service,
-		NULL,
-		NULL
-	};
+	static struct service *upnp_services[4];
 	upnp_services[0] = upnp_transport_get_service();
+	upnp_services[1] = upnp_connmgr_get_service();
 	upnp_services[2] = upnp_control_get_service();
+	upnp_services[3] = NULL;
 	render_device.services = upnp_services;
         return connmgr_init();
 }

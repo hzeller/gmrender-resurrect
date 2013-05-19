@@ -54,6 +54,41 @@
 #define TRANSPORT_CONTROL_URL "/upnp/control/rendertransport1"
 #define TRANSPORT_EVENT_URL "/upnp/event/rendertransport1"
 
+typedef enum {
+	TRANSPORT_VAR_TRANSPORT_STATUS,
+	TRANSPORT_VAR_NEXT_AV_URI,
+	TRANSPORT_VAR_NEXT_AV_URI_META,
+	TRANSPORT_VAR_CUR_TRACK_META,
+	TRANSPORT_VAR_REL_CTR_POS,
+	TRANSPORT_VAR_AAT_INSTANCE_ID,
+	TRANSPORT_VAR_AAT_SEEK_TARGET,
+	TRANSPORT_VAR_PLAY_MEDIUM,
+	TRANSPORT_VAR_REL_TIME_POS,
+	TRANSPORT_VAR_REC_MEDIA,
+	TRANSPORT_VAR_CUR_PLAY_MODE,
+	TRANSPORT_VAR_TRANSPORT_PLAY_SPEED,
+	TRANSPORT_VAR_PLAY_MEDIA,
+	TRANSPORT_VAR_ABS_TIME_POS,
+	TRANSPORT_VAR_CUR_TRACK,
+	TRANSPORT_VAR_CUR_TRACK_URI,
+	TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS,
+	TRANSPORT_VAR_NR_TRACKS,
+	TRANSPORT_VAR_AV_URI,
+	TRANSPORT_VAR_ABS_CTR_POS,
+	TRANSPORT_VAR_CUR_REC_QUAL_MODE,
+	TRANSPORT_VAR_CUR_MEDIA_DUR,
+	TRANSPORT_VAR_AAT_SEEK_MODE,
+	TRANSPORT_VAR_AV_URI_META,
+	TRANSPORT_VAR_REC_MEDIUM,
+	TRANSPORT_VAR_REC_MEDIUM_WR_STATUS,
+	TRANSPORT_VAR_LAST_CHANGE,
+	TRANSPORT_VAR_CUR_TRACK_DUR,
+	TRANSPORT_VAR_TRANSPORT_STATE,
+	TRANSPORT_VAR_POS_REC_QUAL_MODE,
+	TRANSPORT_VAR_UNKNOWN,
+	TRANSPORT_VAR_COUNT
+} transport_variable_t;
+
 enum {
 	TRANSPORT_CMD_GETCURRENTTRANSPORTACTIONS,
 	TRANSPORT_CMD_GETDEVICECAPABILITIES,
@@ -97,7 +132,7 @@ enum UPNPTransportError {
 	UPNP_TRANSPORT_E_INVALID_IID	= 718,
 };
 
-static const char *transport_variables[] = {
+static const char *transport_variable_names[] = {
 	[TRANSPORT_VAR_TRANSPORT_STATE] = "TransportState",
 	[TRANSPORT_VAR_TRANSPORT_STATUS] = "TransportStatus",
 	[TRANSPORT_VAR_PLAY_MEDIUM] = "PlaybackStorageMedium",
@@ -132,7 +167,7 @@ static const char *transport_variables[] = {
 };
 
 static const char kZeroTime[] = "0:00:00.000";
-static const char *default_transport_values[] = {
+static const char *transport_default_values[] = {
 	[TRANSPORT_VAR_TRANSPORT_STATE] = "STOPPED",
 	[TRANSPORT_VAR_TRANSPORT_STATUS] = "OK",
 	[TRANSPORT_VAR_PLAY_MEDIUM] = "UNKNOWN",
@@ -465,7 +500,6 @@ static enum transport_state transport_state_ = TRANSPORT_STOPPED;
 extern struct service transport_service_;   // Defined below.
 static variable_container_t *state_variables_ = NULL;
 static upnp_last_change_collector_t *upnp_collector_ = NULL;
-static const char **hack_variables_ = NULL;  // tmp access.
 
 /* protects transport_values, and service-specific state */
 
@@ -563,6 +597,10 @@ static int replace_var(transport_variable_t varnum, const char *new_value) {
 	return VariableContainer_change(state_variables_, varnum, new_value);
 }
 
+static const char *get_var(transport_variable_t varnum) {
+	return VariableContainer_get(state_variables_, varnum, NULL);
+}
+
 // Transport uri always comes in uri/meta pairs. Set these and also the related
 // track uri/meta variables.
 // Returns 1, if this meta-data likely needs to be updated while the stream
@@ -599,7 +637,7 @@ static void change_transport_state(enum transport_state new_state) {
 	const char *available_actions = NULL;
 	switch (new_state) {
 	case TRANSPORT_STOPPED:
-		if (strlen(hack_variables_[TRANSPORT_VAR_AV_URI]) == 0) {
+		if (strlen(get_var(TRANSPORT_VAR_AV_URI)) == 0) {
 			available_actions = "PLAY";
 		} else {
 			available_actions = "PLAY,SEEK";
@@ -653,7 +691,7 @@ static void update_meta_from_stream(const struct SongMetaData *meta) {
 	if (meta->title == NULL || strlen(meta->title) == 0) {
 		return;
 	}
-	const char *original_xml = hack_variables_[TRANSPORT_VAR_AV_URI_META];
+	const char *original_xml = get_var(TRANSPORT_VAR_AV_URI_META);
 	char *didl = SongMetaData_to_DIDL(meta, original_xml);
 	service_lock();
 	replace_var(TRANSPORT_VAR_AV_URI_META, didl);
@@ -970,13 +1008,14 @@ static void inform_done_playing(enum PlayFeedback fb) {
 		replace_transport_uri_and_meta("", "");
 		change_transport_state(TRANSPORT_STOPPED);
 		break;
-	case PLAY_STARTED_NEXT_STREAM:
-		replace_transport_uri_and_meta(
-			   hack_variables_[TRANSPORT_VAR_NEXT_AV_URI],
-			   hack_variables_[TRANSPORT_VAR_NEXT_AV_URI_META]);
+	case PLAY_STARTED_NEXT_STREAM: {
+		const char *av_uri = get_var(TRANSPORT_VAR_NEXT_AV_URI);
+		const char *av_meta = get_var(TRANSPORT_VAR_NEXT_AV_URI_META);
+		replace_transport_uri_and_meta(av_uri, av_meta);
 		replace_var(TRANSPORT_VAR_NEXT_AV_URI, "");
 		replace_var(TRANSPORT_VAR_NEXT_AV_URI_META, "");
 		break;
+	}
 	}
 	service_unlock();
 }
@@ -1126,16 +1165,12 @@ static struct action transport_actions[] = {
 };
 
 struct service *upnp_transport_get_service(void) {
-	if (transport_service_.variable_values == NULL) {
+	if (transport_service_.variable_container == NULL) {
 		state_variables_ =
 			VariableContainer_new(TRANSPORT_VAR_COUNT,
-					      transport_variables,
-					      default_transport_values);
-
-		transport_service_.variable_values =
-			VariableContainer_get_values_hack(state_variables_);
+					      transport_variable_names,
+					      transport_default_values);
 		transport_service_.variable_container = state_variables_;
-		hack_variables_ = transport_service_.variable_values;	    
 	}
 	return &transport_service_;
 }
@@ -1162,8 +1197,7 @@ struct service transport_service_ = {
 	.event_url =		TRANSPORT_EVENT_URL,
 	.actions =              transport_actions,
 	.action_arguments =     argument_list,
-	.variable_names =       transport_variables,
-	.variable_values =      NULL, // set later.
+	.variable_names =       transport_variable_names,
 	.variable_container =   NULL, // set later.
 	.variable_meta =        transport_var_meta,
 	.variable_count =       TRANSPORT_VAR_UNKNOWN,

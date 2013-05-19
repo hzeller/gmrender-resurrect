@@ -56,15 +56,14 @@ variable_container_t *VariableContainer_new(int variable_num,
 					    const char **variable_init_values);
 void VariableContainer_delete(variable_container_t *object);
 
-// Only temporary while refactoring.
-const char **VariableContainer_get_values_hack(variable_container_t *object);
-
 // Get number of variables.
 int VariableContainer_get_num_vars(variable_container_t *object);
 
-// Get variable name/value (var [0..num_vars)). Returns if variable exists.
-int VariableContainer_get(variable_container_t *object,
-			   int var, const char **name, const char **value);
+// Get variable name/value. if OUT parameter 'name' is not NULL, returns
+// name of variable for given number.
+// Returns value of variable or NULL if it does not exist.
+const char *VariableContainer_get(variable_container_t *object, int var,
+				  const char **name);
 
 // Change content of variable with given number to NUL terminated content.
 // Returns '1' if value actually changed and all callbacks were called,

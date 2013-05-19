@@ -74,7 +74,6 @@ static struct xmlelement *gen_scpd_action(struct xmldoc *doc,
 
 	top=xmlelement_new(doc, "action");
 
-
 	add_value_element(doc, top, "name", act->action_name);
 	if (arglist) {
 		struct argument *arg;
@@ -84,8 +83,11 @@ static struct xmlelement *gen_scpd_action(struct xmldoc *doc,
 		for(j=0; (arg=arglist[j]); j++) {
 			child=xmlelement_new(doc, "argument");
 			add_value_element(doc,child,"name", arg->name);
-			add_value_element(doc,child,"direction",(arg->direction==PARAM_DIR_IN)?"in":"out");
-			add_value_element(doc,child,"relatedStateVariable", varnames[arg->statevar]);
+			add_value_element(doc,child,"direction",
+					  (arg->direction == PARAM_DIR_IN)
+					  ? "in" : "out");
+			add_value_element(doc,child,"relatedStateVariable",
+					  varnames[arg->statevar]);
 			xmlelement_add_element(doc, parent,child);
 		}
 	}

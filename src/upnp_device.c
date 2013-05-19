@@ -139,7 +139,7 @@ int upnp_append_variable(struct action_event *event,
 	ithread_mutex_lock(service->service_mutex);
 #endif
 
-	value = service->variable_values[varnum];
+	value = VariableContainer_get(service->variable_container, varnum, NULL);
 	assert(value != NULL);
 	retval = upnp_add_response(event, paramname, value);
 
@@ -245,11 +245,11 @@ static int handle_subscription_request(struct upnp_device *priv,
 		VariableContainer_get_num_vars(srv->variable_container);
 	upnp_last_change_builder_t *builder = UPnPLastChangeBuilder_new();
 	for (int i = 0; i < var_count; ++i) {
-		const char *name, *value;
+		const char *name;
+		const char *value =
+			VariableContainer_get(srv->variable_container, i, &name);
 		// Send over all variables except "LastChange" itself.
-		if (VariableContainer_get(srv->variable_container, i,
-					  &name, &value)
-		    && strcmp("LastChange", name) != 0) {
+		if (value && strcmp("LastChange", name) != 0) {
 			UPnPLastChangeBuilder_add(builder, name, value);
 		}
 	}

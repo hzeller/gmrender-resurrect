@@ -53,7 +53,6 @@
 #define CONTROL_CONTROL_URL "/upnp/control/rendercontrol1"
 #define CONTROL_EVENT_URL "/upnp/event/rendercontrol1"
 
-
 typedef enum {
 	CONTROL_VAR_G_GAIN,
 	CONTROL_VAR_B_BLACK,
@@ -122,7 +121,7 @@ typedef enum {
 
 static struct action control_actions[];
 
-static const char *control_variables[] = {
+static const char *control_variable_names[] = {
 	[CONTROL_VAR_LAST_CHANGE] = "LastChange",
 	[CONTROL_VAR_PRESET_NAME_LIST] = "PresetNameList",
 	[CONTROL_VAR_AAT_CHANNEL] = "A_ARG_TYPE_Channel",
@@ -222,7 +221,7 @@ static struct var_meta control_var_meta[] = {
 	[CONTROL_VAR_UNKNOWN] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
 };
 
-static const char *default_control_values[] = {
+static const char *control_default_values[] = {
 	[CONTROL_VAR_LAST_CHANGE] = "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\"/>",
 	[CONTROL_VAR_PRESET_NAME_LIST] = "",
 	[CONTROL_VAR_AAT_CHANNEL] = "",
@@ -781,13 +780,11 @@ static struct action control_actions[] = {
 };
 
 struct service *upnp_control_get_service(void) {
-	if (control_service_.variable_values == NULL) {
+	if (control_service_.variable_container == NULL) {
 		state_variables_ =
 			VariableContainer_new(CONTROL_VAR_COUNT,
-					      control_variables,
-					      default_control_values);
-		control_service_.variable_values =
-			VariableContainer_get_values_hack(state_variables_);
+					      control_variable_names,
+					      control_default_values);
 		control_service_.variable_container = state_variables_;
 	}
 
@@ -821,8 +818,7 @@ struct service control_service_ = {
         .event_url = CONTROL_EVENT_URL,
 	.actions =	control_actions,
 	.action_arguments =	argument_list,
-	.variable_names =	control_variables,
-	.variable_values =	NULL,  // set later.
+	.variable_names =	control_variable_names,
 	.variable_container =   NULL,  // set later.
 	.variable_meta =	control_var_meta,
 	.variable_count =	CONTROL_VAR_UNKNOWN,

@@ -25,6 +25,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -35,11 +36,12 @@
 #include <upnp/ithread.h>
 #endif
 
-#include "logging.h"
+#include "upnp_connmgr.h"
 
+#include "logging.h"
 #include "upnp.h"
 #include "upnp_device.h"
-#include "upnp_connmgr.h"
+#include "variable-container.h"
 
 //#define CONNMGR_SERVICE "urn:upnp-org:serviceId:ConnectionManager"
 #define CONNMGR_SERVICE "urn:schemas-upnp-org:service:ConnectionManager"
@@ -48,6 +50,7 @@
 #define CONNMGR_CONTROL_URL "/upnp/control/renderconnmgr1"
 #define CONNMGR_EVENT_URL "/upnp/event/renderconnmgr1"
 
+extern struct service connmgr_service_;   // Defined below.
 
 typedef enum {
 	CONNMGR_VAR_AAT_CONN_MGR,
@@ -120,7 +123,7 @@ static struct argument **argument_list[] = {
 	[CONNMGR_CMD_UNKNOWN]	=	NULL
 };
 
-static const char *connmgr_variables[] = {
+static const char *connmgr_variable_names[] = {
 	[CONNMGR_VAR_SRC_PROTO_INFO] = "SourceProtocolInfo",
 	[CONNMGR_VAR_SINK_PROTO_INFO] = "SinkProtocolInfo",
 	[CONNMGR_VAR_CUR_CONN_IDS] = "CurrentConnectionIDs",
@@ -134,7 +137,7 @@ static const char *connmgr_variables[] = {
 	[CONNMGR_VAR_UNKNOWN] = NULL
 };
 
-static const char *connmgr_values[] = {
+static const char *connmgr_default_values[] = {
 	[CONNMGR_VAR_SRC_PROTO_INFO] = "",
 	[CONNMGR_VAR_SINK_PROTO_INFO] = "http-get:*:audio/mpeg:*",
 	[CONNMGR_VAR_CUR_CONN_IDS] = "0",
@@ -186,8 +189,7 @@ static struct mime_type {
 	struct mime_type *next;
 } *supported_types = NULL;
 
-static void register_mime_type_internal(const char *mime_type)
-{
+static void register_mime_type_internal(const char *mime_type) {
 	struct mime_type *entry;
 
 	for (entry = supported_types; entry; entry = entry->next) {
@@ -202,8 +204,8 @@ static void register_mime_type_internal(const char *mime_type)
 	entry->next = supported_types;
 	supported_types = entry;
 }
-void register_mime_type(const char *mime_type)
-{
+
+void register_mime_type(const char *mime_type) {
 	register_mime_type_internal(mime_type);
 	if (strcmp("audio/mpeg", mime_type) == 0) {
 		register_mime_type_internal("audio/x-mpeg");
@@ -229,8 +231,7 @@ void register_mime_type(const char *mime_type)
 	}
 }
 
-int connmgr_init(void)
-{
+int connmgr_init(void) {
 	struct mime_type *entry;
 	char *buf = NULL;
 	char *p;
@@ -240,8 +241,11 @@ int connmgr_init(void)
 
 	ENTER();
 
+	struct service *srv = upnp_connmgr_get_service();
+
 	buf = malloc(bufsize);
 	p = buf;
+	assert(buf);  // We assume an implementation that does 0-mallocs.
 	if (buf == NULL) {
 		fprintf(stderr, "%s: initial malloc failed\n",
 			__FUNCTION__);
@@ -272,8 +276,9 @@ int connmgr_init(void)
 	}
 	*p = '\0';
 
-	connmgr_values[CONNMGR_VAR_SINK_PROTO_INFO] = buf;
-	//connmgr_values[CONNMGR_VAR_SRC_PROTO_INFO] = buf;
+	VariableContainer_change(srv->variable_container, 
+				 CONNMGR_VAR_SINK_PROTO_INFO, buf);
+	free(buf);
 
 	result = 0;
 out:
@@ -372,6 +377,16 @@ static int get_current_conn_info(struct action_event *event)
 }
 
 
+struct service *upnp_connmgr_get_service(void) {
+	if (connmgr_service_.variable_container == NULL) {
+		connmgr_service_.variable_container =
+			VariableContainer_new(CONNMGR_VAR_COUNT,
+					      connmgr_variable_names,
+					      connmgr_default_values);
+	}
+	return &connmgr_service_;
+}
+
 static struct action connmgr_actions[] = {
 	[CONNMGR_CMD_GETPROTOCOLINFO] =		{"GetProtocolInfo", get_protocol_info},
 	[CONNMGR_CMD_GETCURRENTCONNECTIONIDS] =	{"GetCurrentConnectionIDs", get_current_conn_ids},
@@ -381,7 +396,7 @@ static struct action connmgr_actions[] = {
 	[CONNMGR_CMD_UNKNOWN] =			{NULL, NULL}
 };
 
-struct service connmgr_service = {
+struct service connmgr_service_ = {
         .service_name =		CONNMGR_SERVICE,
         .type =			CONNMGR_TYPE,
 	.scpd_url =		CONNMGR_SCPD_URL,
@@ -389,8 +404,8 @@ struct service connmgr_service = {
 	.event_url =		CONNMGR_EVENT_URL,
         .actions =		connmgr_actions,
         .action_arguments =     argument_list,
-        .variable_names =       connmgr_variables,
-        .variable_values =      connmgr_values,
+        .variable_names =       connmgr_variable_names,
+	.variable_container =   NULL, // set later.
         .variable_meta =        connmgr_var_meta,
         .variable_count =       CONNMGR_VAR_UNKNOWN,
         .command_count =        CONNMGR_CMD_UNKNOWN,

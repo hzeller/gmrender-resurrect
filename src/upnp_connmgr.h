@@ -24,8 +24,9 @@
 #ifndef _UPNP_CONNMGR_H
 #define _UPNP_CONNMGR_H
 
-extern struct service connmgr_service;
-void register_mime_type(const char *mime_type);
+struct service *upnp_connmgr_get_service(void);
 int connmgr_init(void);
+
+void register_mime_type(const char *mime_type);
 
 #endif /* _UPNP_CONNMGR_H */

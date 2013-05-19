@@ -78,22 +78,21 @@ void VariableContainer_delete(variable_container_t *object) {
 	free(object);
 }
 
-const char **VariableContainer_get_values_hack(variable_container_t *object) {
-	return (const char **) object->values;
-}
-
 // Get number of variables.
 int VariableContainer_get_num_vars(variable_container_t *object) {
 	return object->variable_num;
 }
-// Get variable name/value. Returns 1 if variable exists.
-int VariableContainer_get(variable_container_t *object,
-			    int var, const char **name, const char **value) {
+// Get variable name/value. Any of the OUT parameters 'name' and 'value'
+// can be NULL.
+// Returns pointer to the value if variable exists.
+const char *VariableContainer_get(variable_container_t *object,
+				  int var, const char **name) {
 	if (var < 0 || var >= object->variable_num)
-		return 0;
-	*name = object->variable_names[var];
-	*value = object->values[var];
-	return *name ? 1 : 0;  // Names of not used variables are set to NULL.
+		return NULL;
+	const char *varname = object->variable_names[var];
+	if (name) *name = varname;
+	// Names of not used variables are set to NULL.
+	return varname ? object->values[var] : NULL;
 }
 
 // Change content of variable with given number to NUL terminated content.
