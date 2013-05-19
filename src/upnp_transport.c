@@ -613,17 +613,20 @@ static int replace_transport_uri_and_meta(const char *uri, const char *meta) {
 	// we have exactly one track.
 	const char *tracks = (uri != NULL && strlen(uri) > 0) ? "1" : "0";
 	replace_var(TRANSPORT_VAR_NR_TRACKS, tracks);
-	replace_var(TRANSPORT_VAR_CUR_TRACK, tracks);
-
-	// Also the current track URI mirrors the transport URI.
-	replace_var(TRANSPORT_VAR_CUR_TRACK_URI, uri);
-	replace_var(TRANSPORT_VAR_CUR_TRACK_META, meta);
 
 	// We only really want to send back meta data if we didn't get anything
 	// useful or if this is an audio item.
 	const int requires_stream_meta_callback = (strlen(meta) == 0)
 		|| strstr(meta, "object.item.audioItem");
 	return requires_stream_meta_callback;
+}
+
+// Similar to replace_transport_uri_and_meta() above, but current values.
+static void replace_current_uri_and_meta(const char *uri, const char *meta){
+	const char *tracks = (uri != NULL && strlen(uri) > 0) ? "1" : "0";
+	replace_var(TRANSPORT_VAR_CUR_TRACK, tracks);
+	replace_var(TRANSPORT_VAR_CUR_TRACK_URI, uri);
+	replace_var(TRANSPORT_VAR_CUR_TRACK_META, meta);
 }
 
 static void change_transport_state(enum transport_state new_state) {
@@ -720,7 +723,17 @@ static int set_avtransport_uri(struct action_event *event)
 
 	service_lock();
 	char *meta = upnp_get_string(event, "CurrentURIMetaData");
+	// Transport URI/Meta set now, current URI/Meta when it starts playing.
 	int requires_meta_update = replace_transport_uri_and_meta(uri, meta);
+
+	if (transport_state_ == TRANSPORT_PLAYING) {
+		// Uh, wrong state.
+		// Usually, this should not be called while we are PLAYING, only
+		// STOPPED or PAUSED. But if actually some controller sets this
+		// while playing, probably the best is to update the current
+		// current URI/Meta as well to reflect the state best.
+		replace_current_uri_and_meta(uri, meta);
+	}
 
 	output_set_uri(uri, (requires_meta_update
 			     ? update_meta_from_stream
@@ -984,7 +997,6 @@ static int stop(struct action_event *event)
 	case TRANSPORT_PAUSED_PLAYBACK:
 		output_stop();
 		change_transport_state(TRANSPORT_STOPPED);
-		// Set TransportPlaySpeed to '1'
 		break;
 
 	case TRANSPORT_NO_MEDIA_PRESENT:
@@ -1001,17 +1013,20 @@ static int stop(struct action_event *event)
 	return 0;
 }
 
-static void inform_done_playing(enum PlayFeedback fb) {
+static void inform_play_transition_from_output(enum PlayFeedback fb) {
 	service_lock();
 	switch (fb) {
 	case PLAY_STOPPED:
 		replace_transport_uri_and_meta("", "");
+		replace_current_uri_and_meta("", "");
 		change_transport_state(TRANSPORT_STOPPED);
 		break;
+
 	case PLAY_STARTED_NEXT_STREAM: {
 		const char *av_uri = get_var(TRANSPORT_VAR_NEXT_AV_URI);
 		const char *av_meta = get_var(TRANSPORT_VAR_NEXT_AV_URI_META);
 		replace_transport_uri_and_meta(av_uri, av_meta);
+		replace_current_uri_and_meta(av_uri, av_meta);
 		replace_var(TRANSPORT_VAR_NEXT_AV_URI, "");
 		replace_var(TRANSPORT_VAR_NEXT_AV_URI_META, "");
 		break;
@@ -1034,25 +1049,28 @@ static int play(struct action_event *event)
 	service_lock();
 	switch (transport_state_) {
 	case TRANSPORT_PLAYING:
-		// nothing to change.
-		// TODO: Set TransportPlaySpeed to '1'
+		// Nothing to change.
 		break;
+
 	case TRANSPORT_STOPPED:
 		// If we were stopped before, we start a new song now. So just
 		// set the time to zero now; otherwise we will see the old
 		// value of the previous song until it updates some fractions
 		// of a second later.
 		replace_var(TRANSPORT_VAR_REL_TIME_POS, kZeroTime);
-		/* fall through */
+
+		/* >>> fall through */
 
 	case TRANSPORT_PAUSED_PLAYBACK:
-		if (output_play(&inform_done_playing)) {
+		if (output_play(&inform_play_transition_from_output)) {
 			upnp_set_error(event, 704, "Playing failed");
 			rc = -1;
 		} else {
 			change_transport_state(TRANSPORT_PLAYING);
+			const char *av_uri = get_var(TRANSPORT_VAR_AV_URI);
+			const char *av_meta = get_var(TRANSPORT_VAR_AV_URI_META);
+			replace_current_uri_and_meta(av_uri, av_meta);
 		}
-		// Set TransportPlaySpeed to '1'
 		break;
 
 	case TRANSPORT_NO_MEDIA_PRESENT:
@@ -1095,7 +1113,6 @@ static int pause_stream(struct action_event *event)
 		} else {
 			change_transport_state(TRANSPORT_PAUSED_PLAYBACK);
 		}
-		// Set TransportPlaySpeed to '1'
 		break;
 
         default:

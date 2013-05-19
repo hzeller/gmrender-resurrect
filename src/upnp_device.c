@@ -561,7 +561,6 @@ static struct xmldoc *generate_desc(struct upnp_device_descriptor *device_def)
 
 	doc = xmldoc_new();
 
-	//root=ixmlDocument_createElementNS(doc, "urn:schemas-upnp-org:device-1-0","root");
 	root=xmldoc_new_topelement(doc, "root", "urn:schemas-upnp-org:device-1-0");
 	child=gen_specversion(doc,1,0);
 	xmlelement_add_element(doc, root, child);

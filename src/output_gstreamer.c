@@ -151,7 +151,7 @@ static char *gsuri_ = NULL;         // locally strdup()ed
 static char *gs_next_uri_ = NULL;   // locally strdup()ed
 static struct SongMetaData song_meta_;
 
-static output_done_cb_t play_done_callback_ = NULL;
+static output_transition_cb_t play_trans_callback_ = NULL;
 static output_update_meta_cb_t meta_update_callback_ = NULL;
 
 struct track_time_info {
@@ -186,9 +186,9 @@ static void output_gstreamer_set_uri(const char *uri,
 	LEAVE();
 }
 
-static int output_gstreamer_play(output_done_cb_t callback) {
+static int output_gstreamer_play(output_transition_cb_t callback) {
 	int result = -1;
-	play_done_callback_ = callback;
+	play_trans_callback_ = callback;
 	ENTER();
 	if (get_current_player_state() != GST_STATE_PAUSED) {
 		if (gst_element_set_state(player_, GST_STATE_READY) ==
@@ -310,19 +310,19 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 	case GST_MESSAGE_EOS:
 		g_print("GStreamer: %s: End-of-stream\n", msgSrcName);
 		if (gs_next_uri_ != NULL) {
-			// If playbin does not support gapless, then this
-			// will trigger (only playbin2 does).
+			// If playbin does not support gapless (old
+			// versions didn't), this will trigger.
 			free(gsuri_);
 			gsuri_ = gs_next_uri_;
 			gs_next_uri_ = NULL;
 			gst_element_set_state(player_, GST_STATE_READY);
 			g_object_set(G_OBJECT(player_), "uri", gsuri_, NULL);
 			gst_element_set_state(player_, GST_STATE_PLAYING);
-			if (play_done_callback_) {
-				play_done_callback_(PLAY_STARTED_NEXT_STREAM);
+			if (play_trans_callback_) {
+				play_trans_callback_(PLAY_STARTED_NEXT_STREAM);
 			}
-		} else if (play_done_callback_) {
-			play_done_callback_(PLAY_STOPPED);
+		} else if (play_trans_callback_) {
+			play_trans_callback_(PLAY_STOPPED);
 		}
 		break;
 
@@ -486,8 +486,11 @@ static void prepare_next_stream(GstElement *obj, gpointer userdata) {
 	gs_next_uri_ = NULL;
 	if (gsuri_ != NULL) {
 		g_object_set(G_OBJECT(player_), "uri", gsuri_, NULL);
-		if (play_done_callback_) {
-			play_done_callback_(PLAY_STARTED_NEXT_STREAM);
+		if (play_trans_callback_) {
+			// TODO(hzeller): can we figure out when we _actually_
+			// start playing this ? there are probably a couple
+			// of seconds between now and actual start.
+			play_trans_callback_(PLAY_STARTED_NEXT_STREAM);
 		}
 	}
 }
