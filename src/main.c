@@ -25,13 +25,14 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+#include <glib.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
-#include <limits.h>
 #include <string.h>
-#include <glib.h>
+#include <sys/time.h>
+#include <unistd.h>
 
 #ifdef HAVE_LIBUPNP
 # include <upnp/ithread.h>
@@ -65,6 +66,7 @@ static const gchar *uuid = "GMediaRender-1_0-000-000-002";
 static const gchar *friendly_name = PACKAGE_NAME;
 static const gchar *output = NULL;
 static const gchar *pid_file = NULL;
+static const gchar *log_file = NULL;
  
 /* Generic GMediaRender options */
 static GOptionEntry option_entries[] = {
@@ -82,6 +84,8 @@ static GOptionEntry option_entries[] = {
 	  "File the process ID should be written to.", NULL },
 	{ "daemon", 'd', 0, G_OPTION_ARG_NONE, &daemon_mode,
 	  "Run as daemon.", NULL },
+	{ "logfile", 0, 0, G_OPTION_ARG_STRING, &log_file,
+	  "Debug log filename.", NULL },
 	{ "list-outputs", 0, 0, G_OPTION_ARG_NONE, &show_outputs,
 	  "List available output modules and exit", NULL },
 	{ "dump-devicedesc", 0, 0, G_OPTION_ARG_NONE, &show_devicedesc,
@@ -137,29 +141,33 @@ out:
 
 // Sample variable change display code. Eventually to push out changes
 // on a socket for further consumption.
-static void sample_variable_change_cb(void *prefix, int var_num,
-				      const char *variable_name,
-				      const char *old_value,
-				      const char *variable_value) {
-	const char *log_text = (const char *) prefix;
-	const time_t now = time(NULL);
-	char time_buf[128];
-	ctime_r(&now, time_buf);
-	time_buf[strlen(time_buf) - 1] = '\0';
-
-	if (strcmp(log_text, "transport") == 0 &&
-	    (var_num == TRANSPORT_VAR_NEXT_AV_URI_META ||
-	     var_num == TRANSPORT_VAR_CUR_TRACK_META ||
-	     var_num == TRANSPORT_VAR_AV_URI_META)) {
-		// Noisy XML, don't print fully.
-		fprintf(stderr, "[%s | %s] %03d %s: <...>\n",
-			time_buf, log_text,
-			var_num, variable_name);
-	} else {
-		fprintf(stderr, "[%s | %s] %03d %s: %s\n",
-			time_buf, log_text, var_num,
-			variable_name, variable_value);
-	}
+struct LogInfo {
+	FILE *out;
+	const char *category;
+};
+static void log_variable_change(void *userdata, int var_num,
+				const char *variable_name,
+				const char *old_value,
+				const char *variable_value) {
+	struct LogInfo *info = (struct LogInfo*) userdata;
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	struct tm time_breakdown;
+	localtime_r(&now.tv_sec, &time_breakdown);
+	char fmt_buf[128];
+	strftime(fmt_buf, sizeof(fmt_buf), "%F %T", &time_breakdown);
+	int needs_newline = variable_value[strlen(variable_value) - 1] != '\n';
+	// Silly terminal codes. Set to empty strings if not needed.
+	const char *timestamp_highlight = "\033[1m";   // bold.
+	const char *variable_hightlight = "\033[34m";  // blue.
+	const char *color_off = "\033[0m";
+	fprintf(info->out, "%s[%s.%06ld | %s] %s%s%s: %s%s",
+		timestamp_highlight,
+		fmt_buf, now.tv_usec, info->category,
+		variable_hightlight, variable_name, color_off,
+		variable_value,
+		needs_newline ? "\n" : "");
+	fflush(info->out);
 }
 
 int main(int argc, char **argv)
@@ -195,25 +203,22 @@ int main(int argc, char **argv)
 		exit(EXIT_SUCCESS);
 	}
 
-	if (pid_file && pid_file[0] != '/') {
-		// We need to canonicalize the filename because our
-		// cwd will change after becoming a daemon.
-		char *buf = (char*) malloc(PATH_MAX);  // will leak. Ok.
-		char *result = getcwd(buf, PATH_MAX);
-		result = strcat(result, "/");
-		pid_file = strcat(result, pid_file);
+	// We need to open filenames now, because relative filenames will
+	// break if we're becoming a daemon and cwd changes.
+	FILE *pid_file_stream = NULL;
+	if (pid_file) {
+		pid_file_stream = fopen(pid_file, "w");
+	}
+	FILE *log_file_stream = NULL;
+	if (log_file) {
+		log_file_stream = fopen(log_file, "a");
 	}
 	if (daemon_mode) {
 		daemon(0, 0);  // TODO: check for daemon() in configure.
 	}
-	if (pid_file) {
-		FILE *p = fopen(pid_file, "w+");
-		if (p) {
-			fprintf(p, "%d\n", getpid());
-			fclose(p);
-		} else {
-			perror("Failed to write pid file");
-		}
+	if (pid_file_stream) {
+		fprintf(pid_file_stream, "%d\n", getpid());
+		fclose(pid_file_stream);
 	}
 
 #if !GLIB_CHECK_VERSION(2, 32, 0)
@@ -250,11 +255,21 @@ int main(int argc, char **argv)
 	}
 
 	upnp_transport_init(device);
-	upnp_transport_register_variable_listener(sample_variable_change_cb,
-						  (void*) "transport");
 	upnp_control_init(device);
-	upnp_control_register_variable_listener(sample_variable_change_cb,
-						(void*) "control");
+
+	struct LogInfo transport_log, control_log;
+	if (log_file_stream) {
+		fprintf(log_file_stream, "[Log file contains terminal "
+			"characters; use 'less -r' for best viewing]\n");
+		transport_log.out = log_file_stream;
+		transport_log.category = "transport";
+		upnp_transport_register_variable_listener(log_variable_change,
+							  &transport_log);
+		control_log.out = log_file_stream;
+		control_log.category = "control";
+		upnp_control_register_variable_listener(log_variable_change,
+							&control_log);
+	}
 
 	printf("Ready for rendering..\n");
 	output_loop();
