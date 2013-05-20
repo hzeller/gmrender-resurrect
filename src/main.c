@@ -192,7 +192,13 @@ int main(int argc, char **argv)
 	if (pid_file) {
 		pid_file_stream = fopen(pid_file, "w");
 	}
-	Log_init(log_file);
+	if (log_file != NULL) {
+		Log_init(log_file);
+	} else {
+		fprintf(stderr, "Logging switched off. "
+			"Enable with --logfile=<filename> "
+			"(e.g. --logfile=/dev/stdout for console)\n");
+	}
 
 	if (daemon_mode) {
 		daemon(0, 0);  // TODO: check for daemon() in configure.
