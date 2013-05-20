@@ -166,14 +166,14 @@ static GstState get_current_player_state() {
 }
 
 static void output_gstreamer_set_next_uri(const char *uri) {
-	Log_info("output", "Set next uri to %s", uri);
+	Log_info("gstreamer", "Set next uri to %s", uri);
 	free(gs_next_uri_);
 	gs_next_uri_ = strdup(uri);
 }
 
 static void output_gstreamer_set_uri(const char *uri,
 				     output_update_meta_cb_t meta_cb) {
-	Log_info("output", "Set uri to %s", uri);
+	Log_info("gstreamer", "Set uri to %s", uri);
 	free(gsuri_);
 	gsuri_ = strdup(uri);
 	meta_update_callback_ = meta_cb;
@@ -300,7 +300,7 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 
 	switch (msgType) {
 	case GST_MESSAGE_EOS:
-		g_print("GStreamer: %s: End-of-stream\n", msgSrcName);
+		Log_info("gstreamer", "%s: End-of-stream", msgSrcName);
 		if (gs_next_uri_ != NULL) {
 			// If playbin does not support gapless (old
 			// versions didn't), this will trigger.
@@ -325,7 +325,8 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 		gst_message_parse_error(msg, &err, &debug);
 		g_free(debug);
 
-		g_print("GStreamer: %s: Error: %s\n", msgSrcName, err->message);
+		Log_error("gstreamer", "%s: Error: %s",
+			  msgSrcName, err->message);
 		g_error_free(err);
 
 		break;
@@ -450,12 +451,12 @@ static int output_gstreamer_get_position(gint64 *track_duration,
 static int output_gstreamer_get_volume(float *v) {
 	double volume;
 	g_object_get(player_, "volume", &volume, NULL);
-	Log_info("output", "Query volume fraction: %f", volume);
+	Log_info("gstreamer", "Query volume fraction: %f", volume);
 	*v = volume;
 	return 0;
 }
 static int output_gstreamer_set_volume(float value) {
-	Log_info("output", "Set volume fraction to %f", value);
+	Log_info("gstreamer", "Set volume fraction to %f", value);
 	g_object_set(player_, "volume", (double) value, NULL);
 	return 0;
 }
@@ -466,13 +467,14 @@ static int output_gstreamer_get_mute(int *m) {
 	return 0;
 }
 static int output_gstreamer_set_mute(int m) {
-	Log_info("output", "Set mute to %s", m ? "on" : "off");
+	Log_info("gstreamer", "Set mute to %s", m ? "on" : "off");
 	g_object_set(player_, "mute", (gboolean) m, NULL);
 	return 0;
 }
 
 static void prepare_next_stream(GstElement *obj, gpointer userdata) {
-	Log_info("output", "about-to-finish cb: setting uri %s", gs_next_uri_);
+	Log_info("gstreamer", "about-to-finish cb: setting uri %s",
+		 gs_next_uri_);
 	free(gsuri_);
 	gsuri_ = gs_next_uri_;
 	gs_next_uri_ = NULL;
@@ -509,7 +511,7 @@ static int output_gstreamer_init(void)
 
 	if (audio_sink != NULL) {
 		GstElement *sink = NULL;
-		Log_info("output", "Setting audio sink to %s; device=%s\n",
+		Log_info("gstreamer", "Setting audio sink to %s; device=%s\n",
 			 audio_sink, audio_device ? audio_device : "");
 		sink = gst_element_factory_make (audio_sink, "sink");
 		if (sink == NULL) {
@@ -523,7 +525,7 @@ static int output_gstreamer_init(void)
 	}
 	if (videosink != NULL) {
 		GstElement *sink = NULL;
-		Log_info("output", "Setting video sink to %s", videosink);
+		Log_info("gstreamer", "Setting video sink to %s", videosink);
 		sink = gst_element_factory_make (videosink, "sink");
 		g_object_set (G_OBJECT (player_), "video-sink", sink, NULL);
 	}

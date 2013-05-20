@@ -161,7 +161,7 @@ void upnp_set_error(struct action_event *event, int error_code,
 		  format, ap);
 
 	va_end(ap);
-	fprintf(stderr, "%s: %s\n", __FUNCTION__, event->request->ErrStr);
+	Log_error("upnp", "%s: %s\n", __FUNCTION__, event->request->ErrStr);
 #endif
 }
 
@@ -350,14 +350,15 @@ static int event_handler(Upnp_EventType EventType, void *event, void *userdata)
 		handle_action_request(priv, event);
 		break;
 	case UPNP_CONTROL_GET_VAR_REQUEST:
-		printf("NOT IMPLEMENTED: control get variable request\n");
+		Log_error("upnp",
+			  "NOT IMPLEMENTED: control get variable request");
 		break;
 	case UPNP_EVENT_SUBSCRIPTION_REQUEST:
 		handle_subscription_request(priv, event);
 		break;
 
 	default:
-		printf("Unknown event type: %d\n", EventType);
+		Log_error("upnp", "Unknown event type: %d", EventType);
 		break;
 	}
 	return 0;
@@ -409,22 +410,22 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 #ifdef HAVE_LIBUPNP
 	rc = UpnpInit(ip_address, port);
 	if (UPNP_E_SUCCESS != rc) {
-		printf("UpnpInit() Error: %d\n", rc);
+		Log_error("upnp", "UpnpInit() Error: %d", rc);
 		goto upnp_err_out;
 	}
 	rc = UpnpEnableWebserver(TRUE);
 	if (UPNP_E_SUCCESS != rc) {
-		printf("UpnpEnableWebServer() Error: %d\n", rc);
+		Log_error("upnp", "UpnpEnableWebServer() Error: %d", rc);
 		goto upnp_err_out;
 	}
 	rc = UpnpSetVirtualDirCallbacks(&virtual_dir_callbacks);
 	if (UPNP_E_SUCCESS != rc) {
-		printf("UpnpSetVirtualDirCallbacks() Error: %d\n", rc);
+		Log_error("upnp", "UpnpSetVirtualDirCallbacks() Error: %d", rc);
 		goto upnp_err_out;
 	}
 	rc = UpnpAddVirtualDir("/upnp");
 	if (UPNP_E_SUCCESS != rc) {
-		printf("UpnpAddVirtualDir() Error: %d\n", rc);
+		Log_error("upnp", "UpnpAddVirtualDir() Error: %d", rc);
 		goto upnp_err_out;
 	}
 
@@ -436,13 +437,13 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 				     &event_handler, priv,
 				     &(priv->device_handle));
 	if (UPNP_E_SUCCESS != rc) {
-		printf("UpnpRegisterRootDevice2() Error: %d\n", rc);
+		Log_error("upnp", "UpnpRegisterRootDevice2() Error: %d", rc);
 		goto upnp_err_out;
 	}
 
 	rc = UpnpSendAdvertisement(priv->device_handle, 100);
 	if (UPNP_E_SUCCESS != rc) {
-		fprintf(stderr, "Error sending advertisements: %d\n", rc);
+		Log_error("unpp", "Error sending advertisements: %d", rc);
 		goto upnp_err_out;
 	}
 #endif

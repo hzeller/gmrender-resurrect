@@ -166,7 +166,7 @@ static int webserver_get_info(const char *filename, struct File_Info *info)
 		}
 		virtfile = virtfile->next;
 	}
-        printf("Not found\n");
+        Log_error("webserver", "Not found.");
 out:
 	return result;
 }
@@ -178,9 +178,9 @@ webserver_open(const char *filename, enum UpnpOpenFileMode mode)
 	WebServerFile *file = NULL;
 
 	if (mode != UPNP_READ) {
-		fprintf(stderr,
-			"%s: ignoring request to open file for writing\n",
-			filename);
+		Log_error("webserver",
+			  "%s: ignoring request to open file for writing.",
+			  filename);
 		goto out;
 	}
 

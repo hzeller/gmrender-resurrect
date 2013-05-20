@@ -127,7 +127,7 @@ static int process_cmdline(int argc, char **argv)
 	}
 
 	if (!g_option_context_parse (ctx, &argc, &argv, &err)) {
-		g_print ("Failed to initialize: %s\n", err->message);
+		fprintf(stderr, "Failed to initialize: %s\n", err->message);
 		g_error_free (err);
 		goto out;
 	}
@@ -230,14 +230,15 @@ int main(int argc, char **argv)
 
 	rc = output_init(output);
 	if (rc != 0) {
-		fprintf(stderr,"ERROR: Failed to initialize Output subsystem\n");
+		Log_error("main",
+			  "ERROR: Failed to initialize Output subsystem");
 		goto out;
 	}
 
 	struct upnp_device *device;
 	device = upnp_device_init(upnp_renderer, ip_address);
 	if (device == NULL) {
-		fprintf(stderr,"ERROR: Failed to initialize UPnP device\n");
+		Log_error("main", "ERROR: Failed to initialize UPnP device");
 		goto out;
 	}
 
@@ -251,7 +252,12 @@ int main(int argc, char **argv)
 							(void*) "control");
 	}
 
-	Log_info("main", "Ready for rendering.");
+	if (Log_info_enabled()) {
+		Log_info("main", "Ready for rendering.");
+	} else {
+		fprintf(stderr, "Ready for rendering.\n");
+	}
+
 	output_loop();
 	result = EXIT_SUCCESS;
 

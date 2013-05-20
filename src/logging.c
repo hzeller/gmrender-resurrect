@@ -39,11 +39,13 @@
 static int log_fd = -1;
 static int enable_color = 0;
 
-static const char *kTermHighlight = "\033[1m";   // bold.
-static const char *kTermReset     = "\033[0m";
+static const char *const kBoldHighlight = "\033[1m";
+static const char *const kRedHighlight  = "\033[1m\033[31m";
+static const char *const kTermReset     = "\033[0m";
 
-static const char *timestamp_start = "";
-static const char *timestamp_end = "";
+static const char *info_markup_start_ = "";
+static const char *error_markup_start_ = "";
+static const char *markup_end_ = "";
 
 void Log_init(const char *filename) {
 	if (filename == NULL)
@@ -55,8 +57,9 @@ void Log_init(const char *filename) {
 	}
 	enable_color = isatty(log_fd);
 	if (enable_color) {
-		timestamp_start = kTermHighlight;
-		timestamp_end = kTermReset;
+		info_markup_start_ = kBoldHighlight;
+		error_markup_start_ = kRedHighlight;
+		markup_end_ = kTermReset;
 	}
 	Log_info("logging", "Log started.");
 }
@@ -65,7 +68,8 @@ int Log_color_allowed(void) { return enable_color; }
 int Log_info_enabled(void) { return log_fd >= 0; }
 int Log_error_enabled(void) { return 1; }
 
-static void Log_internal(const char *category, const char *format,
+static void Log_internal(int fd, const char *markup_start,
+			 const char *category, const char *format,
 			 va_list ap) {
 	struct timeval now;
 	gettimeofday(&now, NULL);
@@ -76,15 +80,15 @@ static void Log_internal(const char *category, const char *format,
 	struct iovec parts[3];
 	parts[0].iov_len = asprintf((char**) &parts[0].iov_base,
 				    "%s[%s.%06ld | %s]%s ",
-				    timestamp_start, fmt_buf, now.tv_usec,
-				    category, timestamp_end);
+				    markup_start, fmt_buf, now.tv_usec,
+				    category, markup_end_);
 	parts[1].iov_len = vasprintf((char**) &parts[1].iov_base, format, ap);
 	parts[2].iov_base = (void*) "\n";
 	parts[2].iov_len = 1;
 	int already_newline 
 		= (parts[1].iov_len > 0 &&
 		   ((const char*)parts[1].iov_base)[parts[1].iov_len-1] == '\n');
-	writev(log_fd, parts, already_newline ? 2 : 3);
+	writev(fd, parts, already_newline ? 2 : 3);
 
 	free(parts[0].iov_base);
 	free(parts[1].iov_base);
@@ -94,15 +98,15 @@ void Log_info(const char *category, const char *format, ...) {
 	if (log_fd < 0) return;
 	va_list ap;
 	va_start(ap, format);
-	Log_internal(category, format, ap);
+	Log_internal(log_fd, info_markup_start_, category, format, ap);
 	va_end(ap);
 }
 
 void Log_error(const char *category, const char *format, ...) {
-	if (log_fd < 0) return;
 	va_list ap;
 	va_start(ap, format);
-	Log_internal(category, format, ap);
+	Log_internal(log_fd < 0 ? STDERR_FILENO : log_fd,
+		     error_markup_start_, category, format, ap);
 	va_end(ap);
 }
 

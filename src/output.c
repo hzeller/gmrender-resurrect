@@ -53,17 +53,16 @@ void output_dump_modules(void)
 {
 	int count;
 	
-	puts("Supported output modules:");
-
 	count = sizeof(modules) / sizeof(struct output_module *);
 	if (count == 0) {
 		puts("  NONE!");
 	} else {
 		int i;
 		for (i=0; i<count; i++) {
-			printf("  %s\t%s%s\n", modules[i]->shortname,
-			       modules[i]->description,
-			       (i==0) ? " (default)" : "");
+			Log_info("output", "Available output: %s\t%s%s",
+				 modules[i]->shortname,
+				 modules[i]->description,
+				 (i==0) ? " (default)" : "");
 		}
 	}
 }
@@ -75,7 +74,7 @@ int output_init(const char *shortname)
 
 	count = sizeof(modules) / sizeof(struct output_module *);
 	if (count == 0) {
-		fprintf(stderr, "No output module available\n");
+		Log_error("output", "No output module available");
 		goto out;
 	}
 	if (shortname == NULL) {
@@ -91,8 +90,8 @@ int output_init(const char *shortname)
 	}
 	
 	if (output_module == NULL) {
-		fprintf(stderr, "ERROR: No such output module: '%s'\n",
-		        shortname);
+		Log_error("error", "ERROR: No such output module: '%s'",
+			  shortname);
 		goto out;
 	}
 
