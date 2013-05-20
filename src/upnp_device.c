@@ -52,6 +52,8 @@
 #include "upnp_device.h"
 #include "variable-container.h"
 
+//#define ENABLE_ACTION_LOGGING
+
 struct upnp_device {
 	struct upnp_device_descriptor *upnp_device_descriptor;
 #ifdef HAVE_LIBUPNP
@@ -312,8 +314,7 @@ static int handle_action_request(struct upnp_device *priv,
 		if (rc == 0) {
 			ar_event->ErrCode = UPNP_E_SUCCESS;
 #ifdef ENABLE_ACTION_LOGGING
-			printf("Action '%s' was a success!\n",
-			       ar_event->ActionName);
+			Log_info("upnp", "Action '%s' OK", ar_event->ActionName);
 #endif
 		}
 		if (ar_event->ActionResult == NULL) {
@@ -335,8 +336,6 @@ static int handle_action_request(struct upnp_device *priv,
 			ar_event->ServiceID);
 		ar_event->ErrCode = UPNP_E_SUCCESS;
 	}
-
-
 
 	return 0;
 }

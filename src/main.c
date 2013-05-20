@@ -245,7 +245,7 @@ int main(int argc, char **argv)
 							(void*) "control");
 	}
 
-	Log_info("main", "Ready for rendering..");
+	Log_info("main", "Ready for rendering.");
 	output_loop();
 	result = EXIT_SUCCESS;
 

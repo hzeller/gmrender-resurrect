@@ -58,7 +58,7 @@ void Log_init(const char *filename) {
 		timestamp_start = kTermHighlight;
 		timestamp_end = kTermReset;
 	}
-	Log_info("gmrender", "Log started");
+	Log_info("logging", "Log started.");
 }
 
 int Log_color_allowed(void) { return enable_color; }

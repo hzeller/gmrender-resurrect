@@ -706,8 +706,6 @@ static int set_volume(struct action_event *event) {
 	snprintf(db_volume, sizeof(db_volume), "%d", (int) (256 * decibel));
 
 	const double fraction = exp(decibel / 20 * log(10));
-	fprintf(stderr, "Setting volume to #%d = %.2fdb (%.4f)\n",
-		volume_level, decibel, fraction);
 
 	change_volume(volume, db_volume);
 	output_set_volume(fraction);
@@ -798,7 +796,8 @@ void upnp_control_init(struct upnp_device *device) {
 	// Set initial volume.
 	float volume_fraction = 0;
 	if (output_get_volume(&volume_fraction) == 0) {
-		Log_info("control", "Initial volume: %f", volume_fraction);
+		Log_info("control", "Output inital volume is %f; setting "
+			 "control variables accordingly.", volume_fraction);
 		change_volume_decibel(20 * log(volume_fraction) / log(10));
 	}
 
