@@ -43,8 +43,8 @@ static const char *const kBoldHighlight = "\033[1m";
 static const char *const kRedHighlight  = "\033[1m\033[31m";
 static const char *const kTermReset     = "\033[0m";
 
-static const char *info_markup_start_ = "";
-static const char *error_markup_start_ = "";
+static const char *info_markup_start_  = "INFO  ";
+static const char *error_markup_start_ = "ERROR ";
 static const char *markup_end_ = "";
 
 void Log_init(const char *filename) {
