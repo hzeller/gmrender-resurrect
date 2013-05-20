@@ -38,6 +38,7 @@
 
 #include "upnp_connmgr.h"
 
+#include "logging.h"
 #include "upnp.h"
 #include "upnp_device.h"
 #include "variable-container.h"
@@ -196,7 +197,7 @@ static void register_mime_type_internal(const char *mime_type) {
 			return;
 		}
 	}
-	printf("Registering support for '%s'\n", mime_type);
+	Log_info("connmgr", "Registering support for '%s'", mime_type);
 
 	entry = malloc(sizeof(struct mime_type));
 	entry->mime_type = strdup(mime_type);
@@ -329,7 +330,7 @@ static int get_current_conn_info(struct action_event *event)
 		rc = -1;
 		goto out;
 	}
-	printf("%s: ConnectionID='%s'\n", __FUNCTION__, value);
+	Log_info("connmgr", "Query ConnectionID='%s'", value);
 	free(value);
 
 	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_RCS_ID, "RcsID");

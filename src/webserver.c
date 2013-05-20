@@ -41,6 +41,7 @@
 #include <upnp/ithread.h>
 #endif
 
+#include "logging.h"
 #include "webserver.h"
 
 typedef struct {
@@ -59,10 +60,14 @@ static struct virtual_file {
 	struct virtual_file *next;
 } *virtual_files = NULL;
 
-int webserver_register_buf(const char *path, const char *contents, const char *content_type)
+int webserver_register_buf(const char *path, const char *contents,
+			   const char *content_type)
 {
 	int result = -1;
 	struct virtual_file *entry;
+
+	Log_info("webserver", "Provide %s (%s) from buffer",
+		 path, content_type);
 
 	assert(path != NULL);
 	assert(contents != NULL);
@@ -94,6 +99,9 @@ int webserver_register_file(const char *path, const char *content_type)
 
 	snprintf(local_fname, PATH_MAX, "%s%s", PKG_DATADIR,
 	         strrchr(path, '/'));
+
+	Log_info("webserver", "Provide %s (%s) from %s", path, content_type,
+		 local_fname);
 
 	rc = stat(local_fname, &buf);
 	if (rc) {
@@ -142,8 +150,8 @@ static int webserver_get_info(const char *filename, struct File_Info *info)
 	int result = -1;
 	struct virtual_file *virtfile = virtual_files;
 
-	fprintf(stderr, "%s:(filename='%s',info=%p)\n", __FUNCTION__,
-		filename, info);
+	Log_info("webserver", "%s:(filename='%s',info=%p)", __FUNCTION__,
+		 filename, info);
 
 	while (virtfile != NULL) {
 		if (strcmp(filename, virtfile->virtual_fname) == 0) {

@@ -32,6 +32,7 @@
 
 #include <glib.h>
 
+#include "logging.h"
 #include "output_module.h"
 #include "output_dummy.h"
 #ifdef HAVE_GST
@@ -95,8 +96,8 @@ int output_init(const char *shortname)
 		goto out;
 	}
 
-	printf("Using output module: %s (%s)\n", output_module->shortname,
-	       output_module->description);
+	Log_info("output", "Using output module: %s (%s)",
+		 output_module->shortname, output_module->description);
 
 	if (output_module->init) {
 		result = output_module->init();

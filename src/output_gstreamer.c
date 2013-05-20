@@ -35,6 +35,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "logging.h"
 #include "upnp_connmgr.h"
 #include "output_module.h"
 #include "output_gstreamer.h"
@@ -165,14 +166,14 @@ static GstState get_current_player_state() {
 }
 
 static void output_gstreamer_set_next_uri(const char *uri) {
-	//printf("%s: setting next uri to '%s'\n", __FUNCTION__, uri);
+	Log_info("output", "Set next uri to %s", uri);
 	free(gs_next_uri_);
 	gs_next_uri_ = strdup(uri);
 }
 
 static void output_gstreamer_set_uri(const char *uri,
 				     output_update_meta_cb_t meta_cb) {
-	printf("%s: setting uri to '%s'\n", __FUNCTION__, uri);
+	Log_info("output", "Set uri to %s", uri);
 	free(gsuri_);
 	gsuri_ = strdup(uri);
 	meta_update_callback_ = meta_cb;
@@ -185,14 +186,14 @@ static int output_gstreamer_play(output_transition_cb_t callback) {
 	if (get_current_player_state() != GST_STATE_PAUSED) {
 		if (gst_element_set_state(player_, GST_STATE_READY) ==
 		    GST_STATE_CHANGE_FAILURE) {
-			printf("setting play state failed (1)\n");
+			Log_error("output", "setting play state failed (1)");
 			// Error, but continue; can't get worse :)
 		}
 		g_object_set(G_OBJECT(player_), "uri", gsuri_, NULL);
 	}
 	if (gst_element_set_state(player_, GST_STATE_PLAYING) ==
 	    GST_STATE_CHANGE_FAILURE) {
-		printf("setting play state failed (2)\n");
+		Log_error("output", "setting play state failed (2)");
 		goto out;
 	} 
 	result = 0;
@@ -432,11 +433,11 @@ static int output_gstreamer_get_position(gint64 *track_duration,
 	GstFormat query_type = GST_FORMAT_TIME;
 #endif	
 	if (!gst_element_query_duration(player_, query_type, track_duration)) {
-		fprintf(stderr, "Failed to get track duration\n");
+		Log_error("output", "Failed to get track duration.");
 		rc = -1;
 	}
 	if (!gst_element_query_position(player_, query_type, track_pos)) {
-		fprintf(stderr, "Failed to get track pos\n");
+		Log_error("output", "Failed to get track pos");
 		rc = -1;
 	}
 	// playbin2 does not allow to query while paused. Remember in case
@@ -449,12 +450,12 @@ static int output_gstreamer_get_position(gint64 *track_duration,
 static int output_gstreamer_get_volume(float *v) {
 	double volume;
 	g_object_get(player_, "volume", &volume, NULL);
-	fprintf(stderr, "gstreamer: %f current volume fraction.\n", volume);
+	Log_info("output", "Query volume fraction: %f", volume);
 	*v = volume;
 	return 0;
 }
 static int output_gstreamer_set_volume(float value) {
-	fprintf(stderr, "gstreamer: set volume fraction to %f\n", value);
+	Log_info("output", "Set volume fraction to %f", value);
 	g_object_set(player_, "volume", (double) value, NULL);
 	return 0;
 }
@@ -465,13 +466,13 @@ static int output_gstreamer_get_mute(int *m) {
 	return 0;
 }
 static int output_gstreamer_set_mute(int m) {
-	fprintf(stderr, "gstreamer, got mute %d\n", m);
+	Log_info("output", "Set mute to %s", m ? "on" : "off");
 	g_object_set(player_, "mute", (gboolean) m, NULL);
 	return 0;
 }
 
 static void prepare_next_stream(GstElement *obj, gpointer userdata) {
-	printf("HZ: about-to-finish cb: setting uri %s\n", gs_next_uri_);
+	Log_info("output", "about-to-finish cb: setting uri %s", gs_next_uri_);
 	free(gsuri_);
 	gsuri_ = gs_next_uri_;
 	gs_next_uri_ = NULL;
@@ -508,11 +509,11 @@ static int output_gstreamer_init(void)
 
 	if (audio_sink != NULL) {
 		GstElement *sink = NULL;
-		printf("Setting audio sink to %s; device=%s\n",
-		       audio_sink, audio_device ? audio_device : "");
+		Log_info("output", "Setting audio sink to %s; device=%s\n",
+			 audio_sink, audio_device ? audio_device : "");
 		sink = gst_element_factory_make (audio_sink, "sink");
 		if (sink == NULL) {
-		  fprintf(stderr, "Couldn't create sink '%s'\n", audio_sink);
+		  Log_error("output", "Couldn't create sink '%s'", audio_sink);
 		} else {
 		  if (audio_device != NULL) {
 		    g_object_set (G_OBJECT(sink), "device", audio_device, NULL);
@@ -522,14 +523,14 @@ static int output_gstreamer_init(void)
 	}
 	if (videosink != NULL) {
 		GstElement *sink = NULL;
-		printf("Setting video sink to %s\n", videosink);
+		Log_info("output", "Setting video sink to %s", videosink);
 		sink = gst_element_factory_make (videosink, "sink");
 		g_object_set (G_OBJECT (player_), "video-sink", sink, NULL);
 	}
 
 	if (gst_element_set_state(player_, GST_STATE_READY) ==
 	    GST_STATE_CHANGE_FAILURE) {
-		fprintf(stderr,	"Error: pipeline doesn't want to get ready\n");
+		Log_error("output", "Error: pipeline doesn't become ready.");
 	}
 
 	g_signal_connect(G_OBJECT(player_), "about-to-finish",

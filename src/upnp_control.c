@@ -40,6 +40,7 @@
 #include <upnp/ithread.h>
 #endif
 
+#include "logging.h"
 #include "webserver.h"
 #include "upnp.h"
 #include "upnp_device.h"
@@ -674,7 +675,7 @@ static float change_volume_decibel(float raw_decibel) {
 	char db_volume[10];
 	snprintf(db_volume, sizeof(db_volume), "%d", (int) (256 * decibel));
 
-	fprintf(stderr, "Setting volume-db to %.2fdb == #%d\n",
+	Log_info("control", "Setting volume-db to %.2fdb == #%d",
 		decibel, volume_level);
 
 	change_volume(volume, db_volume);
@@ -793,16 +794,18 @@ struct service *upnp_control_get_service(void) {
 
 void upnp_control_init(struct upnp_device *device) {
 	upnp_control_get_service();
+
+	// Set initial volume.
+	float volume_fraction = 0;
+	if (output_get_volume(&volume_fraction) == 0) {
+		Log_info("control", "Initial volume: %f", volume_fraction);
+		change_volume_decibel(20 * log(volume_fraction) / log(10));
+	}
+
 	assert(upnp_collector_ == NULL);
 	upnp_collector_ = UPnPLastChangeCollector_new(state_variables_,
 						      CONTROL_VAR_LAST_CHANGE,
 						      device, CONTROL_SERVICE);
-	// Get the initial volume and set the corresponding decibel and 'steps'
-	float volume_fraction = 0;
-	if (output_get_volume(&volume_fraction) == 0) {
-		fprintf(stderr, "Initial volume: %f\n", volume_fraction);
-		change_volume_decibel(20 * log(volume_fraction) / log(10));
-	}
 }
 
 void upnp_control_register_variable_listener(variable_change_listener_t cb,

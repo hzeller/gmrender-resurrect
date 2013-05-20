@@ -81,7 +81,6 @@ static char *replace_range(char *input,
 			   int *edit_count) {
 	if (content == NULL)  // unknown content; document unchanged.
 		return input;
-	//fprintf(stderr, "------- Before ------\n%s\n-------------\n", input);
 	const int total_len = strlen(input);
 	const char *start_pos = strstr(input, tag_start);
 	if (start_pos == NULL) return input;
@@ -109,7 +108,6 @@ static char *replace_range(char *input,
 		}
 		result = input;
 	}
-	//fprintf(stderr, "------- After ------\n%s\n-------------\n", result);
 	return result;
 }
 

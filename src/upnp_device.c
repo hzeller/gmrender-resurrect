@@ -210,13 +210,13 @@ static int handle_subscription_request(struct upnp_device *priv,
 	assert(priv != NULL);
 
 
-	printf("Subscription request for %s (%s)\n",
-	       sr_event->ServiceId, sr_event->UDN);
+	Log_info("upnp", "Subscription request for %s (%s)",
+		 sr_event->ServiceId, sr_event->UDN);
 
 	srv = find_service(priv->upnp_device_descriptor, sr_event->ServiceId);
 	if (srv == NULL) {
-		fprintf(stderr, "%s: Unknown service '%s'\n", __FUNCTION__,
-			sr_event->ServiceId);
+		Log_error("upnp", "%s: Unknown service '%s'", __FUNCTION__,
+			  sr_event->ServiceId);
 		goto out;
 	}
 
@@ -247,7 +247,7 @@ static int handle_subscription_request(struct upnp_device *priv,
 	}
 	eventvar_values[0] = UPnPLastChangeBuilder_to_xml(builder);
 	UPnPLastChangeBuilder_delete(builder);
-	printf("Initial variable sync: %s", eventvar_values[0]);
+	Log_info("upnp", "Initial variable sync: %s", eventvar_values[0]);
 
 	rc = UpnpAcceptSubscription(priv->device_handle,
 			       sr_event->UDN, sr_event->ServiceId,
@@ -404,7 +404,6 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
         for (i=0; (srv = device_def->services[i]); i++) {
        		buf = upnp_get_scpd(srv);
 		assert(buf != NULL);
-                printf("registering '%s'\n", srv->scpd_url);
 		webserver_register_buf(srv->scpd_url, buf, "text/xml");
 	}
 

@@ -10,7 +10,7 @@ gmediarender_SOURCES = main.c \
 	webserver.c webserver.h \
 	output.c output.h \
 	output_dummy.c  output_dummy.h \
-	logging.h \
+	logging.h logging.c \
 	xmldoc.c xmldoc.h \
 	xmlescape.c xmlescape.h
 
