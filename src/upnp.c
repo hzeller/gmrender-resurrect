@@ -37,7 +37,6 @@
 #include <upnp/ithread.h>
 #endif
 
-#include "logging.h"
 #include "xmldoc.h"
 #include "upnp.h"
 

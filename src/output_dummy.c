@@ -27,9 +27,6 @@
 
 #include <glib.h>
 
-//#define ENABLE_TRACING
-
-#include "logging.h"
 #include "output_module.h"
 #include "output_dummy.h"
 

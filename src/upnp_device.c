@@ -69,8 +69,6 @@ int upnp_add_response(struct action_event *event,
 	int rc;
 #endif
 
-	//ENTER();
-
 	assert(event != NULL);
 	assert(key != NULL);
 
@@ -110,7 +108,6 @@ out:
 	if (val != NULL) {
 		free(val);
 	}
-	//LEAVE();
 	return result;
 }
 
@@ -120,8 +117,6 @@ int upnp_append_variable(struct action_event *event,
 	const char *value;
 	struct service *service = event->service;
 	int retval = -1;
-
-	//ENTER();
 
 	assert(event != NULL);
 	assert(paramname != NULL);
@@ -147,7 +142,6 @@ int upnp_append_variable(struct action_event *event,
 	ithread_mutex_unlock(service->service_mutex);
 #endif
 out:
-	//LEAVE();
 	return retval;
 }
 
@@ -213,8 +207,6 @@ static int handle_subscription_request(struct upnp_device *priv,
 	int rc;
 	int result = -1;
 
-	ENTER();
-
 	assert(priv != NULL);
 
 
@@ -270,7 +262,6 @@ static int handle_subscription_request(struct upnp_device *priv,
 	free((char*)eventvar_values[0]);
 
 out:
-	LEAVE();
 	return result;
 }
 #endif

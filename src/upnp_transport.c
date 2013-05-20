@@ -41,7 +41,6 @@
 #include <upnp/ithread.h>
 #endif
 
-#include "logging.h"
 #include "output.h"
 #include "upnp.h"
 #include "upnp_device.h"
@@ -532,7 +531,6 @@ static int get_media_info(struct action_event *event)
 {
 	char *value;
 	int rc;
-	ENTER();
 
 	value = upnp_get_string(event, "InstanceID");
 	if (value == NULL) {
@@ -670,8 +668,6 @@ static int obtain_instanceid(struct action_event *event, int *instance)
 	char *value;
 	int rc = 0;
 	
-	ENTER();
-
 	value = upnp_get_string(event, "InstanceID");
 	if (value == NULL) {
 #ifdef HAVE_LIBUPNP
@@ -683,8 +679,6 @@ static int obtain_instanceid(struct action_event *event, int *instance)
 	free(value);
 
 	// TODO - parse value, and store in *instance, if instance!=NULL
-
-	LEAVE();
 
 	return rc;
 }
@@ -709,15 +703,11 @@ static int set_avtransport_uri(struct action_event *event)
 {
 	int rc = 0;
 
-	ENTER();
-
 	if (obtain_instanceid(event, NULL)) {
-		LEAVE();
 		return -1;
 	}
 	char *uri = upnp_get_string(event, "CurrentURI");
 	if (uri == NULL) {
-		LEAVE();
 		return -1;
 	}
 
@@ -743,7 +733,6 @@ static int set_avtransport_uri(struct action_event *event)
 	free(uri);
 	free(meta);
 
-	LEAVE();
 	return rc;
 }
 
@@ -752,16 +741,12 @@ static int set_next_avtransport_uri(struct action_event *event)
 	int rc = 0;
 	char *value;
 
-	ENTER();
-
 	if (obtain_instanceid(event, NULL)) {
-		LEAVE();
 		return -1;
 	}
 
 	value = upnp_get_string(event, "NextURI");
 	if (value == NULL) {
-		LEAVE();
 		return -1;
 	}
 
@@ -781,14 +766,12 @@ static int set_next_avtransport_uri(struct action_event *event)
 
 	service_unlock();
 
-	LEAVE();
 	return rc;
 }
 
 static int get_transport_info(struct action_event *event)
 {
 	int rc;
-	ENTER();
 
 	if (obtain_instanceid(event, NULL)) {
 		rc = -1;
@@ -812,14 +795,12 @@ static int get_transport_info(struct action_event *event)
 		goto out;
 
       out:
-	LEAVE();
 	return rc;
 }
 
 static int get_current_transportactions(struct action_event *event)
 {
 	int rc;
-	ENTER();
 
 	if (obtain_instanceid(event, NULL)) {
 		rc = -1;
@@ -831,14 +812,12 @@ static int get_current_transportactions(struct action_event *event)
 	if (rc)
 		goto out;
       out:
-	LEAVE();
 	return rc;
 }
 
 static int get_transport_settings(struct action_event *event)
 {
 	int rc = 0;
-	ENTER();
 
 	if (obtain_instanceid(event, NULL)) {
 		rc = -1;
@@ -846,7 +825,6 @@ static int get_transport_settings(struct action_event *event)
 	}
 
       out:
-	LEAVE();
 	return rc;
 }
 
@@ -909,7 +887,6 @@ static void *thread_update_track_time(void *userdata) {
 static int get_position_info(struct action_event *event)
 {
 	int rc;
-	ENTER();
 
 	if (obtain_instanceid(event, NULL)) {
 		rc = -1;
@@ -958,14 +935,12 @@ static int get_position_info(struct action_event *event)
 		goto out;
 
       out:
-	LEAVE();
 	return rc;
 }
 
 static int get_device_caps(struct action_event *event)
 {
 	int rc = 0;
-	ENTER();
 
 	if (obtain_instanceid(event, NULL)) {
 		rc = -1;
@@ -973,14 +948,11 @@ static int get_device_caps(struct action_event *event)
 	}
 
       out:
-	LEAVE();
 	return rc;
 }
 
 static int stop(struct action_event *event)
 {
-	ENTER();
-
 	if (obtain_instanceid(event, NULL)) {
 		return -1;
 	}
@@ -1007,8 +979,6 @@ static int stop(struct action_event *event)
 		break;
 	}
 	service_unlock();
-
-	LEAVE();
 
 	return 0;
 }
@@ -1039,10 +1009,7 @@ static int play(struct action_event *event)
 {
 	int rc = 0;
 
-	ENTER();
-
 	if (obtain_instanceid(event, NULL)) {
-		LEAVE();
 		return -1;
 	}
 
@@ -1086,17 +1053,14 @@ static int play(struct action_event *event)
 	}
 	service_unlock();
 
-	LEAVE();
 	return rc;
 }
 
 static int pause_stream(struct action_event *event)
 {
 	int rc = 0;
-	ENTER();
 
 	if (obtain_instanceid(event, NULL)) {
-		LEAVE();
 		return -1;
 	}
 
@@ -1123,15 +1087,12 @@ static int pause_stream(struct action_event *event)
         }
 	service_unlock();
 
-	LEAVE();
-
 	return rc;
 }
 
 static int seek(struct action_event *event)
 {
 	int rc = 0;
-	ENTER();
 
 	if (obtain_instanceid(event, NULL)) {
 		rc = -1;
@@ -1154,8 +1115,6 @@ static int seek(struct action_event *event)
 		free(target);
 	}
 	free(unit);
-
-	LEAVE();
 
 	return rc;
 }

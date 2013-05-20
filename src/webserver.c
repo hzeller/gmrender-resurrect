@@ -41,7 +41,6 @@
 #include <upnp/ithread.h>
 #endif
 
-#include "logging.h"
 #include "webserver.h"
 
 typedef struct {
@@ -65,7 +64,6 @@ int webserver_register_buf(const char *path, const char *contents, const char *c
 	int result = -1;
 	struct virtual_file *entry;
 
-	ENTER();
 	assert(path != NULL);
 	assert(contents != NULL);
 	assert(content_type != NULL);
@@ -83,7 +81,6 @@ int webserver_register_buf(const char *path, const char *contents, const char *c
 	result = 0;
 
 out:
-	LEAVE();
 	return result;
 }
 
@@ -94,8 +91,6 @@ int webserver_register_file(const char *path, const char *content_type)
 	struct virtual_file *entry;
 	int rc;
 	int result = -1;
-
-	ENTER();
 
 	snprintf(local_fname, PATH_MAX, "%s%s", PKG_DATADIR,
 	         strrchr(path, '/'));
@@ -138,7 +133,6 @@ int webserver_register_file(const char *path, const char *content_type)
 	virtual_files = entry;
 	result = 0;
 out:
-	LEAVE();
 	return result;
 }
 
@@ -147,8 +141,6 @@ static int webserver_get_info(const char *filename, struct File_Info *info)
 {
 	int result = -1;
 	struct virtual_file *virtfile = virtual_files;
-
-	ENTER();
 
 	fprintf(stderr, "%s:(filename='%s',info=%p)\n", __FUNCTION__,
 		filename, info);
@@ -168,7 +160,6 @@ static int webserver_get_info(const char *filename, struct File_Info *info)
 	}
         printf("Not found\n");
 out:
-	LEAVE();
 	return result;
 }
 
@@ -178,7 +169,6 @@ webserver_open(const char *filename, enum UpnpOpenFileMode mode)
 	struct virtual_file *virtfile = virtual_files;
 	WebServerFile *file = NULL;
 
-	ENTER();
 	if (mode != UPNP_READ) {
 		fprintf(stderr,
 			"%s: ignoring request to open file for writing\n",
@@ -198,7 +188,6 @@ webserver_open(const char *filename, enum UpnpOpenFileMode mode)
 	}
 
 out:
-	LEAVE();
 	return file;
 }
 
@@ -212,8 +201,6 @@ static int webserver_read(UpnpWebFileHandle fh, char *buf, size_t buflen)
 	WebServerFile *file = (WebServerFile *) fh;
 	ssize_t len = -1;
 
-	ENTER();
-
 	len = minimum(buflen, file->len - file->pos);
 	memcpy(buf, file->contents + file->pos, len);
 
@@ -223,14 +210,11 @@ static int webserver_read(UpnpWebFileHandle fh, char *buf, size_t buflen)
 		file->pos += len;
 	}
 
-	LEAVE();
 	return len;
 }
 
 static int webserver_write(UpnpWebFileHandle fh, char *buf, size_t buflen)
 {
-	ENTER();
-	LEAVE();
 	return -1;
 }
 
@@ -240,8 +224,6 @@ static int webserver_seek(UpnpWebFileHandle fh, off_t offset, int origin)
 	off_t newpos = -1;
 	int result = -1;
 	
-	ENTER();
-
 	switch (origin) {
 	case SEEK_SET:
 		newpos = offset;
@@ -262,7 +244,6 @@ static int webserver_seek(UpnpWebFileHandle fh, off_t offset, int origin)
 	file->pos = newpos;
 	result = 0;
 out:
-	LEAVE();
 	return result;
 }
 
@@ -270,11 +251,8 @@ static int webserver_close(UpnpWebFileHandle fh)
 {
 	WebServerFile *file = (WebServerFile *) fh;
 
-	ENTER();
-
 	free(file);
 
-	LEAVE();
 	return 0;
 }
 

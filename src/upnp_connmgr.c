@@ -38,7 +38,6 @@
 
 #include "upnp_connmgr.h"
 
-#include "logging.h"
 #include "upnp.h"
 #include "upnp_device.h"
 #include "variable-container.h"
@@ -239,8 +238,6 @@ int connmgr_init(void) {
 	int bufsize = 0;
 	int result = -1;
 
-	ENTER();
-
 	struct service *srv = upnp_connmgr_get_service();
 
 	buf = malloc(bufsize);
@@ -282,35 +279,28 @@ int connmgr_init(void) {
 
 	result = 0;
 out:
-	LEAVE();
 	return result;
 }
 
 
 static int get_protocol_info(struct action_event *event)
 {
-	ENTER();
 	upnp_append_variable(event, CONNMGR_VAR_SRC_PROTO_INFO, "Source");
 	upnp_append_variable(event, CONNMGR_VAR_SINK_PROTO_INFO, "Sink");
-	LEAVE();
 	return event->status;
 }
 
 static int get_current_conn_ids(struct action_event *event)
 {
 	int rc = -1;
-	ENTER();
 	upnp_add_response(event, "ConnectionIDs", "0");
 	///rc = upnp_append_variable(event, CONNMGR_VAR_CUR_CONN_IDS,
 	//			    "ConnectionIDs");
-	LEAVE();
 	return rc;
 }
 
 static int prepare_for_connection(struct action_event *event) {
 	int rc;
-
-	ENTER();
 
 	// This will be 0
 	rc = upnp_append_variable(event, CONNMGR_VAR_CUR_CONN_IDS,
@@ -326,7 +316,6 @@ static int prepare_for_connection(struct action_event *event) {
 		goto out;
 
       out:
-	LEAVE();
 	return rc;
 }
 
@@ -335,7 +324,6 @@ static int get_current_conn_info(struct action_event *event)
 	int rc;
 	char *value;
 
-	ENTER();
 	value = upnp_get_string(event, "ConnectionID");
 	if (value == NULL) {
 		rc = -1;
@@ -372,7 +360,6 @@ static int get_current_conn_info(struct action_event *event)
 		goto out;
 
       out:
-	LEAVE();
 	return rc;
 }
 

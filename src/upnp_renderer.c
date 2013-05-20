@@ -43,7 +43,6 @@
 #include <upnp/ithread.h>
 #endif
 
-#include "logging.h"
 #include "webserver.h"
 #include "upnp.h"
 #include "upnp_device.h"
@@ -130,7 +129,6 @@ struct upnp_device_descriptor *
 upnp_renderer_descriptor(const char *friendly_name,
 			 const char *uuid)
 {
-	ENTER();
 	char *udn;
 
 	render_device.friendly_name = friendly_name;

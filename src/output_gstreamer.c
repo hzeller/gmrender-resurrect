@@ -35,9 +35,6 @@
 #include <string.h>
 #include <unistd.h>
 
-//#define ENABLE_TRACING
-
-#include "logging.h"
 #include "upnp_connmgr.h"
 #include "output_module.h"
 #include "output_gstreamer.h"
@@ -168,28 +165,23 @@ static GstState get_current_player_state() {
 }
 
 static void output_gstreamer_set_next_uri(const char *uri) {
-	ENTER();
 	//printf("%s: setting next uri to '%s'\n", __FUNCTION__, uri);
 	free(gs_next_uri_);
 	gs_next_uri_ = strdup(uri);
-	LEAVE();
 }
 
 static void output_gstreamer_set_uri(const char *uri,
 				     output_update_meta_cb_t meta_cb) {
-	ENTER();
 	printf("%s: setting uri to '%s'\n", __FUNCTION__, uri);
 	free(gsuri_);
 	gsuri_ = strdup(uri);
 	meta_update_callback_ = meta_cb;
 	SongMetaData_clear(&song_meta_);
-	LEAVE();
 }
 
 static int output_gstreamer_play(output_transition_cb_t callback) {
 	int result = -1;
 	play_trans_callback_ = callback;
-	ENTER();
 	if (get_current_player_state() != GST_STATE_PAUSED) {
 		if (gst_element_set_state(player_, GST_STATE_READY) ==
 		    GST_STATE_CHANGE_FAILURE) {
@@ -205,7 +197,6 @@ static int output_gstreamer_play(output_transition_cb_t callback) {
 	} 
 	result = 0;
 out:
-	LEAVE();
 	return result;
 }
 
@@ -499,8 +490,6 @@ static int output_gstreamer_init(void)
 {
 	GstBus *bus;
 
-	ENTER();
-
 	SongMetaData_init(&song_meta_);
 	scan_mime_list();
 
@@ -549,7 +538,6 @@ static int output_gstreamer_init(void)
 	if (initial_db < 0) {
 		output_gstreamer_set_volume(exp(initial_db / 20 * log(10)));
 	}
-	LEAVE();
 
 	return 0;
 }
