@@ -39,9 +39,9 @@
 static int log_fd = -1;
 static int enable_color = 0;
 
-static const char *const kBoldHighlight = "\033[1m";
-static const char *const kRedHighlight  = "\033[1m\033[31m";
-static const char *const kTermReset     = "\033[0m";
+static const char *const kInfoHighlight  = "\033[1mINFO  ";
+static const char *const kErrorHighlight = "\033[1m\033[31mERROR ";
+static const char *const kTermReset      = "\033[0m";
 
 static const char *info_markup_start_  = "INFO  ";
 static const char *error_markup_start_ = "ERROR ";
@@ -57,8 +57,8 @@ void Log_init(const char *filename) {
 	}
 	enable_color = isatty(log_fd);
 	if (enable_color) {
-		info_markup_start_ = kBoldHighlight;
-		error_markup_start_ = kRedHighlight;
+		info_markup_start_ = kInfoHighlight;
+		error_markup_start_ = kErrorHighlight;
 		markup_end_ = kTermReset;
 	}
 	Log_info("logging", "Log started.");

@@ -284,6 +284,16 @@ int upnp_device_notify(struct upnp_device *device,
 }
 
 
+static int handle_var_request(struct upnp_device *priv,
+			      struct Upnp_State_Var_Request *var_event) {
+	Log_error("upnp",
+		  "NOT IMPLEMENTED: control get variable request %s (%s) for %s",
+		  var_event->ServiceID, var_event->DevUDN,
+		  var_event->StateVarName);
+	// UpnpAddTo*Response()
+	return -1;
+}
+
 #ifdef HAVE_LIBUPNP
 static int handle_action_request(struct upnp_device *priv,
                                  struct Upnp_Action_Request *ar_event)
@@ -349,10 +359,11 @@ static int event_handler(Upnp_EventType EventType, void *event, void *userdata)
 	case UPNP_CONTROL_ACTION_REQUEST:
 		handle_action_request(priv, event);
 		break;
+
 	case UPNP_CONTROL_GET_VAR_REQUEST:
-		Log_error("upnp",
-			  "NOT IMPLEMENTED: control get variable request");
+		handle_var_request(priv, event);
 		break;
+
 	case UPNP_EVENT_SUBSCRIPTION_REQUEST:
 		handle_subscription_request(priv, event);
 		break;
