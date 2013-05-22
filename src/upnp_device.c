@@ -286,12 +286,31 @@ int upnp_device_notify(struct upnp_device *device,
 
 static int handle_var_request(struct upnp_device *priv,
 			      struct Upnp_State_Var_Request *var_event) {
-	Log_error("upnp",
-		  "NOT IMPLEMENTED: control get variable request %s (%s) for %s",
-		  var_event->ServiceID, var_event->DevUDN,
-		  var_event->StateVarName);
-	// UpnpAddTo*Response()
-	return -1;
+	struct service *srv = find_service(priv->upnp_device_descriptor,
+					   var_event->ServiceID);
+	if (srv == NULL) {
+		var_event->ErrCode = UPNP_SOAP_E_INVALID_ARGS;
+		return -1;
+	}
+	char *result = NULL;
+	const int var_count =
+		VariableContainer_get_num_vars(srv->variable_container);
+	for (int i = 0; i < var_count; ++i) {
+		const char *name;
+		const char *value =
+			VariableContainer_get(srv->variable_container, i, &name);
+		if (value && strcmp(var_event->StateVarName, name) == 0) {
+			result = strdup(value);
+			break;
+		}
+	}
+	var_event->CurrentVal = result;
+	var_event->ErrCode = (result == NULL)
+		? UPNP_SOAP_E_INVALID_VAR
+		: UPNP_E_SUCCESS;
+	Log_info("upnp", "Variable request %s -> %s (%s)",
+		 var_event->StateVarName, result, var_event->ServiceID);
+	return 0;
 }
 
 #ifdef HAVE_LIBUPNP

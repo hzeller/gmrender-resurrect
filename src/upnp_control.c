@@ -515,14 +515,13 @@ static void change_volume(const char *volume, const char *db_volume) {
 static int cmd_obtain_variable(struct action_event *event, int varnum,
 			       const char *paramname)
 {
-	char *value;
-
-	value = upnp_get_string(event, "InstanceID");
-	if (value == NULL) {
+	char *instance = upnp_get_string(event, "InstanceID");
+	if (instance == NULL) {
 		return -1;
 	}
-	printf("%s: InstanceID='%s'\n", __FUNCTION__, value);
-	free(value);
+	Log_info("control", "%s: %s for instance %s\n",
+		 __FUNCTION__, paramname, instance);
+	free(instance);
 
 	return upnp_append_variable(event, varnum, paramname);
 }
@@ -626,8 +625,6 @@ static int set_mute(struct action_event *event) {
 	return 0;
 }
 
-// TODO(hzeller): we might need to add read the initial value
-// from gstreamer and push-notify the real variable.
 static int get_volume(struct action_event *event)
 {
 	/* FIXME - Channel */
