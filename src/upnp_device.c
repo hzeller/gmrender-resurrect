@@ -52,7 +52,7 @@
 #include "upnp_device.h"
 #include "variable-container.h"
 
-//#define ENABLE_ACTION_LOGGING
+#define ENABLE_ACTION_LOGGING
 
 struct upnp_device {
 	struct upnp_device_descriptor *upnp_device_descriptor;
@@ -344,7 +344,21 @@ static int handle_action_request(struct upnp_device *priv,
 		if (rc == 0) {
 			ar_event->ErrCode = UPNP_E_SUCCESS;
 #ifdef ENABLE_ACTION_LOGGING
-			Log_info("upnp", "Action '%s' OK", ar_event->ActionName);
+			char *action_request_xml = NULL;
+			char *action_result_xml = NULL;
+			if (ar_event->ActionRequest) {
+				action_request_xml = ixmlDocumenttoString(
+						ar_event->ActionRequest);
+			}
+			if (ar_event->ActionResult) {
+				action_result_xml = ixmlDocumenttoString(
+						ar_event->ActionResult);
+			}
+			Log_info("upnp", "Action '%s' OK %s => %s",
+				 ar_event->ActionName, action_request_xml,
+				 action_result_xml);
+			free(action_request_xml);
+			free(action_result_xml);
 #endif
 		}
 		if (ar_event->ActionResult == NULL) {
