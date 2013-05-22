@@ -43,8 +43,12 @@
 #include "upnp_device.h"
 #include "variable-container.h"
 
-//#define CONNMGR_SERVICE "urn:upnp-org:serviceId:ConnectionManager"
-#define CONNMGR_SERVICE "urn:schemas-upnp-org:service:ConnectionManager"
+// This actually should be "urn:upnp-org:serviceId:ConnectionManager", but
+// apparently some clients are confused about this ?
+// This change (some explicit commenting out) predates me (hzeller) and
+// there is no trace in any version control about why this is the case.
+//#define CONNMGR_SERVICE_ID "urn:upnp-org:serviceId:ConnectionManager"
+#define CONNMGR_SERVICE_ID "urn:schemas-upnp-org:service:ConnectionManager"
 #define CONNMGR_TYPE	"urn:schemas-upnp-org:service:ConnectionManager:1"
 #define CONNMGR_SCPD_URL "/upnp/renderconnmgrSCPD.xml"
 #define CONNMGR_CONTROL_URL "/upnp/control/renderconnmgr1"
@@ -385,8 +389,8 @@ static struct action connmgr_actions[] = {
 };
 
 struct service connmgr_service_ = {
-        .service_name =		CONNMGR_SERVICE,
-        .type =			CONNMGR_TYPE,
+        .service_id =		CONNMGR_SERVICE_ID,
+        .service_type =		CONNMGR_TYPE,
 	.scpd_url =		CONNMGR_SCPD_URL,
 	.control_url =		CONNMGR_CONTROL_URL,
 	.event_url =		CONNMGR_EVENT_URL,

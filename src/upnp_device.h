@@ -68,7 +68,7 @@ int upnp_device_notify(struct upnp_device *device,
 		       int varcount);
 
 struct service *find_service(struct upnp_device_descriptor *device_def,
-                             char *service_name);
+                             const char *service_name);
 
 char *upnp_get_device_desc(struct upnp_device_descriptor *device_def);
 

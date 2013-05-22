@@ -94,7 +94,7 @@ int upnp_add_response(struct action_event *event,
 	rc =
 	    UpnpAddToActionResponse(&event->request->ActionResult,
 				    event->request->ActionName,
-				    event->service->type, key, val);
+				    event->service->service_type, key, val);
 
 	if (rc != UPNP_E_SUCCESS) {
 		/* report custom error */
@@ -490,16 +490,16 @@ out:
 
 
 struct service *find_service(struct upnp_device_descriptor *device_def,
-                             char *service_name)
+                             const char *service_id)
 {
 	struct service *event_service;
 	int serviceNum = 0;
 
 	assert(device_def != NULL);
-	assert(service_name != NULL);
+	assert(service_id != NULL);
 	while (event_service =
 	       device_def->services[serviceNum], event_service != NULL) {
-		if (strcmp(event_service->service_name, service_name) == 0)
+		if (strcmp(event_service->service_id, service_id) == 0)
 			return event_service;
 		serviceNum++;
 	}
@@ -559,8 +559,8 @@ gen_desc_servicelist(struct upnp_device_descriptor *device_def,
 
         for (i=0; (srv = device_def->services[i]); i++) {
 		parent=xmlelement_new(doc, "service");
-		add_value_element(doc,parent,"serviceType",srv->type);
-		add_value_element(doc,parent,"serviceId", srv->service_name);
+		add_value_element(doc,parent,"serviceType",srv->service_type);
+		add_value_element(doc,parent,"serviceId", srv->service_id);
 		add_value_element(doc,parent,"SCPDURL", srv->scpd_url);
 		add_value_element(doc,parent,"controlURL", srv->control_url);
 		add_value_element(doc,parent,"eventSubURL", srv->event_url);

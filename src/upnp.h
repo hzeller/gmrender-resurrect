@@ -88,8 +88,8 @@ struct service {
 #ifdef HAVE_LIBUPNP
 	ithread_mutex_t *service_mutex;
 #endif
-	const char *service_name;
-	const char *type;
+	const char *service_id;
+	const char *service_type;
 	const char *scpd_url;
 	const char *control_url;
 	const char *event_url;

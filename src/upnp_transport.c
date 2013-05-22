@@ -47,7 +47,13 @@
 #include "variable-container.h"
 #include "xmlescape.h"
 
-#define TRANSPORT_SERVICE "urn:schemas-upnp-org:service:AVTransport:1"
+// There seem to be some confused clients out there that expect the 
+// serviceID to be the same as the transport type.
+// (Not verified this, but see pull request
+// https://github.com/hzeller/gmrender-resurrect/pull/13 )
+// This actually should be "urn:upnp-org:serviceId:AVTransport"
+#define TRANSPORT_SERVICE_ID "urn:schemas-upnp-org:service:AVTransport:1"
+
 #define TRANSPORT_TYPE "urn:schemas-upnp-org:service:AVTransport:1"
 #define TRANSPORT_SCPD_URL "/upnp/rendertransportSCPD.xml"
 #define TRANSPORT_CONTROL_URL "/upnp/control/rendertransport1"
@@ -1152,7 +1158,8 @@ void upnp_transport_init(struct upnp_device *device) {
 	assert(upnp_collector_ == NULL);   // only initialize once.
 	upnp_collector_ = UPnPLastChangeCollector_new(state_variables_,
 						      TRANSPORT_VAR_LAST_CHANGE,
-						      device, TRANSPORT_SERVICE);
+						      device,
+						      TRANSPORT_SERVICE_ID);
 	pthread_t thread;
 	pthread_create(&thread, NULL, thread_update_track_time, NULL);
 }
@@ -1163,8 +1170,8 @@ void upnp_transport_register_variable_listener(variable_change_listener_t cb,
 }
 
 struct service transport_service_ = {
-	.service_name =         TRANSPORT_SERVICE,
-	.type =                 TRANSPORT_TYPE,
+	.service_id =           TRANSPORT_SERVICE_ID,
+	.service_type =         TRANSPORT_TYPE,
 	.scpd_url =		TRANSPORT_SCPD_URL,
 	.control_url =		TRANSPORT_CONTROL_URL,
 	.event_url =		TRANSPORT_EVENT_URL,

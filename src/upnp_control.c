@@ -48,7 +48,11 @@
 #include "xmlescape.h"
 #include "variable-container.h"
 
-#define CONTROL_SERVICE "urn:schemas-upnp-org:service:RenderingControl"
+// This actually should be "urn:upnp-org:serviceId:RenderingControl", but
+// apparently some clients are confused about this ?
+// This change (some explicit commenting out) predates me (hzeller) and
+// there is no trace in any version control about why this is the case.
+#define CONTROL_SERVICE_ID "urn:schemas-upnp-org:service:RenderingControl"
 #define CONTROL_TYPE "urn:schemas-upnp-org:service:RenderingControl:1"
 #define CONTROL_SCPD_URL "/upnp/rendercontrolSCPD.xml"
 #define CONTROL_CONTROL_URL "/upnp/control/rendercontrol1"
@@ -801,7 +805,8 @@ void upnp_control_init(struct upnp_device *device) {
 	assert(upnp_collector_ == NULL);
 	upnp_collector_ = UPnPLastChangeCollector_new(state_variables_,
 						      CONTROL_VAR_LAST_CHANGE,
-						      device, CONTROL_SERVICE);
+						      device,
+						      CONTROL_SERVICE_ID);
 }
 
 void upnp_control_register_variable_listener(variable_change_listener_t cb,
@@ -810,8 +815,8 @@ void upnp_control_register_variable_listener(variable_change_listener_t cb,
 }
 
 struct service control_service_ = {
-	.service_name =	CONTROL_SERVICE,
-	.type =	CONTROL_TYPE,
+	.service_id =	CONTROL_SERVICE_ID,
+	.service_type =	CONTROL_TYPE,
         .scpd_url = CONTROL_SCPD_URL,
         .control_url = CONTROL_CONTROL_URL,
         .event_url = CONTROL_EVENT_URL,

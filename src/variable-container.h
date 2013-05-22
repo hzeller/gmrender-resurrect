@@ -103,7 +103,7 @@ upnp_last_change_collector_t *
 UPnPLastChangeCollector_new(variable_container_t *variable_container,
 			    int last_change_var_num,
 			    struct upnp_device *upnp_device,
-			    const char *service_name);
+			    const char *service_id);
 
 // If we know that there are a couple of changes upcoming, we can
 // 'start_transaction' and tell the collector to keep collecting until we

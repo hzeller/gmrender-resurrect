@@ -182,7 +182,7 @@ struct upnp_last_change_collector {
 	variable_container_t *variables;
 	int last_change_variable_num;  // the variable we manipulate.
 	struct upnp_device *upnp_device;
-	const char *service_name;
+	const char *service_id;
 	int open_transactions;
 	upnp_last_change_builder_t *builder;
 };
@@ -197,13 +197,13 @@ upnp_last_change_collector_t *
 UPnPLastChangeCollector_new(variable_container_t *variable_container,
 			    int last_change_var_num,
 			    struct upnp_device *upnp_device,
-			    const char *service_name) {
+			    const char *service_id) {
 	upnp_last_change_collector_t *result = (upnp_last_change_collector_t*)
 		malloc(sizeof(upnp_last_change_collector_t));
 	result->variables = variable_container;
 	result->last_change_variable_num = last_change_var_num;
 	result->upnp_device = upnp_device;
-	result->service_name = service_name;
+	result->service_id = service_id;
 	result->open_transactions = 0;
 	result->builder = UPnPLastChangeBuilder_new();
 	VariableContainer_register_callback(variable_container,
@@ -250,7 +250,7 @@ static void UPnPLastChangeCollector_notify(upnp_last_change_collector_t *obj) {
 		// pretty sick - people did everything in XML.
 		varvalues[0] = xmlescape(xml_document, 0);
 		upnp_device_notify(obj->upnp_device,
-				   obj->service_name,
+				   obj->service_id,
 				   varnames, varvalues, 1);
 		free((char*)varvalues[0]);
 	}
