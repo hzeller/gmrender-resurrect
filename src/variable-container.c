@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "upnp_device.h"
 #include "xmlescape.h"
@@ -171,6 +172,17 @@ char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder) {
 		return NULL;
 
 	char *xml_document = xmldoc_tostring(builder->change_event_doc);
+	// The XML-doc contains a header of the form <?xml version="1.0"?>
+	// Apparently some players don't like that (foobar).
+	char *end_pos = xml_document ? strstr(xml_document, "?>") : NULL;
+	if (end_pos) {
+		end_pos += 2;
+		while (*end_pos && isspace(*end_pos))
+			end_pos++;
+		char *result = strdup(end_pos);
+		free(xml_document);
+		xml_document = result;
+	}
 	xmldoc_free(builder->change_event_doc);
 	builder->change_event_doc = NULL;
 	builder->instance_element = NULL;
