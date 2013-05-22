@@ -326,12 +326,25 @@ static int handle_action_request(struct upnp_device *priv,
 	event_action = find_action(event_service, ar_event->ActionName);
 
 	if (event_action == NULL) {
-		fprintf(stderr, "Unknown action '%s' for service '%s'\n",
-			ar_event->ActionName, ar_event->ServiceID);
+		Log_error("upnp", "Unknown action '%s' for service '%s'",
+			  ar_event->ActionName, ar_event->ServiceID);
 		ar_event->ActionResult = NULL;
 		ar_event->ErrCode = 401;
 		return -1;
 	}
+#ifdef ENABLE_ACTION_LOGGING
+	{
+		char *action_request_xml = NULL;
+		if (ar_event->ActionRequest) {
+			action_request_xml = ixmlDocumenttoString(
+					   ar_event->ActionRequest);
+		}
+		Log_info("upnp", "Action '%s'; Request: %s",
+			 ar_event->ActionName, action_request_xml);
+		free(action_request_xml);
+	}
+#endif
+
 	if (event_action->callback) {
 		struct action_event event;
 		int rc;
@@ -344,21 +357,18 @@ static int handle_action_request(struct upnp_device *priv,
 		if (rc == 0) {
 			ar_event->ErrCode = UPNP_E_SUCCESS;
 #ifdef ENABLE_ACTION_LOGGING
-			char *action_request_xml = NULL;
-			char *action_result_xml = NULL;
-			if (ar_event->ActionRequest) {
-				action_request_xml = ixmlDocumenttoString(
-						ar_event->ActionRequest);
-			}
 			if (ar_event->ActionResult) {
+				char *action_result_xml = NULL;
 				action_result_xml = ixmlDocumenttoString(
 						ar_event->ActionResult);
+				Log_info("upnp", "Action '%s' OK; Response %s",
+					 ar_event->ActionName,
+					 action_result_xml);
+				free(action_result_xml);
+			} else {
+				Log_info("upnp", "Action '%s' OK",
+					 ar_event->ActionName);
 			}
-			Log_info("upnp", "Action '%s' OK %s => %s",
-				 ar_event->ActionName, action_request_xml,
-				 action_result_xml);
-			free(action_request_xml);
-			free(action_result_xml);
 #endif
 		}
 		if (ar_event->ActionResult == NULL) {
@@ -368,16 +378,17 @@ static int handle_action_request(struct upnp_device *priv,
 						   NULL);
 		}
 	} else {
-		fprintf(stderr,
-			"Got a valid action, but no handler defined (!)\n");
-		fprintf(stderr, "  ErrCode:    %d\n", ar_event->ErrCode);
-		fprintf(stderr, "  Socket:     %d\n", ar_event->Socket);
-		fprintf(stderr, "  ErrStr:     '%s'\n", ar_event->ErrStr);
-		fprintf(stderr, "  ActionName: '%s'\n",
-			ar_event->ActionName);
-		fprintf(stderr, "  DevUDN:     '%s'\n", ar_event->DevUDN);
-		fprintf(stderr, "  ServiceID:  '%s'\n",
-			ar_event->ServiceID);
+		Log_error("upnp",
+			  "Got a valid action, but no handler defined (!)\n"
+			  "  ErrCode:    %d\n"
+			  "  Socket:     %d\n"
+			  "  ErrStr:     '%s'\n"
+			  "  ActionName: '%s'\n"
+			  "  DevUDN:     '%s'\n"
+			  "  ServiceID:  '%s'\n",
+			  ar_event->ErrCode, ar_event->Socket, ar_event->ErrStr,
+			  ar_event->ActionName, ar_event->DevUDN,
+			  ar_event->ServiceID);
 		ar_event->ErrCode = UPNP_E_SUCCESS;
 	}
 
