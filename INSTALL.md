@@ -138,7 +138,12 @@ In particular when you file a bug, please always attach the output of such
 a logfile; start gmrender-resurrect in foreground mode (without `-d`) on the
 commandline and give it a file to log into. Attach that to your bug-report.
 
-    src/gmediarender -f "MyRender" --logfile=/tmp/gmrender.log
+The following command makes sure to capture all logs from gmediarender and other
+log entries that might come from gstreamer plugins not using the gmediarender
+logging, all in one file:
+
+    src/gmediarender -f "MyRender" --logfile=/tmp/gmrender.log >> /tmp/gmrender.log 2>&1
+
 
 # GStreamer 1.0
 gmrender-resurrect is prepared to compile with gstreamer 1.0, already available
