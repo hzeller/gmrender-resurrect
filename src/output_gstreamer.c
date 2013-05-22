@@ -186,14 +186,14 @@ static int output_gstreamer_play(output_transition_cb_t callback) {
 	if (get_current_player_state() != GST_STATE_PAUSED) {
 		if (gst_element_set_state(player_, GST_STATE_READY) ==
 		    GST_STATE_CHANGE_FAILURE) {
-			Log_error("output", "setting play state failed (1)");
+			Log_error("gstreamer", "setting play state failed (1)");
 			// Error, but continue; can't get worse :)
 		}
 		g_object_set(G_OBJECT(player_), "uri", gsuri_, NULL);
 	}
 	if (gst_element_set_state(player_, GST_STATE_PLAYING) ==
 	    GST_STATE_CHANGE_FAILURE) {
-		Log_error("output", "setting play state failed (2)");
+		Log_error("gstreamer", "setting play state failed (2)");
 		goto out;
 	} 
 	result = 0;
@@ -434,11 +434,11 @@ static int output_gstreamer_get_position(gint64 *track_duration,
 	GstFormat query_type = GST_FORMAT_TIME;
 #endif	
 	if (!gst_element_query_duration(player_, query_type, track_duration)) {
-		Log_error("output", "Failed to get track duration.");
+		Log_error("gstreamer", "Failed to get track duration.");
 		rc = -1;
 	}
 	if (!gst_element_query_position(player_, query_type, track_pos)) {
-		Log_error("output", "Failed to get track pos");
+		Log_error("gstreamer", "Failed to get track pos");
 		rc = -1;
 	}
 	// playbin2 does not allow to query while paused. Remember in case
@@ -515,7 +515,8 @@ static int output_gstreamer_init(void)
 			 audio_sink, audio_device ? audio_device : "");
 		sink = gst_element_factory_make (audio_sink, "sink");
 		if (sink == NULL) {
-		  Log_error("output", "Couldn't create sink '%s'", audio_sink);
+		  Log_error("gstreamer", "Couldn't create sink '%s'",
+			    audio_sink);
 		} else {
 		  if (audio_device != NULL) {
 		    g_object_set (G_OBJECT(sink), "device", audio_device, NULL);
@@ -532,7 +533,7 @@ static int output_gstreamer_init(void)
 
 	if (gst_element_set_state(player_, GST_STATE_READY) ==
 	    GST_STATE_CHANGE_FAILURE) {
-		Log_error("output", "Error: pipeline doesn't become ready.");
+		Log_error("gstreamer", "Error: pipeline doesn't become ready.");
 	}
 
 	g_signal_connect(G_OBJECT(player_), "about-to-finish",
