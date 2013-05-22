@@ -252,9 +252,9 @@ static int handle_subscription_request(struct upnp_device *priv,
 	Log_info("upnp", "Initial variable sync: %s", eventvar_values[0]);
 
 	rc = UpnpAcceptSubscription(priv->device_handle,
-			       sr_event->UDN, sr_event->ServiceId,
-			       eventvar_names, eventvar_values, 1,
-			       sr_event->Sid);
+				    sr_event->UDN, sr_event->ServiceId,
+				    eventvar_names, eventvar_values, 1,
+				    sr_event->Sid);
 	if (rc == UPNP_E_SUCCESS) {
 		result = 0;
 	}
@@ -275,9 +275,8 @@ int upnp_device_notify(struct upnp_device *device,
 {
 #ifdef HAVE_LIBUPNP
         UpnpNotify(device->device_handle, 
-                   device->upnp_device_descriptor->udn,
-                   serviceID, varnames,
-                   varvalues, varcount);
+                   device->upnp_device_descriptor->udn, serviceID,
+		   varnames, varvalues, varcount);
 #endif
 
 	return 0;
