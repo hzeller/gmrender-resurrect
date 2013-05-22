@@ -134,6 +134,12 @@ you:
         If you want this on the terminal use --logfile /dev/stdout
         This can be big over time, so only do it for debugging.
 
+In particular when you file a bug, please always attach the output of such
+a logfile; start gmrender-resurrect in foreground mode (without `-d`) on the
+commandline and give it a file to log into. Attach that to your bug-report.
+
+    src/gmediarender -f "MyRender" --logfile=/tmp/gmrender.log
+
 # GStreamer 1.0
 gmrender-resurrect is prepared to compile with gstreamer 1.0, already available
 on newer distributions. This is the preferred version as the older 0.10 version
