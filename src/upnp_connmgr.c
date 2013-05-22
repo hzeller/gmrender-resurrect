@@ -43,12 +43,11 @@
 #include "upnp_device.h"
 #include "variable-container.h"
 
-// This actually should be "urn:upnp-org:serviceId:ConnectionManager", but
-// apparently some clients are confused about this ?
-// This change (some explicit commenting out) predates me (hzeller) and
-// there is no trace in any version control about why this is the case.
-//#define CONNMGR_SERVICE_ID "urn:upnp-org:serviceId:ConnectionManager"
-#define CONNMGR_SERVICE_ID "urn:schemas-upnp-org:service:ConnectionManager"
+// Changing this back now to what it is supposed to be, let's see what happens.
+// For some reason (predates me), this was explicitly commented out and
+// set to the service type; were there clients that were confused about the
+// right use of the service-ID ? Setting this back, let's see what happens.
+#define CONNMGR_SERVICE_ID "urn:upnp-org:serviceId:ConnectionManager"
 #define CONNMGR_TYPE	"urn:schemas-upnp-org:service:ConnectionManager:1"
 #define CONNMGR_SCPD_URL "/upnp/renderconnmgrSCPD.xml"
 #define CONNMGR_CONTROL_URL "/upnp/control/renderconnmgr1"

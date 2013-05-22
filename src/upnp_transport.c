@@ -47,13 +47,13 @@
 #include "variable-container.h"
 #include "xmlescape.h"
 
-// There seem to be some confused clients out there that expect the 
-// serviceID to be the same as the transport type.
-// (Not verified this, but see pull request
-// https://github.com/hzeller/gmrender-resurrect/pull/13 )
-// This actually should be "urn:upnp-org:serviceId:AVTransport"
-#define TRANSPORT_SERVICE_ID "urn:schemas-upnp-org:service:AVTransport:1"
-
+// For some reason (predates me), this was explicitly commented out and
+// set to the service type (without ":1"). Were there clients that were
+// confused about the right use of the service-ID ?
+// (Then, a pull request actually set this to the full ":1" type,
+//  https://github.com/hzeller/gmrender-resurrect/pull/13 )
+// Setting this back, let's see what happens.
+#define TRANSPORT_SERVICE_ID "urn:upnp-org:serviceId:AVTransport"
 #define TRANSPORT_TYPE "urn:schemas-upnp-org:service:AVTransport:1"
 #define TRANSPORT_SCPD_URL "/upnp/rendertransportSCPD.xml"
 #define TRANSPORT_CONTROL_URL "/upnp/control/rendertransport1"
