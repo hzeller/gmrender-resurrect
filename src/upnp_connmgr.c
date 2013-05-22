@@ -43,13 +43,14 @@
 #include "upnp_device.h"
 #include "variable-container.h"
 
+#define CONNMGR_TYPE	"urn:schemas-upnp-org:service:ConnectionManager:1"
+
 // Changing this back now to what it is supposed to be, let's see what happens.
 // For some reason (predates me), this was explicitly commented out and
 // set to the service type; were there clients that were confused about the
 // right use of the service-ID ? Setting this back, let's see what happens.
-//#define CONNMGR_SERVICE_ID "urn:upnp-org:serviceId:ConnectionManager"
-#define CONNMGR_TYPE	"urn:schemas-upnp-org:service:ConnectionManager:1"
-#define CONNMGR_SERVICE_ID CONNMGR_TYPE
+#define CONNMGR_SERVICE_ID "urn:upnp-org:serviceId:ConnectionManager"
+//#define CONNMGR_SERVICE_ID CONNMGR_TYPE
 #define CONNMGR_SCPD_URL "/upnp/renderconnmgrSCPD.xml"
 #define CONNMGR_CONTROL_URL "/upnp/control/renderconnmgr1"
 #define CONNMGR_EVENT_URL "/upnp/event/renderconnmgr1"

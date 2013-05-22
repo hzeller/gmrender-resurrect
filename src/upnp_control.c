@@ -48,12 +48,13 @@
 #include "xmlescape.h"
 #include "variable-container.h"
 
+#define CONTROL_TYPE "urn:schemas-upnp-org:service:RenderingControl:1"
+
 // For some reason (predates me), this was explicitly commented out and
 // set to the service type; were there clients that were confused about the
 // right use of the service-ID ? Setting this back, let's see what happens.
-//#define CONTROL_SERVICE_ID "urn:upnp-org:serviceId:RenderingControl"
-#define CONTROL_TYPE "urn:schemas-upnp-org:service:RenderingControl:1"
-#define CONTROL_SERVICE_ID CONTROL_TYPE
+#define CONTROL_SERVICE_ID "urn:upnp-org:serviceId:RenderingControl"
+//#define CONTROL_SERVICE_ID CONTROL_TYPE
 #define CONTROL_SCPD_URL "/upnp/rendercontrolSCPD.xml"
 #define CONTROL_CONTROL_URL "/upnp/control/rendercontrol1"
 #define CONTROL_EVENT_URL "/upnp/event/rendercontrol1"
