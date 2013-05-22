@@ -259,7 +259,7 @@ struct MetaModify {
 static void MetaModify_add_tag(const GstTagList *list, const gchar *tag,
 			       gpointer user_data) {
 	struct MetaModify *data = (struct MetaModify*) user_data;
-	char **destination = NULL;
+	const char **destination = NULL;
 	if (strcmp(tag, GST_TAG_TITLE) == 0) {
 		destination = &data->meta->title;
 	} else if (strcmp(tag, GST_TAG_ARTIST) == 0) {
@@ -277,7 +277,7 @@ static void MetaModify_add_tag(const GstTagList *list, const gchar *tag,
 		if (replace != NULL &&
 		    (*destination == NULL
 		     || strcmp(replace, *destination) != 0)) {
-			free(*destination);
+			free((char*)*destination);
 			*destination = replace;
 			data->any_change++;
 		} else {

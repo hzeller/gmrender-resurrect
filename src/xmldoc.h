@@ -31,6 +31,7 @@ struct xmldoc *xmldoc_new(void);
 
 int xmldoc_free(struct xmldoc *doc);
 char *xmldoc_tostring(struct xmldoc *doc);
+struct xmldoc *xmldoc_parsexml(const char *xml_text);
 
 struct xmlelement *xmldoc_new_topelement(struct xmldoc *doc,
                                          const char *elementName,
@@ -53,6 +54,16 @@ int xmlelement_set_attribute(struct xmldoc *doc,
 void add_value_element(struct xmldoc *doc,
                        struct xmlelement *parent,
                        const char *tagname, const char *value);
+
+// Find element in document. This returns a newly allocated struct.
+struct xmlelement *find_element_in_doc(struct xmldoc *doc,
+				       const char *key);
+// Find element in document. This returns a newly allocated struct.
+struct xmlelement *find_element_in_element(struct xmlelement *element,
+					   const char *key);
+
+// Returns a newly allocated string representing the element value.
+char *get_node_value(struct xmlelement *element);
 
 struct xmlelement *add_attributevalue_element(struct xmldoc *doc,
 					      struct xmlelement *parent,

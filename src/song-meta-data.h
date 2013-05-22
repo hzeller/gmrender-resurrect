@@ -26,12 +26,13 @@
 
 // An 'object' dealing with the meta data of a song.
 struct SongMetaData {
-	char *title;
-	char *artist;
-	char *album;
-	char *genre;
-	char *composer;
+	const char *title;
+	const char *artist;
+	const char *album;
+	const char *genre;
+	const char *composer;
 };
+
 // Construct song meta data object.
 void SongMetaData_init(struct SongMetaData *object);
 
@@ -43,5 +44,8 @@ void SongMetaData_clear(struct SongMetaData *object);
 // edited version of that document.
 char *SongMetaData_to_DIDL(const struct SongMetaData *object,
 			   const char *original_xml);
+
+// Parse DIDL-Lite and fill SongMetaData struct. Returns 1 when successful.
+int SongMetaData_parse_DIDL(struct SongMetaData *object, const char *xml);
 
 #endif  // _SONG_META_DATA_H

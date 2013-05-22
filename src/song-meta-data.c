@@ -1,6 +1,6 @@
 /* song-meta-data - Object holding meta data for a song.
  *
- * Copyright (C) 2012 Henner Zellre
+ * Copyright (C) 2012 Henner Zeller
  *
  * This file is part of GMediaRender.
  *
@@ -21,6 +21,9 @@
  *
  */ 
 
+// TODO: we're assuming that the namespaces are abbreviated with 'dc' and 'upnp'
+// ... but if I understand that correctly, that doesn't need to be the case.
+
 #include "song-meta-data.h"
 
 #define _GNU_SOURCE
@@ -29,18 +32,19 @@
 #include <stdio.h>
 
 #include "xmlescape.h"
+#include "xmldoc.h"
 
 void SongMetaData_init(struct SongMetaData *value) {
 	memset(value, 0, sizeof(struct SongMetaData));
 }
 void SongMetaData_clear(struct SongMetaData *value) {
-	free(value->title);
+	free((char*)value->title);
 	value->title = NULL;
-	free(value->artist);
+	free((char*)value->artist);
 	value->artist = NULL;
-	free(value->album);
+	free((char*)value->album);
 	value->album = NULL;
-	free(value->genre);
+	free((char*)value->genre);
 	value->genre = NULL;
 }
 
@@ -109,6 +113,44 @@ static char *replace_range(char *input,
 		result = input;
 	}
 	return result;
+}
+
+int SongMetaData_parse_DIDL(struct SongMetaData *object, const char *xml) {
+	struct xmldoc *doc = xmldoc_parsexml(xml);
+	if (doc == NULL)
+		return 0;
+
+	// ... did I mention that I hate navigating XML documents ?
+	struct xmlelement *didl_node = find_element_in_doc(doc, "DIDL-Lite");
+	if (didl_node == NULL)
+		return 0;
+
+	struct xmlelement *item_node = find_element_in_element(didl_node,
+							       "item");
+	if (item_node == NULL)
+		return 0;
+
+	struct xmlelement *value_node = NULL;
+	value_node = find_element_in_element(item_node, "dc:title");
+	if (value_node) object->title = get_node_value(value_node);
+	free(value_node);
+
+	value_node = find_element_in_element(item_node, "upnp:artist");
+	if (value_node) object->artist = get_node_value(value_node);
+	free(value_node);
+
+	value_node = find_element_in_element(item_node, "upnp:album");
+	if (value_node) object->album = get_node_value(value_node);
+	free(value_node);
+
+	value_node = find_element_in_element(item_node, "upnp:genre");
+	if (value_node) object->genre = get_node_value(value_node);
+	free(value_node);
+
+	free(item_node);
+	free(didl_node);
+	xmldoc_free(doc);
+	return 1;
 }
 
 // TODO: actually use some XML library for this, but spending too much time
