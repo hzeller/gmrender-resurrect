@@ -247,9 +247,11 @@ static int handle_subscription_request(struct upnp_device *priv,
 			UPnPLastChangeBuilder_add(builder, name, value);
 		}
 	}
-	eventvar_values[0] = UPnPLastChangeBuilder_to_xml(builder);
+	char *xml_value = UPnPLastChangeBuilder_to_xml(builder);
+	Log_info("upnp", "Initial variable sync: %s", xml_value);
+	eventvar_values[0] = xmlescape(xml_value, 0);
+	free(xml_value);
 	UPnPLastChangeBuilder_delete(builder);
-	Log_info("upnp", "Initial variable sync: %s", eventvar_values[0]);
 
 	rc = UpnpAcceptSubscription(priv->device_handle,
 				    sr_event->UDN, sr_event->ServiceId,
