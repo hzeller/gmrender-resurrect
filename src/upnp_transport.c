@@ -506,7 +506,6 @@ static struct argument **argument_list[] = {
 static enum transport_state transport_state_ = TRANSPORT_STOPPED;
 extern struct service transport_service_;   // Defined below.
 static variable_container_t *state_variables_ = NULL;
-static upnp_last_change_collector_t *upnp_collector_ = NULL;
 
 /* protects transport_values, and service-specific state */
 
@@ -519,15 +518,15 @@ static void service_lock(void)
 #ifdef HAVE_LIBUPNP
 	ithread_mutex_lock(&transport_mutex);
 #endif
-	if (upnp_collector_) {
-		UPnPLastChangeCollector_start_transaction(upnp_collector_);
+	if (transport_service_.last_change) {
+		UPnPLastChangeCollector_start(transport_service_.last_change);
 	}
 }
 
 static void service_unlock(void)
 {
-	if (upnp_collector_) {
-		UPnPLastChangeCollector_commit(upnp_collector_);
+	if (transport_service_.last_change) {
+		UPnPLastChangeCollector_finish(transport_service_.last_change);
 	}
 #ifdef HAVE_LIBUPNP
 	ithread_mutex_unlock(&transport_mutex);
@@ -1157,11 +1156,12 @@ struct service *upnp_transport_get_service(void) {
 }
 
 void upnp_transport_init(struct upnp_device *device) {
-	assert(upnp_collector_ == NULL);   // only initialize once.
-	upnp_collector_ = UPnPLastChangeCollector_new(state_variables_,
-						      TRANSPORT_VAR_LAST_CHANGE,
-						      device,
-						      TRANSPORT_SERVICE_ID);
+	assert(transport_service_.last_change == NULL);
+	transport_service_.last_change =
+		UPnPLastChangeCollector_new(state_variables_,
+					    TRANSPORT_VAR_LAST_CHANGE,
+					    device,
+					    TRANSPORT_SERVICE_ID);
 	pthread_t thread;
 	pthread_create(&thread, NULL, thread_update_track_time, NULL);
 }
@@ -1181,6 +1181,7 @@ struct service transport_service_ = {
 	.action_arguments =     argument_list,
 	.variable_names =       transport_variable_names,
 	.variable_container =   NULL, // set later.
+	.last_change =          NULL,
 	.variable_meta =        transport_var_meta,
 	.variable_count =       TRANSPORT_VAR_UNKNOWN,
 	.command_count =        TRANSPORT_CMD_UNKNOWN,

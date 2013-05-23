@@ -254,7 +254,6 @@ static const char *control_default_values[] = {
 
 extern struct service control_service_;   // Defined below.
 static variable_container_t *state_variables_ = NULL;
-static upnp_last_change_collector_t *upnp_collector_ = NULL;
 
 #ifdef HAVE_LIBUPNP
 static ithread_mutex_t control_mutex;
@@ -265,15 +264,15 @@ static void service_lock(void)
 #ifdef HAVE_LIBUPNP
 	ithread_mutex_lock(&control_mutex);
 #endif
-	if (upnp_collector_) {
-		UPnPLastChangeCollector_start_transaction(upnp_collector_);
+	if (control_service_.last_change) {
+		UPnPLastChangeCollector_start(control_service_.last_change);
 	}
 }
 
 static void service_unlock(void)
 {
-	if (upnp_collector_) {
-		UPnPLastChangeCollector_commit(upnp_collector_);
+	if (control_service_.last_change) {
+		UPnPLastChangeCollector_finish(control_service_.last_change);
 	}
 #ifdef HAVE_LIBUPNP
 	ithread_mutex_unlock(&control_mutex);
@@ -803,11 +802,12 @@ void upnp_control_init(struct upnp_device *device) {
 		change_volume_decibel(20 * log(volume_fraction) / log(10));
 	}
 
-	assert(upnp_collector_ == NULL);
-	upnp_collector_ = UPnPLastChangeCollector_new(state_variables_,
-						      CONTROL_VAR_LAST_CHANGE,
-						      device,
-						      CONTROL_SERVICE_ID);
+	assert(control_service_.last_change == NULL);
+	control_service_.last_change =
+		UPnPLastChangeCollector_new(state_variables_,
+					    CONTROL_VAR_LAST_CHANGE,
+					    device,
+					    CONTROL_SERVICE_ID);
 }
 
 void upnp_control_register_variable_listener(variable_change_listener_t cb,
@@ -825,6 +825,7 @@ struct service control_service_ = {
 	.action_arguments =	argument_list,
 	.variable_names =	control_variable_names,
 	.variable_container =   NULL,  // set later.
+	.last_change =          NULL,
 	.variable_meta =	control_var_meta,
 	.variable_count =	CONTROL_VAR_UNKNOWN,
 	.command_count =	CONTROL_CMD_UNKNOWN,

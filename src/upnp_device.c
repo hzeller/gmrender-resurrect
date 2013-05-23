@@ -235,6 +235,7 @@ static int handle_subscription_request(struct upnp_device *priv,
 
 	// Build the current state of the variables as one gigantic initial
 	// LastChange update.
+	ithread_mutex_lock(srv->service_mutex);
 	const int var_count =
 		VariableContainer_get_num_vars(srv->variable_container);
 	upnp_last_change_builder_t *builder = UPnPLastChangeBuilder_new();
@@ -247,6 +248,7 @@ static int handle_subscription_request(struct upnp_device *priv,
 			UPnPLastChangeBuilder_add(builder, name, value);
 		}
 	}
+	ithread_mutex_unlock(srv->service_mutex);
 	char *xml_value = UPnPLastChangeBuilder_to_xml(builder);
 	Log_info("upnp", "Initial variable sync: %s", xml_value);
 	eventvar_values[0] = xmlescape(xml_value, 0);
@@ -293,6 +295,9 @@ static int handle_var_request(struct upnp_device *priv,
 		var_event->ErrCode = UPNP_SOAP_E_INVALID_ARGS;
 		return -1;
 	}
+
+	ithread_mutex_lock(srv->service_mutex);
+
 	char *result = NULL;
 	const int var_count =
 		VariableContainer_get_num_vars(srv->variable_container);
@@ -305,6 +310,9 @@ static int handle_var_request(struct upnp_device *priv,
 			break;
 		}
 	}
+
+	ithread_mutex_unlock(srv->service_mutex);
+
 	var_event->CurrentVal = result;
 	var_event->ErrCode = (result == NULL)
 		? UPNP_SOAP_E_INVALID_VAR
@@ -332,6 +340,27 @@ static int handle_action_request(struct upnp_device *priv,
 		ar_event->ErrCode = 401;
 		return -1;
 	}
+
+	// We want to send the LastChange event only after the action is
+	// finished - just to be conservative, we don't know how clients
+	// react to get LastChange notifictions while in the middle of
+	// issuing an action.
+	//
+	// So we nest the change collector level here, so that we only send the
+	// LastChange after the action is finished ().
+	//
+	// Note, this is, in fact, only a preparation and not yet working as
+	// described above: we are still in the middle
+	// of executing the event-callback while sending the last change
+	// event implicitly when calling UPnPLastChangeCollector_finish() below.
+	// It would be good to enqueue the upnp_device_notify() after
+	// the action event is finished.
+	if (event_service->last_change) {
+		ithread_mutex_lock(event_service->service_mutex);
+		UPnPLastChangeCollector_start(event_service->last_change);
+		ithread_mutex_unlock(event_service->service_mutex);
+	}
+
 #ifdef ENABLE_ACTION_LOGGING
 	{
 		char *action_request_xml = NULL;
@@ -392,6 +421,11 @@ static int handle_action_request(struct upnp_device *priv,
 		ar_event->ErrCode = UPNP_E_SUCCESS;
 	}
 
+	if (event_service->last_change) {   // See comment above.
+		ithread_mutex_lock(event_service->service_mutex);
+		UPnPLastChangeCollector_finish(event_service->last_change);
+		ithread_mutex_unlock(event_service->service_mutex);
+	}
 	return 0;
 }
 #endif

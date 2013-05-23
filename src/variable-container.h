@@ -106,10 +106,10 @@ UPnPLastChangeCollector_new(variable_container_t *variable_container,
 			    const char *service_id);
 
 // If we know that there are a couple of changes upcoming, we can
-// 'start_transaction' and tell the collector to keep collecting until we
-// 'commit'. There can be only one transaction open at a time.
-void UPnPLastChangeCollector_start_transaction(upnp_last_change_collector_t *o);
-void UPnPLastChangeCollector_commit(upnp_last_change_collector_t *object);
+// 'start' a transaction and tell the collector to keep collecting until we
+// 'finish'. This can be nested.
+void UPnPLastChangeCollector_start(upnp_last_change_collector_t *o);
+void UPnPLastChangeCollector_finish(upnp_last_change_collector_t *object);
 
 // no delete yet. We leak that.
 #endif  /* VARIABLE_CONTAINER_H */

@@ -224,16 +224,14 @@ UPnPLastChangeCollector_new(variable_container_t *variable_container,
 	return result;
 }
 
-void UPnPLastChangeCollector_start_transaction(
-	   upnp_last_change_collector_t *object) {
-	assert(object->open_transactions == 0);
-	object->open_transactions = 1;
+void UPnPLastChangeCollector_start(upnp_last_change_collector_t *object) {
+	object->open_transactions += 1;
 }
 
-void UPnPLastChangeCollector_commit(upnp_last_change_collector_t *object) {
-	assert(object->open_transactions == 1);
-	object->open_transactions = 0;
-	UPnPLastChangeCollector_notify(object);	
+void UPnPLastChangeCollector_finish(upnp_last_change_collector_t *object) {
+	assert(object->open_transactions >= 1);
+	object->open_transactions -= 1;
+	UPnPLastChangeCollector_notify(object);
 }
 
 // TODO(hzeller): add rate limiting. The standard talks about some limited

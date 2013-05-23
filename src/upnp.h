@@ -28,6 +28,7 @@ struct action;
 struct service;
 struct action_event;
 struct variable_container;
+struct upnp_last_change_collector;
 
 struct action {
 	const char *action_name;
@@ -97,6 +98,7 @@ struct service {
 	struct argument ***action_arguments;
 	const char **variable_names;
 	struct variable_container *variable_container;
+	struct upnp_last_change_collector *last_change;
 	struct var_meta *variable_meta;
 	int variable_count;
 	int command_count;
