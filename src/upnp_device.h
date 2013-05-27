@@ -48,7 +48,8 @@ struct upnp_device;
 struct action_event;
 
 struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
-				     const char *ip_address);
+				     const char *ip_address,
+				     unsigned short port);
 
 int upnp_add_response(struct action_event *event,
 		      const char *key, const char *value);

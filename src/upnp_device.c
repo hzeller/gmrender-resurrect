@@ -262,6 +262,9 @@ static int handle_subscription_request(struct upnp_device *priv,
 				    sr_event->Sid);
 	if (rc == UPNP_E_SUCCESS) {
 		result = 0;
+	} else {
+		Log_error("upnp", "Accept Subscription Error: %s (%d)",
+			  UpnpGetErrorMessage(rc), rc);
 	}
 
 	ithread_mutex_unlock(&(priv->device_mutex));
@@ -458,12 +461,11 @@ static int event_handler(Upnp_EventType EventType, void *event, void *userdata)
 
 
 struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
-				     const char *ip_address)
+				     const char *ip_address,
+				     unsigned short port)
 {
 	int rc;
-#ifdef HAVE_LIBUPNP
-	short int port = 0;
-#endif
+
 	struct service *srv;
 	struct icon *icon_entry;
 	char *buf;
@@ -501,22 +503,29 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 #ifdef HAVE_LIBUPNP
 	rc = UpnpInit(ip_address, port);
 	if (UPNP_E_SUCCESS != rc) {
-		Log_error("upnp", "UpnpInit() Error: %d", rc);
+		Log_error("upnp", "UpnpInit('%s', port=%d) Error: %s (%d)",
+			  ip_address, port, UpnpGetErrorMessage(rc), rc);
 		goto upnp_err_out;
 	}
+	Log_info("upnp", "Registered IP=%s port=%d\n",
+		 UpnpGetServerIpAddress(), UpnpGetServerPort());
+
 	rc = UpnpEnableWebserver(TRUE);
 	if (UPNP_E_SUCCESS != rc) {
-		Log_error("upnp", "UpnpEnableWebServer() Error: %d", rc);
+		Log_error("upnp", "UpnpEnableWebServer() Error: %s (%d)",
+			  UpnpGetErrorMessage(rc), rc);
 		goto upnp_err_out;
 	}
 	rc = UpnpSetVirtualDirCallbacks(&virtual_dir_callbacks);
 	if (UPNP_E_SUCCESS != rc) {
-		Log_error("upnp", "UpnpSetVirtualDirCallbacks() Error: %d", rc);
+		Log_error("upnp", "UpnpSetVirtualDirCallbacks() Error: %s (%d)",
+			  UpnpGetErrorMessage(rc), rc);
 		goto upnp_err_out;
 	}
 	rc = UpnpAddVirtualDir("/upnp");
 	if (UPNP_E_SUCCESS != rc) {
-		Log_error("upnp", "UpnpAddVirtualDir() Error: %d", rc);
+		Log_error("upnp", "UpnpAddVirtualDir() Error: %s (%d)",
+			  UpnpGetErrorMessage(rc), rc);
 		goto upnp_err_out;
 	}
 
@@ -528,23 +537,28 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 				     &event_handler, priv,
 				     &(priv->device_handle));
 	if (UPNP_E_SUCCESS != rc) {
-		Log_error("upnp", "UpnpRegisterRootDevice2() Error: %d", rc);
+		Log_error("upnp", "UpnpRegisterRootDevice2() Error: %s (%d)",
+			  UpnpGetErrorMessage(rc), rc);
 		goto upnp_err_out;
 	}
 
 	rc = UpnpSendAdvertisement(priv->device_handle, 100);
 	if (UPNP_E_SUCCESS != rc) {
-		Log_error("unpp", "Error sending advertisements: %d", rc);
+		Log_error("unpp", "Error sending advertisements: %s (%d)",
+			  UpnpGetErrorMessage(rc), rc);
 		goto upnp_err_out;
 	}
 #endif
 
 	goto out;
 
-#ifdef HAVE_LIBUPNP
 upnp_err_out:
+#ifdef HAVE_LIBUPNP
 	UpnpFinish();
 #endif
+	free(priv);
+	priv = NULL;
+
 out:
 	return priv;
 }

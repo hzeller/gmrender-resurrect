@@ -61,7 +61,9 @@ int VariableContainer_get_num_vars(variable_container_t *object);
 
 // Get variable name/value. if OUT parameter 'name' is not NULL, returns
 // name of variable for given number.
-// Returns value of variable or NULL if it does not exist.
+// Returns current value of variable or NULL if it does not exist.
+// Returned value owned by variable container; on variable change, this value
+// will be invalid.
 const char *VariableContainer_get(variable_container_t *object, int var,
 				  const char **name);
 

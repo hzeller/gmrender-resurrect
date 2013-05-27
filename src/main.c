@@ -58,6 +58,8 @@ static gboolean show_transport_scpd = FALSE;
 static gboolean show_outputs = FALSE;
 static gboolean daemon_mode = FALSE;
 static const gchar *ip_address = NULL;
+static int listen_port = 0;
+
 #ifdef GMRENDER_UUID
 // Compile-time uuid.
 static const gchar *uuid = GMRENDER_UUID;
@@ -75,6 +77,10 @@ static GOptionEntry option_entries[] = {
 	  "Output version information and exit", NULL },
 	{ "ip-address", 'I', 0, G_OPTION_ARG_STRING, &ip_address,
 	  "IP address on which to listen.", NULL },
+	// The following is not very reliable, as libupnp does not set
+	// SO_REUSEADDR by default, so it might increment (sending patch).
+	{ "port", 'p', 0, G_OPTION_ARG_INT, &listen_port,
+	  "Port to listen to; [49152..65535].", NULL },
 	{ "uuid", 'u', 0, G_OPTION_ARG_STRING, &uuid,
 	  "UUID to advertise", NULL },
 	{ "friendly-name", 'f', 0, G_OPTION_ARG_STRING, &friendly_name,
@@ -237,7 +243,18 @@ int main(int argc, char **argv)
 	}
 
 	struct upnp_device *device;
-	device = upnp_device_init(upnp_renderer, ip_address);
+	if (listen_port != 0 &&
+	    (listen_port < 49152 || listen_port > 65535)) {
+		// Somewhere obscure internally in libupnp, they clamp the
+		// port to be outside of the IANA range, so at least 49152.
+		// Instead of surprising the user by ignoring lower port
+		// numbers, complain loudly.
+		Log_error("main", "Parameter error: --port needs to be in "
+			  "range [49152..65535] (but was set to %d)",
+			  listen_port);
+		goto out;
+	}
+	device = upnp_device_init(upnp_renderer, ip_address, listen_port);
 	if (device == NULL) {
 		Log_error("main", "ERROR: Failed to initialize UPnP device");
 		goto out;
