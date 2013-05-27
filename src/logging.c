@@ -36,6 +36,7 @@
 
 #include "logging.h"
 #include "config.h"
+#include "git-version.h"
 
 static int log_fd = -1;
 static int enable_color = 0;
@@ -62,7 +63,8 @@ void Log_init(const char *filename) {
 		error_markup_start_ = kErrorHighlight;
 		markup_end_ = kTermReset;
 	}
-	Log_info("logging", "Log started (%s).", PACKAGE_VERSION);
+	Log_info("logging", "Log started (configured=%s; compiled=%s).",
+		 PACKAGE_VERSION, GM_COMPILE_VERSION);
 }
 
 int Log_color_allowed(void) { return enable_color; }
