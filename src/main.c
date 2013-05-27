@@ -57,8 +57,13 @@ static gboolean show_control_scpd = FALSE;
 static gboolean show_transport_scpd = FALSE;
 static gboolean show_outputs = FALSE;
 static gboolean daemon_mode = FALSE;
+
+// IP-address seems strange in libupnp: they actually don't bind that
+// that address, but to INADDR_ANY (miniserver.c in upnp library).
+// Apparently they just use this for the advertisement ? Anyway, 0.0.0.0 would
+// not work.
 static const gchar *ip_address = NULL;
-static int listen_port = 0;
+static int listen_port = 49494;
 
 #ifdef GMRENDER_UUID
 // Compile-time uuid.
@@ -76,11 +81,13 @@ static GOptionEntry option_entries[] = {
 	{ "version", 0, 0, G_OPTION_ARG_NONE, &show_version,
 	  "Output version information and exit", NULL },
 	{ "ip-address", 'I', 0, G_OPTION_ARG_STRING, &ip_address,
-	  "IP address on which to listen.", NULL },
+	  "The local IP address the service is running and advertised "
+	  "(only one, 0.0.0.0 won't work)", NULL },
 	// The following is not very reliable, as libupnp does not set
 	// SO_REUSEADDR by default, so it might increment (sending patch).
 	{ "port", 'p', 0, G_OPTION_ARG_INT, &listen_port,
-	  "Port to listen to; [49152..65535].", NULL },
+	  "Port to listen to; [49152..65535] (libupnp does not use "
+	  "SO_REUSEADDR, so might increment)", NULL },
 	{ "uuid", 'u', 0, G_OPTION_ARG_STRING, &uuid,
 	  "UUID to advertise", NULL },
 	{ "friendly-name", 'f', 0, G_OPTION_ARG_STRING, &friendly_name,
