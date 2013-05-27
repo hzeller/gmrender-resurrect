@@ -48,6 +48,7 @@
 #include "upnp_renderer.h"
 #include "upnp_transport.h"
 #include "upnp_control.h"
+#include "git-version.h"
 
 static gboolean show_version = FALSE;
 static gboolean show_devicedesc = FALSE;
@@ -254,9 +255,8 @@ int main(int argc, char **argv)
 
 	if (Log_info_enabled()) {
 		Log_info("main", "Ready for rendering.");
-	} else {
-		fprintf(stderr, "Ready for rendering.\n");
 	}
+	fprintf(stderr, "Ready for rendering (ver. %s)\n", GM_COMPILE_VERSION);
 
 	output_loop();
 	result = EXIT_SUCCESS;
