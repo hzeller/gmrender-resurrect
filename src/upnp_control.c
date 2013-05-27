@@ -35,10 +35,8 @@
 #include <math.h>
 #include <string.h>
 
-#ifdef HAVE_LIBUPNP
 #include <upnp/upnp.h>
 #include <upnp/ithread.h>
-#endif
 
 #include "logging.h"
 #include "webserver.h"
@@ -255,15 +253,11 @@ static const char *control_default_values[] = {
 extern struct service control_service_;   // Defined below.
 static variable_container_t *state_variables_ = NULL;
 
-#ifdef HAVE_LIBUPNP
 static ithread_mutex_t control_mutex;
-#endif
 
 static void service_lock(void)
 {
-#ifdef HAVE_LIBUPNP
 	ithread_mutex_lock(&control_mutex);
-#endif
 	if (control_service_.last_change) {
 		UPnPLastChangeCollector_start(control_service_.last_change);
 	}
@@ -274,9 +268,7 @@ static void service_unlock(void)
 	if (control_service_.last_change) {
 		UPnPLastChangeCollector_finish(control_service_.last_change);
 	}
-#ifdef HAVE_LIBUPNP
 	ithread_mutex_unlock(&control_mutex);
-#endif
 }
 
 static struct argument *arguments_list_presets[] = {
@@ -829,7 +821,5 @@ struct service control_service_ = {
 	.variable_meta =	control_var_meta,
 	.variable_count =	CONTROL_VAR_UNKNOWN,
 	.command_count =	CONTROL_CMD_UNKNOWN,
-#ifdef HAVE_LIBUPNP
 	.service_mutex =	&control_mutex
-#endif
 };

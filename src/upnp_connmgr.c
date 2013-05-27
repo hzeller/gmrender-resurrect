@@ -31,10 +31,8 @@
 #include <unistd.h>
 #include <string.h>
 
-#ifdef HAVE_LIBUPNP
 #include <upnp/upnp.h>
 #include <upnp/ithread.h>
-#endif
 
 #include "upnp_connmgr.h"
 
@@ -184,9 +182,7 @@ static struct var_meta connmgr_var_meta[] = {
 	[CONNMGR_VAR_UNKNOWN] =		{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
 };
 
-#ifdef HAVE_LIBUPNP
 static ithread_mutex_t connmgr_mutex;
-#endif
 
 struct mime_type;
 static struct mime_type {
@@ -404,8 +400,6 @@ struct service connmgr_service_ = {
         .variable_meta =        connmgr_var_meta,
         .variable_count =       CONNMGR_VAR_UNKNOWN,
         .command_count =        CONNMGR_CMD_UNKNOWN,
-#ifdef HAVE_LIBUPNP
         .service_mutex =        &connmgr_mutex
-#endif
 };
 

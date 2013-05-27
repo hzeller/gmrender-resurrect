@@ -36,10 +36,8 @@
 #include <limits.h>
 #include <assert.h>
 
-#ifdef HAVE_LIBUPNP
 #include <upnp/upnp.h>
 #include <upnp/ithread.h>
-#endif
 
 #include "logging.h"
 #include "webserver.h"
@@ -144,7 +142,6 @@ out:
 	return result;
 }
 
-#ifdef HAVE_LIBUPNP
 static int webserver_get_info(const char *filename, struct File_Info *info)
 {
 	int result = -1;
@@ -272,4 +269,3 @@ struct UpnpVirtualDirCallbacks virtual_dir_callbacks = {
 	webserver_seek,
 	webserver_close
 };
-#endif

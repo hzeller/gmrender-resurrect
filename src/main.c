@@ -34,11 +34,11 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#ifdef HAVE_LIBUPNP
-# include <upnp/ithread.h>
-#else
+#ifndef HAVE_LIBUPNP
 # error "To have gmrender any useful, you need to have libupnp installed."
 #endif
+
+#include <upnp/ithread.h>
 
 #include "logging.h"
 //#include "output_gstreamer.h"

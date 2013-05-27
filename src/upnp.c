@@ -33,9 +33,7 @@
 #include <assert.h>
 #include <string.h>
 
-#ifdef HAVE_LIBUPNP
 #include <upnp/ithread.h>
-#endif
 
 #include "xmldoc.h"
 #include "upnp.h"

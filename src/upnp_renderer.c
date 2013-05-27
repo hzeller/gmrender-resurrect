@@ -38,10 +38,8 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#ifdef HAVE_LIBUPNP
 #include <upnp/upnp.h>
 #include <upnp/ithread.h>
-#endif
 
 #include "webserver.h"
 #include "upnp.h"

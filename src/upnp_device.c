@@ -37,11 +37,9 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#ifdef HAVE_LIBUPNP
 #include <upnp/upnp.h>
 #include <upnp/ithread.h>
 #include <upnp/upnptools.h>
-#endif
 
 #include "logging.h"
 
@@ -57,10 +55,8 @@
 
 struct upnp_device {
 	struct upnp_device_descriptor *upnp_device_descriptor;
-#ifdef HAVE_LIBUPNP
 	ithread_mutex_t device_mutex;
         UpnpDevice_Handle device_handle;
-#endif
 };
 
 int upnp_add_response(struct action_event *event,
@@ -68,9 +64,7 @@ int upnp_add_response(struct action_event *event,
 {
 	int result = -1;
 	char *val;
-#ifdef HAVE_LIBUPNP
 	int rc;
-#endif
 
 	assert(event != NULL);
 	assert(key != NULL);
@@ -83,15 +77,12 @@ int upnp_add_response(struct action_event *event,
 	if (val == NULL) {
 		/* report memory failure */
 		event->status = -1;
-#ifdef HAVE_LIBUPNP
 		event->request->ActionResult = NULL;
 		event->request->ErrCode = UPNP_SOAP_E_ACTION_FAILED;
 		strcpy(event->request->ErrStr, strerror(errno));
-#endif
 		goto out;
 	}
 
-#ifdef HAVE_LIBUPNP
 	rc =
 	    UpnpAddToActionResponse(&event->request->ActionResult,
 				    event->request->ActionName,
@@ -106,7 +97,7 @@ int upnp_add_response(struct action_event *event,
 	}
 
 	result = 0;
-#endif
+
 out:
 	if (val != NULL) {
 		free(val);
@@ -125,25 +116,19 @@ int upnp_append_variable(struct action_event *event,
 	assert(paramname != NULL);
 
 	if (varnum >= service->variable_count) {
-#ifdef HAVE_LIBUPNP
 		upnp_set_error(event, UPNP_E_INTERNAL_ERROR,
 			       "Internal Error - illegal variable number %d",
 			       varnum);
-#endif
 		goto out;
 	}
 
-#ifdef HAVE_LIBUPNP
 	ithread_mutex_lock(service->service_mutex);
-#endif
 
 	value = VariableContainer_get(service->variable_container, varnum, NULL);
 	assert(value != NULL);
 	retval = upnp_add_response(event, paramname, value);
 
-#ifdef HAVE_LIBUPNP
 	ithread_mutex_unlock(service->service_mutex);
-#endif
 out:
 	return retval;
 }
@@ -153,7 +138,6 @@ void upnp_set_error(struct action_event *event, int error_code,
 {
 	event->status = -1;
 
-#ifdef HAVE_LIBUPNP
 	va_list ap;
 	va_start(ap, format);
 	event->request->ActionResult = NULL;
@@ -163,12 +147,10 @@ void upnp_set_error(struct action_event *event, int error_code,
 
 	va_end(ap);
 	Log_error("upnp", "%s: %s\n", __FUNCTION__, event->request->ErrStr);
-#endif
 }
 
 char *upnp_get_string(struct action_event *event, const char *key)
 {
-#ifdef HAVE_LIBUPNP
 	IXML_Node *node;
 
 	node = (IXML_Node *) event->request->ActionRequest;
@@ -197,11 +179,9 @@ char *upnp_get_string(struct action_event *event, const char *key)
 
 	upnp_set_error(event, UPNP_SOAP_E_INVALID_ARGS,
 		       "Missing action request argument (%s)", key);
-#endif /* HAVE_LIBUPNP */
 	return NULL;
 }
 
-#ifdef HAVE_LIBUPNP
 static int handle_subscription_request(struct upnp_device *priv,
                                        struct Upnp_Subscription_Request
                                               *sr_event)
@@ -274,18 +254,15 @@ static int handle_subscription_request(struct upnp_device *priv,
 out:
 	return result;
 }
-#endif
 
 int upnp_device_notify(struct upnp_device *device,
                        const char *serviceID,
                        const char **varnames,
                        const char **varvalues, int varcount)
 {
-#ifdef HAVE_LIBUPNP
         UpnpNotify(device->device_handle, 
                    device->upnp_device_descriptor->udn, serviceID,
 		   varnames, varvalues, varcount);
-#endif
 
 	return 0;
 }
@@ -326,7 +303,6 @@ static int handle_var_request(struct upnp_device *priv,
 	return 0;
 }
 
-#ifdef HAVE_LIBUPNP
 static int handle_action_request(struct upnp_device *priv,
                                  struct Upnp_Action_Request *ar_event)
 {
@@ -432,9 +408,7 @@ static int handle_action_request(struct upnp_device *priv,
 	}
 	return 0;
 }
-#endif
 
-#ifdef HAVE_LIBUPNP
 static int event_handler(Upnp_EventType EventType, void *event, void *userdata)
 {
 	struct upnp_device *priv = (struct upnp_device *) userdata;
@@ -457,8 +431,6 @@ static int event_handler(Upnp_EventType EventType, void *event, void *userdata)
 	}
 	return 0;
 }
-#endif
-
 
 struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 				     const char *ip_address,
@@ -484,9 +456,7 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 
 	priv = malloc(sizeof(*priv));
 	priv->upnp_device_descriptor = device_def;
-#ifdef HAVE_LIBUPNP
 	ithread_mutex_init(&(priv->device_mutex), NULL);
-#endif
 
 	/* register icons in web server */
         for (i=0; (icon_entry = device_def->icons[i]); i++) {
@@ -500,7 +470,6 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 		webserver_register_buf(srv->scpd_url, buf, "text/xml");
 	}
 
-#ifdef HAVE_LIBUPNP
 	rc = UpnpInit(ip_address, port);
 	if (UPNP_E_SUCCESS != rc) {
 		Log_error("upnp", "UpnpInit('%s', port=%d) Error: %s (%d)",
@@ -548,14 +517,11 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 			  UpnpGetErrorMessage(rc), rc);
 		goto upnp_err_out;
 	}
-#endif
 
 	goto out;
 
 upnp_err_out:
-#ifdef HAVE_LIBUPNP
 	UpnpFinish();
-#endif
 	free(priv);
 	priv = NULL;
 

@@ -36,10 +36,8 @@
 
 #include <glib.h>
 
-#ifdef HAVE_LIBUPNP
 #include <upnp/upnp.h>
 #include <upnp/ithread.h>
-#endif
 
 #include "output.h"
 #include "upnp.h"
@@ -509,15 +507,11 @@ static variable_container_t *state_variables_ = NULL;
 
 /* protects transport_values, and service-specific state */
 
-#ifdef HAVE_LIBUPNP
 static ithread_mutex_t transport_mutex;
-#endif
 
 static void service_lock(void)
 {
-#ifdef HAVE_LIBUPNP
 	ithread_mutex_lock(&transport_mutex);
-#endif
 	if (transport_service_.last_change) {
 		UPnPLastChangeCollector_start(transport_service_.last_change);
 	}
@@ -528,9 +522,7 @@ static void service_unlock(void)
 	if (transport_service_.last_change) {
 		UPnPLastChangeCollector_finish(transport_service_.last_change);
 	}
-#ifdef HAVE_LIBUPNP
 	ithread_mutex_unlock(&transport_mutex);
-#endif
 }
 
 
@@ -677,10 +669,8 @@ static int obtain_instanceid(struct action_event *event, int *instance)
 	
 	value = upnp_get_string(event, "InstanceID");
 	if (value == NULL) {
-#ifdef HAVE_LIBUPNP
 		upnp_set_error(event, UPNP_SOAP_E_INVALID_ARGS,
 			       "Missing InstanceID");
-#endif
 		return -1;
 	}
 	free(value);
@@ -1188,7 +1178,5 @@ struct service transport_service_ = {
 	.variable_meta =        transport_var_meta,
 	.variable_count =       TRANSPORT_VAR_UNKNOWN,
 	.command_count =        TRANSPORT_CMD_UNKNOWN,
-#ifdef HAVE_LIBUPNP
 	.service_mutex =        &transport_mutex
-#endif
 };
