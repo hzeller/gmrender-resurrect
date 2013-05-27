@@ -83,6 +83,7 @@ void VariableContainer_delete(variable_container_t *object) {
 int VariableContainer_get_num_vars(variable_container_t *object) {
 	return object->variable_num;
 }
+
 // Get variable name/value. Any of the OUT parameters 'name' and 'value'
 // can be NULL.
 // Returns pointer to the value if variable exists.
@@ -191,7 +192,7 @@ char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder) {
 
 // -- UPnPLastChangeCollector
 struct upnp_last_change_collector {
-	variable_container_t *variables;
+	variable_container_t *variable_container;
 	int last_change_variable_num;  // the variable we manipulate.
 	struct upnp_device *upnp_device;
 	const char *service_id;
@@ -212,12 +213,31 @@ UPnPLastChangeCollector_new(variable_container_t *variable_container,
 			    const char *service_id) {
 	upnp_last_change_collector_t *result = (upnp_last_change_collector_t*)
 		malloc(sizeof(upnp_last_change_collector_t));
-	result->variables = variable_container;
+	result->variable_container = variable_container;
 	result->last_change_variable_num = last_change_var_num;
 	result->upnp_device = upnp_device;
 	result->service_id = service_id;
 	result->open_transactions = 0;
 	result->builder = UPnPLastChangeBuilder_new();
+
+	// Create initial LastChange that contains all variables in their
+	// current state. This might help devices that silently re-connect
+	// without proper registration.
+	const int var_count = VariableContainer_get_num_vars(variable_container);
+	for (int i = 0; i < var_count; ++i) {
+		if (i == result->last_change_variable_num)
+			continue;
+		const char *name;
+		const char *value =
+			VariableContainer_get(variable_container, i, &name);
+		// Send over all variables except "LastChange" itself.
+		if (value && strcmp("LastChange", name) != 0) {
+			UPnPLastChangeBuilder_add(result->builder,
+						  name, value);
+		}
+	}
+	UPnPLastChangeCollector_notify(result);
+
 	VariableContainer_register_callback(variable_container,
 					    UPnPLastChangeCollector_callback,
 					    result);
@@ -245,7 +265,7 @@ static void UPnPLastChangeCollector_notify(upnp_last_change_collector_t *obj) {
 		return;
 
 	// Only if there is actually a change, send it over.
-	if (VariableContainer_change(obj->variables,
+	if (VariableContainer_change(obj->variable_container,
 				     obj->last_change_variable_num,
 				     xml_document)) {
 		const char *varnames[] = {
