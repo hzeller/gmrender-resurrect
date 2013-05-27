@@ -978,7 +978,8 @@ static int stop(struct action_event *event)
 	case TRANSPORT_NO_MEDIA_PRESENT:
 		/* action not allowed in these states - error 701 */
 		upnp_set_error(event, UPNP_TRANSPORT_E_TRANSITION_NA,
-			       "Transition not allowed");
+			       "Transition not allowed; allowed=%s",
+			       get_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS));
 
 		break;
 	}
@@ -1050,7 +1051,8 @@ static int play(struct action_event *event)
 	case TRANSPORT_RECORDING:
 		/* action not allowed in these states - error 701 */
 		upnp_set_error(event, UPNP_TRANSPORT_E_TRANSITION_NA,
-			       "Transition not allowed");
+			       "Transition not allowed; allowed=%s",
+			       get_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS));
 		rc = -1;
 
 		break;
@@ -1086,7 +1088,8 @@ static int pause_stream(struct action_event *event)
         default:
 		/* action not allowed in these states - error 701 */
 		upnp_set_error(event, UPNP_TRANSPORT_E_TRANSITION_NA,
-			       "Transition not allowed");
+			       "Transition not allowed; allowed=%s",
+			       get_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS));
 		rc = -1;
         }
 	service_unlock();
