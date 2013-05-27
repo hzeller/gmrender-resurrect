@@ -619,12 +619,12 @@ gen_desc_servicelist(struct upnp_device_descriptor *device_def,
 	top=xmlelement_new(doc, "serviceList");
 
         for (i=0; (srv = device_def->services[i]); i++) {
-		parent=xmlelement_new(doc, "service");
-		add_value_element(doc,parent,"serviceType",srv->service_type);
-		add_value_element(doc,parent,"serviceId", srv->service_id);
-		add_value_element(doc,parent,"SCPDURL", srv->scpd_url);
-		add_value_element(doc,parent,"controlURL", srv->control_url);
-		add_value_element(doc,parent,"eventSubURL", srv->event_url);
+		parent = xmlelement_new(doc, "service");
+		add_value_element(doc, parent, "serviceType",srv->service_type);
+		add_value_element(doc, parent, "serviceId", srv->service_id);
+		add_value_element(doc, parent, "SCPDURL", srv->scpd_url);
+		add_value_element(doc, parent, "controlURL", srv->control_url);
+		add_value_element(doc, parent, "eventSubURL", srv->event_url);
 		xmlelement_add_element(doc, top, parent);
         }
 
