@@ -19,6 +19,8 @@ gmediarender_SOURCES += \
 	output_gstreamer.c  output_gstreamer.h
 endif
 
+main.c : git-version.h
+
 git-version.h: .FORCE
 	$(AM_V_GEN)(echo "#define GM_COMPILE_VERSION \"$(shell git log -n1 --date=short --format='%cd_%h' 2>/dev/null || echo -n '0.0.7-git')\"" > $@-new; \
 	cmp -s $@ $@-new || cp $@-new $@; \
