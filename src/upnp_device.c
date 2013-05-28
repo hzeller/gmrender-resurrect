@@ -505,6 +505,8 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 				     buf, strlen(buf), 1,
 				     &event_handler, priv,
 				     &(priv->device_handle));
+	free(buf);
+
 	if (UPNP_E_SUCCESS != rc) {
 		Log_error("upnp", "UpnpRegisterRootDevice2() Error: %s (%d)",
 			  UpnpGetErrorMessage(rc), rc);
