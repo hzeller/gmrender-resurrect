@@ -280,7 +280,8 @@ int main(int argc, char **argv)
 	if (Log_info_enabled()) {
 		Log_info("main", "Ready for rendering.");
 	}
-	fprintf(stderr, "Ready for rendering (ver. %s)\n", GM_COMPILE_VERSION);
+	fprintf(stderr, "%s version %s ready for rendering.\n",
+		PACKAGE_STRING, GM_COMPILE_VERSION);
 
 	output_loop();
 	result = EXIT_SUCCESS;
