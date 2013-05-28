@@ -173,8 +173,13 @@ char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder) {
 		return NULL;
 
 	char *xml_doc_string = xmldoc_tostring(builder->change_event_doc);
+#if 0
 	// The XML-doc contains a header of the form <?xml version="1.0"?>
-	// Apparently some players don't like that (foobar).
+	// It _could_ be, that some players don't like this.
+	// The reason why this was added was in debugging some case with
+	// a user, but turns out some other place was the problem (non-quoting
+	// of XML).
+	// If this turns out not to be a problem, get rid of this code-block.
 	char *end_pos = xml_doc_string ? strstr(xml_doc_string, "?>") : NULL;
 	if (end_pos) {
 		end_pos += 2;
@@ -184,6 +189,7 @@ char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder) {
 		free(xml_doc_string);
 		xml_doc_string = result;
 	}
+#endif
 	xmldoc_free(builder->change_event_doc);
 	builder->change_event_doc = NULL;
 	builder->instance_element = NULL;
