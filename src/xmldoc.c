@@ -36,92 +36,77 @@
 
 #include "xmldoc.h"
 
-struct xmldoc {
-	IXML_Document *doc;
-};
-struct xmlelement {
-	IXML_Element *element;
-};
+// The structs are mere placeholders that we internally cast to the
+// objects used in the upnplib.
+struct xmlelement {};
+struct xmldoc {};
+
+static IXML_Document *to_idoc(struct xmldoc *x) {
+	return (IXML_Document*) x;
+}
+
+static IXML_Element *to_ielem(struct xmlelement *x) {
+	return (IXML_Element*) x;
+}
 
 struct xmldoc *xmldoc_new(void)
 {
-	struct xmldoc *result = NULL;
-	result = malloc(sizeof(*result));
 	IXML_Document *doc;
 	doc = ixmlDocument_createDocument();
-	result->doc = doc;
-	return result;
+	return (struct xmldoc*) doc;
 }
 
-int xmldoc_free(struct xmldoc *doc)
+void xmldoc_free(struct xmldoc *doc)
 {
-	int result = -1;
 	assert(doc != NULL);
-	ixmlDocument_free(doc->doc);
-	free(doc);
-	result = 0;
-	return result;
+	ixmlDocument_free(to_idoc(doc));
 }
 
 char *xmldoc_tostring(struct xmldoc *doc)
 {
 	char *result = NULL;
 	assert(doc != NULL);
-	result = ixmlDocumenttoString(doc->doc);
+	result = ixmlDocumenttoString(to_idoc(doc));
 	return result;
 }
 
 struct xmldoc *xmldoc_parsexml(const char *xml_text) {
 	IXML_Document *doc = ixmlParseBuffer(xml_text);
-	if (doc == NULL)
-		return NULL;
-	struct xmldoc *result = NULL;
-	result = malloc(sizeof(*result));
-	result->doc = doc;
-	return result;
+	return (struct xmldoc*) doc;
 }
 
 struct xmlelement *xmldoc_new_topelement(struct xmldoc *doc,
                                          const char *elementName,
                                          const char *xmlns)
 {
-	struct xmlelement *result = NULL;
 	assert(doc != NULL);
 	assert(elementName != NULL);
-	result = malloc(sizeof(*result));
 	IXML_Element *element;
 	if (xmlns) {
-		element = ixmlDocument_createElementNS(doc->doc, xmlns,
+		element = ixmlDocument_createElementNS(to_idoc(doc), xmlns,
                                                        elementName);
                 ixmlElement_setAttribute(element, "xmlns", xmlns);
 	} else {
-		element = ixmlDocument_createElement(doc->doc, elementName);
+		element = ixmlDocument_createElement(to_idoc(doc), elementName);
 	}
-	ixmlNode_appendChild((IXML_Node *)(doc->doc),(IXML_Node *)element);
-	result->element = element;
-	return result;
+	ixmlNode_appendChild((IXML_Node *)(to_idoc(doc)),(IXML_Node *)element);
+	return (struct xmlelement *) element;
 }
 
 struct xmlelement *xmlelement_new(struct xmldoc *doc, const char *elementName)
 {
-	struct xmlelement *result = NULL;
 	assert(doc != NULL);
 	assert(elementName != NULL);
-	result = malloc(sizeof(*result));
 	IXML_Element *element;
-	element = ixmlDocument_createElement(doc->doc, elementName);
-	result->element = element;
-	return result;
+	element = ixmlDocument_createElement(to_idoc(doc), elementName);
+	return (struct xmlelement*) element;
 }
 
 static struct xmlelement *find_element(IXML_Node *node, const char *key) {
 	node = ixmlNode_getFirstChild(node);
 	for (/**/; node != NULL; node = ixmlNode_getNextSibling(node)) {
 		if (strcmp(ixmlNode_getNodeName(node), key) == 0) {
-			struct xmlelement *result = NULL;
-			result = malloc(sizeof(*result));
-			result->element = (IXML_Element*) node;
-			return result;
+			return (struct xmlelement*) node;
 		}
 	}
 	return NULL;
@@ -130,16 +115,16 @@ static struct xmlelement *find_element(IXML_Node *node, const char *key) {
 struct xmlelement *find_element_in_doc(struct xmldoc *doc,
 				       const char *key) {
 
-	return find_element((IXML_Node*) doc->doc, key);
+	return find_element((IXML_Node*) to_idoc(doc), key);
 }
 
 struct xmlelement *find_element_in_element(struct xmlelement *element,
 					   const char *key) {
-	return find_element((IXML_Node*) element->element, key);
+	return find_element((IXML_Node*) to_ielem(element), key);
 }
 
 char *get_node_value(struct xmlelement *element) {
-	IXML_Node *node = (IXML_Node*) element->element;
+	IXML_Node *node = (IXML_Node*) to_ielem(element);
 	node = ixmlNode_getFirstChild(node);
 	const char *node_value = (node != NULL
 				  ? ixmlNode_getNodeValue(node)
@@ -147,55 +132,39 @@ char *get_node_value(struct xmlelement *element) {
 	return strdup(node_value != NULL ? node_value : "");
 }
 
-int xmlelement_free(struct xmlelement *element) {
-	int result = -1;
-	assert(element != NULL);
-	return result;
-}
-
-int xmlelement_add_element(struct xmldoc *doc,
-                           struct xmlelement *parent,
-                           struct xmlelement *child)
+void xmlelement_add_element(struct xmldoc *doc,
+			    struct xmlelement *parent,
+			    struct xmlelement *child)
 {
-	int result = -1;
 	assert(doc != NULL);
 	assert(parent != NULL);
 	assert(child != NULL);
-	ixmlNode_appendChild((IXML_Node *)(parent->element),
-                             (IXML_Node *)(child->element));
-	result = 0;
-	return result;
+	ixmlNode_appendChild((IXML_Node *) to_ielem(parent),
+                             (IXML_Node *) to_ielem(child));
 }
 
-int xmlelement_add_text(struct xmldoc *doc,
-                        struct xmlelement *parent,
-                        const char *text)
+void xmlelement_add_text(struct xmldoc *doc,
+			 struct xmlelement *parent,
+			 const char *text)
 {
-	int result = -1;
 	assert(doc != NULL);
 	assert(parent != NULL);
 	assert(text != NULL);
 	IXML_Node *textNode;
-	textNode = ixmlDocument_createTextNode(doc->doc, text);
-	ixmlNode_appendChild((IXML_Node *)(parent->element),
-                             textNode);
-	result = 0;
-	return result;
+	textNode = ixmlDocument_createTextNode(to_idoc(doc), text);
+	ixmlNode_appendChild((IXML_Node *) to_ielem(parent), textNode);
 }
 
-int xmlelement_set_attribute(struct xmldoc *doc,
-                             struct xmlelement *element,
-                             const char *name,
-                             const char *value)
+void xmlelement_set_attribute(struct xmldoc *doc,
+			      struct xmlelement *element,
+			      const char *name,
+			      const char *value)
 {
-	int result = -1;
 	assert(doc != NULL);
 	assert(element != NULL);
 	assert(name != NULL);
 	assert(value != NULL);
-	ixmlElement_setAttribute(element->element, name, value);
-	result = 0;
-	return result;
+	ixmlElement_setAttribute(to_ielem(element), name, value);
 }
 
 void add_value_element(struct xmldoc *doc,

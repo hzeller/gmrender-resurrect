@@ -29,7 +29,7 @@ struct xmlelement;
 
 struct xmldoc *xmldoc_new(void);
 
-int xmldoc_free(struct xmldoc *doc);
+void xmldoc_free(struct xmldoc *doc);
 char *xmldoc_tostring(struct xmldoc *doc);
 struct xmldoc *xmldoc_parsexml(const char *xml_text);
 
@@ -39,17 +39,16 @@ struct xmlelement *xmldoc_new_topelement(struct xmldoc *doc,
 
 struct xmlelement *xmlelement_new(struct xmldoc *doc, const char *elementName);
 
-int xmlelement_free(struct xmlelement *element);
-int xmlelement_add_element(struct xmldoc *doc,
-                           struct xmlelement *parent,
-                           struct xmlelement *child);
-int xmlelement_add_text(struct xmldoc *doc,
-                        struct xmlelement *parent,
-                        const char *text);
-int xmlelement_set_attribute(struct xmldoc *doc,
-                             struct xmlelement *element,
-                             const char *name,
-                             const char *value);
+void xmlelement_add_element(struct xmldoc *doc,
+			    struct xmlelement *parent,
+			    struct xmlelement *child);
+void xmlelement_add_text(struct xmldoc *doc,
+			 struct xmlelement *parent,
+			 const char *text);
+void xmlelement_set_attribute(struct xmldoc *doc,
+			      struct xmlelement *element,
+			      const char *name,
+			      const char *value);
 
 void add_value_element(struct xmldoc *doc,
                        struct xmlelement *parent,

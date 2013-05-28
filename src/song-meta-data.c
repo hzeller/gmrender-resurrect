@@ -133,22 +133,16 @@ int SongMetaData_parse_DIDL(struct SongMetaData *object, const char *xml) {
 	struct xmlelement *value_node = NULL;
 	value_node = find_element_in_element(item_node, "dc:title");
 	if (value_node) object->title = get_node_value(value_node);
-	free(value_node);
 
 	value_node = find_element_in_element(item_node, "upnp:artist");
 	if (value_node) object->artist = get_node_value(value_node);
-	free(value_node);
 
 	value_node = find_element_in_element(item_node, "upnp:album");
 	if (value_node) object->album = get_node_value(value_node);
-	free(value_node);
 
 	value_node = find_element_in_element(item_node, "upnp:genre");
 	if (value_node) object->genre = get_node_value(value_node);
-	free(value_node);
 
-	free(item_node);
-	free(didl_node);
 	xmldoc_free(doc);
 	return 1;
 }
@@ -206,4 +200,3 @@ char *SongMetaData_to_DIDL(const struct SongMetaData *object,
 	free(composer);
 	return result;
 }
-
