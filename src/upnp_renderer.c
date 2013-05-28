@@ -49,6 +49,7 @@
 #include "upnp_transport.h"
 
 #include "upnp_renderer.h"
+#include "git-version.h"
 
 static struct icon icon1 = {
         .width =        64,
@@ -81,7 +82,7 @@ static struct upnp_device_descriptor render_device = {
         .manufacturer_url       = "http://github.com/hzeller/gmrender-resurrect",
         .model_description      = PACKAGE_STRING,
         .model_name             = PACKAGE_NAME,
-        .model_number           = PACKAGE_VERSION,
+        .model_number           = GM_COMPILE_VERSION,
         .model_url              = "http://github.com/hzeller/gmrender-resurrect",
         .serial_number          = "1",
         .udn                    = "uuid:GMediaRender-1_0-000-000-002",

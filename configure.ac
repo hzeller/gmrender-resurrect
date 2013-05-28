@@ -1,5 +1,5 @@
 AC_PREREQ(2.59)
-AC_INIT(gmediarender, m4_esyscmd([(git log -n1 --date=short --format="%cd_%h" 2>/dev/null || echo -n "0.0.7-git") | tr -d "\n"]), https://github.com/hzeller/gmrender-resurrect)
+AC_INIT(gmediarender, 0.0.7-git, https://github.com/hzeller/gmrender-resurrect)
 AC_CONFIG_AUX_DIR(config)
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
 AC_CONFIG_SRCDIR(src/main.c)

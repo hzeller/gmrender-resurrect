@@ -115,7 +115,7 @@ static GOptionEntry option_entries[] = {
 
 static void do_show_version(void)
 {
-	puts( PACKAGE_STRING "\n"
+	puts( PACKAGE_STRING "; " GM_COMPILE_VERSION "\n"
         	"This is free software. "
 		"You may redistribute copies of it under the terms of\n"
 		"the GNU General Public License "
