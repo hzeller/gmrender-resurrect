@@ -171,7 +171,7 @@ static const char *transport_variable_names[] = {
 	[TRANSPORT_VAR_UNKNOWN] = NULL
 };
 
-static const char kZeroTime[] = "0:00:00.000";
+static const char kZeroTime[] = "0:00:00";
 static const char *transport_default_values[] = {
 	[TRANSPORT_VAR_TRANSPORT_STATE] = "STOPPED",
 	[TRANSPORT_VAR_TRANSPORT_STATUS] = "OK",
@@ -836,9 +836,7 @@ static void print_upnp_time(char *result, size_t size, gint64 t) {
 	const int hour = divide_leave_remainder(&t, 3600LL * one_sec);
 	const int minute = divide_leave_remainder(&t, 60LL * one_sec);
 	const int second = divide_leave_remainder(&t, one_sec);
-	const int milli_second = t / 1000000;
-	snprintf(result, size, "%d:%02d:%02d.%03d", hour, minute, second,
-		 milli_second / 100 * 100);  // quantize to 100
+	snprintf(result, size, "%d:%02d:%02d", hour, minute, second);
 }
 
 static gint64 parse_upnp_time(const char *time_string) {
