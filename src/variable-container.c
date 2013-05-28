@@ -172,22 +172,22 @@ char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder) {
 	if (builder->change_event_doc == NULL)
 		return NULL;
 
-	char *xml_document = xmldoc_tostring(builder->change_event_doc);
+	char *xml_doc_string = xmldoc_tostring(builder->change_event_doc);
 	// The XML-doc contains a header of the form <?xml version="1.0"?>
 	// Apparently some players don't like that (foobar).
-	char *end_pos = xml_document ? strstr(xml_document, "?>") : NULL;
+	char *end_pos = xml_doc_string ? strstr(xml_doc_string, "?>") : NULL;
 	if (end_pos) {
 		end_pos += 2;
 		while (*end_pos && isspace(*end_pos))
 			end_pos++;
 		char *result = strdup(end_pos);
-		free(xml_document);
-		xml_document = result;
+		free(xml_doc_string);
+		xml_doc_string = result;
 	}
 	xmldoc_free(builder->change_event_doc);
 	builder->change_event_doc = NULL;
 	builder->instance_element = NULL;
-	return xml_document;
+	return xml_doc_string;
 }
 
 // -- UPnPLastChangeCollector
@@ -260,14 +260,14 @@ static void UPnPLastChangeCollector_notify(upnp_last_change_collector_t *obj) {
 	if (obj->open_transactions != 0)
 		return;
 
-	char *xml_document = UPnPLastChangeBuilder_to_xml(obj->builder);
-	if (xml_document == NULL)
+	char *xml_doc_string = UPnPLastChangeBuilder_to_xml(obj->builder);
+	if (xml_doc_string == NULL)
 		return;
 
 	// Only if there is actually a change, send it over.
 	if (VariableContainer_change(obj->variable_container,
 				     obj->last_change_variable_num,
-				     xml_document)) {
+				     xml_doc_string)) {
 		const char *varnames[] = {
 			"LastChange",
 			NULL
@@ -278,14 +278,14 @@ static void UPnPLastChangeCollector_notify(upnp_last_change_collector_t *obj) {
 		// Yes, now, the whole XML document is encapsulated in
 		// XML so needs to be XML quoted. The time around 2000 was
 		// pretty sick - people did everything in XML.
-		varvalues[0] = xmlescape(xml_document, 0);
+		varvalues[0] = xmlescape(xml_doc_string, 0);
 		upnp_device_notify(obj->upnp_device,
 				   obj->service_id,
 				   varnames, varvalues, 1);
 		free((char*)varvalues[0]);
 	}
 
-	free(xml_document);
+	free(xml_doc_string);
 }
 
 // The actual callback collecting changes by building an <Event/> XML document.
