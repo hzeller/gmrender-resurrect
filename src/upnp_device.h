@@ -51,6 +51,8 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 				     const char *ip_address,
 				     unsigned short port);
 
+void upnp_device_shutdown(struct upnp_device *device);
+
 int upnp_add_response(struct action_event *event,
 		      const char *key, const char *value);
 void upnp_set_error(struct action_event *event, int error_code,

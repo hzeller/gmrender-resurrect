@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #include <glib.h>
 
@@ -108,14 +109,23 @@ out:
 	return result;
 }
 
+static GMainLoop *main_loop_ = NULL;
+static void exit_loop_sighandler(int sig) {
+	if (main_loop_) {
+		g_main_loop_quit(main_loop_);
+	}
+}
+
 int output_loop()
 {
-        GMainLoop *loop;
-
         /* Create a main loop that runs the default GLib main context */
-        loop = g_main_loop_new(NULL, FALSE);
+        main_loop_ = g_main_loop_new(NULL, FALSE);
 
-        g_main_loop_run(loop);
+	signal(SIGINT, &exit_loop_sighandler);
+	signal(SIGTERM, &exit_loop_sighandler);
+
+        g_main_loop_run(main_loop_);
+
         return 0;
 }
 

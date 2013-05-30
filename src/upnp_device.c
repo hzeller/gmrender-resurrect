@@ -531,6 +531,9 @@ out:
 	return priv;
 }
 
+void upnp_device_shutdown(struct upnp_device *device) {
+	UpnpFinish();
+}
 
 struct service *find_service(struct upnp_device_descriptor *device_def,
                              const char *service_id)

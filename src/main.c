@@ -286,6 +286,11 @@ int main(int argc, char **argv)
 	output_loop();
 	result = EXIT_SUCCESS;
 
+	// We're here, because the loop exited. Probably due to catching
+	// a signal.
+	Log_info("main", "Exiting.");
+	upnp_device_shutdown(device);
+
 out:
 	return result;
 }
