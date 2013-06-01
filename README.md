@@ -15,21 +15,13 @@ missing features to be useful (Original sources in [savannah cvs][orig-cvs]).
 To distinguish this project from the original one, this is called
 [gmrender-resurrect](http://github.com/hzeller/gmrender-resurrect).
 
-Added so far
-  * Support to get duration and position of current stream. This allows
-    controllers to show a progress bar.
-  * Support basic commands (Only `Play` and `Stop` were working before)
-     - `Pause`  : Pause current stream.
-     - `Seek`   : Seek to a particular position.
-  * When current track is finished, transition to state `STOPPED`
-    so that the controller sends us the next song (Actively eventing).
-  * Support gapless (via SetNextAVTransportURI to play gapless). Looks like
-    the next version of BubbleUPnP will send the right action to support it.
-  * Volume/Mute control.
-  * Compiles with gstreamer-0.10 and gstreamer-1.0
-  * ...
+There are many missing features added, this is now very usable, headless
+UPnP renderer.
 
-Tested the following control points: BubbleUPnP, 2Player, DK Player, eezUPnP;
+If you're running this on a Raspberry Pi, you might be interested to connect
+a little LCD display. Check out the [upnp-display][] github project.
+
+Tested with various control points: BubbleUPnP, 2Player, DK Player, eezUPnP;
 Please report what other control-points worked for you - and which didn't.
 
 Issues
@@ -54,3 +46,4 @@ You can reach me via <h.zeller@acm.org>.
 [orig-cvs]:http://cvs.savannah.gnu.org/viewvc/gmrender/?root=gmrender
 [gst-bug-698750]: https://bugzilla.gnome.org/show_bug.cgi?id=698750
 [gst-bug-699794]: https://bugzilla.gnome.org/show_bug.cgi?id=699794
+[upnp-display] https://github.com/hzeller/upnp-display
