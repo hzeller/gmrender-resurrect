@@ -46,4 +46,4 @@ You can reach me via <h.zeller@acm.org>.
 [orig-cvs]:http://cvs.savannah.gnu.org/viewvc/gmrender/?root=gmrender
 [gst-bug-698750]: https://bugzilla.gnome.org/show_bug.cgi?id=698750
 [gst-bug-699794]: https://bugzilla.gnome.org/show_bug.cgi?id=699794
-[upnp-display] https://github.com/hzeller/upnp-display
+[upnp-display]: https://github.com/hzeller/upnp-display
