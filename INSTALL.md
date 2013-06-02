@@ -99,7 +99,7 @@ There are other ways to configure the default gstreamer output devices via
 some global system settings, but in particular if you are on some embedded
 device, setting these directly via a commandline option is the very best.
 
-## --gstout-initial-volume-db
+### --gstout-initial-volume-db
 This sets the initial volume on startup in decibel. The level 0.0 decibel
 is 'full volume', -20db would show on the UPnP controller as '50%'. In the
 following table you see the non-linear relationship:
