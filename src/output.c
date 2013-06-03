@@ -162,6 +162,8 @@ int output_play(output_transition_cb_t transition_callback) {
 	int result = -1;
 	if (output_module && output_module->play) {
 		result = output_module->play(transition_callback);
+	} else {
+	  Log_error("output", "play() not availabe. Compile with gstreamer.");
 	}
 	return result;
 }
@@ -170,6 +172,8 @@ int output_pause(void) {
 	int result = -1;
 	if (output_module && output_module->pause) {
 		result = output_module->pause();
+	} else {
+	  Log_error("output", "pause() not availabe. Compile with gstreamer.");
 	}
 	return result;
 }
@@ -178,6 +182,8 @@ int output_stop(void) {
 	int result = -1;
 	if (output_module && output_module->stop) {
 		result = output_module->stop();
+	} else {
+	  Log_error("output", "stop() not availabe. Compile with gstreamer.");
 	}
 	return result;
 }
@@ -186,6 +192,8 @@ int output_seek(gint64 position_nanos) {
 	int result = -1;
 	if (output_module && output_module->seek) {
 		result = output_module->seek(position_nanos);
+	} else {
+	  Log_error("output", "seek() not availabe. Compile with gstreamer.");
 	}
 	return result;
 }
@@ -201,24 +209,36 @@ int output_get_position(gint64 *track_dur, gint64 *track_pos) {
 int output_get_volume(float *value) {
 	if (output_module && output_module->get_volume) {
 		return output_module->get_volume(value);
+	} else {
+	  Log_error("output", "get_voume() not availabe. "
+		    "Compile with gstreamer.");
 	}
 	return -1;
 }
 int output_set_volume(float value) {
 	if (output_module && output_module->set_volume) {
 		return output_module->set_volume(value);
+	} else {
+	  Log_error("output", "set_volume() not available."
+		    "Compile with gstreamer.");
 	}
 	return -1;
 }
 int output_get_mute(int *value) {
 	if (output_module && output_module->get_mute) {
 		return output_module->get_mute(value);
+	} else {
+	  Log_error("output", "get_mute() not available. "
+		    "Compile with gstreamer.");
 	}
 	return -1;
 }
 int output_set_mute(int value) {
 	if (output_module && output_module->set_mute) {
 		return output_module->set_mute(value);
+	} else {
+	  Log_error("output", "set_mute() not available. "
+		    "Compile with gstreamer.");
 	}
 	return -1;
 }
