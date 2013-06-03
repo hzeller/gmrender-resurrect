@@ -9,7 +9,6 @@ gmediarender_SOURCES = main.c git-version.h \
 	upnp_renderer.h upnp_renderer.c \
 	webserver.c webserver.h \
 	output.c output.h \
-	output_dummy.c  output_dummy.h \
 	logging.h logging.c \
 	xmldoc.c xmldoc.h \
 	xmlescape.c xmlescape.h
