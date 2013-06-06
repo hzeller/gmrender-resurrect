@@ -58,7 +58,7 @@ static gboolean show_transport_scpd = FALSE;
 static gboolean show_outputs = FALSE;
 static gboolean daemon_mode = FALSE;
 
-// IP-address seems strange in libupnp: they actually don't bind that
+// IP-address seems strange in libupnp: they actually don't bind to
 // that address, but to INADDR_ANY (miniserver.c in upnp library).
 // Apparently they just use this for the advertisement ? Anyway, 0.0.0.0 would
 // not work.
@@ -126,7 +126,6 @@ static void do_show_version(void)
 
 static int process_cmdline(int argc, char **argv)
 {
-	int result = -1;
 	GOptionContext *ctx;
 	GError *err = NULL;
 	int rc;
@@ -137,20 +136,16 @@ static int process_cmdline(int argc, char **argv)
 	rc = output_add_options(ctx);
 	if (rc != 0) {
 		fprintf(stderr, "Failed to add output options\n");
-		goto out;
+		return(FALSE);
 	}
 
 	if (!g_option_context_parse (ctx, &argc, &argv, &err)) {
 		fprintf(stderr, "Failed to initialize: %s\n", err->message);
 		g_error_free (err);
-		goto out;
+		return(FALSE);
 	}
 
-
-	result = 0;
-
-out:
-	return result;
+	return(TRUE);
 }
 
 static void log_variable_change(void *userdata, int var_num,
@@ -170,12 +165,11 @@ static void log_variable_change(void *userdata, int var_num,
 int main(int argc, char **argv)
 {
 	int rc;
-	int result = EXIT_FAILURE;
 	struct upnp_device_descriptor *upnp_renderer;
 
 	rc = process_cmdline(argc, argv);
 	if (rc != 0) {
-		goto out;
+		exit(EXIT_FAILURE);
 	}
 
 	if (show_version) {
@@ -231,7 +225,7 @@ int main(int argc, char **argv)
 
 	upnp_renderer = upnp_renderer_descriptor(friendly_name, uuid);
 	if (upnp_renderer == NULL) {
-		goto out;
+		exit(EXIT_FAILURE);
 	}
 
 	if (show_devicedesc) {
@@ -245,8 +239,8 @@ int main(int argc, char **argv)
 	rc = output_init(output);
 	if (rc != 0) {
 		Log_error("main",
-			  "ERROR: Failed to initialize Output subsystem");
-		goto out;
+			  "ERROR: Failed to initialize Output subsystem.");
+		exit(EXIT_FAILURE);
 	}
 
 	struct upnp_device *device;
@@ -259,12 +253,12 @@ int main(int argc, char **argv)
 		Log_error("main", "Parameter error: --port needs to be in "
 			  "range [49152..65535] (but was set to %d)",
 			  listen_port);
-		goto out;
+		exit(EXIT_FAILURE);
 	}
 	device = upnp_device_init(upnp_renderer, ip_address, listen_port);
 	if (device == NULL) {
-		Log_error("main", "ERROR: Failed to initialize UPnP device");
-		goto out;
+		Log_error("main", "ERROR: Failed to initialize UPnP device.");
+		exit(EXIT_FAILURE);
 	}
 
 	upnp_transport_init(device);
@@ -284,13 +278,13 @@ int main(int argc, char **argv)
 		PACKAGE_STRING, GM_COMPILE_VERSION);
 
 	output_loop();
-	result = EXIT_SUCCESS;
 
 	// We're here, because the loop exited. Probably due to catching
 	// a signal.
-	Log_info("main", "Exiting.");
+	if (Log_info_enabled()) {
+		Log_info("main", "Exiting.");
+	}
 	upnp_device_shutdown(device);
 
-out:
-	return result;
+	exit(EXIT_SUCCESS);
 }
