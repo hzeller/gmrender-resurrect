@@ -61,7 +61,6 @@ static struct virtual_file {
 int webserver_register_buf(const char *path, const char *contents,
 			   const char *content_type)
 {
-	int result = -1;
 	struct virtual_file *entry;
 
 	Log_info("webserver", "Provide %s (%s) from buffer",
@@ -73,7 +72,7 @@ int webserver_register_buf(const char *path, const char *contents,
 
 	entry = malloc(sizeof(struct virtual_file));
 	if (entry == NULL) {
-		goto out;
+		return(FALSE);
 	}
 	entry->len = strlen(contents);
 	entry->contents = contents;
@@ -81,10 +80,7 @@ int webserver_register_buf(const char *path, const char *contents,
 	entry->content_type = content_type;
 	entry->next = virtual_files;
 	virtual_files = entry;
-	result = 0;
-
-out:
-	return result;
+	return(TRUE);
 }
 
 int webserver_register_file(const char *path, const char *content_type)
@@ -93,7 +89,6 @@ int webserver_register_file(const char *path, const char *content_type)
 	struct stat buf;
 	struct virtual_file *entry;
 	int rc;
-	int result = -1;
 
 	snprintf(local_fname, PATH_MAX, "%s%s", PKG_DATADIR,
 	         strrchr(path, '/'));
@@ -104,12 +99,12 @@ int webserver_register_file(const char *path, const char *content_type)
 	rc = stat(local_fname, &buf);
 	if (rc) {
 		error(0, errno, "Could not stat '%s'", local_fname);
-		goto out;
+		return(FALSE);
 	}
 
 	entry = malloc(sizeof(struct virtual_file));
 	if (entry == NULL) {
-		goto out;
+		return(FALSE);
 	}
 	if (buf.st_size) {
 		char *cbuf;
@@ -117,12 +112,12 @@ int webserver_register_file(const char *path, const char *content_type)
 		in = fopen(local_fname, "r");
 		if (in == NULL) {
 			free(entry);
-			goto out;
+			return(FALSE);
 		}
 		cbuf = malloc(buf.st_size);
 		if (cbuf == NULL) {
 			free(entry);
-			goto out;
+			return(FALSE);
 		}
 		fread(cbuf, buf.st_size, 1, in);
 		fclose(in);
@@ -137,14 +132,11 @@ int webserver_register_file(const char *path, const char *content_type)
 	entry->content_type = content_type;
 	entry->next = virtual_files;
 	virtual_files = entry;
-	result = 0;
-out:
-	return result;
+	return(TRUE);
 }
 
 static int webserver_get_info(const char *filename, struct File_Info *info)
 {
-	int result = -1;
 	struct virtual_file *virtfile = virtual_files;
 
 	Log_info("webserver", "%s:(filename='%s',info=%p)", __FUNCTION__,
@@ -158,18 +150,15 @@ static int webserver_get_info(const char *filename, struct File_Info *info)
 			info->is_readable = 1;
 			info->content_type =
 			    ixmlCloneDOMString(virtfile->content_type);
-			result = 0;
-			goto out;
+			return(TRUE);
 		}
 		virtfile = virtfile->next;
 	}
         Log_error("webserver", "Not found.");
-out:
-	return result;
+	return(FALSE);
 }
 
-static UpnpWebFileHandle
-webserver_open(const char *filename, enum UpnpOpenFileMode mode)
+static UpnpWebFileHandle webserver_open(const char *filename, enum UpnpOpenFileMode mode)
 {
 	struct virtual_file *virtfile = virtual_files;
 	WebServerFile *file = NULL;
@@ -178,7 +167,7 @@ webserver_open(const char *filename, enum UpnpOpenFileMode mode)
 		Log_error("webserver",
 			  "%s: ignoring request to open file for writing.",
 			  filename);
-		goto out;
+		return file; // Returning NULL pointer.
 	}
 
 	while (virtfile != NULL) {
@@ -187,13 +176,12 @@ webserver_open(const char *filename, enum UpnpOpenFileMode mode)
 			file->pos = 0;
 			file->len = virtfile->len;
 			file->contents = virtfile->contents;
-			goto out;
+			return file; // Returning valid file pointer.
 		}
 		virtfile = virtfile->next;
 	}
 
-out:
-	return file;
+	return file; // Returning NULL pointer.
 }
 
 static inline int minimum(int a, int b)
@@ -227,7 +215,6 @@ static int webserver_seek(UpnpWebFileHandle fh, off_t offset, int origin)
 {
 	WebServerFile *file = (WebServerFile *) fh;
 	off_t newpos = -1;
-	int result = -1;
 	
 	switch (origin) {
 	case SEEK_SET:
@@ -243,13 +230,11 @@ static int webserver_seek(UpnpWebFileHandle fh, off_t offset, int origin)
 
 	if (newpos < 0 || newpos > file->len) {
 		error(0, errno, "%s seek failed", __FUNCTION__);
-		goto out;
+		return(FALSE);
+	} else {
+		file->pos = newpos;
+		return(TRUE);
 	}
-
-	file->pos = newpos;
-	result = 0;
-out:
-	return result;
 }
 
 static int webserver_close(UpnpWebFileHandle fh)
@@ -258,7 +243,7 @@ static int webserver_close(UpnpWebFileHandle fh)
 
 	free(file);
 
-	return 0;
+	return(TRUE);
 }
 
 struct UpnpVirtualDirCallbacks virtual_dir_callbacks = {
