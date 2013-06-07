@@ -143,9 +143,9 @@ static int process_cmdline(int argc, char **argv)
 		fprintf(stderr, "Failed to initialize: %s\n", err->message);
 		g_error_free (err);
 		return -1;
-	} else {
-		return 0;
 	}
+
+	return 0;
 }
 
 static void log_variable_change(void *userdata, int var_num,
