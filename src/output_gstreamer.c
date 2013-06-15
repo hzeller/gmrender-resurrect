@@ -323,11 +323,11 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 		GError *err;
 
 		gst_message_parse_error(msg, &err, &debug);
-		g_free(debug);
 
-		Log_error("gstreamer", "%s: Error: %s",
-			  msgSrcName, err->message);
+		Log_error("gstreamer", "%s: Error: %s (Debug: %s)",
+			  msgSrcName, err->message, debug);
 		g_error_free(err);
+		g_free(debug);
 
 		break;
 	}
