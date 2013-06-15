@@ -51,10 +51,15 @@
 // set to the service type (without ":1"). Were there clients that were
 // confused about the right use of the service-ID ?
 // (Then, a pull request actually set this to the full ":1" type,
-//  https://github.com/hzeller/gmrender-resurrect/pull/13 )
-// Setting this back, let's see what happens.
-#define TRANSPORT_SERVICE_ID "urn:upnp-org:serviceId:AVTransport"
-//#define TRANSPORT_SERVICE_ID TRANSPORT_TYPE
+//  https://github.com/hzeller/gmrender-resurrect/pull/13
+//#define TRANSPORT_SERVICE_ID "urn:upnp-org:serviceId:AVTransport"
+
+// Need to set TransportServiceID to transport type right now: the foobar2000
+// plugin for UPNP playing is broken ( UPnP MediaRenderer Output 1.0 beta 4 )
+// in that it throws a 'XML error' when the service type is _not_ the
+// transport type (which is totally wrong)
+#define TRANSPORT_SERVICE_ID TRANSPORT_TYPE
+
 #define TRANSPORT_SCPD_URL "/upnp/rendertransportSCPD.xml"
 #define TRANSPORT_CONTROL_URL "/upnp/control/rendertransport1"
 #define TRANSPORT_EVENT_URL "/upnp/event/rendertransport1"
