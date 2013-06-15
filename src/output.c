@@ -62,10 +62,10 @@ void output_dump_modules(void)
 	} else {
 		int i;
 		for (i=0; i<count; i++) {
-			Log_info("output", "Available output: %s\t%s%s",
-				 modules[i]->shortname,
-				 modules[i]->description,
-				 (i==0) ? " (default)" : "");
+			printf("Available output: %s\t%s%s\n",
+			       modules[i]->shortname,
+			       modules[i]->description,
+			       (i==0) ? " (default)" : "");
 		}
 	}
 }
