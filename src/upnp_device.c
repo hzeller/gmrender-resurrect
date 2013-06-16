@@ -472,7 +472,7 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 
 	rc = UpnpInit(ip_address, port);
 	if (UPNP_E_SUCCESS != rc) {
-		Log_error("upnp", "UpnpInit('%s', port=%d) Error: %s (%d)",
+		Log_error("upnp", "UpnpInit(ip=%s, port=%d) Error: %s (%d)",
 			  ip_address, port, UpnpGetErrorMessage(rc), rc);
 		goto upnp_err_out;
 	}
