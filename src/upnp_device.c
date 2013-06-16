@@ -639,9 +639,9 @@ static struct xmldoc *generate_desc(struct upnp_device_descriptor *device_def)
 	add_value_element(doc,parent,"manufacturerURL", device_def->manufacturer_url);
 	add_value_element(doc,parent,"modelDescription", device_def->model_description);
 	add_value_element(doc,parent,"modelName", device_def->model_name);
+	add_value_element(doc,parent,"modelNumber", device_def->model_number);
 	add_value_element(doc,parent,"modelURL", device_def->model_url);
 	add_value_element(doc,parent,"UDN", device_def->udn);
-	//add_value_element(doc,parent,"modelNumber", device_def->model_number);
 	//add_value_element(doc,parent,"serialNumber", device_def->serial_number);
 	//add_value_element(doc,parent,"UPC", device_def->upc);
 	if (device_def->icons) {
