@@ -84,9 +84,6 @@ int VariableContainer_get_num_vars(variable_container_t *object) {
 	return object->variable_num;
 }
 
-// Get variable name/value. Any of the OUT parameters 'name' and 'value'
-// can be NULL.
-// Returns pointer to the value if variable exists.
 const char *VariableContainer_get(variable_container_t *object,
 				  int var, const char **name) {
 	if (var < 0 || var >= object->variable_num)

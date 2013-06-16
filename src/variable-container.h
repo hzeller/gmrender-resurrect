@@ -35,7 +35,7 @@
  *   and differs from previous value.
  *
  * upnp_last_change_builder - a builder for the LastChange XML document
- *   containing recently changed variables.
+ *   containing name/value pairs of variables.
  *
  * upnp_last_change_collector - handling of the LastChange variable in UPnP.
  *   Hooks into the callback mechanism of the variable_container to assemble
@@ -110,7 +110,7 @@ UPnPLastChangeCollector_new(variable_container_t *variable_container,
 // If we know that there are a couple of changes upcoming, we can
 // 'start' a transaction and tell the collector to keep collecting until we
 // 'finish'. This can be nested.
-void UPnPLastChangeCollector_start(upnp_last_change_collector_t *o);
+void UPnPLastChangeCollector_start(upnp_last_change_collector_t *object);
 void UPnPLastChangeCollector_finish(upnp_last_change_collector_t *object);
 
 // no delete yet. We leak that.
