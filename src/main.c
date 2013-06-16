@@ -271,9 +271,7 @@ int main(int argc, char **argv)
 							(void*) "control");
 	}
 
-	if (Log_info_enabled()) {
-		Log_info("main", "Ready for rendering.");
-	}
+	Log_info("main", "Ready for rendering.");
 	fprintf(stderr, "%s version %s ready for rendering.\n",
 		PACKAGE_STRING, GM_COMPILE_VERSION);
 
