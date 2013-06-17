@@ -165,18 +165,17 @@ static UpnpWebFileHandle
 webserver_open(const char *filename, enum UpnpOpenFileMode mode)
 {
 	struct virtual_file *virtfile = virtual_files;
-	WebServerFile *file = NULL;
 
 	if (mode != UPNP_READ) {
 		Log_error("webserver",
 			  "%s: ignoring request to open file for writing.",
 			  filename);
-		return file;
+		return NULL;
 	}
 
 	while (virtfile != NULL) {
 		if (strcmp(filename, virtfile->virtual_fname) == 0) {
-			file = malloc(sizeof(WebServerFile));
+			WebServerFile *file = malloc(sizeof(WebServerFile));
 			file->pos = 0;
 			file->len = virtfile->len;
 			file->contents = virtfile->contents;
@@ -185,7 +184,7 @@ webserver_open(const char *filename, enum UpnpOpenFileMode mode)
 		virtfile = virtfile->next;
 	}
 
-	return file;
+	return NULL;
 }
 
 static inline int minimum(int a, int b)
