@@ -129,12 +129,12 @@ int output_loop()
 
 int output_add_options(GOptionContext *ctx)
 {
-	int result, count, i;
+  	int count, i;
 
 	count = sizeof(modules) / sizeof(struct output_module *);
 	for (i = 0; i < count; ++i) {
 		if (modules[i]->add_options) {
-			result = modules[i]->add_options(ctx);
+			int result = modules[i]->add_options(ctx);
 			if (result != 0) {
 				return result;
 			}
