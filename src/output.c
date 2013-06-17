@@ -161,43 +161,38 @@ void output_set_next_uri(const char *uri) {
 }
 
 int output_play(output_transition_cb_t transition_callback) {
-	int result = -1;
 	if (output_module && output_module->play) {
-		result = output_module->play(transition_callback);
+		return output_module->play(transition_callback);
 	}
-	return result;
+	return -1;
 }
 
 int output_pause(void) {
-	int result = -1;
 	if (output_module && output_module->pause) {
-		result = output_module->pause();
+		return output_module->pause();
 	}
-	return result;
+	return -1;
 }
 
 int output_stop(void) {
-	int result = -1;
 	if (output_module && output_module->stop) {
-		result = output_module->stop();
+		return output_module->stop();
 	}
-	return result;
+	return -1;
 }
 
 int output_seek(gint64 position_nanos) {
-	int result = -1;
 	if (output_module && output_module->seek) {
-		result = output_module->seek(position_nanos);
+		return output_module->seek(position_nanos);
 	}
-	return result;
+	return -1;
 }
 
 int output_get_position(gint64 *track_dur, gint64 *track_pos) {
-	int result = -1;
 	if (output_module && output_module->get_position) {
-		result = output_module->get_position(track_dur, track_pos);
+		return output_module->get_position(track_dur, track_pos);
 	}
-	return result;
+	return -1;
 }
 
 int output_get_volume(float *value) {
