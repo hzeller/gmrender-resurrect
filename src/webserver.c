@@ -164,8 +164,6 @@ static int webserver_get_info(const char *filename, struct File_Info *info)
 static UpnpWebFileHandle
 webserver_open(const char *filename, enum UpnpOpenFileMode mode)
 {
-	struct virtual_file *virtfile = virtual_files;
-
 	if (mode != UPNP_READ) {
 		Log_error("webserver",
 			  "%s: ignoring request to open file for writing.",
@@ -173,15 +171,14 @@ webserver_open(const char *filename, enum UpnpOpenFileMode mode)
 		return NULL;
 	}
 
-	while (virtfile != NULL) {
-		if (strcmp(filename, virtfile->virtual_fname) == 0) {
+	for (struct virtual_file *vf = virtual_files; vf; vf = vf->next) {
+		if (strcmp(filename, vf->virtual_fname) == 0) {
 			WebServerFile *file = malloc(sizeof(WebServerFile));
 			file->pos = 0;
-			file->len = virtfile->len;
-			file->contents = virtfile->contents;
+			file->len = vf->len;
+			file->contents = vf->contents;
 			return file;
 		}
-		virtfile = virtfile->next;
 	}
 
 	return NULL;
