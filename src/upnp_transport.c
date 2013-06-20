@@ -46,48 +46,7 @@
 #include "xmlescape.h"
 
 #define TRANSPORT_TYPE "urn:schemas-upnp-org:service:AVTransport:1"
-
-// It looks like Foobar2000 (http://www.foobar2000.org) has a problem with
-// the XML generated in the service list. This affects the follwing foobar2000
-// plugins:
-//   - UPnP MediaRenderer Output 1.0 beta 4
-//        -> it says 'XML error' on connecting
-//   - UPnP/DLNA Renderer, Server, Control Point 0.99.46
-//        -> it sends over the URI, but then refuses to play.
-//
-// This happens in the device service-list if the <serviceId/> is _not_
-// the same as <serviceType/>.
-//
-// So this works
-//<service>
-//  <serviceType>urn:schemas-upnp-org:service:AVTransport:1</serviceType>
-//  <serviceId>urn:schemas-upnp-org:service:AVTransport:1</serviceId>
-//  ...
-//</service>
-//
-// .. but with serviceId different from serviceType:
-//<service>
-//  <serviceType>urn:schemas-upnp-org:service:AVTransport:1</serviceType>
-//  <serviceId>urn:upnp-org:serviceId:AVTransport</serviceId>
-//  ...
-//</service>
-// does _not_ work (in fact, the serviceId string should _not_ matter at all).
-//
-// My assumption is, that somewhere in the connecting to the renderer, someone
-// messes up the value of serviceType with serviceId. Also striking is, that
-// this affects both plug-ins, that are apparently written by different people.
-// So maybe this is in a common library they are using ?
-//
-// Anyway, this enables a work-around by setting the service-ID to the same
-// as transport type. Going to file a bug with the maintainers of the plugins
-// to get to the ground of that bug.
-#define WORKAROUND_FOOBAR2000_EXPECTS_SERVICEID_IS_SERVICE_TYPE_XML_BUG
-
-#ifdef WORKAROUND_FOOBAR2000_EXPECTS_SERVICEID_IS_SERVICE_TYPE_XML_BUG
-#  define TRANSPORT_SERVICE_ID TRANSPORT_TYPE
-#else
-#  define TRANSPORT_SERVICE_ID "urn:upnp-org:serviceId:AVTransport"
-#endif
+#define TRANSPORT_SERVICE_ID "urn:upnp-org:serviceId:AVTransport"
 
 #define TRANSPORT_SCPD_URL "/upnp/rendertransportSCPD.xml"
 #define TRANSPORT_CONTROL_URL "/upnp/control/rendertransport1"
