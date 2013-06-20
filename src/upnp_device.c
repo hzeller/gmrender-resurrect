@@ -383,8 +383,8 @@ static int handle_action_request(struct upnp_device *priv,
 		if (ar_event->ActionResult == NULL) {
 			ar_event->ActionResult =
 			    UpnpMakeActionResponse(ar_event->ActionName,
-						   ar_event->ServiceID, 0,
-						   NULL);
+						   event_service->service_type,
+						   0, NULL);
 		}
 	} else {
 		Log_error("upnp",
