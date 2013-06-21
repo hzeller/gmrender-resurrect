@@ -76,6 +76,7 @@ int upnp_device_notify(struct upnp_device *device,
 struct service *find_service(struct upnp_device_descriptor *device_def,
                              const char *service_name);
 
-char *upnp_get_device_desc(struct upnp_device_descriptor *device_def);
+// Returns a newly allocated string with the device descriptor.
+char *upnp_create_device_desc(struct upnp_device_descriptor *device_def);
 
 #endif /* _UPNP_DEVICE_H */
