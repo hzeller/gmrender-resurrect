@@ -15,8 +15,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -299,60 +299,31 @@ static int get_current_conn_ids(struct action_event *event)
 }
 
 static int prepare_for_connection(struct action_event *event) {
-	int rc;
-
-	// This will be 0
-	rc = upnp_append_variable(event, CONNMGR_VAR_CUR_CONN_IDS,
-				  "ConnectionID");
-	if (rc)
-		return rc;
-	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_AVT_ID,
-				  "AVTransportID");
-	if (rc)
-		return rc;
-
-	return upnp_append_variable(event, CONNMGR_VAR_AAT_RCS_ID, "RcsID");
+	upnp_append_variable(event, CONNMGR_VAR_CUR_CONN_IDS, "ConnectionID");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_AVT_ID,  "AVTransportID");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_RCS_ID, "RcsID");
+	return 0;
 }
 
 static int get_current_conn_info(struct action_event *event)
 {
-	int rc;
-	char *value;
-
-	value = upnp_get_string(event, "ConnectionID");
+	char *value = upnp_get_string(event, "ConnectionID");
 	if (value == NULL) {
 		return -1;
 	}
-	else {
-		Log_info("connmgr", "Query ConnectionID='%s'", value);
-		free(value);
-	}
+	Log_info("connmgr", "Query ConnectionID='%s'", value);
+	free(value);  // we don't actually do anything with it.
 
-	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_RCS_ID, "RcsID");
-	if (rc)
-		return rc;
-	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_AVT_ID,
-				  "AVTransportID");
-	if (rc)
-		return rc;
-	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_PROTO_INFO,
-				  "ProtocolInfo");
-	if (rc)
-		return rc;
-	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_MGR,
-				  "PeerConnectionManager");
-	if (rc)
-		return rc;
-	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_ID,
-				  "PeerConnectionID");
-	if (rc)
-		return rc;
-	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_DIR, "Direction");
-	if (rc)
-		return rc;
-
-	return upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_STATUS,
-				  "Status");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_RCS_ID, "RcsID");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_AVT_ID, "AVTransportID");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_PROTO_INFO,
+			     "ProtocolInfo");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_MGR,
+			     "PeerConnectionManager");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_ID, "PeerConnectionID");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_DIR, "Direction");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_STATUS, "Status");
+	return 0;
 }
 
 

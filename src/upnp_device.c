@@ -15,8 +15,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -62,75 +62,44 @@ struct upnp_device {
 int upnp_add_response(struct action_event *event,
 		      const char *key, const char *value)
 {
-	int result = -1;
-	char *val;
-	int rc;
-
 	assert(event != NULL);
 	assert(key != NULL);
+	assert(value != NULL);
 
 	if (event->status) {
-		goto out;
+                return -1;
 	}
 
-	val = strdup(value);
-	if (val == NULL) {
-		/* report memory failure */
-		event->status = -1;
-		event->request->ActionResult = NULL;
-		event->request->ErrCode = UPNP_SOAP_E_ACTION_FAILED;
-		strcpy(event->request->ErrStr, strerror(errno));
-		goto out;
-	}
-
-	rc =
-	    UpnpAddToActionResponse(&event->request->ActionResult,
-				    event->request->ActionName,
-				    event->service->service_type, key, val);
-
+	int rc;
+	rc = UpnpAddToActionResponse(&event->request->ActionResult,
+                                     event->request->ActionName,
+                                     event->service->service_type, key, value);
 	if (rc != UPNP_E_SUCCESS) {
 		/* report custom error */
 		event->request->ActionResult = NULL;
 		event->request->ErrCode = UPNP_SOAP_E_ACTION_FAILED;
 		strcpy(event->request->ErrStr, UpnpGetErrorMessage(rc));
-		goto out;
+		return -1;
 	}
-
-	result = 0;
-
-out:
-	if (val != NULL) {
-		free(val);
-	}
-	return result;
+	return 0;
 }
 
-int upnp_append_variable(struct action_event *event,
-			 int varnum, const char *paramname)
+void upnp_append_variable(struct action_event *event,
+                          int varnum, const char *paramname)
 {
 	const char *value;
 	struct service *service = event->service;
-	int retval = -1;
 
 	assert(event != NULL);
 	assert(paramname != NULL);
 
-	if (varnum >= service->variable_count) {
-		upnp_set_error(event, UPNP_E_INTERNAL_ERROR,
-			       "Internal Error - illegal variable number %d",
-			       varnum);
-		goto out;
-	}
-
 	ithread_mutex_lock(service->service_mutex);
 
 	value = VariableContainer_get(service->variable_container, varnum, NULL);
-	assert(value != NULL);
-	retval = upnp_add_response(event, paramname, value);
+	assert(value != NULL);   // triggers on invalid variable.
+	upnp_add_response(event, paramname, value);
 
 	ithread_mutex_unlock(service->service_mutex);
-out:
-	return retval;
 }
 
 void upnp_set_error(struct action_event *event, int error_code,
@@ -668,4 +637,3 @@ char *upnp_get_device_desc(struct upnp_device_descriptor *device_def)
         }
         return result;
 }
-

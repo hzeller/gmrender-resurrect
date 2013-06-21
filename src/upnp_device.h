@@ -61,8 +61,11 @@ void upnp_set_error(struct action_event *event, int error_code,
 // Returns a writable copy of the value.
 char *upnp_get_string(struct action_event *event, const char *key);
 
-int upnp_append_variable(struct action_event *event,
-                         int varnum, const char *paramname);
+// Append variable, identified by the variable number, to the event,
+// store the value under the given parameter name. The caller needs to provide
+// a valid variable number (assert()-ed).
+void upnp_append_variable(struct action_event *event,
+                          int varnum, const char *paramname);
 
 int upnp_device_notify(struct upnp_device *device,
 		       const char *serviceID,

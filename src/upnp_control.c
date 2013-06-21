@@ -15,8 +15,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -81,7 +81,7 @@ typedef enum {
 	CONTROL_VAR_BRIGHTNESS,
 	CONTROL_VAR_UNKNOWN,
 	CONTROL_VAR_COUNT
-} control_variable;
+} control_variable_t;
 
 typedef enum {
 	CONTROL_CMD_GET_BLUE_BLACK,
@@ -499,7 +499,7 @@ static struct argument **argument_list[] = {
 
 
 // Replace given variable without sending an state-change event.
-static void replace_var(control_variable varnum, const char *new_value) {
+static void replace_var(control_variable_t varnum, const char *new_value) {
 	VariableContainer_change(state_variables_, varnum, new_value);
 }
 
@@ -508,7 +508,8 @@ static void change_volume(const char *volume, const char *db_volume) {
 	replace_var(CONTROL_VAR_VOLUME_DB, db_volume);
 }
 
-static int cmd_obtain_variable(struct action_event *event, int varnum,
+static int cmd_obtain_variable(struct action_event *event,
+			       control_variable_t varnum,
 			       const char *paramname)
 {
 	char *instance = upnp_get_string(event, "InstanceID");
@@ -517,9 +518,10 @@ static int cmd_obtain_variable(struct action_event *event, int varnum,
 	}
 	Log_info("control", "%s: %s for instance %s\n",
 		 __FUNCTION__, paramname, instance);
-	free(instance);
+	free(instance);   // we don't care about that value for now.
 
-	return upnp_append_variable(event, varnum, paramname);
+	upnp_append_variable(event, varnum, paramname);
+	return 0;
 }
 
 static int list_presets(struct action_event *event)
