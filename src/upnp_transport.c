@@ -1027,10 +1027,19 @@ struct service *upnp_transport_get_service(void) {
 void upnp_transport_init(struct upnp_device *device) {
 	assert(transport_service_.last_change == NULL);
 	transport_service_.last_change =
-		UPnPLastChangeCollector_new(state_variables_,
-					    TRANSPORT_VAR_LAST_CHANGE,
-					    device,
+		UPnPLastChangeCollector_new(state_variables_, device,
 					    TRANSPORT_SERVICE_ID);
+	// Times and counters should not be evented. We only change REL_TIME
+	// right now anyway.
+	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
+					   TRANSPORT_VAR_REL_TIME_POS);
+	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
+					   TRANSPORT_VAR_ABS_TIME_POS);
+	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
+					   TRANSPORT_VAR_REL_CTR_POS);
+	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
+					   TRANSPORT_VAR_ABS_CTR_POS);
+
 	pthread_t thread;
 	pthread_create(&thread, NULL, thread_update_track_time, NULL);
 }

@@ -798,9 +798,7 @@ void upnp_control_init(struct upnp_device *device) {
 
 	assert(control_service_.last_change == NULL);
 	control_service_.last_change =
-		UPnPLastChangeCollector_new(state_variables_,
-					    CONTROL_VAR_LAST_CHANGE,
-					    device,
+		UPnPLastChangeCollector_new(state_variables_, device,
 					    CONTROL_SERVICE_ID);
 }
 
