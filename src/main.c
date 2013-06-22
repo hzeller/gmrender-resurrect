@@ -124,7 +124,7 @@ static void do_show_version(void)
 	);
 }
 
-static int process_cmdline(int argc, char **argv)
+static gboolean process_cmdline(int argc, char **argv)
 {
 	GOptionContext *ctx;
 	GError *err = NULL;
@@ -136,16 +136,16 @@ static int process_cmdline(int argc, char **argv)
 	rc = output_add_options(ctx);
 	if (rc != 0) {
 		fprintf(stderr, "Failed to add output options\n");
-		return -1;
+		return FALSE;
 	}
 
 	if (!g_option_context_parse (ctx, &argc, &argv, &err)) {
 		fprintf(stderr, "Failed to initialize: %s\n", err->message);
 		g_error_free (err);
-		return -1;
+		return FALSE;
 	}
 
-	return 0;
+	return TRUE;
 }
 
 static void log_variable_change(void *userdata, int var_num,
@@ -167,8 +167,7 @@ int main(int argc, char **argv)
 	int rc;
 	struct upnp_device_descriptor *upnp_renderer;
 
-	rc = process_cmdline(argc, argv);
-	if (rc != 0) {
+	if (!process_cmdline(argc, argv)) {
 		return EXIT_FAILURE;
 	}
 
