@@ -28,6 +28,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <stdint.h>
 
 #include "upnp_device.h"
 #include "xmlescape.h"
@@ -170,23 +171,6 @@ char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder) {
 		return NULL;
 
 	char *xml_doc_string = xmldoc_tostring(builder->change_event_doc);
-#if 0
-	// The XML-doc contains a header of the form <?xml version="1.0"?>
-	// It _could_ be, that some players don't like this.
-	// The reason why this was added was in debugging some case with
-	// a user, but turns out some other place was the problem (non-quoting
-	// of XML).
-	// If this turns out not to be a problem, get rid of this code-block.
-	char *end_pos = xml_doc_string ? strstr(xml_doc_string, "?>") : NULL;
-	if (end_pos) {
-		end_pos += 2;
-		while (*end_pos && isspace(*end_pos))
-			end_pos++;
-		char *result = strdup(end_pos);
-		free(xml_doc_string);
-		xml_doc_string = result;
-	}
-#endif
 	xmldoc_free(builder->change_event_doc);
 	builder->change_event_doc = NULL;
 	builder->instance_element = NULL;
@@ -196,7 +180,8 @@ char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder) {
 // -- UPnPLastChangeCollector
 struct upnp_last_change_collector {
 	variable_container_t *variable_container;
-	int last_change_variable_num;  // the variable we manipulate.
+	int last_change_variable_num;      // the variable we manipulate.
+	uint32_t not_eventable_variables;  // variables not to event on.
 	struct upnp_device *upnp_device;
 	const char *service_id;
 	int open_transactions;
@@ -211,13 +196,13 @@ static void UPnPLastChangeCollector_callback(void *userdata,
 
 upnp_last_change_collector_t *
 UPnPLastChangeCollector_new(variable_container_t *variable_container,
-			    int last_change_var_num,
 			    struct upnp_device *upnp_device,
 			    const char *service_id) {
 	upnp_last_change_collector_t *result = (upnp_last_change_collector_t*)
 		malloc(sizeof(upnp_last_change_collector_t));
 	result->variable_container = variable_container;
-	result->last_change_variable_num = last_change_var_num;
+	result->last_change_variable_num = -1;
+	result->not_eventable_variables = 0;
 	result->upnp_device = upnp_device;
 	result->service_id = service_id;
 	result->open_transactions = 0;
@@ -226,25 +211,38 @@ UPnPLastChangeCollector_new(variable_container_t *variable_container,
 	// Create initial LastChange that contains all variables in their
 	// current state. This might help devices that silently re-connect
 	// without proper registration.
+	// Also determine, which variable is actually the "LastChange" one.
 	const int var_count = VariableContainer_get_num_vars(variable_container);
+	assert(var_count < 32);  // otherwise widen not_eventable_variables
 	for (int i = 0; i < var_count; ++i) {
-		if (i == result->last_change_variable_num)
-			continue;
 		const char *name;
-		const char *value =
-			VariableContainer_get(variable_container, i, &name);
-		// Send over all variables except "LastChange" itself.
-		if (value && strcmp("LastChange", name) != 0) {
-			UPnPLastChangeBuilder_add(result->builder,
-						  name, value);
+		const char *value = VariableContainer_get(variable_container,
+							  i, &name);
+		if (!value) {
+			continue;
 		}
+		if (strcmp("LastChange", name) == 0) {
+			result->last_change_variable_num = i;
+			continue;
+		}
+		// Send over all variables except "LastChange" itself.
+		UPnPLastChangeBuilder_add(result->builder, name, value);
 	}
+	assert(result->last_change_variable_num >= 0); // we expect to have one.
+	// The state change variable itself is not eventable.
+	UPnPLastChangeCollector_add_ignore(result,
+					   result->last_change_variable_num);
 	UPnPLastChangeCollector_notify(result);
 
 	VariableContainer_register_callback(variable_container,
 					    UPnPLastChangeCollector_callback,
 					    result);
 	return result;
+}
+
+void UPnPLastChangeCollector_add_ignore(upnp_last_change_collector_t *object,
+					int variable_num) {
+	object->not_eventable_variables |= (1 << variable_num);
 }
 
 void UPnPLastChangeCollector_start(upnp_last_change_collector_t *object) {
@@ -301,9 +299,9 @@ static void UPnPLastChangeCollector_callback(void *userdata,
 	upnp_last_change_collector_t *object = 
 		(upnp_last_change_collector_t*) userdata;
 
-	if (var_num == object->last_change_variable_num)
-		return;  // ignore change of LastChange variable.
-
+	if (object->not_eventable_variables & (1 << var_num)) {
+		return;  // ignore changes on non-eventable variables.
+	}
 	UPnPLastChangeBuilder_add(object->builder, var_name, new_value);
 	UPnPLastChangeCollector_notify(object);
 }

@@ -228,8 +228,7 @@ int main(int argc, char **argv)
 	}
 
 	if (show_devicedesc) {
-		char *buf;
-		buf = upnp_get_device_desc(upnp_renderer);
+		char *buf = upnp_create_device_desc(upnp_renderer);
 		assert(buf != NULL);
 		fputs(buf, stdout);
 		exit(EXIT_SUCCESS);

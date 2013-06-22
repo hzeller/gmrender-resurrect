@@ -15,8 +15,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -99,13 +99,13 @@ enum {
 	TRANSPORT_CMD_PLAY,
 	//TRANSPORT_CMD_PREVIOUS,
 	TRANSPORT_CMD_SEEK,
-	TRANSPORT_CMD_SETAVTRANSPORTURI,             
+	TRANSPORT_CMD_SETAVTRANSPORTURI,
 	//TRANSPORT_CMD_SETPLAYMODE,
 	TRANSPORT_CMD_STOP,
 	TRANSPORT_CMD_SETNEXTAVTRANSPORTURI,
 	//TRANSPORT_CMD_RECORD,
 	//TRANSPORT_CMD_SETRECORDQUALITYMODE,
-	TRANSPORT_CMD_UNKNOWN,                   
+	TRANSPORT_CMD_UNKNOWN,
 	TRANSPORT_CMD_COUNT
 };
 
@@ -356,7 +356,7 @@ static struct var_meta transport_var_meta[] = {
 	[TRANSPORT_VAR_AAT_INSTANCE_ID] =		{ SENDEVENT_NO, DATATYPE_UI4, NULL, NULL },
 	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] =		{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
 	[TRANSPORT_VAR_UNKNOWN] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
-};	
+};
 
 static struct argument *arguments_setavtransporturi[] = {
         & (struct argument) { "InstanceID", PARAM_DIR_IN, TRANSPORT_VAR_AAT_INSTANCE_ID },
@@ -518,68 +518,41 @@ static void service_unlock(void)
 	ithread_mutex_unlock(&transport_mutex);
 }
 
+static int obtain_instanceid(struct action_event *event, int *instance)
+{
+	char *value = upnp_get_string(event, "InstanceID");
+	if (value == NULL) {
+		upnp_set_error(event, UPNP_SOAP_E_INVALID_ARGS,
+			       "Missing InstanceID");
+		return -1;
+	}
+	free(value);
+
+	// TODO - parse value, and store in *instance, if instance!=NULL
+
+	return 0;
+}
 
 static int get_media_info(struct action_event *event)
 {
-	char *value;
-	int rc;
-
-	value = upnp_get_string(event, "InstanceID");
-	if (value == NULL) {
-		rc = -1;
-		goto out;
+	if (obtain_instanceid(event, NULL) < 0) {
+		return -1;
 	}
 
-	free(value);
-
-	rc = upnp_append_variable(event, TRANSPORT_VAR_NR_TRACKS,
-				  "NrTracks");
-	if (rc)
-		goto out;
-
-	rc = upnp_append_variable(event, TRANSPORT_VAR_CUR_MEDIA_DUR,
-				  "MediaDuration");
-	if (rc)
-		goto out;
-
-	rc = upnp_append_variable(event, TRANSPORT_VAR_AV_URI,
-				  "CurrentURI");
-	if (rc)
-		goto out;
-
-	rc = upnp_append_variable(event, TRANSPORT_VAR_AV_URI_META,
-				  "CurrentURIMetaData");
-	if (rc)
-		goto out;
-
-	rc = upnp_append_variable(event, TRANSPORT_VAR_NEXT_AV_URI,
-				  "NextURI");
-	if (rc)
-		goto out;
-
-	rc = upnp_append_variable(event, TRANSPORT_VAR_NEXT_AV_URI_META,
-				  "NextURIMetaData");
-	if (rc)
-		goto out;
-
-	rc = upnp_append_variable(event, TRANSPORT_VAR_REC_MEDIA,
-				  "PlayMedium");
-	if (rc)
-		goto out;
-
-	rc = upnp_append_variable(event, TRANSPORT_VAR_REC_MEDIUM,
-				  "RecordMedium");
-	if (rc)
-		goto out;
-
-	rc = upnp_append_variable(event,
-				  TRANSPORT_VAR_REC_MEDIUM_WR_STATUS,
-				  "WriteStatus");
-	if (rc)
-		goto out;
-
-      out:
-	return rc;
+	upnp_append_variable(event, TRANSPORT_VAR_NR_TRACKS, "NrTracks");
+	upnp_append_variable(event, TRANSPORT_VAR_CUR_MEDIA_DUR,
+			     "MediaDuration");
+	upnp_append_variable(event, TRANSPORT_VAR_AV_URI, "CurrentURI");
+	upnp_append_variable(event, TRANSPORT_VAR_AV_URI_META,
+			     "CurrentURIMetaData");
+	upnp_append_variable(event, TRANSPORT_VAR_NEXT_AV_URI, "NextURI");
+	upnp_append_variable(event, TRANSPORT_VAR_NEXT_AV_URI_META,
+			     "NextURIMetaData");
+	upnp_append_variable(event, TRANSPORT_VAR_REC_MEDIA, "PlayMedium");
+	upnp_append_variable(event, TRANSPORT_VAR_REC_MEDIUM, "RecordMedium");
+	upnp_append_variable(event, TRANSPORT_VAR_REC_MEDIUM_WR_STATUS,
+			     "WriteStatus");
+	return 0;
 }
 
 // Replace given variable without sending an state-change event.
@@ -655,24 +628,6 @@ static void change_transport_state(enum transport_state new_state) {
 	}
 }
 
-static int obtain_instanceid(struct action_event *event, int *instance)
-{
-	char *value;
-	int rc = 0;
-	
-	value = upnp_get_string(event, "InstanceID");
-	if (value == NULL) {
-		upnp_set_error(event, UPNP_SOAP_E_INVALID_ARGS,
-			       "Missing InstanceID");
-		return -1;
-	}
-	free(value);
-
-	// TODO - parse value, and store in *instance, if instance!=NULL
-
-	return rc;
-}
-
 // Callback from our output if the song meta data changed.
 static void update_meta_from_stream(const struct SongMetaData *meta) {
 	if (meta->title == NULL || strlen(meta->title) == 0) {
@@ -691,9 +646,7 @@ static void update_meta_from_stream(const struct SongMetaData *meta) {
 
 static int set_avtransport_uri(struct action_event *event)
 {
-	int rc = 0;
-
-	if (obtain_instanceid(event, NULL)) {
+	if (obtain_instanceid(event, NULL) < 0) {
 		return -1;
 	}
 	char *uri = upnp_get_string(event, "CurrentURI");
@@ -723,99 +676,74 @@ static int set_avtransport_uri(struct action_event *event)
 	free(uri);
 	free(meta);
 
-	return rc;
+	return 0;
 }
 
 static int set_next_avtransport_uri(struct action_event *event)
 {
+	if (obtain_instanceid(event, NULL) < 0) {
+		return -1;
+	}
+
+	char *next_uri = upnp_get_string(event, "NextURI");
+	if (next_uri == NULL) {
+		return -1;
+	}
+
 	int rc = 0;
-	char *value;
-
-	if (obtain_instanceid(event, NULL)) {
-		return -1;
-	}
-
-	value = upnp_get_string(event, "NextURI");
-	if (value == NULL) {
-		return -1;
-	}
-
 	service_lock();
 
-	output_set_next_uri(value);
-	replace_var(TRANSPORT_VAR_NEXT_AV_URI, value);
-	free(value);
+	output_set_next_uri(next_uri);
+	replace_var(TRANSPORT_VAR_NEXT_AV_URI, next_uri);
 
-	value = upnp_get_string(event, "NextURIMetaData");
-	if (value == NULL) {
+	char *next_uri_meta = upnp_get_string(event, "NextURIMetaData");
+	if (next_uri_meta == NULL) {
 		rc = -1;
 	} else {
-		replace_var(TRANSPORT_VAR_NEXT_AV_URI_META, value);
-		free(value);
+		replace_var(TRANSPORT_VAR_NEXT_AV_URI_META, next_uri_meta);
 	}
 
 	service_unlock();
+
+	free(next_uri);
+	free(next_uri_meta);
 
 	return rc;
 }
 
 static int get_transport_info(struct action_event *event)
 {
-	int rc;
-
-	if (obtain_instanceid(event, NULL)) {
-		rc = -1;
-		goto out;
+	if (obtain_instanceid(event, NULL) < 0) {
+		return -1;
 	}
 
-	rc = upnp_append_variable(event, TRANSPORT_VAR_TRANSPORT_STATE,
-				  "CurrentTransportState");
-	if (rc)
-		goto out;
-
-	rc = upnp_append_variable(event, TRANSPORT_VAR_TRANSPORT_STATUS,
-				  "CurrentTransportStatus");
-	if (rc)
-		goto out;
-
-	rc = upnp_append_variable(event,
-				  TRANSPORT_VAR_TRANSPORT_PLAY_SPEED,
-				  "CurrentSpeed");
-	if (rc)
-		goto out;
-
-      out:
-	return rc;
+	upnp_append_variable(event, TRANSPORT_VAR_TRANSPORT_STATE,
+			     "CurrentTransportState");
+	upnp_append_variable(event, TRANSPORT_VAR_TRANSPORT_STATUS,
+			     "CurrentTransportStatus");
+	upnp_append_variable(event, TRANSPORT_VAR_TRANSPORT_PLAY_SPEED,
+			     "CurrentSpeed");
+	return 0;
 }
 
 static int get_current_transportactions(struct action_event *event)
 {
-	int rc;
-
-	if (obtain_instanceid(event, NULL)) {
-		rc = -1;
-		goto out;
+	if (obtain_instanceid(event, NULL) < 0) {
+		return -1;
 	}
 
-	rc = upnp_append_variable(event, TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS,
-				  "Actions");
-	if (rc)
-		goto out;
-      out:
-	return rc;
+	upnp_append_variable(event, TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS,
+			     "Actions");
+	return 0;
 }
 
 static int get_transport_settings(struct action_event *event)
 {
-	int rc = 0;
-
-	if (obtain_instanceid(event, NULL)) {
-		rc = -1;
-		goto out;
+	if (obtain_instanceid(event, NULL) < 0) {
+		return -1;
 	}
-
-      out:
-	return rc;
+	// TODO: what variables to add ?
+	return 0;
 }
 
 // Print UPnP formatted time into given buffer. time given in nanoseconds.
@@ -871,74 +799,36 @@ static void *thread_update_track_time(void *userdata) {
 
 static int get_position_info(struct action_event *event)
 {
-	int rc;
-
-	if (obtain_instanceid(event, NULL)) {
-		rc = -1;
-		goto out;
+	if (obtain_instanceid(event, NULL) < 0) {
+		return -1;
 	}
-	
-	// Variables are changed by update thread in parallel, so we need
-	// the lock.
-	rc = upnp_append_variable(event, TRANSPORT_VAR_CUR_TRACK, "Track");
-	if (rc)
-		goto out;
 
-	rc = upnp_append_variable(event, TRANSPORT_VAR_CUR_TRACK_DUR,
-				  "TrackDuration");
-	if (rc)
-		goto out;
+	upnp_append_variable(event, TRANSPORT_VAR_CUR_TRACK, "Track");
+	upnp_append_variable(event, TRANSPORT_VAR_CUR_TRACK_DUR,
+			     "TrackDuration");
+	upnp_append_variable(event, TRANSPORT_VAR_CUR_TRACK_META,
+			     "TrackMetaData");
+	upnp_append_variable(event, TRANSPORT_VAR_CUR_TRACK_URI, "TrackURI");
+	upnp_append_variable(event, TRANSPORT_VAR_REL_TIME_POS, "RelTime");
+	upnp_append_variable(event, TRANSPORT_VAR_ABS_TIME_POS, "AbsTime");
+	upnp_append_variable(event, TRANSPORT_VAR_REL_CTR_POS, "RelCount");
+	upnp_append_variable(event, TRANSPORT_VAR_ABS_CTR_POS, "AbsCount");
 
-	rc = upnp_append_variable(event, TRANSPORT_VAR_CUR_TRACK_META,
-				  "TrackMetaData");
-	if (rc)
-		goto out;
-
-	rc = upnp_append_variable(event, TRANSPORT_VAR_CUR_TRACK_URI,
-				  "TrackURI");
-	if (rc)
-		goto out;
-
-	rc = upnp_append_variable(event, TRANSPORT_VAR_REL_TIME_POS,
-				  "RelTime");
-	if (rc)
-		goto out;
-
-	rc = upnp_append_variable(event, TRANSPORT_VAR_ABS_TIME_POS,
-				  "AbsTime");
-	if (rc)
-		goto out;
-
-	rc = upnp_append_variable(event, TRANSPORT_VAR_REL_CTR_POS,
-				  "RelCount");
-	if (rc)
-		goto out;
-
-	rc = upnp_append_variable(event, TRANSPORT_VAR_ABS_CTR_POS,
-				  "AbsCount");
-	if (rc)
-		goto out;
-
-      out:
-	return rc;
+	return 0;
 }
 
 static int get_device_caps(struct action_event *event)
 {
-	int rc = 0;
-
-	if (obtain_instanceid(event, NULL)) {
-		rc = -1;
-		goto out;
+	if (obtain_instanceid(event, NULL) < 0) {
+		return -1;
 	}
-
-      out:
-	return rc;
+	// TODO: implement ?
+	return 0;
 }
 
 static int stop(struct action_event *event)
 {
-	if (obtain_instanceid(event, NULL)) {
+	if (obtain_instanceid(event, NULL) < 0) {
 		return -1;
 	}
 
@@ -993,12 +883,11 @@ static void inform_play_transition_from_output(enum PlayFeedback fb) {
 
 static int play(struct action_event *event)
 {
-	int rc = 0;
-
-	if (obtain_instanceid(event, NULL)) {
+	if (obtain_instanceid(event, NULL) < 0) {
 		return -1;
 	}
 
+	int rc = 0;
 	service_lock();
 	switch (transport_state_) {
 	case TRANSPORT_PLAYING:
@@ -1035,7 +924,6 @@ static int play(struct action_event *event)
 			       "Transition not allowed; allowed=%s",
 			       get_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS));
 		rc = -1;
-
 		break;
 	}
 	service_unlock();
@@ -1045,12 +933,11 @@ static int play(struct action_event *event)
 
 static int pause_stream(struct action_event *event)
 {
-	int rc = 0;
-
-	if (obtain_instanceid(event, NULL)) {
+	if (obtain_instanceid(event, NULL) < 0) {
 		return -1;
 	}
 
+	int rc = 0;
 	service_lock();
 	switch (transport_state_) {
         case TRANSPORT_PAUSED_PLAYBACK:
@@ -1080,10 +967,8 @@ static int pause_stream(struct action_event *event)
 
 static int seek(struct action_event *event)
 {
-	int rc = 0;
-
-	if (obtain_instanceid(event, NULL)) {
-		rc = -1;
+	if (obtain_instanceid(event, NULL) < 0) {
+		return -1;
 	}
 
 	char *unit = upnp_get_string(event, "Unit");
@@ -1104,7 +989,7 @@ static int seek(struct action_event *event)
 	}
 	free(unit);
 
-	return rc;
+	return 0;
 }
 
 static struct action transport_actions[] = {
@@ -1142,10 +1027,19 @@ struct service *upnp_transport_get_service(void) {
 void upnp_transport_init(struct upnp_device *device) {
 	assert(transport_service_.last_change == NULL);
 	transport_service_.last_change =
-		UPnPLastChangeCollector_new(state_variables_,
-					    TRANSPORT_VAR_LAST_CHANGE,
-					    device,
+		UPnPLastChangeCollector_new(state_variables_, device,
 					    TRANSPORT_SERVICE_ID);
+	// Times and counters should not be evented. We only change REL_TIME
+	// right now anyway.
+	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
+					   TRANSPORT_VAR_REL_TIME_POS);
+	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
+					   TRANSPORT_VAR_ABS_TIME_POS);
+	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
+					   TRANSPORT_VAR_REL_CTR_POS);
+	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
+					   TRANSPORT_VAR_ABS_CTR_POS);
+
 	pthread_t thread;
 	pthread_create(&thread, NULL, thread_update_track_time, NULL);
 }

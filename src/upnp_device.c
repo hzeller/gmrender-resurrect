@@ -15,8 +15,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -62,75 +62,44 @@ struct upnp_device {
 int upnp_add_response(struct action_event *event,
 		      const char *key, const char *value)
 {
-	int result = -1;
-	char *val;
-	int rc;
-
 	assert(event != NULL);
 	assert(key != NULL);
+	assert(value != NULL);
 
 	if (event->status) {
-		goto out;
+		return -1;
 	}
 
-	val = strdup(value);
-	if (val == NULL) {
-		/* report memory failure */
-		event->status = -1;
-		event->request->ActionResult = NULL;
-		event->request->ErrCode = UPNP_SOAP_E_ACTION_FAILED;
-		strcpy(event->request->ErrStr, strerror(errno));
-		goto out;
-	}
-
-	rc =
-	    UpnpAddToActionResponse(&event->request->ActionResult,
-				    event->request->ActionName,
-				    event->service->service_type, key, val);
-
+	int rc;
+	rc = UpnpAddToActionResponse(&event->request->ActionResult,
+				     event->request->ActionName,
+				     event->service->service_type, key, value);
 	if (rc != UPNP_E_SUCCESS) {
 		/* report custom error */
 		event->request->ActionResult = NULL;
 		event->request->ErrCode = UPNP_SOAP_E_ACTION_FAILED;
 		strcpy(event->request->ErrStr, UpnpGetErrorMessage(rc));
-		goto out;
+		return -1;
 	}
-
-	result = 0;
-
-out:
-	if (val != NULL) {
-		free(val);
-	}
-	return result;
+	return 0;
 }
 
-int upnp_append_variable(struct action_event *event,
-			 int varnum, const char *paramname)
+void upnp_append_variable(struct action_event *event,
+                          int varnum, const char *paramname)
 {
 	const char *value;
 	struct service *service = event->service;
-	int retval = -1;
 
 	assert(event != NULL);
 	assert(paramname != NULL);
 
-	if (varnum >= service->variable_count) {
-		upnp_set_error(event, UPNP_E_INTERNAL_ERROR,
-			       "Internal Error - illegal variable number %d",
-			       varnum);
-		goto out;
-	}
-
 	ithread_mutex_lock(service->service_mutex);
 
 	value = VariableContainer_get(service->variable_container, varnum, NULL);
-	assert(value != NULL);
-	retval = upnp_add_response(event, paramname, value);
+	assert(value != NULL);   // triggers on invalid variable.
+	upnp_add_response(event, paramname, value);
 
 	ithread_mutex_unlock(service->service_mutex);
-out:
-	return retval;
 }
 
 void upnp_set_error(struct action_event *event, int error_code,
@@ -188,10 +157,8 @@ static int handle_subscription_request(struct upnp_device *priv,
 {
 	struct service *srv;
 	int rc;
-	int result = -1;
 
 	assert(priv != NULL);
-
 
 	Log_info("upnp", "Subscription request for %s (%s)",
 		 sr_event->ServiceId, sr_event->UDN);
@@ -200,9 +167,10 @@ static int handle_subscription_request(struct upnp_device *priv,
 	if (srv == NULL) {
 		Log_error("upnp", "%s: Unknown service '%s'", __FUNCTION__,
 			  sr_event->ServiceId);
-		goto out;
+		return -1;
 	}
 
+	int result = -1;
 	ithread_mutex_lock(&(priv->device_mutex));
 
 	// There is really only one variable evented: LastChange
@@ -251,7 +219,6 @@ static int handle_subscription_request(struct upnp_device *priv,
 
 	free((char*)eventvar_values[0]);
 
-out:
 	return result;
 }
 
@@ -437,34 +404,30 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 				     unsigned short port)
 {
 	int rc;
-
 	struct service *srv;
 	struct icon *icon_entry;
 	char *buf;
-	struct upnp_device *priv = NULL;
-	int i;
 
 	assert(device_def != NULL);
 
-	if (device_def->init_function)
-	{
+	if (device_def->init_function) {
 		rc = device_def->init_function();
 		if (rc != 0) {
-			goto out;
+			return NULL;
 		}
 	}
 
-	priv = malloc(sizeof(*priv));
-	priv->upnp_device_descriptor = device_def;
-	ithread_mutex_init(&(priv->device_mutex), NULL);
+	struct upnp_device *result_device = malloc(sizeof(*result_device));
+	result_device->upnp_device_descriptor = device_def;
+	ithread_mutex_init(&(result_device->device_mutex), NULL);
 
 	/* register icons in web server */
-        for (i=0; (icon_entry = device_def->icons[i]); i++) {
+        for (int i = 0; (icon_entry = device_def->icons[i]); i++) {
 		webserver_register_file(icon_entry->url, "image/png");
         }
 
 	/* generate and register service schemas in web server */
-        for (i=0; (srv = device_def->services[i]); i++) {
+        for (int i = 0; (srv = device_def->services[i]); i++) {
        		buf = upnp_get_scpd(srv);
 		assert(buf != NULL);
 		webserver_register_buf(srv->scpd_url, buf, "text/xml");
@@ -474,7 +437,7 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 	if (UPNP_E_SUCCESS != rc) {
 		Log_error("upnp", "UpnpInit(ip=%s, port=%d) Error: %s (%d)",
 			  ip_address, port, UpnpGetErrorMessage(rc), rc);
-		goto upnp_err_out;
+		goto upnp_cleanup_and_error_out;
 	}
 	Log_info("upnp", "Registered IP=%s port=%d\n",
 		 UpnpGetServerIpAddress(), UpnpGetServerPort());
@@ -483,52 +446,50 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 	if (UPNP_E_SUCCESS != rc) {
 		Log_error("upnp", "UpnpEnableWebServer() Error: %s (%d)",
 			  UpnpGetErrorMessage(rc), rc);
-		goto upnp_err_out;
+		goto upnp_cleanup_and_error_out;
 	}
+
 	rc = UpnpSetVirtualDirCallbacks(&virtual_dir_callbacks);
 	if (UPNP_E_SUCCESS != rc) {
 		Log_error("upnp", "UpnpSetVirtualDirCallbacks() Error: %s (%d)",
 			  UpnpGetErrorMessage(rc), rc);
-		goto upnp_err_out;
+		goto upnp_cleanup_and_error_out;
 	}
+
 	rc = UpnpAddVirtualDir("/upnp");
 	if (UPNP_E_SUCCESS != rc) {
 		Log_error("upnp", "UpnpAddVirtualDir() Error: %s (%d)",
 			  UpnpGetErrorMessage(rc), rc);
-		goto upnp_err_out;
+		goto upnp_cleanup_and_error_out;
 	}
 
-
-       	buf = upnp_get_device_desc(device_def);
-
+       	buf = upnp_create_device_desc(device_def);
 	rc = UpnpRegisterRootDevice2(UPNPREG_BUF_DESC,
 				     buf, strlen(buf), 1,
-				     &event_handler, priv,
-				     &(priv->device_handle));
+				     &event_handler, result_device,
+				     &(result_device->device_handle));
 	free(buf);
 
 	if (UPNP_E_SUCCESS != rc) {
 		Log_error("upnp", "UpnpRegisterRootDevice2() Error: %s (%d)",
 			  UpnpGetErrorMessage(rc), rc);
-		goto upnp_err_out;
+		goto upnp_cleanup_and_error_out;
 	}
 
-	rc = UpnpSendAdvertisement(priv->device_handle, 100);
+	rc = UpnpSendAdvertisement(result_device->device_handle, 100);
 	if (UPNP_E_SUCCESS != rc) {
 		Log_error("unpp", "Error sending advertisements: %s (%d)",
 			  UpnpGetErrorMessage(rc), rc);
-		goto upnp_err_out;
+		goto upnp_cleanup_and_error_out;
 	}
 
-	goto out;
+	return result_device;
 
-upnp_err_out:
+upnp_cleanup_and_error_out:
 	UpnpFinish();
-	free(priv);
-	priv = NULL;
+	free(result_device);
 
-out:
-	return priv;
+	return NULL;
 }
 
 void upnp_device_shutdown(struct upnp_device *device) {
@@ -569,16 +530,15 @@ static struct xmlelement *gen_specversion(struct xmldoc *doc,
 }
 
 
-static struct xmlelement *gen_desc_iconlist(struct xmldoc *doc, struct icon **icons)
-{
+static struct xmlelement *gen_desc_iconlist(struct xmldoc *doc,
+					    struct icon **icons) {
 	struct xmlelement *top;
 	struct xmlelement *parent;
 	struct icon *icon_entry;
-	int i;
 
 	top=xmlelement_new(doc, "iconList");
 
-	for (i=0; (icon_entry=icons[i]); i++) {
+	for (int i = 0; (icon_entry=icons[i]); i++) {
 		parent=xmlelement_new(doc, "icon");
 		add_value_element(doc,parent,"mimetype", icon_entry->mimetype);
 		add_value_element_int(doc,parent,"width",icon_entry->width);
@@ -654,18 +614,15 @@ static struct xmldoc *generate_desc(struct upnp_device_descriptor *device_def)
 	return doc;
 }
 
-char *upnp_get_device_desc(struct upnp_device_descriptor *device_def)
-{
+char *upnp_create_device_desc(struct upnp_device_descriptor *device_def) {
         char *result = NULL;
         struct xmldoc *doc;
 
         doc = generate_desc(device_def);
 
-        if (doc != NULL)
-        {
+        if (doc != NULL) {
                 result = xmldoc_tostring(doc);
                 xmldoc_free(doc);
         }
         return result;
 }
-
