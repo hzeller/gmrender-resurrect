@@ -494,12 +494,8 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 		assert(buf != NULL);
 		webserver_register_buf(srv->scpd_url, buf, "text/xml");
 	}
-	free(buf);
 
-	if (!initialize_device(device_def,
-			       result_device,
-			       ip_address,
-			       port)) {
+	if (!initialize_device(device_def, result_device, ip_address, port)) {
 		UpnpFinish();
 		free(result_device);
 		return NULL;
