@@ -32,6 +32,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <string.h>
+#include <glib.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -399,14 +400,75 @@ static int event_handler(Upnp_EventType EventType, void *event, void *userdata)
 	return 0;
 }
 
+static gboolean initialize_device(struct upnp_device_descriptor *device_def,
+				  struct upnp_device *result_device,
+				  const char *ip_address,
+				  unsigned short port)
+{
+	int rc;
+	char *buf;
+
+	rc = UpnpInit(ip_address, port);
+	if (UPNP_E_SUCCESS != rc) {
+		Log_error("upnp", "UpnpInit(ip=%s, port=%d) Error: %s (%d)",
+			  ip_address, port, UpnpGetErrorMessage(rc), rc);
+		return FALSE;
+	}
+	Log_info("upnp", "Registered IP=%s port=%d\n",
+		 UpnpGetServerIpAddress(), UpnpGetServerPort());
+
+	rc = UpnpEnableWebserver(TRUE);
+	if (UPNP_E_SUCCESS != rc) {
+		Log_error("upnp", "UpnpEnableWebServer() Error: %s (%d)",
+			  UpnpGetErrorMessage(rc), rc);
+		return FALSE;
+	}
+
+	rc = UpnpSetVirtualDirCallbacks(&virtual_dir_callbacks);
+	if (UPNP_E_SUCCESS != rc) {
+		Log_error("upnp", "UpnpSetVirtualDirCallbacks() Error: %s (%d)",
+			  UpnpGetErrorMessage(rc), rc);
+		return FALSE;
+	}
+
+	rc = UpnpAddVirtualDir("/upnp");
+	if (UPNP_E_SUCCESS != rc) {
+		Log_error("upnp", "UpnpAddVirtualDir() Error: %s (%d)",
+			  UpnpGetErrorMessage(rc), rc);
+		return FALSE;
+	}
+
+       	buf = upnp_create_device_desc(device_def);
+	rc = UpnpRegisterRootDevice2(UPNPREG_BUF_DESC,
+				     buf, strlen(buf), 1,
+				     &event_handler, result_device,
+				     &(result_device->device_handle));
+	free(buf);
+
+	if (UPNP_E_SUCCESS != rc) {
+		Log_error("upnp", "UpnpRegisterRootDevice2() Error: %s (%d)",
+			  UpnpGetErrorMessage(rc), rc);
+		return FALSE;
+	}
+
+	rc = UpnpSendAdvertisement(result_device->device_handle, 100);
+	if (UPNP_E_SUCCESS != rc) {
+		Log_error("unpp", "Error sending advertisements: %s (%d)",
+			  UpnpGetErrorMessage(rc), rc);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 				     const char *ip_address,
 				     unsigned short port)
 {
 	int rc;
+	char *buf;
 	struct service *srv;
 	struct icon *icon_entry;
-	char *buf;
 
 	assert(device_def != NULL);
 
@@ -433,63 +495,13 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 		webserver_register_buf(srv->scpd_url, buf, "text/xml");
 	}
 
-	rc = UpnpInit(ip_address, port);
-	if (UPNP_E_SUCCESS != rc) {
-		Log_error("upnp", "UpnpInit(ip=%s, port=%d) Error: %s (%d)",
-			  ip_address, port, UpnpGetErrorMessage(rc), rc);
-		goto upnp_cleanup_and_error_out;
-	}
-	Log_info("upnp", "Registered IP=%s port=%d\n",
-		 UpnpGetServerIpAddress(), UpnpGetServerPort());
-
-	rc = UpnpEnableWebserver(TRUE);
-	if (UPNP_E_SUCCESS != rc) {
-		Log_error("upnp", "UpnpEnableWebServer() Error: %s (%d)",
-			  UpnpGetErrorMessage(rc), rc);
-		goto upnp_cleanup_and_error_out;
-	}
-
-	rc = UpnpSetVirtualDirCallbacks(&virtual_dir_callbacks);
-	if (UPNP_E_SUCCESS != rc) {
-		Log_error("upnp", "UpnpSetVirtualDirCallbacks() Error: %s (%d)",
-			  UpnpGetErrorMessage(rc), rc);
-		goto upnp_cleanup_and_error_out;
-	}
-
-	rc = UpnpAddVirtualDir("/upnp");
-	if (UPNP_E_SUCCESS != rc) {
-		Log_error("upnp", "UpnpAddVirtualDir() Error: %s (%d)",
-			  UpnpGetErrorMessage(rc), rc);
-		goto upnp_cleanup_and_error_out;
-	}
-
-       	buf = upnp_create_device_desc(device_def);
-	rc = UpnpRegisterRootDevice2(UPNPREG_BUF_DESC,
-				     buf, strlen(buf), 1,
-				     &event_handler, result_device,
-				     &(result_device->device_handle));
-	free(buf);
-
-	if (UPNP_E_SUCCESS != rc) {
-		Log_error("upnp", "UpnpRegisterRootDevice2() Error: %s (%d)",
-			  UpnpGetErrorMessage(rc), rc);
-		goto upnp_cleanup_and_error_out;
-	}
-
-	rc = UpnpSendAdvertisement(result_device->device_handle, 100);
-	if (UPNP_E_SUCCESS != rc) {
-		Log_error("unpp", "Error sending advertisements: %s (%d)",
-			  UpnpGetErrorMessage(rc), rc);
-		goto upnp_cleanup_and_error_out;
+	if (!initialize_device(device_def, result_device, ip_address, port)) {
+		UpnpFinish();
+		free(result_device);
+		return NULL;
 	}
 
 	return result_device;
-
-upnp_cleanup_and_error_out:
-	UpnpFinish();
-	free(result_device);
-
-	return NULL;
 }
 
 void upnp_device_shutdown(struct upnp_device *device) {
