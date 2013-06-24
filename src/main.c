@@ -15,8 +15,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -40,15 +40,14 @@
 
 #include <upnp/ithread.h>
 
+#include "git-version.h"
 #include "logging.h"
-//#include "output_gstreamer.h"
 #include "output.h"
 #include "upnp.h"
+#include "upnp_control.h"
 #include "upnp_device.h"
 #include "upnp_renderer.h"
 #include "upnp_transport.h"
-#include "upnp_control.h"
-#include "git-version.h"
 
 static gboolean show_version = FALSE;
 static gboolean show_devicedesc = FALSE;
@@ -75,7 +74,7 @@ static const gchar *friendly_name = PACKAGE_NAME;
 static const gchar *output = NULL;
 static const gchar *pid_file = NULL;
 static const gchar *log_file = NULL;
- 
+
 /* Generic GMediaRender options */
 static GOptionEntry option_entries[] = {
 	{ "version", 0, 0, G_OPTION_ARG_NONE, &show_version,
@@ -162,6 +161,16 @@ static void log_variable_change(void *userdata, int var_num,
 		 variable_value, needs_newline ? "\n" : "");
 }
 
+static void init_logging(const char *log_file) {
+	if (log_file != NULL) {
+		Log_init(log_file);
+	} else {
+		fprintf(stderr, "Logging switched off. "
+			"Enable with --logfile=<filename> "
+			"(e.g. --logfile=/dev/stdout for console)\n");
+	}
+}
+
 int main(int argc, char **argv)
 {
 	int rc;
@@ -193,20 +202,17 @@ int main(int argc, char **argv)
 		exit(EXIT_SUCCESS);
 	}
 
-	// We need to open filenames now, because relative filenames will
+	init_logging(log_file);
+
+	// Now we're going to start threads etc, which means we need
+	// to become a daemon before that.
+
+	// We need to open the pid-file now because relative filenames will
 	// break if we're becoming a daemon and cwd changes.
 	FILE *pid_file_stream = NULL;
 	if (pid_file) {
 		pid_file_stream = fopen(pid_file, "w");
 	}
-	if (log_file != NULL) {
-		Log_init(log_file);
-	} else {
-		fprintf(stderr, "Logging switched off. "
-			"Enable with --logfile=<filename> "
-			"(e.g. --logfile=/dev/stdout for console)\n");
-	}
-
 	if (daemon_mode) {
 		daemon(0, 0);  // TODO: check for daemon() in configure.
 	}
@@ -225,13 +231,6 @@ int main(int argc, char **argv)
 	upnp_renderer = upnp_renderer_descriptor(friendly_name, uuid);
 	if (upnp_renderer == NULL) {
 		return EXIT_FAILURE;
-	}
-
-	if (show_devicedesc) {
-		char *buf = upnp_create_device_desc(upnp_renderer);
-		assert(buf != NULL);
-		fputs(buf, stdout);
-		exit(EXIT_SUCCESS);
 	}
 
 	rc = output_init(output);
@@ -261,6 +260,15 @@ int main(int argc, char **argv)
 
 	upnp_transport_init(device);
 	upnp_control_init(device);
+
+	if (show_devicedesc) {
+		// This can only be run after all services have been
+		// initialized.
+		char *buf = upnp_create_device_desc(upnp_renderer);
+		assert(buf != NULL);
+		fputs(buf, stdout);
+		exit(EXIT_SUCCESS);
+	}
 
 	if (Log_info_enabled()) {
 		upnp_transport_register_variable_listener(log_variable_change,

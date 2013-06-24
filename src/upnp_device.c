@@ -228,7 +228,7 @@ int upnp_device_notify(struct upnp_device *device,
                        const char **varnames,
                        const char **varvalues, int varcount)
 {
-        UpnpNotify(device->device_handle, 
+        UpnpNotify(device->device_handle,
                    device->upnp_device_descriptor->udn, serviceID,
 		   varnames, varvalues, varcount);
 
