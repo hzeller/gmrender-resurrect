@@ -15,8 +15,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -61,8 +61,11 @@ void upnp_set_error(struct action_event *event, int error_code,
 // Returns a writable copy of the value.
 char *upnp_get_string(struct action_event *event, const char *key);
 
-int upnp_append_variable(struct action_event *event,
-                         int varnum, const char *paramname);
+// Append variable, identified by the variable number, to the event,
+// store the value under the given parameter name. The caller needs to provide
+// a valid variable number (assert()-ed).
+void upnp_append_variable(struct action_event *event,
+                          int varnum, const char *paramname);
 
 int upnp_device_notify(struct upnp_device *device,
 		       const char *serviceID,
@@ -73,6 +76,7 @@ int upnp_device_notify(struct upnp_device *device,
 struct service *find_service(struct upnp_device_descriptor *device_def,
                              const char *service_name);
 
-char *upnp_get_device_desc(struct upnp_device_descriptor *device_def);
+// Returns a newly allocated string with the device descriptor.
+char *upnp_create_device_desc(struct upnp_device_descriptor *device_def);
 
 #endif /* _UPNP_DEVICE_H */

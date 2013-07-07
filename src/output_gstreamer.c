@@ -181,7 +181,6 @@ static void output_gstreamer_set_uri(const char *uri,
 }
 
 static int output_gstreamer_play(output_transition_cb_t callback) {
-	int result = -1;
 	play_trans_callback_ = callback;
 	if (get_current_player_state() != GST_STATE_PAUSED) {
 		if (gst_element_set_state(player_, GST_STATE_READY) ==
@@ -194,11 +193,9 @@ static int output_gstreamer_play(output_transition_cb_t callback) {
 	if (gst_element_set_state(player_, GST_STATE_PLAYING) ==
 	    GST_STATE_CHANGE_FAILURE) {
 		Log_error("gstreamer", "setting play state failed (2)");
-		goto out;
-	} 
-	result = 0;
-out:
-	return result;
+		return -1;
+	}
+	return 0;
 }
 
 static int output_gstreamer_stop(void) {
@@ -323,11 +320,11 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 		GError *err;
 
 		gst_message_parse_error(msg, &err, &debug);
-		g_free(debug);
 
-		Log_error("gstreamer", "%s: Error: %s",
-			  msgSrcName, err->message);
+		Log_error("gstreamer", "%s: Error: %s (Debug: %s)",
+			  msgSrcName, err->message, debug);
 		g_error_free(err);
+		g_free(debug);
 
 		break;
 	}

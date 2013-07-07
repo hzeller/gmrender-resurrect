@@ -15,8 +15,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -131,7 +131,7 @@ upnp_renderer_descriptor(const char *friendly_name,
 	char *udn;
 
 	render_device.friendly_name = friendly_name;
-	
+
 	asprintf(&udn, "uuid:%s", uuid);
 	render_device.udn = udn;
 	return &render_device;

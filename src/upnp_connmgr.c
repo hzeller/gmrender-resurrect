@@ -15,8 +15,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -238,7 +238,6 @@ int connmgr_init(void) {
 	char *p;
 	int offset;
 	int bufsize = 0;
-	int result = -1;
 
 	struct service *srv = upnp_connmgr_get_service();
 
@@ -248,7 +247,7 @@ int connmgr_init(void) {
 	if (buf == NULL) {
 		fprintf(stderr, "%s: initial malloc failed\n",
 			__FUNCTION__);
-		goto out;
+		return -1;
 	}
 
 	for (entry = supported_types; entry; entry = entry->next) {
@@ -258,7 +257,7 @@ int connmgr_init(void) {
 		if (buf == NULL) {
 			fprintf(stderr, "%s: realloc failed\n",
 				__FUNCTION__);
-			goto out;
+			return -1;
 		}
 		p = buf;
 		p += offset;
@@ -279,9 +278,7 @@ int connmgr_init(void) {
 				 CONNMGR_VAR_SINK_PROTO_INFO, buf);
 	free(buf);
 
-	result = 0;
-out:
-	return result;
+	return 0;
 }
 
 
@@ -302,67 +299,31 @@ static int get_current_conn_ids(struct action_event *event)
 }
 
 static int prepare_for_connection(struct action_event *event) {
-	int rc;
-
-	// This will be 0
-	rc = upnp_append_variable(event, CONNMGR_VAR_CUR_CONN_IDS,
-				  "ConnectionID");
-	if (rc)
-		goto out;
-	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_AVT_ID,
-				  "AVTransportID");
-	if (rc)
-		goto out;
-	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_RCS_ID, "RcsID");
-	if (rc)
-		goto out;
-
-      out:
-	return rc;
+	upnp_append_variable(event, CONNMGR_VAR_CUR_CONN_IDS, "ConnectionID");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_AVT_ID,  "AVTransportID");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_RCS_ID, "RcsID");
+	return 0;
 }
 
 static int get_current_conn_info(struct action_event *event)
 {
-	int rc;
-	char *value;
-
-	value = upnp_get_string(event, "ConnectionID");
+	char *value = upnp_get_string(event, "ConnectionID");
 	if (value == NULL) {
-		rc = -1;
-		goto out;
+		return -1;
 	}
 	Log_info("connmgr", "Query ConnectionID='%s'", value);
-	free(value);
+	free(value);  // we don't actually do anything with it.
 
-	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_RCS_ID, "RcsID");
-	if (rc)
-		goto out;
-	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_AVT_ID,
-				  "AVTransportID");
-	if (rc)
-		goto out;
-	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_PROTO_INFO,
-				  "ProtocolInfo");
-	if (rc)
-		goto out;
-	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_MGR,
-				  "PeerConnectionManager");
-	if (rc)
-		goto out;
-	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_ID,
-				  "PeerConnectionID");
-	if (rc)
-		goto out;
-	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_DIR, "Direction");
-	if (rc)
-		goto out;
-	rc = upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_STATUS,
-				  "Status");
-	if (rc)
-		goto out;
-
-      out:
-	return rc;
+	upnp_append_variable(event, CONNMGR_VAR_AAT_RCS_ID, "RcsID");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_AVT_ID, "AVTransportID");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_PROTO_INFO,
+			     "ProtocolInfo");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_MGR,
+			     "PeerConnectionManager");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_ID, "PeerConnectionID");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_DIR, "Direction");
+	upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_STATUS, "Status");
+	return 0;
 }
 
 
@@ -402,4 +363,3 @@ struct service connmgr_service_ = {
         .command_count =        CONNMGR_CMD_UNKNOWN,
         .service_mutex =        &connmgr_mutex
 };
-

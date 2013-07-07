@@ -62,10 +62,10 @@ void output_dump_modules(void)
 	} else {
 		int i;
 		for (i=0; i<count; i++) {
-			Log_info("output", "Available output: %s\t%s%s",
-				 modules[i]->shortname,
-				 modules[i]->description,
-				 (i==0) ? " (default)" : "");
+			printf("Available output: %s\t%s%s\n",
+			       modules[i]->shortname,
+			       modules[i]->description,
+			       (i==0) ? " (default)" : "");
 		}
 	}
 }
@@ -73,12 +73,11 @@ void output_dump_modules(void)
 int output_init(const char *shortname)
 {
 	int count;
-	int result = -1;
 
 	count = sizeof(modules) / sizeof(struct output_module *);
 	if (count == 0) {
 		Log_error("output", "No output module available");
-		goto out;
+		return -1;
 	}
 	if (shortname == NULL) {
 		output_module = modules[0];
@@ -95,20 +94,17 @@ int output_init(const char *shortname)
 	if (output_module == NULL) {
 		Log_error("error", "ERROR: No such output module: '%s'",
 			  shortname);
-		goto out;
+		return -1;
 	}
 
 	Log_info("output", "Using output module: %s (%s)",
 		 output_module->shortname, output_module->description);
 
 	if (output_module->init) {
-		result = output_module->init();
-	} else {
-		result = 0;
+		return output_module->init();
 	}
-	
-out:
-	return result;
+
+	return 0;
 }
 
 static GMainLoop *main_loop_ = NULL;
@@ -133,20 +129,19 @@ int output_loop()
 
 int output_add_options(GOptionContext *ctx)
 {
-	int result = 0;
-	int count, i;
+  	int count, i;
 
 	count = sizeof(modules) / sizeof(struct output_module *);
 	for (i = 0; i < count; ++i) {
 		if (modules[i]->add_options) {
-			result = modules[i]->add_options(ctx);
+			int result = modules[i]->add_options(ctx);
 			if (result != 0) {
-				goto out;
+				return result;
 			}
 		}
 	}
-out:
-	return result;
+
+	return 0;
 }
 
 void output_set_uri(const char *uri, output_update_meta_cb_t meta_cb) {
@@ -161,43 +156,38 @@ void output_set_next_uri(const char *uri) {
 }
 
 int output_play(output_transition_cb_t transition_callback) {
-	int result = -1;
 	if (output_module && output_module->play) {
-		result = output_module->play(transition_callback);
+		return output_module->play(transition_callback);
 	}
-	return result;
+	return -1;
 }
 
 int output_pause(void) {
-	int result = -1;
 	if (output_module && output_module->pause) {
-		result = output_module->pause();
+		return output_module->pause();
 	}
-	return result;
+	return -1;
 }
 
 int output_stop(void) {
-	int result = -1;
 	if (output_module && output_module->stop) {
-		result = output_module->stop();
+		return output_module->stop();
 	}
-	return result;
+	return -1;
 }
 
 int output_seek(gint64 position_nanos) {
-	int result = -1;
 	if (output_module && output_module->seek) {
-		result = output_module->seek(position_nanos);
+		return output_module->seek(position_nanos);
 	}
-	return result;
+	return -1;
 }
 
 int output_get_position(gint64 *track_dur, gint64 *track_pos) {
-	int result = -1;
 	if (output_module && output_module->get_position) {
-		result = output_module->get_position(track_dur, track_pos);
+		return output_module->get_position(track_dur, track_pos);
 	}
-	return result;
+	return -1;
 }
 
 int output_get_volume(float *value) {

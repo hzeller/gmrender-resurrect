@@ -35,7 +35,7 @@
  *   and differs from previous value.
  *
  * upnp_last_change_builder - a builder for the LastChange XML document
- *   containing recently changed variables.
+ *   containing name/value pairs of variables.
  *
  * upnp_last_change_collector - handling of the LastChange variable in UPnP.
  *   Hooks into the callback mechanism of the variable_container to assemble
@@ -101,16 +101,25 @@ char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder);
 struct upnp_device;  // forward declare.
 struct upnp_last_change_collector;
 typedef struct upnp_last_change_collector upnp_last_change_collector_t;
+
+// Create a new last change collector that registers at the
+// "variable_container" for changes in variables. It assembles a LastChange
+// event and sends it to the given "upnp_device".
+// The variable_container is expected to contain one variable with name
+// "LastChange", otherwise this collector is not applicable and fails.
 upnp_last_change_collector_t *
 UPnPLastChangeCollector_new(variable_container_t *variable_container,
-			    int last_change_var_num,
 			    struct upnp_device *upnp_device,
 			    const char *service_id);
+
+// Set variable number that should be ignored in eventing.
+void UPnPLastChangeCollector_add_ignore(upnp_last_change_collector_t *object,
+					int variable_num);
 
 // If we know that there are a couple of changes upcoming, we can
 // 'start' a transaction and tell the collector to keep collecting until we
 // 'finish'. This can be nested.
-void UPnPLastChangeCollector_start(upnp_last_change_collector_t *o);
+void UPnPLastChangeCollector_start(upnp_last_change_collector_t *object);
 void UPnPLastChangeCollector_finish(upnp_last_change_collector_t *object);
 
 // no delete yet. We leak that.
