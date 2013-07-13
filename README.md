@@ -31,7 +31,7 @@ Issues
 Some troubles came up with the underlying gstreamer that manifests in
 'not responding' after a couple of hours or days of use; this is with
 gstreamer 0.10 up to 1.0.7. There was a [leaking thread bug][gst-bug-699794]
-whose fix will probably show up in GStreamer 1.0.8 that fixes this bug.
+whose fix showed up in GStreamer 1.0.8.
 If you are using an older version, then only restart of gmrender-resurrect
 helps in these situations.
 Unfortunately, in  gstreamer 1.0.x version, there is another bug, a
