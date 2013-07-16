@@ -1030,7 +1030,7 @@ void upnp_transport_init(struct upnp_device *device) {
 		UPnPLastChangeCollector_new(state_variables_, device,
 					    TRANSPORT_SERVICE_ID);
 	// Times and counters should not be evented. We only change REL_TIME
-	// right now anyway.
+	// right now anyway (AVTransport-v1 document, 2.3.1 Event Model)
 	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
 					   TRANSPORT_VAR_REL_TIME_POS);
 	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
