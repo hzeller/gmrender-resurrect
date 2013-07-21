@@ -141,9 +141,6 @@ static int webserver_get_info(const char *filename, struct File_Info *info)
 {
 	struct virtual_file *virtfile = virtual_files;
 
-	Log_info("webserver", "%s:(filename='%s',info=%p)", __FUNCTION__,
-		 filename, info);
-
 	while (virtfile != NULL) {
 		if (strcmp(filename, virtfile->virtual_fname) == 0) {
 			info->file_length = virtfile->len;
@@ -152,12 +149,16 @@ static int webserver_get_info(const char *filename, struct File_Info *info)
 			info->is_readable = 1;
 			info->content_type =
 			    ixmlCloneDOMString(virtfile->content_type);
+			Log_info("webserver", "Access %s (%s) len=%zd",
+				 filename, info->content_type, virtfile->len);
 			return 0;
 		}
 		virtfile = virtfile->next;
 	}
 
-	Log_error("webserver", "Not found.");
+	Log_error("webserver", "404 Not found. (attempt to access "
+		  "non-existent '%s')", filename);
+
 	return -1;
 }
 
