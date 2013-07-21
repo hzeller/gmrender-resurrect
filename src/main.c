@@ -40,6 +40,10 @@
 
 #include <upnp/ithread.h>
 
+// For version strings of upnp and gstreamer
+#include <upnp/upnpconfig.h>
+#include <gst/gst.h>
+
 #include "git-version.h"
 #include "logging.h"
 #include "output.h"
@@ -164,6 +168,14 @@ static void log_variable_change(void *userdata, int var_num,
 static void init_logging(const char *log_file) {
 	if (log_file != NULL) {
 		Log_init(log_file);
+		Log_info("main", "%s log started. gmediarender=%s"
+			 "; libupnp=%s"
+			 "; gstreamer=%d.%d.%d",
+			 PACKAGE_STRING, GM_COMPILE_VERSION,
+			 UPNP_VERSION_STRING,
+			 GST_VERSION_MAJOR, GST_VERSION_MINOR,
+			 GST_VERSION_MICRO);
+
 	} else {
 		fprintf(stderr, "Logging switched off. "
 			"Enable with --logfile=<filename> "

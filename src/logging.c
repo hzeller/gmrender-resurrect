@@ -63,8 +63,6 @@ void Log_init(const char *filename) {
 		error_markup_start_ = kErrorHighlight;
 		markup_end_ = kTermReset;
 	}
-	Log_info("logging", "%s log started (%s).",
-		 PACKAGE_STRING, GM_COMPILE_VERSION);
 }
 
 int Log_color_allowed(void) { return enable_color; }
