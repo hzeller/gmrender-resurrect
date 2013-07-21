@@ -156,8 +156,8 @@ static int webserver_get_info(const char *filename, struct File_Info *info)
 		virtfile = virtfile->next;
 	}
 
-	Log_error("webserver", "404 Not found. (attempt to access "
-		  "non-existent '%s')", filename);
+	Log_info("webserver", "404 Not found. (attempt to access "
+		 "non-existent '%s')", filename);
 
 	return -1;
 }
