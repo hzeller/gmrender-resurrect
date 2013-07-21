@@ -167,14 +167,23 @@ been reports of bad sound quality. For one, the 3.5mm output is very low
 quality, so don't expect wonders (though it seems that driver changes improved
 this quality a lot).
 
-Some people found that they gets better quality with pulseaudio running
-(Personally, I just use straight ALSA, sound quality seems to be good to
-me and it is less hassle keeping pulseaudio running stably),
+You can use gmrender-resurrect with Pulseaudio or ALSA (or whatever other output
+ways gstreamer supports). Personally, I use ALSA as it is the most simple and
+robust way (Pulseaudio would be a layer on top of ALSA anyway).
+See flag --gstout-audiosink above how to tell gmediarender to use alsasink.
+
+By default, ALSA seems to attempt some re-sampling apparently; A user
+pointed out that this can be fixed by putting this in your `/etc/asound.conf`
+
+    ctl.!default {
+      type hw
+      card 0
+    }
 
 Stephen Phillips wrote a comprehensive blog-post about installing
-gmrender-resurrect on the Raspberry Pi (January 2013):
+gmrender-resurrect on the Raspberry Pi (July 2013):
 
-http://blog.scphillips.com/2013/01/using-a-raspberry-pi-with-android-phones-for-media-streaming/
+http://blog.scphillips.com/2013/07/playing-music-on-a-raspberry-pi-using-upnp-and-dlna-revisited/
 
 ## Arch Linux
 There is an Arch package available here
