@@ -424,12 +424,8 @@ static gboolean initialize_device(struct upnp_device_descriptor *device_def,
 		return FALSE;
 	}
 
-	rc = UpnpSetVirtualDirCallbacks(&virtual_dir_callbacks);
-	if (UPNP_E_SUCCESS != rc) {
-		Log_error("upnp", "UpnpSetVirtualDirCallbacks() Error: %s (%d)",
-			  UpnpGetErrorMessage(rc), rc);
-		return FALSE;
-	}
+	if (!webserver_register_callbacks())
+	  return FALSE;
 
 	rc = UpnpAddVirtualDir("/upnp");
 	if (UPNP_E_SUCCESS != rc) {

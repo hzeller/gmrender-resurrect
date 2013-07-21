@@ -37,6 +37,7 @@
 #include <assert.h>
 
 #include <upnp/upnp.h>
+#include <upnp/upnptools.h>  // UpnpGetErrorMessage
 #include <upnp/ithread.h>
 
 #include "logging.h"
@@ -247,7 +248,10 @@ static int webserver_close(UpnpWebFileHandle fh)
 	return 0;
 }
 
-struct UpnpVirtualDirCallbacks virtual_dir_callbacks = {
+#if (UPNP_VERSION < 10607)
+// Older versions had a nice struct to register callbacks, just as you would
+// expect from a proper C API
+static struct UpnpVirtualDirCallbacks virtual_dir_callbacks = {
 	webserver_get_info,
 	webserver_open,
 	webserver_read,
@@ -255,3 +259,35 @@ struct UpnpVirtualDirCallbacks virtual_dir_callbacks = {
 	webserver_seek,
 	webserver_close
 };
+
+gboolean webserver_register_callbacks(void) {
+  int rc = UpnpSetVirtualDirCallbacks(&virtual_dir_callbacks);
+  if (UPNP_E_SUCCESS != rc) {
+    Log_error("webserver", "UpnpSetVirtualDirCallbacks() Error: %s (%d)",
+	      UpnpGetErrorMessage(rc), rc);
+    return FALSE;
+  }
+  return TRUE;
+}
+#else
+// With version 1.6.7 and above, the UPNP library maintainers made a questionable
+// API choice to register the callbacks one-by-one, instead of having a
+// struct with the callbacks which is certainly a better and 'typical' C API
+// choice. They removed the UpnpVirtualDirCallbacks in the course of that.
+// Because it breaks code, it has been reverted in version 1.6.16
+// (see http://sourceforge.net/p/pupnp/bugs/29/ ), but we essentially have a
+// broken version between 1.6.7 ... 1.6.16.
+// Assuming that they will go on with this broken idea and eventually remove
+// the support for the VirtualDirCallbacks in new major versions, we use the
+// newer (may I emphasize: questionable) API to register the callbacks.
+gboolean webserver_register_callbacks(void) {
+  gboolean result =
+    (UpnpVirtualDir_set_GetInfoCallback(webserver_get_info) == UPNP_E_SUCCESS
+     && UpnpVirtualDir_set_OpenCallback(webserver_open) == UPNP_E_SUCCESS
+     && UpnpVirtualDir_set_ReadCallback(webserver_read) == UPNP_E_SUCCESS
+     && UpnpVirtualDir_set_WriteCallback(webserver_write) == UPNP_E_SUCCESS
+     && UpnpVirtualDir_set_SeekCallback(webserver_seek) == UPNP_E_SUCCESS
+     && UpnpVirtualDir_set_CloseCallback(webserver_close) == UPNP_E_SUCCESS);
+  return result;
+}
+#endif

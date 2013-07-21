@@ -24,7 +24,10 @@
 #ifndef _WEBSERVER_H
 #define _WEBSERVER_H
 
-extern struct UpnpVirtualDirCallbacks virtual_dir_callbacks;
+#include <glib.h>
+
+// Start the webserver with the registered files.
+gboolean webserver_register_callbacks(void);
 
 int webserver_register_buf(const char *path, const char *contents,
                            const char *content_type);
