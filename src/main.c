@@ -21,6 +21,8 @@
  *
  */
 
+#define _GNU_SOURCE
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -43,6 +45,7 @@
 // For version strings of upnp and gstreamer
 #include <upnp/upnpconfig.h>
 #include <gst/gst.h>
+#include <glib/gversion.h>
 
 #include "git-version.h"
 #include "logging.h"
@@ -166,21 +169,23 @@ static void log_variable_change(void *userdata, int var_num,
 }
 
 static void init_logging(const char *log_file) {
+	char *version;
+	asprintf(&version,  "[ gmediarender %s "
+		 "(libupnp-%s; glib-%d.%d.%d; gstreamer-%d.%d.%d) ]",
+		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
+		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION,
+		 GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
 	if (log_file != NULL) {
 		Log_init(log_file);
-		Log_info("main", "%s log started. gmediarender=%s"
-			 "; libupnp=%s"
-			 "; gstreamer=%d.%d.%d",
-			 PACKAGE_STRING, GM_COMPILE_VERSION,
-			 UPNP_VERSION_STRING,
-			 GST_VERSION_MAJOR, GST_VERSION_MINOR,
-			 GST_VERSION_MICRO);
+		Log_info("main", "%s log started %s", PACKAGE_STRING, version);
 
 	} else {
-		fprintf(stderr, "Logging switched off. "
+		fprintf(stderr, "%s started %s.\nLogging switched off. "
 			"Enable with --logfile=<filename> "
-			"(e.g. --logfile=/dev/stdout for console)\n");
+			"(e.g. --logfile=/dev/stdout for console)\n",
+			PACKAGE_STRING, version);
 	}
+	free(version);
 }
 
 int main(int argc, char **argv)
@@ -289,9 +294,9 @@ int main(int argc, char **argv)
 							(void*) "control");
 	}
 
+	// Write both to the log (which might be disabled) and console.
 	Log_info("main", "Ready for rendering.");
-	fprintf(stderr, "%s version %s ready for rendering.\n",
-		PACKAGE_STRING, GM_COMPILE_VERSION);
+	fprintf(stderr, "Ready for rendering.\n");
 
 	output_loop();
 
