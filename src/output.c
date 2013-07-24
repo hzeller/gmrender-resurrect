@@ -110,6 +110,7 @@ int output_init(const char *shortname)
 static GMainLoop *main_loop_ = NULL;
 static void exit_loop_sighandler(int sig) {
 	if (main_loop_) {
+		// TODO(hzeller): revisit - this is not safe to do.
 		g_main_loop_quit(main_loop_);
 	}
 }
