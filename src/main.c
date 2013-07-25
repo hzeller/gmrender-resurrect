@@ -45,7 +45,6 @@
 // For version strings of upnp and gstreamer
 #include <upnp/upnpconfig.h>
 #include <gst/gst.h>
-#include <glib/gversion.h>
 
 #include "git-version.h"
 #include "logging.h"
