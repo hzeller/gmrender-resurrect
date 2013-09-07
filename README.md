@@ -25,7 +25,7 @@ to narrow down things.
 If you're running this on a Raspberry Pi, you might be interested to connect
 a little LCD display. Check out the **[upnp-display][]** github project.
 
-Issues with old versions (<= 0.10) of gstreamer
+Issues with old versions (≤ 0.10) of gstreamer
 -----------------------------------------------
 
 Some troubles came up with the underlying gstreamer that manifests in
