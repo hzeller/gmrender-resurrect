@@ -5,7 +5,10 @@ compilation configuration:
 
     sudo apt-get install autoconf automake libtool
 
-.. and the libraries needed for gmrender:
+.. and the libraries needed for gmrender, most notably gstreamer.
+On current Linux distributions, these are typically version 0.10 of gstreamer,
+but if possible, try to get a gstreamer version 1.0.x, the old version is not
+supported anymore. But, since this version is still quite common, here we go:
 
     sudo apt-get update
     sudo apt-get install libupnp-dev libgstreamer0.10-dev \
@@ -14,6 +17,9 @@ compilation configuration:
                 gstreamer0.10-ffmpeg \
                 gstreamer0.10-pulseaudio gstreamer0.10-alsa
 
+
+(See below for the Gstreamer 1.0 installation; essentially only the version
+number is different, gmrender compiles with both versions).
 
 Get the source. If this is your first time using git, you first need to install
 it:

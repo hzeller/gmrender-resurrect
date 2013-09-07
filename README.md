@@ -25,8 +25,8 @@ to narrow down things.
 If you're running this on a Raspberry Pi, you might be interested to connect
 a little LCD display. Check out the **[upnp-display][]** github project.
 
-Issues
-------
+Issues with old versions (<= 0.10) of gstreamer
+-----------------------------------------------
 
 Some troubles came up with the underlying gstreamer that manifests in
 'not responding' after a couple of hours or days of use; this is with
@@ -36,8 +36,11 @@ If you are using an older version, then only restart of gmrender-resurrect
 helps in these situations.
 Unfortunately, in  gstreamer 1.0.x version, there is another bug, a
 [race condition][gst-bug-698750], that affects gapless playing with some
-file formats (FLAC is ok, OGG has trouble). So I can't fully recommend using
-1.0.x yet either :/
+file formats (FLAC is ok, OGG has trouble), but apparantly, this is being
+fixed in the development version of gstreamer (not verified yet).
+
+If you want to use OpenMAX support, [there are reports][open-max-support], that
+this works with a recent version of gstreamer 1.0.9.
 
 Installation
 ------------
@@ -52,3 +55,4 @@ You can reach me via <h.zeller@acm.org>.
 [gst-bug-699794]: https://bugzilla.gnome.org/show_bug.cgi?id=699794
 [compat-wiki]: https://github.com/hzeller/gmrender-resurrect/wiki/Comptibility
 [upnp-display]: https://github.com/hzeller/upnp-display
+[open-max-support]: https://github.com/hzeller/gmrender-resurrect/issues/33#issuecomment-23859699
