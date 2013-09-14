@@ -158,13 +158,16 @@ on newer distributions. This is the preferred version as the older 0.10 version
 is not supported anymore. Instead of the 0.10 versions above, just install
 these:
 
-    sudo aptitude install libgstreamer1.0-dev \
+    sudo aptitude install libupnp-dev libgstreamer1.0-dev \
              gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
              gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \
-             gstreamer1.0-libav \
-             gstreamer1.0-pulseaudio gstreamer1.0-alsa
+             gstreamer1.0-libav
 
-(pulseaudio or alsa depending on what output you prefer)
+Then pulseaudio or alsa depending on what output you prefer (personally, I use
+alsa)
+
+    sudo aptitude install gstreamer1.0-alsa
+    sudo aptitude install gstreamer1.0-pulseaudio
 
 # Other installation resources
 ## Raspberry Pi
