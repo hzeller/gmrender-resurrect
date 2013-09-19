@@ -1,0 +1,9 @@
+[Unit]
+Description=GMediaRender UPnP/DLNA renderer
+After=network.target sound.target
+
+[Service]
+ExecStart=/usr/bin/gmediarender
+
+[Install]
+WantedBy=multi-user.target
