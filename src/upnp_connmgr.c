@@ -245,6 +245,7 @@ void register_mime_type(const char *mime_type) {
 	}
 	if (strcmp("audio/x-m4a", mime_type) == 0) {
 	  register_mime_type_internal("audio/m4a");
+	  register_mime_type_internal("audio/mp4");
 	}
 }
 
