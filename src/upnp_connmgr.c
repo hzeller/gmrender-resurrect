@@ -232,11 +232,16 @@ void register_mime_type(const char *mime_type) {
 	}
 
 	// Some workaround: some controllers seem to match the version without
-	// x-, some with. If this works, we should probably collect all of these
+	// x-, some with; though the mime-type is correct with x-, these formats
+	// seem to be common enough to sometimes be used without.
+	// If this works, we should probably collect all of these
 	// in a set emit always both, foo/bar and foo/x-bar, as it is a similar
 	// work-around as seen above with mpeg -> x-mpeg.
 	if (strcmp("audio/x-alac", mime_type) == 0) {
 	  register_mime_type_internal("audio/alac");
+	}
+	if (strcmp("audio/x-aiff", mime_type) == 0) {
+	  register_mime_type_internal("audio/aiff");
 	}
 	if (strcmp("audio/x-m4a", mime_type) == 0) {
 	  register_mime_type_internal("audio/m4a");
