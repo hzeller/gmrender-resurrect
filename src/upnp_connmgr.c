@@ -40,6 +40,7 @@
 #include "upnp.h"
 #include "upnp_device.h"
 #include "variable-container.h"
+#include "mime_types.h"
 
 #define CONNMGR_TYPE	"urn:schemas-upnp-org:service:ConnectionManager:1"
 
@@ -184,71 +185,6 @@ static struct var_meta connmgr_var_meta[] = {
 
 static ithread_mutex_t connmgr_mutex;
 
-struct mime_type;
-static struct mime_type {
-	const char *mime_type;
-	struct mime_type *next;
-} *supported_types = NULL;
-
-static void register_mime_type_internal(const char *mime_type) {
-	struct mime_type *entry;
-
-	for (entry = supported_types; entry; entry = entry->next) {
-		if (strcmp(entry->mime_type, mime_type) == 0) {
-			return;
-		}
-	}
-	Log_info("connmgr", "Registering support for '%s'", mime_type);
-
-	entry = malloc(sizeof(struct mime_type));
-	entry->mime_type = strdup(mime_type);
-	entry->next = supported_types;
-	supported_types = entry;
-}
-
-void register_mime_type(const char *mime_type) {
-	register_mime_type_internal(mime_type);
-	if (strcmp("audio/mpeg", mime_type) == 0) {
-		register_mime_type_internal("audio/x-mpeg");
-
-		// BubbleUPnP does not seem to match generic "audio/*" types,
-		// but only matches mime-types _exactly_, so we add some here.
-		// TODO(hzeller): we already add the "audio/*" mime-type
-		// output_gstream.c:scan_caps() which should just work once
-		// BubbleUPnP allows for  matching "audio/*". Remove the code
-		// here.
-
-		// BubbleUPnP uses audio/x-scpl as an indicator to know if the
-		// renderer can handle it (otherwise it will proxy).
-		// Simple claim: if we can handle mpeg, then we can handle
-		// shoutcast.
-		// (For more accurate answer: we'd to check if all of
-		// mpeg, aac, aacp, ogg are supported).
-		register_mime_type_internal("audio/x-scpls");
-
-		// This is apparently something sent by the spotifyd
-		// https://gitorious.org/spotifyd
-		register_mime_type("audio/L16;rate=44100;channels=2");
-	}
-
-	// Some workaround: some controllers seem to match the version without
-	// x-, some with; though the mime-type is correct with x-, these formats
-	// seem to be common enough to sometimes be used without.
-	// If this works, we should probably collect all of these
-	// in a set emit always both, foo/bar and foo/x-bar, as it is a similar
-	// work-around as seen above with mpeg -> x-mpeg.
-	if (strcmp("audio/x-alac", mime_type) == 0) {
-	  register_mime_type_internal("audio/alac");
-	}
-	if (strcmp("audio/x-aiff", mime_type) == 0) {
-	  register_mime_type_internal("audio/aiff");
-	}
-	if (strcmp("audio/x-m4a", mime_type) == 0) {
-	  register_mime_type_internal("audio/m4a");
-	  register_mime_type_internal("audio/mp4");
-	}
-}
-
 int connmgr_init(void) {
 	struct mime_type *entry;
 	char *buf = NULL;
@@ -267,7 +203,7 @@ int connmgr_init(void) {
 		return -1;
 	}
 
-	for (entry = supported_types; entry; entry = entry->next) {
+	for (entry = get_supported_mime_types(); entry; entry = entry->next) {
 		bufsize += strlen(entry->mime_type) + 1 + 8 + 3 + 2;
 		offset = p - buf;
 		buf = realloc(buf, bufsize);

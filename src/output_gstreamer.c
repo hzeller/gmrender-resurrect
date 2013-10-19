@@ -39,6 +39,7 @@
 #include "upnp_connmgr.h"
 #include "output_module.h"
 #include "output_gstreamer.h"
+#include "mime_types.h"
 
 static void scan_caps(const GstCaps * caps)
 {

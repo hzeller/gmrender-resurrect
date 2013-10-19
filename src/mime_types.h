@@ -1,6 +1,6 @@
-/* upnp_connmgr.h - UPnP Connection Manager definitions
+/* mime_types.h - MIME types utils
  *
- * Copyright (C) 2005   Ivo Clarysse
+ * Copyright (C) 2013 Andrey Demenev
  *
  * This file is part of GMediaRender.
  *
@@ -15,17 +15,22 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
 
-#ifndef _UPNP_CONNMGR_H
-#define _UPNP_CONNMGR_H
+#ifndef _MIME_TYPES_H
+#define _MIME_TYPES_H
 
-struct service *upnp_connmgr_get_service(void);
-int connmgr_init(void);
+struct mime_type {
+	const char *mime_type;
+	struct mime_type *next;
+};
 
+struct mime_type *get_supported_mime_types(void);
+void register_mime_type(const char *mime_type);
 
-#endif /* _UPNP_CONNMGR_H */
+#endif
+
