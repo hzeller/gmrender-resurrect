@@ -1,5 +1,6 @@
 /* mime_types.h - MIME types utils
  *
+ * Copyright (C) 2005-2007   Ivo Clarysse
  * Copyright (C) 2013 Andrey Demenev
  *
  * This file is part of GMediaRender.
