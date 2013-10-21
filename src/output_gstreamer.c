@@ -169,7 +169,10 @@ static GstState get_current_player_state() {
 static void output_gstreamer_set_next_uri(const char *uri) {
 	Log_info("gstreamer", "Set next uri to %s", uri);
 	free(gs_next_uri_);
-	gs_next_uri_ = strdup(uri);
+	if (uri != NULL)
+		gs_next_uri_ = strdup(uri);
+	else
+		gs_next_uri_ = NULL;
 }
 
 static void output_gstreamer_set_uri(const char *uri,
