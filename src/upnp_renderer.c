@@ -47,6 +47,7 @@
 #include "upnp_connmgr.h"
 #include "upnp_control.h"
 #include "upnp_transport.h"
+#include "oh_playlist.h"
 
 #include "upnp_renderer.h"
 #include "git-version.h"
@@ -115,11 +116,12 @@ void upnp_renderer_dump_transport_scpd(void)
 
 static int upnp_renderer_init(void)
 {
-	static struct service *upnp_services[4];
+	static struct service *upnp_services[5];
 	upnp_services[0] = upnp_transport_get_service();
 	upnp_services[1] = upnp_connmgr_get_service();
 	upnp_services[2] = upnp_control_get_service();
-	upnp_services[3] = NULL;
+	upnp_services[3] = oh_playlist_get_service();
+	upnp_services[4] = NULL;
 	render_device.services = upnp_services;
         return connmgr_init();
 }

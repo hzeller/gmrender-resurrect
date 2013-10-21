@@ -53,6 +53,7 @@ typedef enum {
         DATATYPE_I4,
         DATATYPE_UI2,
         DATATYPE_UI4,
+        DATATYPE_BASE64,
         DATATYPE_UNKNOWN,
         DATATYPE_COUNT
 } param_datatype;

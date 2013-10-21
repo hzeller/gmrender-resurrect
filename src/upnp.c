@@ -45,6 +45,7 @@ static const char *param_datatype_names[] = {
         [DATATYPE_I4] =         "i4",
         [DATATYPE_UI2] =        "ui2",
         [DATATYPE_UI4] =        "ui4",
+        [DATATYPE_BASE64] =     "bin.base64",
         [DATATYPE_UNKNOWN] =    NULL
 };
 
