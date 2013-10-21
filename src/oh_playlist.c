@@ -49,6 +49,7 @@
 #include "xmlescape.h"
 #include "xmldoc.h"
 #include "oh_playlist.h"
+#include "playlist.h"
 #include "mime_types.h"
 
 #define PLAYLIST_TYPE "urn:av-openhome-org:service:Playlist:1"
@@ -64,12 +65,6 @@
 #define LIST_SIZE_INCREMENT 50
 
 static const gint64 one_sec_unit = 1000000000LL;
-
-typedef struct {
-	char *uri;
-	char *metadata;
-} playlist_item;
-
 
 typedef enum {
 	PLAYLIST_VAR_TRANSPORT_STATE,
@@ -124,27 +119,6 @@ enum {
 
 	PLAYLIST_CMD_UNKNOWN,
 	PLAYLIST_CMD_COUNT
-};
-
-enum UPNPTransportError {
-	UPNP_TRANSPORT_E_TRANSITION_NA	= 701,
-	UPNP_TRANSPORT_E_NO_CONTENTS	= 702,
-	UPNP_TRANSPORT_E_READ_ERROR	= 703,
-	UPNP_TRANSPORT_E_PLAY_FORMAT_NS	= 704,
-	UPNP_TRANSPORT_E_TRANSPORT_LOCKED	= 705,
-	UPNP_TRANSPORT_E_WRITE_ERROR	= 706,
-	UPNP_TRANSPORT_E_REC_MEDIA_WP	= 707,
-	UPNP_TRANSPORT_E_REC_FORMAT_NS	= 708,
-	UPNP_TRANSPORT_E_REC_MEDIA_FULL	= 709,
-	UPNP_TRANSPORT_E_SEEKMODE_NS	= 710,
-	UPNP_TRANSPORT_E_ILL_SEEKTARGET	= 711,
-	UPNP_TRANSPORT_E_PLAYMODE_NS	= 712,
-	UPNP_TRANSPORT_E_RECQUAL_NS	= 713,
-	UPNP_TRANSPORT_E_ILLEGAL_MIME	= 714,
-	UPNP_TRANSPORT_E_CONTENT_BUSY	= 715,
-	UPNP_TRANSPORT_E_RES_NOT_FOUND	= 716,
-	UPNP_TRANSPORT_E_PLAYSPEED_NS	= 717,
-	UPNP_TRANSPORT_E_INVALID_IID	= 718,
 };
 
 static const char *playlist_variable_names[] = {
@@ -371,28 +345,7 @@ static struct argument **argument_list[] = {
 
 // Our 'instance' variables.
 
-typedef uint32_t entry_id_t;
-
-static struct {
-	int allocated;
-	int size;
-	entry_id_t *ids;
-	playlist_item *items;
-} playlist;
-
-static entry_id_t next_item_id = 1;
-
-static entry_id_t current_id = 0;
-static entry_id_t current_idx = 0;
-
-static entry_id_t next_id = 0;
-static entry_id_t next_idx = 0;
-
-static entry_id_t prev_id = 0;
-static entry_id_t prev_idx = 0;
-
-
-static uint32_t token = 1;
+static struct playlist *playlist;
 
 static enum playlist_state playlist_state_ = PLAYLIST_STOPPED;
 extern struct service playlist_service_;   // Defined below.
@@ -401,6 +354,8 @@ static variable_container_t *state_variables_ = NULL;
 /* protects transport_values, and service-specific state */
 
 static ithread_mutex_t playlist_mutex;
+
+static void inform_play_transition_from_output(enum PlayFeedback fb);
 
 static void service_lock(void)
 {
@@ -417,9 +372,11 @@ static int replace_var(playlist_variable_t varnum, const char *new_value) {
 	return VariableContainer_change(state_variables_, varnum, new_value);
 }
 
+/*
 static const char *get_var(playlist_variable_t varnum) {
 	return VariableContainer_get(state_variables_, varnum, NULL);
 }
+*/
 
 static void change_playlist_state(enum playlist_state new_state)
 {
@@ -427,6 +384,41 @@ static void change_playlist_state(enum playlist_state new_state)
 	playlist_state_ = new_state;
 	if (!replace_var(PLAYLIST_VAR_TRANSPORT_STATE, playlist_states[new_state])) {
 		return;
+	}
+}
+
+
+static void playlist_current_change(struct playlist *list, playlist_id_t id, int index, int automatic)
+{
+	char *uri;
+	if (!playlist_get(playlist, id, &uri, NULL)) {
+		output_set_uri(uri, NULL);
+		if (!automatic && (playlist_state_ != PLAYLIST_STOPPED)) {
+			if (output_play(&inform_play_transition_from_output))  {
+				change_playlist_state(PLAYLIST_STOPPED);
+			} else {
+				change_playlist_state(PLAYLIST_PLAYING);
+			}
+		}
+	}
+	char buf[32];
+	sprintf(buf, "%u", id);
+	replace_var(PLAYLIST_VAR_ID, buf);
+}
+
+static void playlist_current_remove(struct playlist *list)
+{
+	output_stop();
+	change_playlist_state(PLAYLIST_STOPPED);
+}
+
+static void playlist_next_change(struct playlist *list, playlist_id_t id, int index)
+{
+	char *uri;
+	if (playlist_get(playlist, id, &uri, NULL)) {
+		output_set_next_uri(NULL);
+	} else {
+		output_set_next_uri(uri);
 	}
 }
 
@@ -444,96 +436,24 @@ static void update_repeat_state(int state)
 	service_unlock();
 }
 
-static void update_next_prev(void)
-{
-	if (current_id) {
-		if (current_idx < playlist.size - 1) {
-			next_id = playlist.ids[current_idx + 1];
-			next_idx = current_idx + 1;
-			output_set_next_uri(playlist.items[current_idx + 1].uri);
-		} else {
-			next_idx = next_id = 0;
-			output_set_next_uri(NULL);
-		}
-		if (current_idx > 0) {
-			prev_id = playlist.ids[current_idx - 1];
-			prev_idx = current_idx - 1;
-		} else {
-			prev_idx = prev_id = 0;
-		}
-	} else {
-		next_idx = next_id = 0;
-		prev_idx = prev_id = 0;
-		output_set_next_uri(NULL);
-	}
-}
 
 static void update_playlist(void)
 {
-	token++;
-	const guchar *data = (const guchar*)&playlist.ids;
-	gchar *encoded = g_base64_encode(data, sizeof(entry_id_t) * playlist.size);
-	replace_var(PLAYLIST_VAR_ID_ARRRAY, encoded);
-	g_free(encoded);
-	update_next_prev();
-}
-
-static void set_current(uint32_t id, int index)
-{
-	current_id = id;
-	current_idx = index;
-	char buf[32];
-	sprintf(buf, "%u", id);
-	replace_var(PLAYLIST_VAR_ID, buf);
-	if (current_id) {
-		output_set_uri(playlist.items[current_idx].uri, NULL);
-	}
-	update_next_prev();
-}
-
-static int playlist_id_index(entry_id_t id)
-{
-	int i;
-	for (i = 0; i < playlist.size; i++) {
-		if (playlist.ids[i] == id)
-			return i;
-	}
-	return -1;
-}
-
-static void playlist_ensure_capacity(int size)
-{
-	assert(size > 0);
-	if (playlist.allocated >= size)
-		return;
-
-	int new_size = playlist.allocated + LIST_SIZE_INCREMENT;
-
-	if (playlist.ids == NULL) {
-		playlist.ids = malloc(sizeof(entry_id_t) * new_size);
-		assert(playlist.ids != NULL);
-		playlist.items = malloc(sizeof(playlist_item) * new_size);
-		assert(playlist.items != NULL);
+	int size = playlist_get_size(playlist);
+	if (size > 0) {
+		const guchar *data = (const guchar*)playlist_get_ids(playlist);
+		gchar *encoded = g_base64_encode(data, sizeof(playlist_id_t) * size);
+		replace_var(PLAYLIST_VAR_ID_ARRRAY, encoded);
+		g_free(encoded);
 	} else {
-		playlist.ids = realloc(playlist.ids, sizeof(entry_id_t) * new_size);
-		assert(playlist.ids != NULL);
-		playlist.items = realloc(playlist.items, sizeof(playlist_item) * new_size);
-		assert(playlist.items != NULL);
+		replace_var(PLAYLIST_VAR_ID_ARRRAY, "");
 	}
-	playlist.allocated = new_size;
 }
 
 static int delete_all(struct action_event *event)
 {
-	int i;
 	service_lock();
-	for (i = 0 ; i < playlist.size; i++) {
-		free(playlist.items[i].uri);
-		free(playlist.items[i].metadata);
-	}
-	playlist.size = 0;
-	next_item_id = 1;
-	set_current(0, 0);
+	playlist_clear(playlist);
 	update_playlist();
 	output_stop();
 	change_playlist_state(PLAYLIST_STOPPED);
@@ -543,12 +463,12 @@ static int delete_all(struct action_event *event)
 
 static int id_array(struct action_event *event)
 {
-	char buf[32];
-	sprintf(buf, "%u", token);
 	service_lock();
+	char buf[32];
+	sprintf(buf, "%u", playlist_get_token(playlist));
 	upnp_add_response(event, "Token", buf);
-	upnp_append_variable(event, PLAYLIST_VAR_ID_ARRRAY, "Array");
 	service_unlock();
+	upnp_append_variable(event, PLAYLIST_VAR_ID_ARRRAY, "Array");
 	return 0;
 }
 
@@ -596,7 +516,7 @@ static void inform_play_transition_from_output(enum PlayFeedback fb)
 		break;
 
 	case PLAY_STARTED_NEXT_STREAM:
-		set_current(next_id, next_idx);
+		playlist_next(playlist, 1);
 		break;
 	}
 	service_unlock();
@@ -621,40 +541,18 @@ static int pause_stream(struct action_event *event)
 
 static int play_next(struct action_event *event)
 {
-	int rc = 0;
 	service_lock();
-	if (next_id) {
-		set_current(next_id, next_idx);
-		if (playlist_state_ != PLAYLIST_STOPPED) {
-			if (output_play(&inform_play_transition_from_output)) {
-				upnp_set_error(event, 800, "Playing failed");
-				rc = -1;
-			} else {
-				change_playlist_state(PLAYLIST_PLAYING);
-			}
-		}
-	}
+	playlist_next(playlist, 0);
 	service_unlock();
-	return rc;
+	return 0;
 }
 
 static int play_prev(struct action_event *event)
 {
-	int rc = 0;
 	service_lock();
-	if (prev_id) {
-		set_current(prev_id, prev_idx);
-		if (playlist_state_ != PLAYLIST_STOPPED) {
-			if (output_play(&inform_play_transition_from_output)) {
-				upnp_set_error(event, 800, "Playing failed");
-				rc = -1;
-			} else {
-				change_playlist_state(PLAYLIST_PLAYING);
-			}
-		}
-	}
+	playlist_prev(playlist);
 	service_unlock();
-	return rc;
+	return 0;
 }
 
 static int stop(struct action_event *event)
@@ -672,11 +570,14 @@ static int play(struct action_event *event)
 {
 	int rc = 0;
 	service_lock();
-	if (output_play(&inform_play_transition_from_output)) {
-		upnp_set_error(event, 800, "Playing failed");
-		rc = -1;
-	} else {
-		change_playlist_state(PLAYLIST_PLAYING);
+	if (playlist_current_id(playlist) > 0) {
+		if (output_play(&inform_play_transition_from_output)) {
+			upnp_set_error(event, 800, "Playing failed");
+			change_playlist_state(PLAYLIST_STOPPED);
+			rc = -1;
+		} else {
+			change_playlist_state(PLAYLIST_PLAYING);
+		}
 	}
 	service_unlock();
 	return rc;
@@ -698,7 +599,7 @@ static int id_array_changed(struct action_event *event)
 	sscanf(token_str, "%d", &t);
 	free(token_str);
 	service_lock();
-	upnp_add_response(event, "Value", t == token ? "0" : "1");
+	upnp_add_response(event, "Value", t == playlist_get_token(playlist) ? "0" : "1");
 	service_unlock();
 	return 0;
 }
@@ -800,12 +701,12 @@ static int read_entry_list(struct action_event *event)
 			break;
 		if (id < 1 || id > INT_MAX)
 			break;
-		int idx = playlist_id_index(id);
-		if (idx >= 0) {
+		char *uri, *meta;
+		if (!playlist_get(playlist, id, &uri, &meta)) {
 			struct xmlelement *parent = xmlelement_new(doc, "Entry");
 			add_value_element_int(doc, parent, "Id", id);
-			add_value_element(doc, parent, "Uri", playlist.items[idx].uri);
-			add_value_element(doc, parent, "Metadata", playlist.items[idx].metadata);
+			add_value_element(doc, parent, "Uri", uri);
+			add_value_element(doc, parent, "Metadata", meta);
 			xmlelement_add_element(doc, top, parent);
 		}
 		start = end;
@@ -819,24 +720,10 @@ static int read_entry_list(struct action_event *event)
 	return 0;
 }
 
-static int do_seek_index(struct action_event *event, int idx, int lock)
-{
-	int rc = 0;
-	if (lock) service_lock();
-	if (idx < 0 || idx >= playlist.size) {
-		rc = -1;
-		upnp_set_error(event, 800, "Index out of bounds");
-	}
-	if (rc == 0) {
-		set_current(playlist.ids[idx], idx);
-	}
-	if (lock) service_unlock();
-	return rc;
-}
-
 static int seek_id(struct action_event *event)
 {
-	char *id_str = upnp_get_string(event, "Id");
+	int rc = 0;
+	char *id_str = upnp_get_string(event, "Value");
 	if (id_str == NULL) {
 		return -1;
 	}
@@ -844,14 +731,17 @@ static int seek_id(struct action_event *event)
 	sscanf(id_str, "%d", &id);
 	free(id_str);
 	service_lock();
-	int idx = playlist_id_index(id);
-	int rc = do_seek_index(event, idx, 0);
+	if (playlist_set_current_id(playlist, id)) {
+		rc = -1;
+		upnp_set_error(event, 800, "Seek error");
+	}
 	service_unlock();
 	return rc;
 }
 
 static int seek_index(struct action_event *event)
 {
+	int rc = 0;
 	char *idx_str = upnp_get_string(event, "Value");
 	if (idx_str == NULL) {
 		return -1;
@@ -859,7 +749,11 @@ static int seek_index(struct action_event *event)
 	int idx = -1;
 	sscanf(idx_str, "%d", &idx);
 	free(idx_str);
-	return do_seek_index(event, idx, 1);
+	if (playlist_set_current_index(playlist, idx)) {
+		rc = -1;
+		upnp_set_error(event, 800, "Seek error");
+	}
+	return rc;
 }
 
 static int transport_state(struct action_event *event)
@@ -884,14 +778,14 @@ static int read_entry(struct action_event *event)
 	sscanf(id_str, "%d", &id);
 	free(id_str);
 	service_lock();
-	int idx = playlist_id_index(id);
-	if (idx < 0) {
+	char *uri, *meta;
+	if (playlist_get(playlist, id, &uri, &meta)) {
 		service_unlock();
 		upnp_set_error(event, 800, "Invalid Id");
 		return -1;
 	}
-	upnp_add_response(event, "Uri", playlist.items[idx].uri);
-	upnp_add_response(event, "Metadata", playlist.items[idx].metadata);
+	upnp_add_response(event, "Uri", uri);
+	upnp_add_response(event, "Metadata", meta);
 	service_unlock();
 	return 0;
 }
@@ -905,31 +799,9 @@ static int delete_id(struct action_event *event)
 
 	int id = 0; 
 	sscanf(id_str, "%d", &id);
-	service_lock();
-	int idx = playlist_id_index(id);
-	if (idx >= 0) {
-		free(playlist.items[idx].uri);
-		free(playlist.items[idx].metadata);
-		if (idx < playlist.size - 1) {
-			memmove(playlist.ids + idx, playlist.ids + idx + 1, sizeof(entry_id_t) * (playlist.size - idx - 1));
-			memmove(playlist.items + idx, playlist.items + idx + 1, sizeof(playlist_item) * (playlist.size - idx - 1));
-		}
-		playlist.size--;
-		if (current_id > 0) {
-			if (current_idx == idx) {
-				if (playlist.size > 0) {
-					set_current(playlist.ids[0], 0);
-				} else {
-					set_current(0, 0);
-				}
-				output_stop();
-				change_playlist_state(PLAYLIST_STOPPED);
-			} else if (idx < current_idx) {
-				set_current(current_id, current_idx-1);
-			}
-		}
-	}
 	free(id_str);
+	service_lock();
+	playlist_remove(playlist, id);
 	update_playlist();
 	service_unlock();
 	return 0;
@@ -937,60 +809,35 @@ static int delete_id(struct action_event *event)
 
 static int insert(struct action_event *event)
 {
-	if (playlist.size >= TRACKS_MAX) {
-		upnp_set_error(event, 801, "Playlist is full");
-		return -1;
-	}
 	int rc = 0;
 	char *after_id_str = upnp_get_string(event, "AfterId");
 	if (after_id_str == NULL)
 		return -1;
 
-	service_lock();
 	int id = 0; 
-	int after_idx = -1;
 	sscanf(after_id_str, "%d", &id);
 	free(after_id_str);
-	if (id != 0) {
-		after_idx = playlist_id_index(id);
-		if (after_idx < 0) {
-			upnp_set_error(event, 800, "Invalid AfterId");
-			rc = -1;
-		}
-
+		
+	char *uri = upnp_get_string(event, "Uri");
+	if (uri == NULL) {
+		return -1;
+	}
+	char *meta = upnp_get_string(event, "Metadata");
+	if (meta == NULL) {
+		free(uri);
+		return -1;
+	}
+	service_lock();
+	playlist_id_t new_id = 1;
+	if (playlist_add(playlist, id, uri, meta, &new_id)) {
+		upnp_set_error(event, 800, "Invalid AfterId");
+		rc = -1;
 	}
 
 	if (rc == 0) {
-		char *uri = upnp_get_string(event, "Uri");
-		if (uri == NULL) {
-			service_unlock();
-			return -1;
-		}
-		char *meta = upnp_get_string(event, "Metadata");
-		if (meta == NULL) {
-			service_unlock();
-			free(uri);
-			return -1;
-		}
-		playlist_ensure_capacity(playlist.size + 1);
-		if (after_idx < playlist.size - 1) {
-			memmove(playlist.ids + after_idx + 2, playlist.ids + after_idx + 1, sizeof(entry_id_t) * (playlist.size - after_idx - 1));
-			memmove(playlist.items + after_idx + 2, playlist.items + after_idx + 1, sizeof(playlist_item) * (playlist.size - after_idx - 1));
-		}
-			
-		playlist.ids[after_idx+1] = next_item_id;
-		playlist.items[after_idx+1].uri = uri;
-		playlist.items[after_idx+1].metadata = meta;
-		playlist.size++;
 		char buf[32];
-		sprintf(buf, "%u", next_item_id);
+		sprintf(buf, "%u", new_id);
 		upnp_add_response(event, "NewId", buf);
-
-		if (current_id <= 0) {
-			set_current(next_item_id, after_idx + 1);
-		}
-
-		next_item_id++;
 		update_playlist();
 	}
 	service_unlock();
@@ -1062,10 +909,10 @@ void oh_playlist_init(struct upnp_device *device) {
 					   PLAYLIST_VAR_ID_ARRAY_CHANGED);
 
 
-	playlist.allocated = 0;
-	playlist.size = 0;
-	playlist.ids = NULL;
-	playlist.items = NULL;
+	playlist = playlist_create();
+	playlist_set_current_change_listener(playlist, playlist_current_change);
+	playlist_set_current_remove_listener(playlist, playlist_current_remove);
+	playlist_set_next_change_listener(playlist, playlist_next_change);
 	generate_protocol_info();
 
 	//pthread_t thread;
