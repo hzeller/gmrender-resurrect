@@ -453,7 +453,7 @@ static void update_next_prev(void)
 			output_set_next_uri(playlist.items[current_idx + 1].uri);
 		} else {
 			next_idx = next_id = 0;
-			output_set_next_uri("");
+			output_set_next_uri(NULL);
 		}
 		if (current_idx > 0) {
 			prev_id = playlist.ids[current_idx - 1];
@@ -464,7 +464,7 @@ static void update_next_prev(void)
 	} else {
 		next_idx = next_id = 0;
 		prev_idx = prev_id = 0;
-		output_set_next_uri("");
+		output_set_next_uri(NULL);
 	}
 }
 
@@ -535,6 +535,8 @@ static int delete_all(struct action_event *event)
 	next_item_id = 1;
 	set_current(0, 0);
 	update_playlist();
+	output_stop();
+	change_playlist_state(PLAYLIST_STOPPED);
 	service_unlock();
 	return 0;
 }
@@ -623,11 +625,13 @@ static int play_next(struct action_event *event)
 	service_lock();
 	if (next_id) {
 		set_current(next_id, next_idx);
-		if (output_play(&inform_play_transition_from_output)) {
-			upnp_set_error(event, 800, "Playing failed");
-			rc = -1;
-		} else {
-			change_playlist_state(PLAYLIST_PLAYING);
+		if (playlist_state_ != PLAYLIST_STOPPED) {
+			if (output_play(&inform_play_transition_from_output)) {
+				upnp_set_error(event, 800, "Playing failed");
+				rc = -1;
+			} else {
+				change_playlist_state(PLAYLIST_PLAYING);
+			}
 		}
 	}
 	service_unlock();
@@ -640,11 +644,13 @@ static int play_prev(struct action_event *event)
 	service_lock();
 	if (prev_id) {
 		set_current(prev_id, prev_idx);
-		if (output_play(&inform_play_transition_from_output)) {
-			upnp_set_error(event, 800, "Playing failed");
-			rc = -1;
-		} else {
-			change_playlist_state(PLAYLIST_PLAYING);
+		if (playlist_state_ != PLAYLIST_STOPPED) {
+			if (output_play(&inform_play_transition_from_output)) {
+				upnp_set_error(event, 800, "Playing failed");
+				rc = -1;
+			} else {
+				change_playlist_state(PLAYLIST_PLAYING);
+			}
 		}
 	}
 	service_unlock();
@@ -916,6 +922,8 @@ static int delete_id(struct action_event *event)
 				} else {
 					set_current(0, 0);
 				}
+				output_stop();
+				change_playlist_state(PLAYLIST_STOPPED);
 			} else if (idx < current_idx) {
 				set_current(current_id, current_idx-1);
 			}
