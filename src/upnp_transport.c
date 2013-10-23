@@ -753,10 +753,9 @@ static int divide_leave_remainder(gint64 *val, gint64 divisor) {
 	return result;
 }
 static void print_upnp_time(char *result, size_t size, gint64 t) {
-	const gint64 one_sec = 1000000000LL;  // units are in nanoseconds.
-	const int hour = divide_leave_remainder(&t, 3600LL * one_sec);
-	const int minute = divide_leave_remainder(&t, 60LL * one_sec);
-	const int second = divide_leave_remainder(&t, one_sec);
+	const int hour = divide_leave_remainder(&t, 3600);
+	const int minute = divide_leave_remainder(&t, 60);
+	const int second = divide_leave_remainder(&t, 1);
 	snprintf(result, size, "%d:%02d:%02d", hour, minute, second);
 }
 
@@ -770,32 +769,18 @@ static gint64 parse_upnp_time(const char *time_string) {
 	return one_sec_unit * seconds;
 }
 
-// We constantly update the track time to event about it to our clients.
-static void *thread_update_track_time(void *userdata) {
-	const gint64 one_sec_unit = 1000000000LL;
+
+static void shared_meta_time_change(uint32_t total, uint32_t current)
+{
 	char tbuf[32];
-	gint64 last_duration = -1, last_position = -1;
-	for (;;) {
-		usleep(500000);  // 500ms
-		service_lock();
-		gint64 duration, position;
-		const int pos_result = output_get_position(&duration, &position);
-		if (pos_result == 0) {
-			if (duration != last_duration) {
-				print_upnp_time(tbuf, sizeof(tbuf), duration);
-				replace_var(TRANSPORT_VAR_CUR_TRACK_DUR, tbuf);
-				last_duration = duration;
-			}
-			if (position / one_sec_unit != last_position) {
-				print_upnp_time(tbuf, sizeof(tbuf), position);
-				replace_var(TRANSPORT_VAR_REL_TIME_POS, tbuf);
-				last_position = position / one_sec_unit;
-			}
-		}
-		service_unlock();
-	}
-	return NULL;  // not reached.
+	service_lock();
+	print_upnp_time(tbuf, sizeof(tbuf), total);
+	replace_var(TRANSPORT_VAR_CUR_TRACK_DUR, tbuf);
+	print_upnp_time(tbuf, sizeof(tbuf), current);
+	replace_var(TRANSPORT_VAR_REL_TIME_POS, tbuf);
+	service_unlock();
 }
+
 
 static int get_position_info(struct action_event *event)
 {
@@ -1040,8 +1025,11 @@ void upnp_transport_init(struct upnp_device *device) {
 	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
 					   TRANSPORT_VAR_ABS_CTR_POS);
 
-	pthread_t thread;
-	pthread_create(&thread, NULL, thread_update_track_time, NULL);
+	struct shared_metadata *sm = output_shared_metadata();
+	if (sm != NULL) {
+		shared_meta_time_add_listener(sm, shared_meta_time_change);
+	}
+
 }
 
 void upnp_transport_register_variable_listener(variable_change_listener_t cb,

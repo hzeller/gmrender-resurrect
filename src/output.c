@@ -30,6 +30,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <upnp/ithread.h>
 
 #include <glib.h>
 
@@ -51,6 +52,31 @@ static struct output_module *modules[] = {
 };
 
 static struct output_module *output_module = NULL;
+
+static void *thread_update_track_time(void *userdata) {
+	const gint64 one_sec_unit = 1000000000LL;
+	gint64 last_duration = -1, last_position = -1;
+	for (;;) {
+		usleep(500000);  // 500ms
+		struct shared_metadata *sm = output_shared_metadata();
+		if (sm != NULL) {
+			gint64 duration, position;
+			const int pos_result = output_get_position(&duration, &position);
+			if (pos_result == 0) {
+				duration /= one_sec_unit;
+				position /= one_sec_unit;
+				if (duration != last_duration || position != last_position) {
+					last_duration = duration;
+					last_position = position;
+					shared_meta_time_notify(sm, duration, position);
+				}
+			}
+		}
+	}
+	return NULL;  // not reached.
+}
+
+
 
 void output_dump_modules(void)
 {
@@ -101,6 +127,10 @@ int output_init(const char *shortname)
 		 output_module->shortname, output_module->description);
 
 	output_module->shared_metadata = shared_metadata_create();
+
+	pthread_t thread;
+	pthread_create(&thread, NULL, thread_update_track_time, NULL);
+
 
 	if (output_module->init) {
 		return output_module->init();
