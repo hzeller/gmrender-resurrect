@@ -182,6 +182,9 @@ static void output_gstreamer_set_uri(const char *uri,
 	gsuri_ = strdup(uri);
 	meta_update_callback_ = meta_cb;
 	SongMetaData_clear(&song_meta_);
+	if (gstreamer_output.shared_metadata != NULL) {
+		shared_meta_song_notify(gstreamer_output.shared_metadata, gsuri_, (char*)"");
+	}
 }
 
 static int output_gstreamer_play(output_transition_cb_t callback) {
@@ -256,6 +259,7 @@ struct MetaModify {
 	struct SongMetaData *meta;
 	int any_change;
 };
+
 
 static void MetaModify_add_tag(const GstTagList *list, const gchar *tag,
 			       gpointer user_data) {
@@ -347,7 +351,7 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 		if (GST_STATE_PLAYING == newstate && gstreamer_output.shared_metadata)  {
 			int current_audio_num;
 			g_object_get (player_, "current-audio", &current_audio_num, NULL);
-			if (current_audio_num < 0) {
+			if (current_audio_num >= 0) {
 				GstPad *audio_pad= NULL;
 				g_signal_emit_by_name (player_, "get-audio-pad", current_audio_num, &audio_pad);
 				if (audio_pad != NULL) {
@@ -420,6 +424,17 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 					shared_meta_details_notify(gstreamer_output.shared_metadata, channels, bits, rate);
 				}
 			}
+
+			gint64 track_duration;
+#if (GST_VERSION_MAJOR < 1)
+			GstFormat fmt = GST_FORMAT_TIME;
+			GstFormat* query_type = &fmt;
+#else
+			GstFormat query_type = GST_FORMAT_TIME;
+#endif	
+			if (gst_element_query_duration(player_, query_type, &track_duration)) {
+				shared_meta_time_notify(gstreamer_output.shared_metadata, track_duration / 1000000000LL, 0);
+			}
 		}
 
 		break;
@@ -428,7 +443,7 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 	case GST_MESSAGE_TAG: {
 		GstTagList *tags = NULL;
     
-		if (meta_update_callback_ != NULL) {
+		if (meta_update_callback_ != NULL || gstreamer_output.shared_metadata != NULL) {
 			gst_message_parse_tag(msg, &tags);
 			/*g_print("GStreamer: Got tags from element %s\n",
 				GST_OBJECT_NAME (msg->src));
@@ -439,7 +454,13 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 			gst_tag_list_foreach(tags, &MetaModify_add_tag, &modify);
 			gst_tag_list_free(tags);
 			if (modify.any_change) {
-				meta_update_callback_(&song_meta_);
+				if (meta_update_callback_ != NULL)
+					meta_update_callback_(&song_meta_);
+				if (gstreamer_output.shared_metadata != NULL) {
+					char *meta = SongMetaData_to_DIDL(&song_meta_, NULL);
+					shared_meta_meta_notify(gstreamer_output.shared_metadata, meta);
+					free(meta);
+				}
 			}
 		}
 		break;

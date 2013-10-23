@@ -51,6 +51,7 @@ struct shared_metadata {
 static void add_callback(shared_meta_callback **list, void *cb)
 {
 	assert(cb != NULL);
+	assert(list != NULL);
 	shared_meta_callback *cur = *list;
 	while (cur != NULL) {
 		if (cur->callback == cb)
@@ -205,6 +206,7 @@ struct shared_metadata* shared_metadata_create(void)
 {
 	struct shared_metadata *sm = malloc(sizeof(struct shared_metadata));
 	assert(sm != NULL);
+	memset(sm, 0, sizeof(struct shared_metadata));
 	return sm;
 }
 

@@ -55,6 +55,7 @@
 #include "upnp_renderer.h"
 #include "upnp_transport.h"
 #include "oh_playlist.h"
+#include "oh_info.h"
 
 static gboolean show_version = FALSE;
 static gboolean show_devicedesc = FALSE;
@@ -278,6 +279,7 @@ int main(int argc, char **argv)
 	upnp_transport_init(device);
 	upnp_control_init(device);
 	oh_playlist_init(device);
+	oh_info_init(device);
 
 	if (show_devicedesc) {
 		// This can only be run after all services have been
