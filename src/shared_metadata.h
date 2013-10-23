@@ -28,9 +28,13 @@
 
 struct shared_metadata;
 
+struct shared_metadata *shared_metadata_create(void);
+void shared_metadata_free(struct shared_metadata *sm);
+
 typedef void (*shared_meta_song_change_t)(char *uri, char *metadata);
 typedef void (*shared_meta_metadata_change_t)(char *metadata);
 typedef void (*shared_meta_time_change_t)(uint32_t total, uint32_t current);
+typedef void (*shared_meta_details_change_t)(int channels, int bits, int rate);
 
 
 void shared_meta_song_add_listener(struct shared_metadata *sm, shared_meta_song_change_t l);
@@ -39,10 +43,13 @@ void shared_meta_meta_add_listener(struct shared_metadata *sm, shared_meta_metad
 void shared_meta_meta_remove_listener(struct shared_metadata *sm, shared_meta_metadata_change_t l);
 void shared_meta_time_add_listener(struct shared_metadata *sm, shared_meta_time_change_t l);
 void shared_meta_time_remove_listener(struct shared_metadata *sm, shared_meta_time_change_t l);
+void shared_meta_details_add_listener(struct shared_metadata *sm, shared_meta_details_change_t l);
+void shared_meta_details_remove_listener(struct shared_metadata *sm, shared_meta_details_change_t l);
 
 void shared_meta_song_notify(struct shared_metadata *sm, char *uri, char *metadata);
 void shared_meta_meta_notify(struct shared_metadata *sm, char *metadata);
 void shared_meta_time_notify(struct shared_metadata *sm, uint32_t total, uint32_t current);
+void shared_meta_details_notify(struct shared_metadata *sm, int channels, int bits, int rate);
 
 
 #endif /* _SHARED_METADATA_H */

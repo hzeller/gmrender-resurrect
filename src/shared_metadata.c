@@ -36,6 +36,7 @@ struct shared_metadata {
 	shared_meta_callback *song_callbacks;
 	shared_meta_callback *meta_callbacks;
 	shared_meta_callback *time_callbacks;
+	shared_meta_callback *details_callbacks;
 	ithread_mutex_t mutex;
 };
 
@@ -61,6 +62,16 @@ static void add_callback(shared_meta_callback **list, void *cb)
 		assert(cur != NULL);
 		cur->next = *list;
 		*list = cur;
+	}
+}
+
+static void clear_list(shared_meta_callback *list)
+{
+	shared_meta_callback *next;
+	while (list != NULL) {
+		next = list->next;
+		free(list);
+		list = next;
 	}
 }
 
@@ -133,6 +144,22 @@ void shared_meta_time_remove_listener(struct shared_metadata *sm, shared_meta_ti
 	ithread_mutex_unlock(&(sm->mutex));
 }
 
+void shared_meta_details_add_listener(struct shared_metadata *sm, shared_meta_details_change_t l)
+{
+	assert(sm != NULL);
+	ithread_mutex_lock(&(sm->mutex));
+	add_callback(&(sm->details_callbacks), l);
+	ithread_mutex_unlock(&(sm->mutex));
+}
+
+void shared_meta_details_remove_listener(struct shared_metadata *sm, shared_meta_details_change_t l)
+{
+	assert(sm != NULL);
+	ithread_mutex_lock(&(sm->mutex));
+	remove_callback(&(sm->details_callbacks), l);
+	ithread_mutex_unlock(&(sm->mutex));
+}
+
 void shared_meta_song_notify(struct shared_metadata *sm, char *uri, char *metadata)
 {
 	assert(sm != NULL);
@@ -163,3 +190,29 @@ void shared_meta_time_notify(struct shared_metadata *sm, uint32_t total, uint32_
 	ithread_mutex_unlock(&(sm->mutex));
 }
 
+void shared_meta_details_notify(struct shared_metadata *sm, int channels, int bits, int rate)
+{
+	assert(sm != NULL);
+	ithread_mutex_lock(&(sm->mutex));
+	LIST_START_ITERATE(sm->details_callbacks, shared_meta_details_change_t);
+	callback(channels, bits, rate);
+	LIST_END_ITERATE();
+	ithread_mutex_unlock(&(sm->mutex));
+}
+
+struct shared_metadata* shared_metadata_create(void)
+{
+	struct shared_metadata *sm = malloc(sizeof(struct shared_metadata));
+	assert(sm != NULL);
+	return sm;
+}
+
+void shared_metadata_free(struct shared_metadata *sm)
+{
+	if (sm != NULL) {
+		clear_list(sm->song_callbacks);
+		clear_list(sm->meta_callbacks);
+		clear_list(sm->time_callbacks);
+		clear_list(sm->details_callbacks);
+	}
+}
