@@ -100,6 +100,8 @@ int output_init(const char *shortname)
 	Log_info("output", "Using output module: %s (%s)",
 		 output_module->shortname, output_module->description);
 
+	output_module->shared_metadata = shared_metadata_create();
+
 	if (output_module->init) {
 		return output_module->init();
 	}
@@ -215,3 +217,12 @@ int output_set_mute(int value) {
 	}
 	return -1;
 }
+
+struct shared_metadata *output_shared_metadata(void)
+{
+	if (output_module) {
+		return output_module->shared_metadata;
+	}
+	return NULL;
+}
+

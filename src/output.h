@@ -26,6 +26,7 @@
 
 #include <glib.h>
 #include "song-meta-data.h"
+#include "shared_metadata.h"
 
 // Feedback for the controlling part what is happening with the
 // output.
@@ -58,5 +59,7 @@ int output_get_volume(float *v);
 int output_set_volume(float v);
 int output_get_mute(int *m);
 int output_set_mute(int m);
+
+struct shared_metadata *output_shared_metadata(void);
 
 #endif /* _OUTPUT_H */

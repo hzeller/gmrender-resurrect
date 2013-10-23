@@ -25,10 +25,12 @@
 #define _OUTPUT_MODULE_H
 
 #include "output.h"
+#include "shared_metadata.h"
 
 struct output_module {
         const char *shortname;
         const char *description;
+		struct shared_metadata *shared_metadata;
 	int (*add_options)(GOptionContext *ctx);
 
 	// Commands.
