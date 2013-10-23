@@ -188,6 +188,7 @@ static int handle_subscription_request(struct upnp_device *priv,
 	ithread_mutex_lock(srv->service_mutex);
 	const int var_count =
 		VariableContainer_get_num_vars(srv->variable_container);
+	// TODO(hzeller): maybe use srv->last_change directly ?
 	upnp_last_change_builder_t *builder = UPnPLastChangeBuilder_new(srv->event_xml_ns);
 	for (int i = 0; i < var_count; ++i) {
 		const char *name;
