@@ -804,6 +804,14 @@ void upnp_control_init(struct upnp_device *device) {
 		UPnPLastChangeCollector_new(state_variables_, CONTROL_EVENT_XML_NS,
 					    device,
 					    CONTROL_SERVICE_ID);
+	// According to UPnP-av-RenderingControl-v3-Service-20101231.pdf, 2.3.1
+	// page 51, the A_ARG_TYPE* variables are not evented.
+	UPnPLastChangeCollector_add_ignore(control_service_.last_change,
+					   CONTROL_VAR_AAT_CHANNEL);
+	UPnPLastChangeCollector_add_ignore(control_service_.last_change,
+					   CONTROL_VAR_AAT_INSTANCE_ID);
+	UPnPLastChangeCollector_add_ignore(control_service_.last_change,
+					   CONTROL_VAR_AAT_PRESET_NAME);
 }
 
 void upnp_control_register_variable_listener(variable_change_listener_t cb,
