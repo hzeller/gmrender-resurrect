@@ -56,6 +56,8 @@
 #define CONTROL_SCPD_URL "/upnp/rendercontrolSCPD.xml"
 #define CONTROL_CONTROL_URL "/upnp/control/rendercontrol1"
 #define CONTROL_EVENT_URL "/upnp/event/rendercontrol1"
+
+// Namespace, see UPnP-av-RenderingControl-v3-Service-20101231.pdf page 19
 #define CONTROL_EVENT_XML_NS "urn:schemas-upnp-org:metadata-1-0/RCS/"
 
 typedef enum {
