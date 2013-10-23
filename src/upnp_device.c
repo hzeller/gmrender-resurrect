@@ -194,8 +194,10 @@ static int handle_subscription_request(struct upnp_device *priv,
 		const char *name;
 		const char *value =
 			VariableContainer_get(srv->variable_container, i, &name);
-		// Send over all variables except "LastChange" itself.
-		if (value && strcmp("LastChange", name) != 0) {
+		// Send over all variables except "LastChange" itself. Also all
+		// A_ARG_TYPE variables are not evented.
+		if (value && strcmp("LastChange", name) != 0
+		    && strncmp("A_ARG_TYPE_", name, strlen("A_ARG_TYPE_")) != 0) {
 			UPnPLastChangeBuilder_add(builder, name, value);
 		}
 	}
