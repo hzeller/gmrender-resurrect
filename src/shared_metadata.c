@@ -60,6 +60,7 @@ static void add_callback(shared_meta_callback **list, void *cb)
 	if (cur == NULL) {
 		cur = malloc(sizeof(shared_meta_callback));
 		assert(cur != NULL);
+		cur->callback = cb;
 		cur->next = *list;
 		*list = cur;
 	}
