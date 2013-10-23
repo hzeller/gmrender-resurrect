@@ -127,13 +127,15 @@ void VariableContainer_register_callback(variable_container_t *object,
 
 // -- UPnPLastChangeBuilder
 struct upnp_last_change_builder {
+	const char *xml_namespace;
 	struct xmldoc *change_event_doc;
 	struct xmlelement *instance_element;
 };
 
-upnp_last_change_builder_t *UPnPLastChangeBuilder_new(void) {
+upnp_last_change_builder_t *UPnPLastChangeBuilder_new(const char *xml_namespace) {
 	upnp_last_change_builder_t *result = (upnp_last_change_builder_t*)
 		malloc(sizeof(upnp_last_change_builder_t));
+	result->xml_namespace = xml_namespace;
 	result->change_event_doc = NULL;
 	result->instance_element = NULL;
 	return result;
@@ -154,7 +156,7 @@ void UPnPLastChangeBuilder_add(upnp_last_change_builder_t *builder,
 		builder->change_event_doc = xmldoc_new();
 		struct xmlelement *toplevel =
 			xmldoc_new_topelement(builder->change_event_doc, "Event",
-				     "urn:schemas-upnp-org:metadata-1-0/AVT/");
+					      builder->xml_namespace);
 		// Right now, we only have exactly one instance.
 		builder->instance_element =
 			add_attributevalue_element(builder->change_event_doc,
@@ -196,6 +198,7 @@ static void UPnPLastChangeCollector_callback(void *userdata,
 
 upnp_last_change_collector_t *
 UPnPLastChangeCollector_new(variable_container_t *variable_container,
+			    const char *event_xml_namespace,
 			    struct upnp_device *upnp_device,
 			    const char *service_id) {
 	upnp_last_change_collector_t *result = (upnp_last_change_collector_t*)
@@ -206,7 +209,7 @@ UPnPLastChangeCollector_new(variable_container_t *variable_container,
 	result->upnp_device = upnp_device;
 	result->service_id = service_id;
 	result->open_transactions = 0;
-	result->builder = UPnPLastChangeBuilder_new();
+	result->builder = UPnPLastChangeBuilder_new(event_xml_namespace);
 
 	// Create initial LastChange that contains all variables in their
 	// current state. This might help devices that silently re-connect

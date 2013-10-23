@@ -51,6 +51,7 @@
 #define TRANSPORT_SCPD_URL "/upnp/rendertransportSCPD.xml"
 #define TRANSPORT_CONTROL_URL "/upnp/control/rendertransport1"
 #define TRANSPORT_EVENT_URL "/upnp/event/rendertransport1"
+#define TRANSPORT_EVENT_XML_NS "urn:schemas-upnp-org:metadata-1-0/AVT/"
 
 typedef enum {
 	TRANSPORT_VAR_TRANSPORT_STATUS,
@@ -1027,8 +1028,9 @@ struct service *upnp_transport_get_service(void) {
 void upnp_transport_init(struct upnp_device *device) {
 	assert(transport_service_.last_change == NULL);
 	transport_service_.last_change =
-		UPnPLastChangeCollector_new(state_variables_, device,
-					    TRANSPORT_SERVICE_ID);
+		UPnPLastChangeCollector_new(state_variables_,
+					    TRANSPORT_EVENT_XML_NS,
+					    device, TRANSPORT_SERVICE_ID);
 	// Times and counters should not be evented. We only change REL_TIME
 	// right now anyway (AVTransport-v1 document, 2.3.1 Event Model)
 	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
@@ -1055,6 +1057,7 @@ struct service transport_service_ = {
 	.scpd_url =		TRANSPORT_SCPD_URL,
 	.control_url =		TRANSPORT_CONTROL_URL,
 	.event_url =		TRANSPORT_EVENT_URL,
+	.event_xml_ns =         TRANSPORT_EVENT_XML_NS,
 	.actions =              transport_actions,
 	.action_arguments =     argument_list,
 	.variable_names =       transport_variable_names,

@@ -92,6 +92,7 @@ struct service {
 	const char *scpd_url;
 	const char *control_url;
 	const char *event_url;
+	const char *event_xml_ns;
 	struct action *actions;
 	struct argument ***action_arguments;
 	const char **variable_names;

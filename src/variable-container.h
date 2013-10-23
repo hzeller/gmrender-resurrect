@@ -88,7 +88,10 @@ void VariableContainer_register_callback(variable_container_t *object,
 // added name/value pairs.
 struct upnp_last_change_builder;
 typedef struct upnp_last_change_builder upnp_last_change_builder_t;
-upnp_last_change_builder_t *UPnPLastChangeBuilder_new(void);
+
+// Create a new last change builder. The pointer to the xml_namespace string
+// must exist for the livetime of this object.
+upnp_last_change_builder_t *UPnPLastChangeBuilder_new(const char *xml_namespace);
 void UPnPLastChangeBuilder_delete(upnp_last_change_builder_t *builder);
 
 void UPnPLastChangeBuilder_add(upnp_last_change_builder_t *builder,
@@ -109,6 +112,7 @@ typedef struct upnp_last_change_collector upnp_last_change_collector_t;
 // "LastChange", otherwise this collector is not applicable and fails.
 upnp_last_change_collector_t *
 UPnPLastChangeCollector_new(variable_container_t *variable_container,
+			    const char *event_xml_namespac,
 			    struct upnp_device *upnp_device,
 			    const char *service_id);
 
