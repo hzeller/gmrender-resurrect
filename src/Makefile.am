@@ -15,6 +15,7 @@ gmediarender_SOURCES = main.c git-version.h \
 	mime_types.c mime_types.h \
 	oh_playlist.c oh_playlist.h \
 	oh_info.c oh_info.h \
+	oh_time.c oh_time.h \
 	playlist.c playlist.h \
 	shared_metadata.c shared_metadata.h
 
