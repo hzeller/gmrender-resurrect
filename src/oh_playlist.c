@@ -360,12 +360,20 @@ static void inform_play_transition_from_output(enum PlayFeedback fb);
 static void service_lock(void)
 {
 	ithread_mutex_lock(&playlist_mutex);
+	if (playlist_service_.last_change) {
+		UPnPLastChangeCollector_start(playlist_service_.last_change);
+	}
 }
 
 static void service_unlock(void)
 {
+	if (playlist_service_.last_change) {
+		UPnPLastChangeCollector_finish(playlist_service_.last_change);
+	}
 	ithread_mutex_unlock(&playlist_mutex);
 }
+
+
 
 // Replace given variable without sending an state-change event.
 static int replace_var(playlist_variable_t varnum, const char *new_value) {

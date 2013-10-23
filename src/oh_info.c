@@ -187,10 +187,16 @@ static ithread_mutex_t info_mutex;
 static void service_lock(void)
 {
 	ithread_mutex_lock(&info_mutex);
+	if (info_service_.last_change) {
+		UPnPLastChangeCollector_start(info_service_.last_change);
+	}
 }
 
 static void service_unlock(void)
 {
+	if (info_service_.last_change) {
+		UPnPLastChangeCollector_finish(info_service_.last_change);
+	}
 	ithread_mutex_unlock(&info_mutex);
 }
 
@@ -262,6 +268,7 @@ static void update_counter_vars(void)
 
 static void shared_meta_time_change(uint32_t total, uint32_t current)
 {
+	service_lock();
 	int changed = 0;
 	if (replace_var_uint(INFO_VAR_DURATION, total))
 		changed = 1;
@@ -269,29 +276,35 @@ static void shared_meta_time_change(uint32_t total, uint32_t current)
 		details_count++;
 		update_counter_vars();
 	}
+	service_unlock();
 }
 
 static void shared_meta_song_change(char *uri, char *meta)
 {
+	service_lock();
 	if (replace_var(INFO_VAR_URI, uri)) {
 		track_count++;
 		metatext_count = 0;
 		details_count = 0;
 		update_counter_vars();
 	}
+	service_unlock();
 }
 
 static void shared_meta_meta_change(char *meta)
 {
+	service_lock();
 	if (replace_var(INFO_VAR_METADATA, meta)) {
 		track_count++;
 		update_counter_vars();
 	}
+	service_unlock();
 }
 
 static void shared_meta_details_change(int channels, int bits, int rate)
 {
 	int changed;
+	service_lock();
 	changed = replace_var_int(INFO_VAR_BIT_DEPTH, bits);
 	changed |= replace_var_int(INFO_VAR_SAMPLE_RATE, rate);
 	changed |= replace_var_uint(INFO_VAR_DETAILS_COUNT, details_count);
@@ -299,6 +312,7 @@ static void shared_meta_details_change(int channels, int bits, int rate)
 		details_count++;
 		update_counter_vars();
 	}
+	service_unlock();
 }
 
 struct service *oh_info_get_service(void) {

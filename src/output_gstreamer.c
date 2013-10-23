@@ -337,6 +337,8 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 		break;
 	}
 	case GST_MESSAGE_STATE_CHANGED: {
+		if (GST_MESSAGE_SRC(msg) != GST_OBJECT(player_))
+			break;
 		GstState oldstate, newstate, pending;
 		gst_message_parse_state_changed(msg, &oldstate, &newstate,
 						&pending);

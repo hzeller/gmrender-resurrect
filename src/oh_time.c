@@ -123,10 +123,16 @@ static ithread_mutex_t time_mutex;
 static void service_lock(void)
 {
 	ithread_mutex_lock(&time_mutex);
+	if (time_service_.last_change) {
+		UPnPLastChangeCollector_start(time_service_.last_change);
+	}
 }
 
 static void service_unlock(void)
 {
+	if (time_service_.last_change) {
+		UPnPLastChangeCollector_finish(time_service_.last_change);
+	}
 	ithread_mutex_unlock(&time_mutex);
 }
 
