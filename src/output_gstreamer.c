@@ -343,6 +343,85 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 			gststate_get_name(newstate),
 			gststate_get_name(pending));
 		*/
+			
+		if (GST_STATE_PLAYING == newstate && gstreamer_output.shared_metadata)  {
+			int current_audio_num;
+			g_object_get (player_, "current-audio", &current_audio_num, NULL);
+			if (current_audio_num < 0) {
+				GstPad *audio_pad= NULL;
+				g_signal_emit_by_name (player_, "get-audio-pad", current_audio_num, &audio_pad);
+				if (audio_pad != NULL) {
+					GstCaps *caps = gst_pad_get_current_caps(audio_pad);
+					const GstStructure *str = gst_caps_get_structure (caps, 0);
+					gint bits = 0, channels = 0, rate = 0;
+
+					gst_structure_get_int(str, "rate", &rate);
+					gst_structure_get_int(str, "channels", &channels);
+
+					const gchar *format = gst_structure_get_string(str, "format");
+					if (format != NULL)  {
+						if (!strcmp(format, "S8"))
+							bits = 8;
+						else if (!strcmp(format, "U8"))
+							bits = 8;
+						else if (!strcmp(format, "S16LE"))
+							bits = 16;
+						else if (!strcmp(format, "S16BE"))
+							bits = 16;
+						else if (!strcmp(format, "S24_32LE"))
+							bits = 24;
+						else if (!strcmp(format, "S24_32BE"))
+							bits = 24;
+						else if (!strcmp(format, "U24_32LE"))
+							bits = 24;
+						else if (!strcmp(format, "U24_32BE"))
+							bits = 24;
+						else if (!strcmp(format, "S32LE"))
+							bits = 32;
+						else if (!strcmp(format, "S32BE"))
+							bits = 32;
+						else if (!strcmp(format, "U32LE"))
+							bits = 32;
+						else if (!strcmp(format, "U32BE"))
+							bits = 32;
+						else if (!strcmp(format, "S24LE"))
+							bits = 24;
+						else if (!strcmp(format, "S24BE"))
+							bits = 24;
+						else if (!strcmp(format, "U24LE"))
+							bits = 24;
+						else if (!strcmp(format, "U24BE"))
+							bits = 24;
+						else if (!strcmp(format, "S20LE"))
+							bits = 20;
+						else if (!strcmp(format, "S20BE"))
+							bits = 20;
+						else if (!strcmp(format, "U20LE"))
+							bits = 20;
+						else if (!strcmp(format, "U20BE"))
+							bits = 20;
+						else if (!strcmp(format, "S18LE"))
+							bits = 18;
+						else if (!strcmp(format, "S18BE"))
+							bits = 18;
+						else if (!strcmp(format, "U18LE"))
+							bits = 18;
+						else if (!strcmp(format, "U18BE"))
+							bits = 18;
+						else if (!strcmp(format, "F32LE"))
+							bits = 32;
+						else if (!strcmp(format, "F32BE"))
+							bits = 32;
+						else if (!strcmp(format, "F64LE"))
+							bits = 64;
+						else if (!strcmp(format, "F64BE"))
+							bits = 64;
+					}
+					shared_meta_details_notify(gstreamer_output.shared_metadata, channels, bits, rate);
+				}
+			}
+		}
+
 		break;
 	}
 
