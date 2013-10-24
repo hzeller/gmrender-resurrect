@@ -50,6 +50,7 @@
 #include "oh_playlist.h"
 #include "oh_info.h"
 #include "oh_time.h"
+#include "oh_product.h"
 
 #include "upnp_renderer.h"
 #include "git-version.h"
@@ -118,14 +119,15 @@ void upnp_renderer_dump_transport_scpd(void)
 
 static int upnp_renderer_init(void)
 {
-	static struct service *upnp_services[7];
+	static struct service *upnp_services[8];
 	upnp_services[0] = upnp_transport_get_service();
 	upnp_services[1] = upnp_connmgr_get_service();
 	upnp_services[2] = upnp_control_get_service();
-	upnp_services[3] = oh_playlist_get_service();
-	upnp_services[4] = oh_info_get_service();
-	upnp_services[5] = oh_time_get_service();
-	upnp_services[6] = NULL;
+	upnp_services[3] = oh_product_get_service();
+	upnp_services[4] = oh_playlist_get_service();
+	upnp_services[5] = oh_info_get_service();
+	upnp_services[6] = oh_time_get_service();
+	upnp_services[7] = NULL;
 	render_device.services = upnp_services;
         return connmgr_init();
 }

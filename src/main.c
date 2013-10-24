@@ -57,6 +57,7 @@
 #include "oh_playlist.h"
 #include "oh_info.h"
 #include "oh_time.h"
+#include "oh_product.h"
 
 static gboolean show_version = FALSE;
 static gboolean show_devicedesc = FALSE;
@@ -279,6 +280,7 @@ int main(int argc, char **argv)
 
 	upnp_transport_init(device);
 	upnp_control_init(device);
+	oh_product_init(device);
 	oh_playlist_init(device);
 	oh_info_init(device);
 	oh_time_init(device);
