@@ -58,6 +58,7 @@
 #include "oh_info.h"
 #include "oh_time.h"
 #include "oh_product.h"
+#include "oh_source.h"
 
 static gboolean show_version = FALSE;
 static gboolean show_devicedesc = FALSE;
@@ -66,6 +67,7 @@ static gboolean show_control_scpd = FALSE;
 static gboolean show_transport_scpd = FALSE;
 static gboolean show_outputs = FALSE;
 static gboolean daemon_mode = FALSE;
+static gboolean openhome_mode = FALSE;
 
 // IP-address seems strange in libupnp: they actually don't bind to
 // that address, but to INADDR_ANY (miniserver.c in upnp library).
@@ -89,6 +91,8 @@ static const gchar *log_file = NULL;
 static GOptionEntry option_entries[] = {
 	{ "version", 0, 0, G_OPTION_ARG_NONE, &show_version,
 	  "Output version information and exit", NULL },
+	{ "openhome", 0, 0, G_OPTION_ARG_NONE, &openhome_mode,
+	  "Device mode (upnpav or openhome, defaults to upnpav)", NULL },
 	{ "ip-address", 'I', 0, G_OPTION_ARG_STRING, &ip_address,
 	  "The local IP address the service is running and advertised "
 	  "(only one, 0.0.0.0 won't work)", NULL },
@@ -194,7 +198,7 @@ static void init_logging(const char *log_file) {
 int main(int argc, char **argv)
 {
 	int rc;
-	struct upnp_device_descriptor *upnp_renderer;
+	struct upnp_device_descriptor *device_desc;
 
 	if (!process_cmdline(argc, argv)) {
 		return EXIT_FAILURE;
@@ -248,8 +252,11 @@ int main(int argc, char **argv)
 	}
 #endif
 
-	upnp_renderer = upnp_renderer_descriptor(friendly_name, uuid);
-	if (upnp_renderer == NULL) {
+	if (!openhome_mode)
+		device_desc = upnp_renderer_descriptor(friendly_name, uuid);
+	else
+		device_desc = oh_source_descriptor(friendly_name, uuid);
+	if (device_desc == NULL) {
 		return EXIT_FAILURE;
 	}
 
@@ -272,29 +279,32 @@ int main(int argc, char **argv)
 			  listen_port);
 		return EXIT_FAILURE;
 	}
-	device = upnp_device_init(upnp_renderer, ip_address, listen_port);
+	device = upnp_device_init(device_desc, ip_address, listen_port);
 	if (device == NULL) {
 		Log_error("main", "ERROR: Failed to initialize UPnP device");
 		return EXIT_FAILURE;
 	}
 
-	upnp_transport_init(device);
-	upnp_control_init(device);
-	oh_product_init(device);
-	oh_playlist_init(device);
-	oh_info_init(device);
-	oh_time_init(device);
+	if (!openhome_mode) {
+		upnp_transport_init(device);
+		upnp_control_init(device);
+	} else {
+		oh_product_init(device);
+		oh_playlist_init(device);
+		oh_info_init(device);
+		oh_time_init(device);
+	}
 
 	if (show_devicedesc) {
 		// This can only be run after all services have been
 		// initialized.
-		char *buf = upnp_create_device_desc(upnp_renderer);
+		char *buf = upnp_create_device_desc(device_desc);
 		assert(buf != NULL);
 		fputs(buf, stdout);
 		exit(EXIT_SUCCESS);
 	}
 
-	if (Log_info_enabled()) {
+	if (!openhome_mode && Log_info_enabled()) {
 		upnp_transport_register_variable_listener(log_variable_change,
 							  (void*) "transport");
 		upnp_control_register_variable_listener(log_variable_change,

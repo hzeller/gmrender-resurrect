@@ -186,46 +186,11 @@ static struct var_meta connmgr_var_meta[] = {
 static ithread_mutex_t connmgr_mutex;
 
 int connmgr_init(void) {
-	struct mime_type *entry;
-	char *buf = NULL;
-	char *p;
-	int offset;
-	int bufsize = 0;
 
 	struct service *srv = upnp_connmgr_get_service();
-
-	buf = malloc(bufsize);
-	p = buf;
-	assert(buf);  // We assume an implementation that does 0-mallocs.
-	if (buf == NULL) {
-		fprintf(stderr, "%s: initial malloc failed\n",
-			__FUNCTION__);
+	char *buf = get_mime_protocol_info();
+	if (buf == NULL)
 		return -1;
-	}
-
-	for (entry = get_supported_mime_types(); entry; entry = entry->next) {
-		bufsize += strlen(entry->mime_type) + 1 + 8 + 3 + 2;
-		offset = p - buf;
-		buf = realloc(buf, bufsize);
-		if (buf == NULL) {
-			fprintf(stderr, "%s: realloc failed\n",
-				__FUNCTION__);
-			return -1;
-		}
-		p = buf;
-		p += offset;
-		strncpy(p, "http-get:*:", 11);
-		p += 11;
-		strncpy(p, entry->mime_type, strlen(entry->mime_type));
-		p += strlen(entry->mime_type);
-		strncpy(p, ":*,", 3);
-		p += 3;
-	}
-	if (p > buf) {
-		p--;
-		*p = '\0';
-	}
-	*p = '\0';
 
 	VariableContainer_change(srv->variable_container, 
 				 CONNMGR_VAR_SINK_PROTO_INFO, buf);

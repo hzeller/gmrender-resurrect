@@ -44,15 +44,12 @@
 #include "webserver.h"
 #include "upnp.h"
 #include "upnp_device.h"
-#include "upnp_connmgr.h"
-#include "upnp_control.h"
-#include "upnp_transport.h"
 #include "oh_playlist.h"
 #include "oh_info.h"
 #include "oh_time.h"
 #include "oh_product.h"
 
-#include "upnp_renderer.h"
+#include "oh_source.h"
 #include "git-version.h"
 
 static struct icon icon1 = {
@@ -76,67 +73,79 @@ static struct icon *renderer_icon[] = {
         NULL
 };
 
-static int upnp_renderer_init(void);
+static int oh_source_init(void);
 
-static struct upnp_device_descriptor render_device = {
-	.init_function          = upnp_renderer_init,
-        .device_type            = "urn:schemas-upnp-org:device:MediaRenderer:1",
+static struct upnp_device_descriptor source_device = {
+	.init_function          = oh_source_init,
+        .device_type            = "urn:linn-co-uk:device:Source:1",
         .friendly_name          = "GMediaRender",
-        .manufacturer           = "Ivo Clarysse, Henner Zeller",
+        .manufacturer           = "Ivo Clarysse, Henner Zeller, Andrey Demenev",
         .manufacturer_url       = "http://github.com/hzeller/gmrender-resurrect",
         .model_description      = PACKAGE_STRING,
         .model_name             = PACKAGE_NAME,
         .model_number           = GM_COMPILE_VERSION,
         .model_url              = "http://github.com/hzeller/gmrender-resurrect",
         .serial_number          = "1",
-        .udn                    = "uuid:GMediaRender-1_0-000-000-002",
+        .udn                    = "uuid:GMediaRender-1_0-000-000-003",
         .upc                    = "",
         .presentation_url       = "",  // TODO(hzeller) show something useful.
         .icons                  = renderer_icon,
 };
 
-void upnp_renderer_dump_connmgr_scpd(void)
+void oh_source_dump_product_scpd(void)
 {
 	char *buf;
-	buf = upnp_get_scpd(upnp_connmgr_get_service());
-	assert(buf != NULL);
-	fputs(buf, stdout);
-}
-void upnp_renderer_dump_control_scpd(void)
-{
-	char *buf;
-	buf = upnp_get_scpd(upnp_control_get_service());
-	assert(buf != NULL);
-	fputs(buf, stdout);
-}
-void upnp_renderer_dump_transport_scpd(void)
-{
-	char *buf;
-	buf = upnp_get_scpd(upnp_transport_get_service());
+	buf = upnp_get_scpd(oh_product_get_service());
 	assert(buf != NULL);
 	fputs(buf, stdout);
 }
 
-static int upnp_renderer_init(void)
+void oh_source_dump_info_scpd(void)
 {
-	static struct service *upnp_services[4];
-	upnp_services[0] = upnp_transport_get_service();
-	upnp_services[1] = upnp_connmgr_get_service();
-	upnp_services[2] = upnp_control_get_service();
-	upnp_services[3] = NULL;
-	render_device.services = upnp_services;
-        return connmgr_init();
+	char *buf;
+	buf = upnp_get_scpd(oh_info_get_service());
+	assert(buf != NULL);
+	fputs(buf, stdout);
+}
+
+void oh_source_dump_time_scpd(void)
+{
+	char *buf;
+	buf = upnp_get_scpd(oh_time_get_service());
+	assert(buf != NULL);
+	fputs(buf, stdout);
+}
+
+void oh_source_dump_playlist_scpd(void)
+{
+	char *buf;
+	buf = upnp_get_scpd(oh_playlist_get_service());
+	assert(buf != NULL);
+	fputs(buf, stdout);
+}
+
+
+static int oh_source_init(void)
+{
+	static struct service *upnp_services[5];
+	upnp_services[0] = oh_product_get_service();
+	upnp_services[1] = oh_playlist_get_service();
+	upnp_services[2] = oh_info_get_service();
+	upnp_services[3] = oh_time_get_service();
+	upnp_services[4] = NULL;
+	source_device.services = upnp_services;
+    return 0;
 }
 
 struct upnp_device_descriptor *
-upnp_renderer_descriptor(const char *friendly_name,
+oh_source_descriptor(const char *friendly_name,
 			 const char *uuid)
 {
 	char *udn;
 
-	render_device.friendly_name = friendly_name;
+	source_device.friendly_name = friendly_name;
 
 	asprintf(&udn, "uuid:%s", uuid);
-	render_device.udn = udn;
-	return &render_device;
+	source_device.udn = udn;
+	return &source_device;
 }

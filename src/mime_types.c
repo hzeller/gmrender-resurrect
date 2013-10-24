@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <assert.h>
+#include <stdio.h>
 
 #include "mime_types.h"
 #include "logging.h"
@@ -48,7 +50,7 @@ static void register_mime_type_internal(const char *mime_type) {
 			return;
 		}
 	}
-	Log_info("connmgr", "Registering support for '%s'", mime_type);
+	Log_info("mimetypes", "Registering support for '%s'", mime_type);
 
 	entry = malloc(sizeof(struct mime_type));
 	entry->mime_type = strdup(mime_type);
@@ -97,5 +99,47 @@ void register_mime_type(const char *mime_type) {
 	  register_mime_type_internal("audio/m4a");
 	  register_mime_type_internal("audio/mp4");
 	}
+}
+
+char *get_mime_protocol_info(void)
+{
+	struct mime_type *entry;
+	char *buf = NULL;
+	char *p;
+	int offset;
+	int bufsize = 0;
+	buf = malloc(bufsize);
+	p = buf;
+	assert(buf);  // We assume an implementation that does 0-mallocs.
+	if (buf == NULL) {
+		fprintf(stderr, "%s: initial malloc failed\n",
+			__FUNCTION__);
+		return NULL;
+	}
+
+	for (entry = get_supported_mime_types(); entry; entry = entry->next) {
+		bufsize += strlen(entry->mime_type) + 1 + 8 + 3 + 2;
+		offset = p - buf;
+		buf = realloc(buf, bufsize);
+		if (buf == NULL) {
+			fprintf(stderr, "%s: realloc failed\n",
+				__FUNCTION__);
+			return NULL;
+		}
+		p = buf;
+		p += offset;
+		strncpy(p, "http-get:*:", 11);
+		p += 11;
+		strncpy(p, entry->mime_type, strlen(entry->mime_type));
+		p += strlen(entry->mime_type);
+		strncpy(p, ":*,", 3);
+		p += 3;
+	}
+	if (p > buf) {
+		p--;
+		*p = '\0';
+	}
+	*p = '\0';
+	return buf;
 }
 

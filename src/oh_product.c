@@ -86,6 +86,7 @@ typedef enum {
 enum {
 	PRODUCT_CMD_SOURCE_COUNT,
 	PRODUCT_CMD_SOURCE,
+	PRODUCT_CMD_SOURCE_INDEX,
 	PRODUCT_CMD_SET_SOURCE_INDEX,
 	PRODUCT_CMD_SET_SOURCE_INDEX_BY_NAME,
 	PRODUCT_CMD_SOURCE_XML,
@@ -241,6 +242,11 @@ static struct argument *arguments_source_count[] = {
         NULL
 };
 
+static struct argument *arguments_source_index[] = {
+        & (struct argument) { "Value", PARAM_DIR_OUT, PRODUCT_VAR_SOURCE_INDEX },
+		NULL
+};
+
 static struct argument *arguments_source[] = {
         & (struct argument) { "Index", PARAM_DIR_IN, PRODUCT_VAR_SOURCE_INDEX },
         & (struct argument) { "SystemName", PARAM_DIR_OUT, PRODUCT_VAR_SOURCE_NAME },
@@ -263,6 +269,7 @@ static struct argument *arguments_xml_count[] = {
 static struct argument **argument_list[] = {
 	[PRODUCT_CMD_SOURCE_COUNT] = arguments_source_count,
 	[PRODUCT_CMD_SOURCE] = arguments_source,
+	[PRODUCT_CMD_SOURCE_INDEX] = arguments_source_index,
 	[PRODUCT_CMD_SET_SOURCE_INDEX] = arguments_set_source_index,
 	[PRODUCT_CMD_SET_SOURCE_INDEX_BY_NAME] = arguments_set_source_index_by_name,
 	[PRODUCT_CMD_SOURCE_XML] = arguments_source_xml,
@@ -313,6 +320,11 @@ static int replace_var_uint(product_variable_t varnum, unsigned int new_value)
 static int cmd_source_count(struct action_event *event)
 {
 	upnp_append_variable(event, PRODUCT_VAR_SOURCE_COUNT, "Value");
+	return 0;
+}
+
+static int cmd_source_index(struct action_event *event) {
+	upnp_append_variable(event, PRODUCT_VAR_SOURCE_INDEX, "Value");
 	return 0;
 }
 
@@ -420,6 +432,7 @@ static int cmd_set_standby(struct action_event *event)
 static struct action product_actions[] = {
 	[PRODUCT_CMD_SOURCE_COUNT] = { "SourceCount", cmd_source_count },
 	[PRODUCT_CMD_SOURCE] = { "Source", cmd_source },
+	[PRODUCT_CMD_SOURCE_INDEX] = { "SourceIndex", cmd_source_index },
 	[PRODUCT_CMD_SET_SOURCE_INDEX] = { "SetSourceIndex", cmd_set_source_index },
 	[PRODUCT_CMD_SET_SOURCE_INDEX_BY_NAME] = { "SetSourceIndexByName", cmd_set_source_index_by_name },
 	[PRODUCT_CMD_SOURCE_XML] = { "SourceXml", cmd_source_xml },

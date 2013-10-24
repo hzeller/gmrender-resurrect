@@ -1,4 +1,4 @@
-/* mime_types.h - MIME types utils
+/* oh_source.h - OpenHome Source definitions
  *
  * Copyright (C) 2005-2007   Ivo Clarysse
  * Copyright (C) 2013 Andrey Demenev
@@ -16,23 +16,21 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * along with GMediaRender; if not, write to the Free Software 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
  * MA 02110-1301, USA.
  *
  */
 
-#ifndef _MIME_TYPES_H
-#define _MIME_TYPES_H
+#ifndef _OH_SOURCE_H
+#define _OH_SOURCE_H
 
-struct mime_type {
-	const char *mime_type;
-	struct mime_type *next;
-};
+void oh_source_dump_product_scpd(void);
+void oh_source_dump_info_scpd(void);
+void oh_source_dump_time_scpd(void);
+void oh_source_dump_playlist_scpd(void);
 
-struct mime_type *get_supported_mime_types(void);
-void register_mime_type(const char *mime_type);
-char *get_mime_protocol_info(void);
+// Returned pointer not owned.
+struct upnp_device_descriptor *oh_source_descriptor(const char *name, const char *uuid);
 
-#endif
-
+#endif /* _OH_SOURCE_H */
