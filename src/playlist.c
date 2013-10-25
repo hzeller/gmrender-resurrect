@@ -48,6 +48,7 @@ struct playlist {
 	int next_index;
 	uint32_t token;
 
+	playlist_list_change_listener_t list_change_listener;
 	playlist_current_change_listener_t current_change_listener;
 	playlist_current_remove_listener_t current_remove_listener;
 	playlist_next_change_listener_t next_change_listener;
@@ -124,6 +125,11 @@ struct playlist *playlist_create(void)
 	return list;
 }
 
+void playlist_set_list_change_listener(struct playlist *list, playlist_list_change_listener_t l)
+{
+	list->list_change_listener = l;
+}
+
 void playlist_set_current_change_listener(struct playlist *list, playlist_current_change_listener_t l)
 {
 	list->current_change_listener = l;
@@ -170,11 +176,16 @@ int playlist_add(struct playlist *list, playlist_id_t after_id, char *uri, char 
 	if (list->next_index > after_index) {
 		list->next_index++;
 	}
+		
+	if (list->list_change_listener != NULL) {
+		list->list_change_listener(list);
+	}
 
 	if (list->current_index < 0) {
-		list->current_index = after_index + 1;
+		//list->current_index = after_index + 1;
 		if (list->current_change_listener != NULL) {
-			list->current_change_listener(list, list->ids[list->current_index], list->current_index, 0);
+			//list->current_change_listener(list, list->ids[list->current_index], list->current_index, 0);
+			list->current_change_listener(list, 0, -1, 0);
 		}
 	} else if (list->current_index > after_index) {
 		list->current_index++;
@@ -196,6 +207,10 @@ int playlist_clear(struct playlist *list)
 	if (list->current_index >= 0) {
 		
 		list->current_index = -1;
+
+		if (list->list_change_listener != NULL) {
+			list->list_change_listener(list);
+		}
 
 		if (list->current_remove_listener != NULL) {
 			list->current_remove_listener(list);
@@ -226,6 +241,7 @@ int playlist_remove(struct playlist *list, playlist_id_t id)
 	list->token++;
 	list->list_size--;
 
+
 	if (idx == list->current_index) {
 		if (list->current_remove_listener != NULL) {
 			list->current_remove_listener(list);
@@ -252,6 +268,10 @@ int playlist_remove(struct playlist *list, playlist_id_t id)
 			list->next_index--;
 		}
 	}
+	if (list->list_change_listener != NULL) {
+		list->list_change_listener(list);
+	}
+
 	return 0;
 }
 
@@ -278,26 +298,26 @@ int playlist_get(struct playlist *list, playlist_id_t id, char **uri, char **met
 	return 0;
 }
 
-int playlist_set_current_index(struct playlist *list, int index)
+int playlist_set_current_index(struct playlist *list, int index, int play_after_set)
 {
 	assert(list != NULL);
 	if (index < 0 || index >= list->list_size)
 		return 1;
-	if (index != list->current_index) {
+	if (index != list->current_index || play_after_set) {
 		list->current_index = index;
 		if (list->current_change_listener != NULL) {
-			list->current_change_listener(list, list->ids[index], index, 0);
+			list->current_change_listener(list, list->ids[index], index, play_after_set);
 		}
 		assign_next(list);
 	}
 	return 0;
 }
 
-int playlist_set_current_id(struct playlist *list, playlist_id_t id)
+int playlist_set_current_id(struct playlist *list, playlist_id_t id, int play_after_set)
 {
 	assert(list != NULL);
 	int index = find_id_in_list(list->ids, list->list_size, id);
-	return playlist_set_current_index(list, index);
+	return playlist_set_current_index(list, index, play_after_set);
 }
 
 void playlist_next(struct playlist *list, int automatic)

@@ -52,7 +52,7 @@
 #include "variable-container.h"
 
 // Enable logging of action requests.
-#define ENABLE_ACTION_LOGGING
+//#define ENABLE_ACTION_LOGGING
 
 struct upnp_device {
 	struct upnp_device_descriptor *upnp_device_descriptor;

@@ -64,14 +64,15 @@
 #define STR(s) #s
 #define LIST_SIZE_INCREMENT 50
 
+static void update_playlist(void);
 static const gint64 one_sec_unit = 1000000000LL;
 
 typedef enum {
 	PLAYLIST_VAR_TRANSPORT_STATE,
 	PLAYLIST_VAR_REPEAT,
 	PLAYLIST_VAR_SHUFFLE,
-	PLAYLIST_VAR_ID,
 	PLAYLIST_VAR_ID_ARRRAY,
+	PLAYLIST_VAR_ID,
 	PLAYLIST_VAR_TRACKS_MAX,
 	PLAYLIST_VAR_PROTOCOL_INFO,
 	PLAYLIST_VAR_INDEX,
@@ -84,8 +85,6 @@ typedef enum {
 	PLAYLIST_VAR_ID_ARRAY_TOKEN,
 	PLAYLIST_VAR_ID_ARRAY_CHANGED,
 	
-	PLAYLIST_VAR_DUMMY,
-
 	PLAYLIST_VAR_UNKNOWN,
 	PLAYLIST_VAR_COUNT
 } playlist_variable_t;
@@ -124,8 +123,8 @@ static const char *playlist_variable_names[] = {
 	[PLAYLIST_VAR_TRANSPORT_STATE] = "TransportState",
 	[PLAYLIST_VAR_REPEAT] = "Repeat",
 	[PLAYLIST_VAR_SHUFFLE] = "Shuffle",
-	[PLAYLIST_VAR_ID] = "Id",
 	[PLAYLIST_VAR_ID_ARRRAY] = "IdArray",
+	[PLAYLIST_VAR_ID] = "Id",
 	[PLAYLIST_VAR_TRACKS_MAX] = "TracksMax",
 	[PLAYLIST_VAR_PROTOCOL_INFO] = "ProtocolInfo",
 	[PLAYLIST_VAR_INDEX] = "Index",
@@ -137,7 +136,6 @@ static const char *playlist_variable_names[] = {
 	[PLAYLIST_VAR_METADATA] = "Metadata",
 	[PLAYLIST_VAR_ID_ARRAY_TOKEN] = "IdArrayToken",
 	[PLAYLIST_VAR_ID_ARRAY_CHANGED] = "IdArrayChanged",
-	[PLAYLIST_VAR_DUMMY] = "Unused",
 	[PLAYLIST_VAR_UNKNOWN] = NULL,
 };
 
@@ -147,8 +145,8 @@ static const char *playlist_default_values[] = {
 	[PLAYLIST_VAR_TRANSPORT_STATE] = "Stopped",
 	[PLAYLIST_VAR_REPEAT] = "0",
 	[PLAYLIST_VAR_SHUFFLE] = "0",
-	[PLAYLIST_VAR_ID] = "0",
 	[PLAYLIST_VAR_ID_ARRRAY] = "",
+	[PLAYLIST_VAR_ID] = "0",
 	[PLAYLIST_VAR_TRACKS_MAX] = XSTR(TRACKS_MAX),
 	[PLAYLIST_VAR_PROTOCOL_INFO] = "",
 	[PLAYLIST_VAR_INDEX] = "",
@@ -160,7 +158,6 @@ static const char *playlist_default_values[] = {
 	[PLAYLIST_VAR_METADATA] = "",
 	[PLAYLIST_VAR_ID_ARRAY_TOKEN] = "",
 	[PLAYLIST_VAR_ID_ARRAY_CHANGED] = "",
-	[PLAYLIST_VAR_DUMMY] = "",
 	[PLAYLIST_VAR_UNKNOWN] = NULL,
 };
 
@@ -189,8 +186,8 @@ static struct var_meta player_var_meta[] = {
 	[PLAYLIST_VAR_TRANSPORT_STATE] =    { SENDEVENT_YES, DATATYPE_STRING, playlist_states, NULL },
 	[PLAYLIST_VAR_REPEAT] =				{ SENDEVENT_YES, DATATYPE_BOOLEAN, NULL, NULL },
 	[PLAYLIST_VAR_SHUFFLE] =			{ SENDEVENT_YES, DATATYPE_BOOLEAN, NULL, NULL },
-	[PLAYLIST_VAR_ID] =					{ SENDEVENT_YES, DATATYPE_UI4, NULL, &id_range },
 	[PLAYLIST_VAR_ID_ARRRAY] =			{ SENDEVENT_YES, DATATYPE_BASE64, NULL, NULL },
+	[PLAYLIST_VAR_ID] =					{ SENDEVENT_YES, DATATYPE_UI4, NULL, &id_range },
 	[PLAYLIST_VAR_TRACKS_MAX] =			{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
 	[PLAYLIST_VAR_PROTOCOL_INFO] =		{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
 	[PLAYLIST_VAR_INDEX] =				{ SENDEVENT_NO,  DATATYPE_UI4, NULL, NULL },
@@ -202,7 +199,6 @@ static struct var_meta player_var_meta[] = {
 	[PLAYLIST_VAR_METADATA] =			{ SENDEVENT_NO,  DATATYPE_STRING, NULL, NULL },
 	[PLAYLIST_VAR_ID_ARRAY_TOKEN] =		{ SENDEVENT_NO,  DATATYPE_UI4, NULL, NULL },
 	[PLAYLIST_VAR_ID_ARRAY_CHANGED] =	{ SENDEVENT_NO,  DATATYPE_BOOLEAN, NULL, NULL },
-	[PLAYLIST_VAR_DUMMY] =				{ SENDEVENT_NO,  DATATYPE_STRING, NULL, NULL },
 	
 	[PLAYLIST_VAR_UNKNOWN] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
 };
@@ -259,7 +255,7 @@ static struct argument *arguments_id[] = {
 };
 
 static struct argument *arguments_read[] = {
-        & (struct argument) { "Id", PARAM_DIR_IN, PLAYLIST_VAR_DUMMY },
+        & (struct argument) { "Id", PARAM_DIR_IN, PLAYLIST_VAR_ID },
         & (struct argument) { "Uri", PARAM_DIR_OUT, PLAYLIST_VAR_URI },
         & (struct argument) { "Metadata", PARAM_DIR_OUT, PLAYLIST_VAR_METADATA },
         NULL
@@ -273,15 +269,15 @@ static struct argument *arguments_readlist[] = {
 };
 
 static struct argument *arguments_insert[] = {
-        & (struct argument) { "AfterId", PARAM_DIR_IN, PLAYLIST_VAR_DUMMY },
+        & (struct argument) { "AfterId", PARAM_DIR_IN, PLAYLIST_VAR_ID },
         & (struct argument) { "Uri", PARAM_DIR_IN, PLAYLIST_VAR_URI },
         & (struct argument) { "Metadata", PARAM_DIR_IN, PLAYLIST_VAR_METADATA },
-        & (struct argument) { "NewId", PARAM_DIR_OUT, PLAYLIST_VAR_DUMMY },
+        & (struct argument) { "NewId", PARAM_DIR_OUT, PLAYLIST_VAR_ID },
         NULL
 };
 
 static struct argument *arguments_deleteid[] = {
-        & (struct argument) { "Value", PARAM_DIR_IN, PLAYLIST_VAR_DUMMY },
+        & (struct argument) { "Value", PARAM_DIR_IN, PLAYLIST_VAR_ID },
         NULL
 };
 
@@ -386,18 +382,21 @@ static void change_playlist_state(enum playlist_state new_state)
 {
 	assert(new_state >= PLAYLIST_STOPPED && new_state <= PLAYLIST_PAUSED);
 	playlist_state_ = new_state;
-	if (!replace_var(PLAYLIST_VAR_TRANSPORT_STATE, playlist_states[new_state])) {
-		return;
-	}
+	replace_var(PLAYLIST_VAR_TRANSPORT_STATE, playlist_states[new_state]);
 }
 
+
+static void playlist_list_change(struct playlist *list)
+{
+	update_playlist();
+}
 
 static void playlist_current_change(struct playlist *list, playlist_id_t id, int index, int automatic)
 {
 	char *uri;
 	if (!playlist_get(playlist, id, &uri, NULL)) {
 		output_set_uri(uri, NULL);
-		if (!automatic && (playlist_state_ != PLAYLIST_STOPPED)) {
+		if (!automatic && playlist_state_ != PLAYLIST_STOPPED) {
 			if (output_play(&inform_play_transition_from_output))  {
 				change_playlist_state(PLAYLIST_STOPPED);
 			} else {
@@ -475,7 +474,6 @@ static int delete_all(struct action_event *event)
 {
 	service_lock();
 	playlist_clear(playlist);
-	update_playlist();
 	output_stop();
 	change_playlist_state(PLAYLIST_STOPPED);
 	service_unlock();
@@ -752,9 +750,17 @@ static int seek_id(struct action_event *event)
 	sscanf(id_str, "%d", &id);
 	free(id_str);
 	service_lock();
-	if (playlist_set_current_id(playlist, id)) {
+	output_stop();
+	if (playlist_set_current_id(playlist, id, 0)) {
 		rc = -1;
 		upnp_set_error(event, 800, "Seek error");
+	}
+	if (output_play(&inform_play_transition_from_output)) {
+		upnp_set_error(event, 800, "Playing failed");
+		change_playlist_state(PLAYLIST_STOPPED);
+		rc = -1;
+	} else {
+		change_playlist_state(PLAYLIST_PLAYING);
 	}
 	service_unlock();
 	return rc;
@@ -770,10 +776,19 @@ static int seek_index(struct action_event *event)
 	int idx = -1;
 	sscanf(idx_str, "%d", &idx);
 	free(idx_str);
-	if (playlist_set_current_index(playlist, idx)) {
+	if (playlist_set_current_index(playlist, idx, 0)) {
 		rc = -1;
 		upnp_set_error(event, 800, "Seek error");
 	}
+	/*
+	if (output_play(&inform_play_transition_from_output)) {
+		upnp_set_error(event, 800, "Playing failed");
+		change_playlist_state(PLAYLIST_STOPPED);
+		rc = -1;
+	} else {
+		change_playlist_state(PLAYLIST_PLAYING);
+	}
+	*/
 	return rc;
 }
 
@@ -823,7 +838,6 @@ static int delete_id(struct action_event *event)
 	free(id_str);
 	service_lock();
 	playlist_remove(playlist, id);
-	update_playlist();
 	service_unlock();
 	return 0;
 }
@@ -859,7 +873,6 @@ static int insert(struct action_event *event)
 		char buf[32];
 		sprintf(buf, "%u", new_id);
 		upnp_add_response(event, "NewId", buf);
-		update_playlist();
 	}
 	service_unlock();
 	return rc;
@@ -913,6 +926,7 @@ void oh_playlist_init(struct upnp_device *device) {
 					    PLAYLIST_SERVICE_ID);
 
 	playlist = playlist_create();
+	playlist_set_list_change_listener(playlist, playlist_list_change);
 	playlist_set_current_change_listener(playlist, playlist_current_change);
 	playlist_set_current_remove_listener(playlist, playlist_current_remove);
 	playlist_set_next_change_listener(playlist, playlist_next_change);

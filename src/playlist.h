@@ -30,6 +30,7 @@ struct playlist;
 
 typedef uint32_t playlist_id_t;
 
+typedef void (*playlist_list_change_listener_t)(struct playlist *list);
 typedef void (*playlist_current_change_listener_t)(struct playlist *list, playlist_id_t id, int index, int automatic);
 typedef void (*playlist_current_remove_listener_t)(struct playlist *list);
 typedef void (*playlist_next_change_listener_t)(struct playlist *list, playlist_id_t id, int index);
@@ -37,6 +38,7 @@ typedef void (*playlist_next_change_listener_t)(struct playlist *list, playlist_
 
 struct playlist *playlist_create(void);
 
+void playlist_set_list_change_listener(struct playlist *list, playlist_list_change_listener_t l);
 void playlist_set_current_change_listener(struct playlist *list, playlist_current_change_listener_t l);
 void playlist_set_current_remove_listener(struct playlist *list, playlist_current_remove_listener_t l);
 void playlist_set_next_change_listener(struct playlist *list, playlist_next_change_listener_t l);
@@ -53,8 +55,8 @@ playlist_id_t playlist_current_id(struct playlist *list);
 void playlist_next(struct playlist *list, int automatic);
 void playlist_prev(struct playlist *list);
 
-int playlist_set_current_id(struct playlist *list, playlist_id_t id);
-int playlist_set_current_index(struct playlist *list, int index);
+int playlist_set_current_id(struct playlist *list, playlist_id_t id, int play_after_set);
+int playlist_set_current_index(struct playlist *list, int index, int play_after_set);
 
 int playlist_get_size(struct playlist *list);
 playlist_id_t * playlist_get_ids(struct playlist *list);

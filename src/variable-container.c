@@ -277,7 +277,7 @@ static void UPnPVarChangeCollector_notify_all(upnp_var_change_collector_t *obj)
 	}
 	varnames[changed_count] = NULL;
 	varvalues[changed_count] = NULL;
-	upnp_device_notify(obj->upnp_device, obj->service_id, varnames, varvalues, 1);
+	upnp_device_notify(obj->upnp_device, obj->service_id, varnames, varvalues, changed_count);
 	free(varnames);
 	free(varvalues);
 }
