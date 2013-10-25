@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <upnp/ithread.h>
+#include <string.h>
 
 #include "shared_metadata.h"
 
