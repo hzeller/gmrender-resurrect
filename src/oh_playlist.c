@@ -445,10 +445,27 @@ static void update_playlist(void)
 {
 	int size = playlist_get_size(playlist);
 	if (size > 0) {
-		const guchar *data = (const guchar*)playlist_get_ids(playlist);
+		// Andrey Demenev: I do not know if we can rely on system-supplied
+		// endianness conversion
+		playlist_id_t *orig_ids = playlist_get_ids(playlist);
+		playlist_id_t *swapped_ids = NULL;
+		int test = 1;
+		if (*((char*)&test) == 1) { // little endian
+			swapped_ids = malloc(sizeof(playlist_id_t) * size);
+			for (int i = 0; i < size; i++) {
+				playlist_id_t id = orig_ids[i];
+				swapped_ids[i] = ((id>>24)&0xff) 
+					|((id<<8)&0xff0000) 
+					|((id>>8)&0xff00)
+					|((id<<24)&0xff000000);
+			}
+		}
+		const guchar *data = (const guchar*)(swapped_ids == NULL ? orig_ids : swapped_ids);
 		gchar *encoded = g_base64_encode(data, sizeof(playlist_id_t) * size);
 		replace_var(PLAYLIST_VAR_ID_ARRRAY, encoded);
 		g_free(encoded);
+		if (swapped_ids != NULL)
+			free(swapped_ids);
 	} else {
 		replace_var(PLAYLIST_VAR_ID_ARRRAY, "");
 	}
