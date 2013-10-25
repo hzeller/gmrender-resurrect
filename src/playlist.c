@@ -323,15 +323,17 @@ int playlist_set_current_id(struct playlist *list, playlist_id_t id, int play_af
 void playlist_next(struct playlist *list, int automatic)
 {
 	assert(list != NULL);
-	list->current_index = list->next_index;
-	if (list->current_change_listener != NULL) {
-		if (list->current_index >= 0) {
-			list->current_change_listener(list, list->ids[list->current_index], list->current_index, automatic);
-		} else {
-			list->current_change_listener(list, 0, -1, automatic);
+	if (list->next_index >= 0) {
+		list->current_index = list->next_index;
+		if (list->current_change_listener != NULL) {
+			if (list->current_index >= 0) {
+				list->current_change_listener(list, list->ids[list->current_index], list->current_index, automatic);
+			} else {
+				list->current_change_listener(list, 0, -1, automatic);
+			}
 		}
+		assign_next(list);
 	}
-	assign_next(list);
 }
 
 void playlist_prev(struct playlist *list)
@@ -339,11 +341,9 @@ void playlist_prev(struct playlist *list)
 	assert(list != NULL);
 	if (list->list_size > 0) {
 		int prev = list->current_index - 1;
-		if (prev < 0) {
-			list->current_index = 0;
-		} else {
-			list->current_index = prev;
-		}
+		if (prev < 0)
+			return;
+		list->current_index = prev;
 		if (list->current_change_listener != NULL) {
 			list->current_change_listener(list, list->ids[list->current_index], list->current_index, 0);
 		}

@@ -403,6 +403,9 @@ static void playlist_current_change(struct playlist *list, playlist_id_t id, int
 				change_playlist_state(PLAYLIST_PLAYING);
 			}
 		}
+	} else {
+		output_stop();
+		change_playlist_state(PLAYLIST_STOPPED);
 	}
 	char buf[32];
 	sprintf(buf, "%u", id);
