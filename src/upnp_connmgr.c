@@ -249,7 +249,7 @@ struct service *upnp_connmgr_get_service(void) {
 	if (connmgr_service_.variable_container == NULL) {
 		connmgr_service_.variable_container =
 			VariableContainer_new(CONNMGR_VAR_COUNT,
-					      connmgr_variable_names,
+						  &connmgr_service_,
 					      connmgr_default_values);
 		// no changes expected; no collector.
 	}
@@ -275,7 +275,7 @@ struct service connmgr_service_ = {
         .action_arguments =     argument_list,
         .variable_names =       connmgr_variable_names,
 	.variable_container =   NULL, // set later.
-	.last_change =          NULL,
+	.var_change_collector =          NULL,
         .variable_meta =        connmgr_var_meta,
         .variable_count =       CONNMGR_VAR_UNKNOWN,
         .command_count =        CONNMGR_CMD_UNKNOWN,

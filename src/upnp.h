@@ -97,7 +97,7 @@ struct service {
 	struct argument ***action_arguments;
 	const char **variable_names;
 	struct variable_container *variable_container;
-	struct upnp_last_change_collector *last_change;
+	struct upnp_var_change_collector *var_change_collector;
 	struct var_meta *variable_meta;
 	int variable_count;
 	int command_count;

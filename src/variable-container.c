@@ -34,6 +34,7 @@
 #include "xmlescape.h"
 #include "xmldoc.h"
 
+
 // -- VariableContainer
 struct cb_list {
 	variable_change_listener_t callback;
@@ -43,19 +44,19 @@ struct cb_list {
 
 struct variable_container {
 	int variable_num;
-	const char **variable_names;
+	struct service *service_desc;
 	char **values;
 	struct cb_list *callbacks;
 };
 
 variable_container_t *VariableContainer_new(int variable_num,
-					    const char **variable_names,
+					    struct service *service_desc,
 					    const char **variable_init_values) {
 	assert(variable_num > 0);
 	variable_container_t *result
 		= (variable_container_t*)malloc(sizeof(variable_container_t));
 	result->variable_num = variable_num;
-	result->variable_names = variable_names;
+	result->service_desc = service_desc;
 	result->values = (char **) malloc(variable_num * sizeof(char*));
 	result->callbacks = NULL;
 	for (int i = 0; i < variable_num; ++i) {
@@ -86,11 +87,13 @@ int VariableContainer_get_num_vars(variable_container_t *object) {
 }
 
 const char *VariableContainer_get(variable_container_t *object,
-				  int var, const char **name) {
+				  int var, const char **name, param_event *evented) {
 	if (var < 0 || var >= object->variable_num)
 		return NULL;
-	const char *varname = object->variable_names[var];
+	const char *varname = object->service_desc->variable_names[var];
 	if (name) *name = varname;
+	if (evented)
+		*evented = object->service_desc->variable_meta[var].sendevents;
 	// Names of not used variables are set to NULL.
 	return varname ? object->values[var] : NULL;
 }
@@ -107,7 +110,7 @@ int VariableContainer_change(variable_container_t *object,
 	object->values[var_num] = new_value;
 	for (struct cb_list *it = object->callbacks; it; it = it->next) {
 		it->callback(it->userdata,
-			     var_num, object->variable_names[var_num],
+			     var_num, object->service_desc->variable_names[var_num],
 			     old_value, new_value);
 	}
 	free(old_value);
@@ -177,32 +180,32 @@ char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder) {
 	return xml_doc_string;
 }
 
-// -- UPnPLastChangeCollector
-struct upnp_last_change_collector {
+// -- UPnPVarChangeCollector
+struct upnp_var_change_collector {
 	variable_container_t *variable_container;
 	int last_change_variable_num;      // the variable we manipulate.
-	uint32_t not_eventable_variables;  // variables not to event on.
+	uint32_t changed_variables;  // variables not to event on.
 	struct upnp_device *upnp_device;
 	const char *service_id;
 	int open_transactions;
 	upnp_last_change_builder_t *builder;
 };
 
-static void UPnPLastChangeCollector_notify(upnp_last_change_collector_t *obj);
-static void UPnPLastChangeCollector_callback(void *userdata,
+static void UPnPVarChangeCollector_notify(upnp_var_change_collector_t *obj);
+static void UPnPVarChangeCollector_callback(void *userdata,
 					     int var_num, const char *var_name,
 					     const char *old_value,
 					     const char *new_value);
 
-upnp_last_change_collector_t *
-UPnPLastChangeCollector_new(variable_container_t *variable_container,
+upnp_var_change_collector_t *
+UPnPVarChangeCollector_new(variable_container_t *variable_container,
 			    struct upnp_device *upnp_device,
 			    const char *service_id) {
-	upnp_last_change_collector_t *result = (upnp_last_change_collector_t*)
-		malloc(sizeof(upnp_last_change_collector_t));
+	upnp_var_change_collector_t *result = (upnp_var_change_collector_t*)
+		malloc(sizeof(upnp_var_change_collector_t));
 	result->variable_container = variable_container;
 	result->last_change_variable_num = -1;
-	result->not_eventable_variables = 0;
+	result->changed_variables = 0;
 	result->upnp_device = upnp_device;
 	result->service_id = service_id;
 	result->open_transactions = 0;
@@ -213,11 +216,11 @@ UPnPLastChangeCollector_new(variable_container_t *variable_container,
 	// without proper registration.
 	// Also determine, which variable is actually the "LastChange" one.
 	const int var_count = VariableContainer_get_num_vars(variable_container);
-	assert(var_count < 32);  // otherwise widen not_eventable_variables
+	assert(var_count < 32);  // otherwise widen changed_variables
 	for (int i = 0; i < var_count; ++i) {
 		const char *name;
 		const char *value = VariableContainer_get(variable_container,
-							  i, &name);
+							  i, &name, NULL);
 		if (!value) {
 			continue;
 		}
@@ -225,42 +228,71 @@ UPnPLastChangeCollector_new(variable_container_t *variable_container,
 			result->last_change_variable_num = i;
 			continue;
 		}
-		// Send over all variables except "LastChange" itself.
-		UPnPLastChangeBuilder_add(result->builder, name, value);
+		if (variable_container->service_desc->variable_meta[i].sendevents != SENDEVENT_YES) {
+			continue;
+		}
+		result->changed_variables |= (1 << i);
 	}
-	assert(result->last_change_variable_num >= 0); // we expect to have one.
-	// The state change variable itself is not eventable.
-	UPnPLastChangeCollector_add_ignore(result,
-					   result->last_change_variable_num);
-	UPnPLastChangeCollector_notify(result);
+	UPnPVarChangeCollector_notify(result);
 
 	VariableContainer_register_callback(variable_container,
-					    UPnPLastChangeCollector_callback,
+					    UPnPVarChangeCollector_callback,
 					    result);
 	return result;
 }
 
-void UPnPLastChangeCollector_add_ignore(upnp_last_change_collector_t *object,
-					int variable_num) {
-	object->not_eventable_variables |= (1 << variable_num);
-}
-
-void UPnPLastChangeCollector_start(upnp_last_change_collector_t *object) {
+void UPnPVarChangeCollector_start(upnp_var_change_collector_t *object) {
 	object->open_transactions += 1;
 }
 
-void UPnPLastChangeCollector_finish(upnp_last_change_collector_t *object) {
+void UPnPVarChangeCollector_finish(upnp_var_change_collector_t *object) {
 	assert(object->open_transactions >= 1);
 	object->open_transactions -= 1;
-	UPnPLastChangeCollector_notify(object);
+	UPnPVarChangeCollector_notify(object);
 }
 
-// TODO(hzeller): add rate limiting. The standard talks about some limited
-// amount of events per time-unit.
-static void UPnPLastChangeCollector_notify(upnp_last_change_collector_t *obj) {
-	if (obj->open_transactions != 0)
-		return;
 
+static void UPnPVarChangeCollector_notify_all(upnp_var_change_collector_t *obj)
+{
+	int i, j;
+	int changed_count = 0;
+	for (i = 0; i < obj->variable_container->variable_num; i++) {
+		if (obj->changed_variables & (1 << i)) {
+			changed_count++;
+		}
+	}
+	if (!changed_count)
+		return;
+	const char **varnames = malloc(sizeof(char*) * (changed_count + 1));
+	assert(varnames != NULL);;
+	const char **varvalues = malloc(sizeof(char*) * (changed_count + 1));
+	assert(varvalues != NULL);
+	j = 0;
+	for (i = 0; i < obj->variable_container->variable_num; i++) {
+		if (!(obj->changed_variables & (1 << i)))
+			continue;
+		varnames[j] = obj->variable_container->service_desc->variable_names[i];
+		varvalues[j] = obj->variable_container->values[i];
+		j++;
+	}
+	varnames[changed_count] = NULL;
+	varvalues[changed_count] = NULL;
+	upnp_device_notify(obj->upnp_device, obj->service_id, varnames, varvalues, 1);
+	free(varnames);
+	free(varvalues);
+}
+
+static void UPnPVarChangeCollector_notify_lastchange(upnp_var_change_collector_t *obj)
+{
+	int i;
+	for (i = 0; i < obj->variable_container->variable_num; i++) {
+		if (i == obj->last_change_variable_num);
+		if (obj->changed_variables & (1 << i)) {
+			if (obj->variable_container->service_desc->variable_names[i] != NULL) {
+				UPnPLastChangeBuilder_add(obj->builder, obj->variable_container->service_desc->variable_names[i], obj->variable_container->values[i]);
+			}
+		}
+	}
 	char *xml_doc_string = UPnPLastChangeBuilder_to_xml(obj->builder);
 	if (xml_doc_string == NULL)
 		return;
@@ -280,6 +312,7 @@ static void UPnPLastChangeCollector_notify(upnp_last_change_collector_t *obj) {
 		// XML so needs to be XML quoted. The time around 2000 was
 		// pretty sick - people did everything in XML.
 		varvalues[0] = xmlescape(xml_doc_string, 0);
+		//varvalues[0] = xml_doc_string;
 		upnp_device_notify(obj->upnp_device,
 				   obj->service_id,
 				   varnames, varvalues, 1);
@@ -289,19 +322,42 @@ static void UPnPLastChangeCollector_notify(upnp_last_change_collector_t *obj) {
 	free(xml_doc_string);
 }
 
+
+// TODO(hzeller): add rate limiting. The standard talks about some limited
+// amount of events per time-unit.
+static void UPnPVarChangeCollector_notify(upnp_var_change_collector_t *obj) {
+	if (obj->open_transactions != 0)
+		return;
+
+	// if LastChange variable is present, send update in that variable.
+	// Otherwise, use normal variable eventing.
+	if (obj->last_change_variable_num >= 0) {
+		UPnPVarChangeCollector_notify_lastchange(obj);
+	} else {
+		UPnPVarChangeCollector_notify_all(obj);
+	}
+	obj->changed_variables = 0;
+}
+
 // The actual callback collecting changes by building an <Event/> XML document.
 // This is not very robust if in the same transaction, we get the same variable
 // changed twice -- it emits two changes.
-static void UPnPLastChangeCollector_callback(void *userdata,
+static void UPnPVarChangeCollector_callback(void *userdata,
 					     int var_num, const char *var_name,
 					     const char *old_value,
 					     const char *new_value) {
-	upnp_last_change_collector_t *object = 
-		(upnp_last_change_collector_t*) userdata;
+	upnp_var_change_collector_t *object = 
+		(upnp_var_change_collector_t*) userdata;
 
-	if (object->not_eventable_variables & (1 << var_num)) {
+	if (var_num == object->last_change_variable_num) {
+		return;
+	}
+	if (
+			object->variable_container->service_desc->variable_meta[var_num].sendevents != SENDEVENT_YES
+			&& object->last_change_variable_num < 0
+			) {
 		return;  // ignore changes on non-eventable variables.
 	}
-	UPnPLastChangeBuilder_add(object->builder, var_name, new_value);
-	UPnPLastChangeCollector_notify(object);
+	object->changed_variables |= (1 << var_num);
+	UPnPVarChangeCollector_notify(object);
 }

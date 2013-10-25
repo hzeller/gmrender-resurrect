@@ -70,7 +70,6 @@ typedef enum {
 	INFO_VAR_CODEC_NAME,
 	INFO_VAR_METATEXT,
 	
-	INFO_VAR_LAST_CHANGE,
 	INFO_VAR_UNKNOWN,
 	INFO_VAR_COUNT
 } info_variable_t;
@@ -98,7 +97,6 @@ static const char *info_variable_names[] = {
 	[INFO_VAR_LOSSLESS] = "Lossless",
 	[INFO_VAR_CODEC_NAME] = "CodecName",
 	[INFO_VAR_METATEXT] = "Metatext",
-	[INFO_VAR_LAST_CHANGE] = "LastChange",
 	[INFO_VAR_UNKNOWN] = NULL,
 };
 
@@ -115,7 +113,6 @@ static const char *info_default_values[] = {
 	[INFO_VAR_LOSSLESS] = "0",
 	[INFO_VAR_CODEC_NAME] = "",
 	[INFO_VAR_METATEXT] = "",
-	[INFO_VAR_LAST_CHANGE] = "",
 	[INFO_VAR_UNKNOWN] = NULL,
 };
 
@@ -133,7 +130,6 @@ static struct var_meta info_var_meta[] = {
 	[INFO_VAR_LOSSLESS] =			{ SENDEVENT_YES, DATATYPE_BOOLEAN, NULL, NULL },
 	[INFO_VAR_CODEC_NAME] =			{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
 	[INFO_VAR_METATEXT] =			{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[INFO_VAR_LAST_CHANGE] =		{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
 	[INFO_VAR_UNKNOWN] =			{ SENDEVENT_YES, DATATYPE_UNKNOWN, NULL, NULL },
 };
 
@@ -187,15 +183,15 @@ static ithread_mutex_t info_mutex;
 static void service_lock(void)
 {
 	ithread_mutex_lock(&info_mutex);
-	if (info_service_.last_change) {
-		UPnPLastChangeCollector_start(info_service_.last_change);
+	if (info_service_.var_change_collector) {
+		UPnPVarChangeCollector_start(info_service_.var_change_collector);
 	}
 }
 
 static void service_unlock(void)
 {
-	if (info_service_.last_change) {
-		UPnPLastChangeCollector_finish(info_service_.last_change);
+	if (info_service_.var_change_collector) {
+		UPnPVarChangeCollector_finish(info_service_.var_change_collector);
 	}
 	ithread_mutex_unlock(&info_mutex);
 }
@@ -319,7 +315,7 @@ struct service *oh_info_get_service(void) {
 	if (info_service_.variable_container == NULL) {
 		state_variables_ =
 			VariableContainer_new(INFO_VAR_COUNT,
-					      info_variable_names,
+					      &info_service_,
 					      info_default_values);
 		info_service_.variable_container = state_variables_;
 	}
@@ -327,9 +323,9 @@ struct service *oh_info_get_service(void) {
 }
 
 void oh_info_init(struct upnp_device *device) {
-	assert(info_service_.last_change == NULL);
-	info_service_.last_change =
-		UPnPLastChangeCollector_new(state_variables_, device,
+	assert(info_service_.var_change_collector == NULL);
+	info_service_.var_change_collector =
+		UPnPVarChangeCollector_new(state_variables_, device,
 					    INFO_SERVICE_ID);
 	struct shared_metadata *sm = output_shared_metadata();
 	if (sm != NULL) {
@@ -350,7 +346,7 @@ struct service info_service_ = {
 	.action_arguments =     argument_list,
 	.variable_names =       info_variable_names,
 	.variable_container =   NULL,
-	.last_change =          NULL,
+	.var_change_collector =          NULL,
 	.variable_meta =        info_var_meta,
 	.variable_count =       INFO_VAR_UNKNOWN,
 	.command_count =        INFO_CMD_UNKNOWN,

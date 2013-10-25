@@ -45,6 +45,9 @@
 #ifndef VARIABLE_CONTAINER_H
 #define VARIABLE_CONTAINER_H
 
+#include <upnp/ithread.h>
+#include "upnp.h"
+
 // -- VariableContainer
 struct variable_container;
 typedef struct variable_container variable_container_t;
@@ -52,7 +55,7 @@ typedef struct variable_container variable_container_t;
 // Create a new variable container. The variable_names need to be valid for the
 // lifetime of this objec.
 variable_container_t *VariableContainer_new(int variable_num,
-					    const char **variable_names,
+					    struct service *service_desc,
 					    const char **variable_init_values);
 void VariableContainer_delete(variable_container_t *object);
 
@@ -65,7 +68,8 @@ int VariableContainer_get_num_vars(variable_container_t *object);
 // Returned value owned by variable container; on variable change, this value
 // will be invalid.
 const char *VariableContainer_get(variable_container_t *object, int var,
-				  const char **name);
+				  const char **name,
+				  param_event *evented);
 
 // Change content of variable with given number to NUL terminated content.
 // Returns '1' if value actually changed and all callbacks were called,
@@ -97,30 +101,28 @@ void UPnPLastChangeBuilder_add(upnp_last_change_builder_t *builder,
 // Resets the document. If no changes have been added, NULL is returned.
 char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder);
 
-// -- UPnP LastChange collector
+// -- UPnP variable change collector
 struct upnp_device;  // forward declare.
-struct upnp_last_change_collector;
-typedef struct upnp_last_change_collector upnp_last_change_collector_t;
+struct upnp_var_change_collector;
+typedef struct upnp_var_change_collector upnp_var_change_collector_t;
 
-// Create a new last change collector that registers at the
-// "variable_container" for changes in variables. It assembles a LastChange
-// event and sends it to the given "upnp_device".
-// The variable_container is expected to contain one variable with name
-// "LastChange", otherwise this collector is not applicable and fails.
-upnp_last_change_collector_t *
-UPnPLastChangeCollector_new(variable_container_t *variable_container,
+// Create a new variable change collector that registers at the
+// "variable_container" for changes in variables. It accumulates information
+// about state variables changed during a transaction.
+// After a transaction is finished, and update event is sent.
+// If LastChange variable is present, it is the only variable sent within
+// event. Otherwise, all modified variables which are defined as eventable
+// are sent in the event.
+upnp_var_change_collector_t *
+UPnPVarChangeCollector_new(variable_container_t *variable_container,
 			    struct upnp_device *upnp_device,
 			    const char *service_id);
 
-// Set variable number that should be ignored in eventing.
-void UPnPLastChangeCollector_add_ignore(upnp_last_change_collector_t *object,
-					int variable_num);
-
-// If we know that there are a couple of changes upcoming, we can
+// If we know that there is at leats one change upcoming, we MUST
 // 'start' a transaction and tell the collector to keep collecting until we
-// 'finish'. This can be nested.
-void UPnPLastChangeCollector_start(upnp_last_change_collector_t *object);
-void UPnPLastChangeCollector_finish(upnp_last_change_collector_t *object);
+// 'finish'. This can be nested. 
+void UPnPVarChangeCollector_start(upnp_var_change_collector_t *object);
+void UPnPVarChangeCollector_finish(upnp_var_change_collector_t *object);
 
 // no delete yet. We leak that.
 #endif  /* VARIABLE_CONTAINER_H */

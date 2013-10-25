@@ -52,7 +52,7 @@
 #include "variable-container.h"
 
 // Enable logging of action requests.
-//#define ENABLE_ACTION_LOGGING
+#define ENABLE_ACTION_LOGGING
 
 struct upnp_device {
 	struct upnp_device_descriptor *upnp_device_descriptor;
@@ -96,7 +96,7 @@ void upnp_append_variable(struct action_event *event,
 
 	ithread_mutex_lock(service->service_mutex);
 
-	value = VariableContainer_get(service->variable_container, varnum, NULL);
+	value = VariableContainer_get(service->variable_container, varnum, NULL, NULL);
 	assert(value != NULL);   // triggers on invalid variable.
 	upnp_add_response(event, paramname, value);
 
@@ -174,36 +174,81 @@ static int handle_subscription_request(struct upnp_device *priv,
 	int result = -1;
 	ithread_mutex_lock(&(priv->device_mutex));
 
-	// There is really only one variable evented: LastChange
-	const char *eventvar_names[] = {
-		"LastChange",
-		NULL
-	};
-	const char *eventvar_values[] = {
-		NULL, NULL
-	};
+	int has_last_change = 0;
+	int num_evented_vars = 0;
 
 	// Build the current state of the variables as one gigantic initial
 	// LastChange update.
 	ithread_mutex_lock(srv->service_mutex);
 	const int var_count =
 		VariableContainer_get_num_vars(srv->variable_container);
-	upnp_last_change_builder_t *builder = UPnPLastChangeBuilder_new();
+
 	for (int i = 0; i < var_count; ++i) {
 		const char *name;
-		const char *value =
-			VariableContainer_get(srv->variable_container, i, &name);
-		// Send over all variables except "LastChange" itself.
-		if (value && strcmp("LastChange", name) != 0) {
-			UPnPLastChangeBuilder_add(builder, name, value);
+		param_event evented;
+
+		VariableContainer_get(srv->variable_container, i, &name, &evented);
+		if (name == NULL)
+			continue;
+		if (strcmp("LastChange", name) == 0) {
+			has_last_change = 1;
+		} else {
+			if (evented == SENDEVENT_YES)
+				num_evented_vars++;
 		}
 	}
+
 	ithread_mutex_unlock(srv->service_mutex);
-	char *xml_value = UPnPLastChangeBuilder_to_xml(builder);
-	Log_info("upnp", "Initial variable sync: %s", xml_value);
-	eventvar_values[0] = xmlescape(xml_value, 0);
-	free(xml_value);
-	UPnPLastChangeBuilder_delete(builder);
+	const char **eventvar_names;
+	const char **eventvar_values;
+	if (has_last_change) {
+		upnp_last_change_builder_t *builder = UPnPLastChangeBuilder_new();
+		for (int i = 0; i < var_count; ++i) {
+			const char *name;
+			const char *value =
+				VariableContainer_get(srv->variable_container, i, &name, NULL);
+			if (name == NULL)
+				continue;
+			// Send over all variables except "LastChange" itself.
+			if (value && strcmp("LastChange", name) != 0) {
+				UPnPLastChangeBuilder_add(builder, name, value);
+			}
+		}
+
+		// There is really only one variable evented: LastChange
+		const char *eventvar_names_[] = {
+			"LastChange",
+			NULL
+		};
+		const char *eventvar_values_[] = {
+			NULL, NULL
+		};
+		char *xml_value = UPnPLastChangeBuilder_to_xml(builder);
+		Log_info("upnp", "Initial variable sync: %s", xml_value);
+		eventvar_values_[0] = xmlescape(xml_value, 0);
+		free(xml_value);
+		UPnPLastChangeBuilder_delete(builder);
+		eventvar_names = eventvar_names_;
+		eventvar_values = eventvar_values_;
+	} else {
+		const char **eventvar_names_ = malloc(sizeof(char*) * (num_evented_vars + 1));
+		assert(eventvar_names_ != NULL);
+		const char **eventvar_values_ = malloc(sizeof(char*) * (num_evented_vars + 1));
+		assert(eventvar_values_ != NULL);
+		int j = 0;
+		for (int i = 0; i < var_count; i++) {
+			param_event evented;
+			const char *name, *value;
+			value = VariableContainer_get(srv->variable_container, i, &name, &evented);
+			if (evented == SENDEVENT_YES) {
+				eventvar_names_[j] = name;
+				eventvar_values_[j] = value;
+				j++;
+			}
+		}
+		eventvar_names = eventvar_names_;
+		eventvar_values = eventvar_values_;
+	}
 
 	rc = UpnpAcceptSubscription(priv->device_handle,
 				    sr_event->UDN, sr_event->ServiceId,
@@ -218,7 +263,12 @@ static int handle_subscription_request(struct upnp_device *priv,
 
 	ithread_mutex_unlock(&(priv->device_mutex));
 
-	free((char*)eventvar_values[0]);
+	if (has_last_change)
+		free((char*)eventvar_values[0]);
+	else {
+		free (eventvar_names);
+		free (eventvar_values);
+	}
 
 	return result;
 }
@@ -253,7 +303,7 @@ static int handle_var_request(struct upnp_device *priv,
 	for (int i = 0; i < var_count; ++i) {
 		const char *name;
 		const char *value =
-			VariableContainer_get(srv->variable_container, i, &name);
+			VariableContainer_get(srv->variable_container, i, &name, NULL);
 		if (value && strcmp(var_event->StateVarName, name) == 0) {
 			result = strdup(value);
 			break;
@@ -303,9 +353,9 @@ static int handle_action_request(struct upnp_device *priv,
 	// event implicitly when calling UPnPLastChangeCollector_finish() below.
 	// It would be good to enqueue the upnp_device_notify() after
 	// the action event is finished.
-	if (event_service->last_change) {
+	if (event_service->var_change_collector) {
 		ithread_mutex_lock(event_service->service_mutex);
-		UPnPLastChangeCollector_start(event_service->last_change);
+		UPnPVarChangeCollector_start(event_service->var_change_collector);
 		ithread_mutex_unlock(event_service->service_mutex);
 	}
 
@@ -369,9 +419,9 @@ static int handle_action_request(struct upnp_device *priv,
 		ar_event->ErrCode = UPNP_E_SUCCESS;
 	}
 
-	if (event_service->last_change) {   // See comment above.
+	if (event_service->var_change_collector) {   // See comment above.
 		ithread_mutex_lock(event_service->service_mutex);
-		UPnPLastChangeCollector_finish(event_service->last_change);
+		UPnPVarChangeCollector_finish(event_service->var_change_collector);
 		ithread_mutex_unlock(event_service->service_mutex);
 	}
 	return 0;

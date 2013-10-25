@@ -258,15 +258,15 @@ static ithread_mutex_t control_mutex;
 static void service_lock(void)
 {
 	ithread_mutex_lock(&control_mutex);
-	if (control_service_.last_change) {
-		UPnPLastChangeCollector_start(control_service_.last_change);
+	if (control_service_.var_change_collector) {
+		UPnPVarChangeCollector_start(control_service_.var_change_collector);
 	}
 }
 
 static void service_unlock(void)
 {
-	if (control_service_.last_change) {
-		UPnPLastChangeCollector_finish(control_service_.last_change);
+	if (control_service_.var_change_collector) {
+		UPnPVarChangeCollector_finish(control_service_.var_change_collector);
 	}
 	ithread_mutex_unlock(&control_mutex);
 }
@@ -777,7 +777,7 @@ struct service *upnp_control_get_service(void) {
 	if (control_service_.variable_container == NULL) {
 		state_variables_ =
 			VariableContainer_new(CONTROL_VAR_COUNT,
-					      control_variable_names,
+						  &control_service_,
 					      control_default_values);
 		control_service_.variable_container = state_variables_;
 	}
@@ -796,9 +796,9 @@ void upnp_control_init(struct upnp_device *device) {
 		change_volume_decibel(20 * log(volume_fraction) / log(10));
 	}
 
-	assert(control_service_.last_change == NULL);
-	control_service_.last_change =
-		UPnPLastChangeCollector_new(state_variables_, device,
+	assert(control_service_.var_change_collector == NULL);
+	control_service_.var_change_collector =
+		UPnPVarChangeCollector_new(state_variables_, device,
 					    CONTROL_SERVICE_ID);
 }
 
@@ -817,7 +817,7 @@ struct service control_service_ = {
 	.action_arguments =	argument_list,
 	.variable_names =	control_variable_names,
 	.variable_container =   NULL,  // set later.
-	.last_change =          NULL,
+	.var_change_collector =          NULL,
 	.variable_meta =	control_var_meta,
 	.variable_count =	CONTROL_VAR_UNKNOWN,
 	.command_count =	CONTROL_CMD_UNKNOWN,

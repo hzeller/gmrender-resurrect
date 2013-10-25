@@ -86,7 +86,6 @@ typedef enum {
 	
 	PLAYLIST_VAR_DUMMY,
 
-	PLAYLIST_VAR_LAST_CHANGE,
 	PLAYLIST_VAR_UNKNOWN,
 	PLAYLIST_VAR_COUNT
 } playlist_variable_t;
@@ -139,7 +138,6 @@ static const char *playlist_variable_names[] = {
 	[PLAYLIST_VAR_ID_ARRAY_TOKEN] = "IdArrayToken",
 	[PLAYLIST_VAR_ID_ARRAY_CHANGED] = "IdArrayChanged",
 	[PLAYLIST_VAR_DUMMY] = "Unused",
-	[PLAYLIST_VAR_LAST_CHANGE] = "LastChange",
 	[PLAYLIST_VAR_UNKNOWN] = NULL,
 };
 
@@ -163,7 +161,6 @@ static const char *playlist_default_values[] = {
 	[PLAYLIST_VAR_ID_ARRAY_TOKEN] = "",
 	[PLAYLIST_VAR_ID_ARRAY_CHANGED] = "",
 	[PLAYLIST_VAR_DUMMY] = "",
-	[PLAYLIST_VAR_LAST_CHANGE] = "",
 	[PLAYLIST_VAR_UNKNOWN] = NULL,
 };
 
@@ -206,7 +203,6 @@ static struct var_meta player_var_meta[] = {
 	[PLAYLIST_VAR_ID_ARRAY_TOKEN] =		{ SENDEVENT_NO,  DATATYPE_UI4, NULL, NULL },
 	[PLAYLIST_VAR_ID_ARRAY_CHANGED] =	{ SENDEVENT_NO,  DATATYPE_BOOLEAN, NULL, NULL },
 	[PLAYLIST_VAR_DUMMY] =				{ SENDEVENT_NO,  DATATYPE_STRING, NULL, NULL },
-	[PLAYLIST_VAR_LAST_CHANGE] =		{ SENDEVENT_YES,  DATATYPE_STRING, NULL, NULL },
 	
 	[PLAYLIST_VAR_UNKNOWN] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
 };
@@ -360,15 +356,15 @@ static void inform_play_transition_from_output(enum PlayFeedback fb);
 static void service_lock(void)
 {
 	ithread_mutex_lock(&playlist_mutex);
-	if (playlist_service_.last_change) {
-		UPnPLastChangeCollector_start(playlist_service_.last_change);
+	if (playlist_service_.var_change_collector) {
+		UPnPVarChangeCollector_start(playlist_service_.var_change_collector);
 	}
 }
 
 static void service_unlock(void)
 {
-	if (playlist_service_.last_change) {
-		UPnPLastChangeCollector_finish(playlist_service_.last_change);
+	if (playlist_service_.var_change_collector) {
+		UPnPVarChangeCollector_finish(playlist_service_.var_change_collector);
 	}
 	ithread_mutex_unlock(&playlist_mutex);
 }
@@ -886,7 +882,7 @@ struct service *oh_playlist_get_service(void) {
 	if (playlist_service_.variable_container == NULL) {
 		state_variables_ =
 			VariableContainer_new(PLAYLIST_VAR_COUNT,
-					      playlist_variable_names,
+						  &playlist_service_,
 					      playlist_default_values);
 		playlist_service_.variable_container = state_variables_;
 	}
@@ -894,28 +890,10 @@ struct service *oh_playlist_get_service(void) {
 }
 
 void oh_playlist_init(struct upnp_device *device) {
-	assert(playlist_service_.last_change == NULL);
-	playlist_service_.last_change =
-		UPnPLastChangeCollector_new(state_variables_, device,
+	assert(playlist_service_.var_change_collector == NULL);
+	playlist_service_.var_change_collector =
+		UPnPVarChangeCollector_new(state_variables_, device,
 					    PLAYLIST_SERVICE_ID);
-
-	UPnPLastChangeCollector_add_ignore(playlist_service_.last_change,
-					   PLAYLIST_VAR_INDEX);
-	UPnPLastChangeCollector_add_ignore(playlist_service_.last_change,
-					   PLAYLIST_VAR_RELATIVE);
-	UPnPLastChangeCollector_add_ignore(playlist_service_.last_change,
-					   PLAYLIST_VAR_ABSOLUTE);
-	UPnPLastChangeCollector_add_ignore(playlist_service_.last_change,
-					   PLAYLIST_VAR_TRACK_LIST);
-	UPnPLastChangeCollector_add_ignore(playlist_service_.last_change,
-					   PLAYLIST_VAR_URI);
-	UPnPLastChangeCollector_add_ignore(playlist_service_.last_change,
-					   PLAYLIST_VAR_METADATA);
-	UPnPLastChangeCollector_add_ignore(playlist_service_.last_change,
-					   PLAYLIST_VAR_ID_ARRAY_TOKEN);
-	UPnPLastChangeCollector_add_ignore(playlist_service_.last_change,
-					   PLAYLIST_VAR_ID_ARRAY_CHANGED);
-
 
 	playlist = playlist_create();
 	playlist_set_current_change_listener(playlist, playlist_current_change);
@@ -945,7 +923,7 @@ struct service playlist_service_ = {
 	.action_arguments =     argument_list,
 	.variable_names =       playlist_variable_names,
 	.variable_container =   NULL, // set later.
-	.last_change =          NULL,
+	.var_change_collector =          NULL,
 	.variable_meta =        player_var_meta,
 	.variable_count =       PLAYLIST_VAR_UNKNOWN,
 	.command_count =        PLAYLIST_CMD_UNKNOWN,

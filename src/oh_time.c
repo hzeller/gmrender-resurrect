@@ -61,7 +61,6 @@ typedef enum {
 	TIME_VAR_DURATION,
 	TIME_VAR_SECONDS,
 	
-	TIME_VAR_LAST_CHANGE,
 	TIME_VAR_UNKNOWN,
 	TIME_VAR_COUNT
 } time_variable_t;
@@ -77,7 +76,6 @@ static const char *time_variable_names[] = {
 	[TIME_VAR_TRACK_COUNT] = "TrackCount",
 	[TIME_VAR_DURATION] = "Duration",
 	[TIME_VAR_SECONDS] = "Seconds",
-	[TIME_VAR_LAST_CHANGE] = "LastChange",
 	[TIME_VAR_UNKNOWN] = NULL,
 };
 
@@ -85,7 +83,6 @@ static const char *time_default_values[] = {
 	[TIME_VAR_TRACK_COUNT] = "0",
 	[TIME_VAR_DURATION] = "0",
 	[TIME_VAR_SECONDS] = "0",
-	[TIME_VAR_LAST_CHANGE] = "",
 	[TIME_VAR_UNKNOWN] = NULL,
 };
 
@@ -94,7 +91,6 @@ static struct var_meta time_var_meta[] = {
 	[TIME_VAR_TRACK_COUNT] =		{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
 	[TIME_VAR_DURATION] =			{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
 	[TIME_VAR_SECONDS] =			{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-	[TIME_VAR_LAST_CHANGE] =		{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
 	[TIME_VAR_UNKNOWN] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL },
 };
 
@@ -123,15 +119,15 @@ static ithread_mutex_t time_mutex;
 static void service_lock(void)
 {
 	ithread_mutex_lock(&time_mutex);
-	if (time_service_.last_change) {
-		UPnPLastChangeCollector_start(time_service_.last_change);
+	if (time_service_.var_change_collector) {
+		UPnPVarChangeCollector_start(time_service_.var_change_collector);
 	}
 }
 
 static void service_unlock(void)
 {
-	if (time_service_.last_change) {
-		UPnPLastChangeCollector_finish(time_service_.last_change);
+	if (time_service_.var_change_collector) {
+		UPnPVarChangeCollector_finish(time_service_.var_change_collector);
 	}
 	ithread_mutex_unlock(&time_mutex);
 }
@@ -182,7 +178,7 @@ struct service *oh_time_get_service(void) {
 	if (time_service_.variable_container == NULL) {
 		state_variables_ =
 			VariableContainer_new(TIME_VAR_COUNT,
-					      time_variable_names,
+						  &time_service_,
 					      time_default_values);
 		time_service_.variable_container = state_variables_;
 	}
@@ -190,9 +186,9 @@ struct service *oh_time_get_service(void) {
 }
 
 void oh_time_init(struct upnp_device *device) {
-	assert(time_service_.last_change == NULL);
-	time_service_.last_change =
-		UPnPLastChangeCollector_new(state_variables_, device,
+	assert(time_service_.var_change_collector == NULL);
+	time_service_.var_change_collector =
+		UPnPVarChangeCollector_new(state_variables_, device,
 					    TIME_SERVICE_ID);
 	struct shared_metadata *sm = output_shared_metadata();
 	if (sm != NULL) {
@@ -212,7 +208,7 @@ struct service time_service_ = {
 	.action_arguments =     argument_list,
 	.variable_names =       time_variable_names,
 	.variable_container =   NULL,
-	.last_change =          NULL,
+	.var_change_collector =          NULL,
 	.variable_meta =        time_var_meta,
 	.variable_count =       TIME_VAR_UNKNOWN,
 	.command_count =        TIME_CMD_UNKNOWN,

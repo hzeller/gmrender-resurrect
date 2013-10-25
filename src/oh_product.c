@@ -78,7 +78,6 @@ typedef enum {
 	PRODUCT_VAR_SOURCE_NAME,
 	PRODUCT_VAR_SOURCE_VISIBLE,
 	
-	PRODUCT_VAR_LAST_CHANGE,
 	PRODUCT_VAR_UNKNOWN,
 	PRODUCT_VAR_COUNT
 } product_variable_t;
@@ -125,7 +124,6 @@ static const char *product_variable_names[] = {
 	[PRODUCT_VAR_SOURCE_TYPE] = "SourceType",
 	[PRODUCT_VAR_SOURCE_NAME] = "SourceName",
 	[PRODUCT_VAR_SOURCE_VISIBLE] = "SourceVisible",
-	[PRODUCT_VAR_LAST_CHANGE] = "LastChange",
 	[PRODUCT_VAR_UNKNOWN] = NULL,
 };
 
@@ -153,7 +151,6 @@ static const char *product_default_values[] = {
 	[PRODUCT_VAR_SOURCE_NAME] = "Playlist",
 	[PRODUCT_VAR_SOURCE_VISIBLE] = "1",
 	
-	[PRODUCT_VAR_LAST_CHANGE] = "",
 	[PRODUCT_VAR_UNKNOWN] = NULL,
 };
 
@@ -182,7 +179,6 @@ static struct var_meta product_var_meta[] = {
 	[PRODUCT_VAR_SOURCE_NAME]				= { SENDEVENT_NO,  DATATYPE_STRING,  NULL, NULL },
 	[PRODUCT_VAR_SOURCE_VISIBLE]			= { SENDEVENT_NO,  DATATYPE_STRING,  NULL, NULL },
 
-	[PRODUCT_VAR_LAST_CHANGE]				= { SENDEVENT_NO,  DATATYPE_STRING,  NULL, NULL },
 	[PRODUCT_VAR_UNKNOWN]					= { SENDEVENT_NO,  DATATYPE_UNKNOWN, NULL, NULL },
 };
 
@@ -293,15 +289,15 @@ static ithread_mutex_t product_mutex;
 static void service_lock(void)
 {
 	ithread_mutex_lock(&product_mutex);
-	if (product_service_.last_change) {
-		UPnPLastChangeCollector_start(product_service_.last_change);
+	if (product_service_.var_change_collector) {
+		UPnPVarChangeCollector_start(product_service_.var_change_collector);
 	}
 }
 
 static void service_unlock(void)
 {
-	if (product_service_.last_change) {
-		UPnPLastChangeCollector_finish(product_service_.last_change);
+	if (product_service_.var_change_collector) {
+		UPnPVarChangeCollector_finish(product_service_.var_change_collector);
 	}
 	ithread_mutex_unlock(&product_mutex);
 }
@@ -450,7 +446,7 @@ struct service *oh_product_get_service(void) {
 	if (product_service_.variable_container == NULL) {
 		state_variables_ =
 			VariableContainer_new(PRODUCT_VAR_COUNT,
-					      product_variable_names,
+						   &product_service_,
 					      product_default_values);
 		product_service_.variable_container = state_variables_;
 	}
@@ -458,9 +454,9 @@ struct service *oh_product_get_service(void) {
 }
 
 void oh_product_init(struct upnp_device *device) {
-	assert(product_service_.last_change == NULL);
-	product_service_.last_change =
-		UPnPLastChangeCollector_new(state_variables_, device,
+	assert(product_service_.var_change_collector == NULL);
+	product_service_.var_change_collector =
+		UPnPVarChangeCollector_new(state_variables_, device,
 					    PRODUCT_SERVICE_ID);
 }
 
@@ -474,7 +470,7 @@ struct service product_service_ = {
 	.action_arguments =     argument_list,
 	.variable_names =       product_variable_names,
 	.variable_container =   NULL,
-	.last_change =          NULL,
+	.var_change_collector =          NULL,
 	.variable_meta =        product_var_meta,
 	.variable_count =       PRODUCT_VAR_UNKNOWN,
 	.command_count =        PRODUCT_CMD_UNKNOWN,

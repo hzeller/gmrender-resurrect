@@ -505,15 +505,15 @@ static ithread_mutex_t transport_mutex;
 static void service_lock(void)
 {
 	ithread_mutex_lock(&transport_mutex);
-	if (transport_service_.last_change) {
-		UPnPLastChangeCollector_start(transport_service_.last_change);
+	if (transport_service_.var_change_collector) {
+		UPnPVarChangeCollector_start(transport_service_.var_change_collector);
 	}
 }
 
 static void service_unlock(void)
 {
-	if (transport_service_.last_change) {
-		UPnPLastChangeCollector_finish(transport_service_.last_change);
+	if (transport_service_.var_change_collector) {
+		UPnPVarChangeCollector_finish(transport_service_.var_change_collector);
 	}
 	ithread_mutex_unlock(&transport_mutex);
 }
@@ -561,7 +561,7 @@ static int replace_var(transport_variable_t varnum, const char *new_value) {
 }
 
 static const char *get_var(transport_variable_t varnum) {
-	return VariableContainer_get(state_variables_, varnum, NULL);
+	return VariableContainer_get(state_variables_, varnum, NULL, NULL);
 }
 
 // Transport uri always comes in uri/meta pairs. Set these and also the related
@@ -1002,7 +1002,7 @@ struct service *upnp_transport_get_service(void) {
 	if (transport_service_.variable_container == NULL) {
 		state_variables_ =
 			VariableContainer_new(TRANSPORT_VAR_COUNT,
-					      transport_variable_names,
+					      &transport_service_,
 					      transport_default_values);
 		transport_service_.variable_container = state_variables_;
 	}
@@ -1010,21 +1010,10 @@ struct service *upnp_transport_get_service(void) {
 }
 
 void upnp_transport_init(struct upnp_device *device) {
-	assert(transport_service_.last_change == NULL);
-	transport_service_.last_change =
-		UPnPLastChangeCollector_new(state_variables_, device,
+	assert(transport_service_.var_change_collector == NULL);
+	transport_service_.var_change_collector =
+		UPnPVarChangeCollector_new(state_variables_, device,
 					    TRANSPORT_SERVICE_ID);
-	// Times and counters should not be evented. We only change REL_TIME
-	// right now anyway (AVTransport-v1 document, 2.3.1 Event Model)
-	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
-					   TRANSPORT_VAR_REL_TIME_POS);
-	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
-					   TRANSPORT_VAR_ABS_TIME_POS);
-	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
-					   TRANSPORT_VAR_REL_CTR_POS);
-	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
-					   TRANSPORT_VAR_ABS_CTR_POS);
-
 	struct shared_metadata *sm = output_shared_metadata();
 	if (sm != NULL) {
 		shared_meta_time_add_listener(sm, shared_meta_time_change);
@@ -1047,7 +1036,7 @@ struct service transport_service_ = {
 	.action_arguments =     argument_list,
 	.variable_names =       transport_variable_names,
 	.variable_container =   NULL, // set later.
-	.last_change =          NULL,
+	.var_change_collector =          NULL,
 	.variable_meta =        transport_var_meta,
 	.variable_count =       TRANSPORT_VAR_UNKNOWN,
 	.command_count =        TRANSPORT_CMD_UNKNOWN,
