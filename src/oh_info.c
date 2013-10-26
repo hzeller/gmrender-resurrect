@@ -325,8 +325,10 @@ struct service *oh_info_get_service(void) {
 void oh_info_init(struct upnp_device *device) {
 	assert(info_service_.var_change_collector == NULL);
 	info_service_.var_change_collector =
-		UPnPVarChangeCollector_new(state_variables_, device,
-					    INFO_SERVICE_ID);
+		UPnPVarChangeCollector_new(state_variables_, 
+			"",  /* const char *event_xml_namespace - not used, since we do not provide LastChange variable */
+			device,
+			INFO_SERVICE_ID);
 	struct shared_metadata *sm = output_shared_metadata();
 	if (sm != NULL) {
 		shared_meta_details_add_listener(sm, shared_meta_details_change);

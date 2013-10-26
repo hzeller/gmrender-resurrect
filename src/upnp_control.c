@@ -56,6 +56,7 @@
 #define CONTROL_SCPD_URL "/upnp/rendercontrolSCPD.xml"
 #define CONTROL_CONTROL_URL "/upnp/control/rendercontrol1"
 #define CONTROL_EVENT_URL "/upnp/event/rendercontrol1"
+#define CONTROL_EVENT_XML_NS "urn:schemas-upnp-org:metadata-1-0/RCS/" 
 
 typedef enum {
 	CONTROL_VAR_G_GAIN,
@@ -226,7 +227,7 @@ static struct var_meta control_var_meta[] = {
 };
 
 static const char *control_default_values[] = {
-	[CONTROL_VAR_LAST_CHANGE] = "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/AVT/\"/>",
+	[CONTROL_VAR_LAST_CHANGE] = "<Event xmlns = \"" CONTROL_EVENT_XML_NS  "\"/>",
 	[CONTROL_VAR_PRESET_NAME_LIST] = "",
 	[CONTROL_VAR_AAT_CHANNEL] = "",
 	[CONTROL_VAR_AAT_INSTANCE_ID] = "0",
@@ -798,8 +799,9 @@ void upnp_control_init(struct upnp_device *device) {
 
 	assert(control_service_.var_change_collector == NULL);
 	control_service_.var_change_collector =
-		UPnPVarChangeCollector_new(state_variables_, device,
-					    CONTROL_SERVICE_ID);
+		UPnPVarChangeCollector_new(state_variables_, CONTROL_EVENT_XML_NS,
+				device,
+				CONTROL_SERVICE_ID);
 }
 
 void upnp_control_register_variable_listener(variable_change_listener_t cb,
@@ -810,9 +812,10 @@ void upnp_control_register_variable_listener(variable_change_listener_t cb,
 struct service control_service_ = {
 	.service_id =	CONTROL_SERVICE_ID,
 	.service_type =	CONTROL_TYPE,
-        .scpd_url = CONTROL_SCPD_URL,
-        .control_url = CONTROL_CONTROL_URL,
-        .event_url = CONTROL_EVENT_URL,
+    .scpd_url = CONTROL_SCPD_URL,
+	.control_url = CONTROL_CONTROL_URL,
+	.event_url = CONTROL_EVENT_URL,
+	.event_xml_ns = CONTROL_EVENT_XML_NS, 
 	.actions =	control_actions,
 	.action_arguments =	argument_list,
 	.variable_names =	control_variable_names,

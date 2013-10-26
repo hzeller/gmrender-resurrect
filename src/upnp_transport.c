@@ -51,6 +51,7 @@
 #define TRANSPORT_SCPD_URL "/upnp/rendertransportSCPD.xml"
 #define TRANSPORT_CONTROL_URL "/upnp/control/rendertransport1"
 #define TRANSPORT_EVENT_URL "/upnp/event/rendertransport1"
+#define TRANSPORT_EVENT_XML_NS "urn:schemas-upnp-org:metadata-1-0/AVT/"
 
 typedef enum {
 	TRANSPORT_VAR_TRANSPORT_STATUS,
@@ -191,7 +192,7 @@ static const char *transport_default_values[] = {
 	[TRANSPORT_VAR_ABS_TIME_POS] = "NOT_IMPLEMENTED",
 	[TRANSPORT_VAR_REL_CTR_POS] = "2147483647",
 	[TRANSPORT_VAR_ABS_CTR_POS] = "2147483647",
-        [TRANSPORT_VAR_LAST_CHANGE] = "<Event xmlns=\"urn:schemas-upnp-org:metadata-1-0/AVT/\"/>",
+    [TRANSPORT_VAR_LAST_CHANGE] = "<Event xmlns=\"" TRANSPORT_EVENT_XML_NS "\"/>",
 	[TRANSPORT_VAR_AAT_SEEK_MODE] = "TRACK_NR",
 	[TRANSPORT_VAR_AAT_SEEK_TARGET] = "",
 	[TRANSPORT_VAR_AAT_INSTANCE_ID] = "0",
@@ -1012,8 +1013,9 @@ struct service *upnp_transport_get_service(void) {
 void upnp_transport_init(struct upnp_device *device) {
 	assert(transport_service_.var_change_collector == NULL);
 	transport_service_.var_change_collector =
-		UPnPVarChangeCollector_new(state_variables_, device,
-					    TRANSPORT_SERVICE_ID);
+		UPnPVarChangeCollector_new(state_variables_,
+				TRANSPORT_EVENT_XML_NS,
+				device, TRANSPORT_SERVICE_ID);
 	struct shared_metadata *sm = output_shared_metadata();
 	if (sm != NULL) {
 		shared_meta_time_add_listener(sm, shared_meta_time_change);
@@ -1032,6 +1034,7 @@ struct service transport_service_ = {
 	.scpd_url =		TRANSPORT_SCPD_URL,
 	.control_url =		TRANSPORT_CONTROL_URL,
 	.event_url =		TRANSPORT_EVENT_URL,
+	.event_xml_ns =         TRANSPORT_EVENT_XML_NS,
 	.actions =              transport_actions,
 	.action_arguments =     argument_list,
 	.variable_names =       transport_variable_names,

@@ -925,8 +925,9 @@ struct service *oh_playlist_get_service(void) {
 void oh_playlist_init(struct upnp_device *device) {
 	assert(playlist_service_.var_change_collector == NULL);
 	playlist_service_.var_change_collector =
-		UPnPVarChangeCollector_new(state_variables_, device,
-					    PLAYLIST_SERVICE_ID);
+		UPnPVarChangeCollector_new(state_variables_,
+		"",  /* const char *event_xml_namespace - not used, since we do not provide LastChange variable */
+		device, PLAYLIST_SERVICE_ID);
 
 	playlist = playlist_create();
 	playlist_set_list_change_listener(playlist, playlist_list_change);

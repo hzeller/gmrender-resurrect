@@ -92,7 +92,10 @@ void VariableContainer_register_callback(variable_container_t *object,
 // added name/value pairs.
 struct upnp_last_change_builder;
 typedef struct upnp_last_change_builder upnp_last_change_builder_t;
-upnp_last_change_builder_t *UPnPLastChangeBuilder_new(void);
+
+// Create a new last change builder. The pointer to the xml_namespace string
+// must exist for the livetime of this object.
+upnp_last_change_builder_t *UPnPLastChangeBuilder_new(const char *xml_namespace);
 void UPnPLastChangeBuilder_delete(upnp_last_change_builder_t *builder);
 
 void UPnPLastChangeBuilder_add(upnp_last_change_builder_t *builder,
@@ -115,8 +118,9 @@ typedef struct upnp_var_change_collector upnp_var_change_collector_t;
 // are sent in the event.
 upnp_var_change_collector_t *
 UPnPVarChangeCollector_new(variable_container_t *variable_container,
-			    struct upnp_device *upnp_device,
-			    const char *service_id);
+		const char *event_xml_namespace,
+		struct upnp_device *upnp_device,
+		const char *service_id);
 
 // If we know that there is at leats one change upcoming, we MUST
 // 'start' a transaction and tell the collector to keep collecting until we

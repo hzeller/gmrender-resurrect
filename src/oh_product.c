@@ -456,8 +456,10 @@ struct service *oh_product_get_service(void) {
 void oh_product_init(struct upnp_device *device) {
 	assert(product_service_.var_change_collector == NULL);
 	product_service_.var_change_collector =
-		UPnPVarChangeCollector_new(state_variables_, device,
-					    PRODUCT_SERVICE_ID);
+		UPnPVarChangeCollector_new(state_variables_, 
+			"",  /* const char *event_xml_namespace - not used, since we do not provide LastChange variable */
+			device,
+			PRODUCT_SERVICE_ID);
 }
 
 struct service product_service_ = {

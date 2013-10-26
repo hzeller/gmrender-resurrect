@@ -202,7 +202,7 @@ static int handle_subscription_request(struct upnp_device *priv,
 	const char **eventvar_names;
 	const char **eventvar_values;
 	if (has_last_change) {
-		upnp_last_change_builder_t *builder = UPnPLastChangeBuilder_new();
+		upnp_last_change_builder_t *builder = UPnPLastChangeBuilder_new(srv->event_xml_ns);
 		for (int i = 0; i < var_count; ++i) {
 			const char *name;
 			const char *value =
