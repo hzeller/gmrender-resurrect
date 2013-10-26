@@ -173,15 +173,17 @@ void UPnPLastChangeBuilder_add(upnp_last_change_builder_t *builder,
                  name, "val", value);
 	
 	// HACK!
-	// The 'Volume' and 'VolumeDB' events seem to need another qualifying
-	// attribute that represents the channel. Since all other elements just
-	// have one value to transmit without qualifier, this notion of a
-	// qualifier built into the variable container.
-	// This is a bit ugly: if we see that the variable in question is
-	// Volume*, we add the attribute.
+		// The volume related events need another qualifying
+		// attribute that represents the channel. Since all other elements just
+		// have one value to transmit without qualifier, the variable container
+		// is oblivious about this notion of a qualifier.
+		// So this is a bit ugly: if we see the variables in question,
+		// we add the attribute manually.
+
 	if (strcmp(name, "Volume") == 0
 			|| strcmp(name, "VolumeDB") == 0
-			|| strcmp(name, "Mute") == 0) {
+			|| strcmp(name, "Mute") == 0
+			|| strcmp(name, "Loudness") == 0) {
 	    xmlelement_set_attribute(builder->change_event_doc,
            xml_value, "channel", "Master");
 	} 
