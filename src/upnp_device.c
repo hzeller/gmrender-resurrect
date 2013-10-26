@@ -247,7 +247,7 @@ static int handle_subscription_request(struct upnp_device *priv,
 			value = VariableContainer_get(srv->variable_container, i, &name, &evented);
 			if (evented == SENDEVENT_YES) {
 				eventvar_names_[j] = name;
-				eventvar_values_[j] = value;
+				eventvar_values_[j] = xmlescape(value, 0);
 				j++;
 			}
 		}
@@ -273,6 +273,9 @@ static int handle_subscription_request(struct upnp_device *priv,
 	if (has_last_change)
 		free((char*)eventvar_values[0]);
 	else {
+		for (int i = 0; i < num_evented_vars; i++) {
+			free ((char*)eventvar_values[i]);
+		}
 		free (eventvar_names);
 		free (eventvar_values);
 	}

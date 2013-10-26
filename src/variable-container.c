@@ -293,12 +293,15 @@ static void UPnPVarChangeCollector_notify_all(upnp_var_change_collector_t *obj)
 		if (!(obj->changed_variables & (1 << i)))
 			continue;
 		varnames[j] = obj->variable_container->service_desc->variable_names[i];
-		varvalues[j] = obj->variable_container->values[i];
+		varvalues[j] = xmlescape(obj->variable_container->values[i], 0);
 		j++;
 	}
 	varnames[changed_count] = NULL;
 	varvalues[changed_count] = NULL;
 	upnp_device_notify(obj->upnp_device, obj->service_id, varnames, varvalues, changed_count);
+	for (i = 0; i < changed_count; i++) {
+		free((char*)varvalues[i]);
+	}
 	free(varnames);
 	free(varvalues);
 }
