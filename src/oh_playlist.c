@@ -36,6 +36,8 @@
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include <glib.h>
 
@@ -347,6 +349,9 @@ static variable_container_t *state_variables_ = NULL;
 
 static ithread_mutex_t playlist_mutex;
 
+static ithread_mutex_t  playlist_update_mutex;
+static ithread_cond_t  playlist_update_cond;
+
 static void inform_play_transition_from_output(enum PlayFeedback fb);
 
 static void service_lock(void)
@@ -388,7 +393,9 @@ static void change_playlist_state(enum playlist_state new_state)
 
 static void playlist_list_change(struct playlist *list)
 {
-	update_playlist();
+	ithread_mutex_lock(&playlist_update_mutex);
+	ithread_cond_signal(&playlist_update_cond);
+	ithread_mutex_unlock(&playlist_update_mutex);
 }
 
 static void playlist_current_change(struct playlist *list, playlist_id_t id, int index, int automatic)
@@ -471,6 +478,39 @@ static void update_playlist(void)
 	} else {
 		replace_var(PLAYLIST_VAR_ID_ARRRAY, "");
 	}
+}
+
+static void *thread_update_playlist(void *userdata)
+{
+	for (;;) {
+		struct timespec ts;
+		struct timeval tp;
+		// first, wait until a playlist change occurs
+		ithread_mutex_lock(&playlist_update_mutex);
+		ithread_cond_wait(&playlist_update_cond, &playlist_update_mutex);
+		ithread_mutex_unlock(&playlist_update_mutex);
+		// then wait until no playlist change occurs for 1/4 s
+		for (;;) {
+			ithread_mutex_lock(&playlist_update_mutex);
+			gettimeofday(&tp, NULL);
+			ts.tv_sec  = tp.tv_sec;
+			ts.tv_nsec = tp.tv_usec * 1000;
+			ts.tv_nsec += one_sec_unit / 4;
+			if (ts.tv_nsec >= one_sec_unit) {
+				ts.tv_nsec -= one_sec_unit;
+				ts.tv_sec++;
+			}
+			int rc = ithread_cond_timedwait(&playlist_update_cond, &playlist_update_mutex, &ts);
+			ithread_mutex_unlock(&playlist_update_mutex);
+			if (rc == ETIMEDOUT) {
+				service_lock();
+				update_playlist();
+				service_unlock();
+				break;
+			}
+		}
+	}
+	return NULL;
 }
 
 static int delete_all(struct action_event *event)
@@ -935,7 +975,12 @@ void oh_playlist_init(struct upnp_device *device) {
 	playlist_set_current_remove_listener(playlist, playlist_current_remove);
 	playlist_set_next_change_listener(playlist, playlist_next_change);
 	generate_protocol_info();
+	
+	ithread_mutex_init(&playlist_update_mutex, NULL);
+	ithread_cond_init(&playlist_update_cond, NULL);
 
+	ithread_t playlist_update_thread;
+	ithread_create(&playlist_update_thread, NULL, thread_update_playlist, NULL);
 	//pthread_t thread;
 	//pthread_create(&thread, NULL, thread_update_track_time, NULL);
 }

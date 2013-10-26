@@ -204,13 +204,12 @@ int playlist_clear(struct playlist *list)
 	}
 	list->list_size = 0;
 	list->token++;
+	if (list->list_change_listener != NULL) {
+		list->list_change_listener(list);
+	}
 	if (list->current_index >= 0) {
 		
 		list->current_index = -1;
-
-		if (list->list_change_listener != NULL) {
-			list->list_change_listener(list);
-		}
 
 		if (list->current_remove_listener != NULL) {
 			list->current_remove_listener(list);
