@@ -205,12 +205,14 @@ static int handle_subscription_request(struct upnp_device *priv,
 		upnp_last_change_builder_t *builder = UPnPLastChangeBuilder_new(srv->event_xml_ns);
 		for (int i = 0; i < var_count; ++i) {
 			const char *name;
+			param_event evented;
 			const char *value =
-				VariableContainer_get(srv->variable_container, i, &name, NULL);
+				VariableContainer_get(srv->variable_container, i, &name, &evented);
 			if (name == NULL)
 				continue;
-			// Send over all variables except "LastChange" itself.
-			if (value && strcmp("LastChange", name) != 0) {
+			// Send over all variables except "LastChange" itself
+			// and those marked as non-evented
+			if (value && strcmp("LastChange", name) != 0 && evented == SENDEVENT_YES) {
 				UPnPLastChangeBuilder_add(builder, name, value);
 			}
 		}
@@ -224,6 +226,9 @@ static int handle_subscription_request(struct upnp_device *priv,
 			NULL, NULL
 		};
 		char *xml_value = UPnPLastChangeBuilder_to_xml(builder);
+		// NULL if none of vars has sendevents set SENDEVENT_YES,
+		// this should not happen if LastChange is used
+		assert(xml_value != NULL); 
 		Log_info("upnp", "Initial variable sync: %s", xml_value);
 		eventvar_values_[0] = xmlescape(xml_value, 0);
 		free(xml_value);
