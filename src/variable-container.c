@@ -166,9 +166,25 @@ void UPnPLastChangeBuilder_add(upnp_last_change_builder_t *builder,
 						   toplevel,
 						   "InstanceID", "val", "0");
 	}
-	add_attributevalue_element(builder->change_event_doc,
-				   builder->instance_element,
-				   name, "val", value);
+	
+	struct xmlelement *xml_value;
+	xml_value = add_attributevalue_element(builder->change_event_doc,
+                 builder->instance_element,
+                 name, "val", value);
+	
+	// HACK!
+	// The 'Volume' and 'VolumeDB' events seem to need another qualifying
+	// attribute that represents the channel. Since all other elements just
+	// have one value to transmit without qualifier, this notion of a
+	// qualifier built into the variable container.
+	// This is a bit ugly: if we see that the variable in question is
+	// Volume*, we add the attribute.
+	if (strcmp(name, "Volume") == 0
+			|| strcmp(name, "VolumeDB") == 0
+			|| strcmp(name, "Mute") == 0) {
+	    xmlelement_set_attribute(builder->change_event_doc,
+           xml_value, "channel", "Master");
+	} 
 }
 
 char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder) {
