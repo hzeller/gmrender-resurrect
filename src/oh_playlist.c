@@ -159,7 +159,7 @@ static const char *playlist_default_values[] = {
 	[PLAYLIST_VAR_URI] = "",
 	[PLAYLIST_VAR_METADATA] = "",
 	[PLAYLIST_VAR_ID_ARRAY_TOKEN] = "",
-	[PLAYLIST_VAR_ID_ARRAY_CHANGED] = "",
+	[PLAYLIST_VAR_ID_ARRAY_CHANGED] = "0",
 	[PLAYLIST_VAR_UNKNOWN] = NULL,
 };
 

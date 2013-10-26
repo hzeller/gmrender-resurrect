@@ -205,7 +205,7 @@ static int handle_subscription_request(struct upnp_device *priv,
 		upnp_last_change_builder_t *builder = UPnPLastChangeBuilder_new(srv->event_xml_ns);
 		for (int i = 0; i < var_count; ++i) {
 			const char *name;
-			param_event evented;
+			param_event evented = SENDEVENT_NO;
 			const char *value =
 				VariableContainer_get(srv->variable_container, i, &name, &evented);
 			if (name == NULL)
@@ -242,7 +242,7 @@ static int handle_subscription_request(struct upnp_device *priv,
 		assert(eventvar_values_ != NULL);
 		int j = 0;
 		for (int i = 0; i < var_count; i++) {
-			param_event evented;
+			param_event evented = SENDEVENT_NO;
 			const char *name, *value;
 			value = VariableContainer_get(srv->variable_container, i, &name, &evented);
 			if (evented == SENDEVENT_YES) {
@@ -251,13 +251,15 @@ static int handle_subscription_request(struct upnp_device *priv,
 				j++;
 			}
 		}
+		eventvar_names_[num_evented_vars] = NULL;
+		eventvar_values_[num_evented_vars] = NULL;
 		eventvar_names = eventvar_names_;
 		eventvar_values = eventvar_values_;
 	}
 
 	rc = UpnpAcceptSubscription(priv->device_handle,
 				    sr_event->UDN, sr_event->ServiceId,
-				    eventvar_names, eventvar_values, 1,
+				    eventvar_names, eventvar_values, has_last_change ? 1 : num_evented_vars,
 				    sr_event->Sid);
 	if (rc == UPNP_E_SUCCESS) {
 		result = 0;
