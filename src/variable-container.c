@@ -310,7 +310,10 @@ static void UPnPVarChangeCollector_notify_lastchange(upnp_var_change_collector_t
 		if (i == obj->last_change_variable_num);
 		if (obj->changed_variables & (1 << i)) {
 			if (obj->variable_container->service_desc->variable_names[i] != NULL) {
-				UPnPLastChangeBuilder_add(obj->builder, obj->variable_container->service_desc->variable_names[i], obj->variable_container->values[i]);
+				UPnPLastChangeBuilder_add(
+						obj->builder, 
+						obj->variable_container->service_desc->variable_names[i], 
+						obj->variable_container->values[i]);
 			}
 		}
 	}
@@ -373,10 +376,7 @@ static void UPnPVarChangeCollector_callback(void *userdata,
 	if (var_num == object->last_change_variable_num) {
 		return;
 	}
-	if (
-			object->variable_container->service_desc->variable_meta[var_num].sendevents != SENDEVENT_YES
-			&& object->last_change_variable_num < 0
-			) {
+	if (object->variable_container->service_desc->variable_meta[var_num].sendevents != SENDEVENT_YES) {
 		return;  // ignore changes on non-eventable variables.
 	}
 	object->changed_variables |= (1 << var_num);
