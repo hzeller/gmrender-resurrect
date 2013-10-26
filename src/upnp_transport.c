@@ -51,6 +51,8 @@
 #define TRANSPORT_SCPD_URL "/upnp/rendertransportSCPD.xml"
 #define TRANSPORT_CONTROL_URL "/upnp/control/rendertransport1"
 #define TRANSPORT_EVENT_URL "/upnp/event/rendertransport1"
+
+// Namespace, see UPnP-av-AVTransport-v3-Service-20101231.pdf page 15
 #define TRANSPORT_EVENT_XML_NS "urn:schemas-upnp-org:metadata-1-0/AVT/"
 
 typedef enum {
