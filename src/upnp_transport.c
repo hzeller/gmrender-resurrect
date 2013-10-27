@@ -878,10 +878,11 @@ static int play(struct action_event *event)
 	int rc = 0;
 	service_lock();
 	switch (transport_state_) {
+	// even if already playing, we must restart playback when Play
+	// action is executed. Kinsky, for example, would not send Stop
+	// when changing tracks and playback is already in progress -
+	// it will just set new URI, and send Play command
 	case TRANSPORT_PLAYING:
-		// Nothing to change.
-		break;
-
 	case TRANSPORT_STOPPED:
 		// If we were stopped before, we start a new song now. So just
 		// set the time to zero now; otherwise we will see the old
