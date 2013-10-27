@@ -17,6 +17,7 @@ gmediarender_SOURCES = main.c git-version.h \
 	oh_info.c oh_info.h \
 	oh_time.c oh_time.h \
 	oh_product.c oh_product.h \
+	oh_volume.c oh_volume.h \
 	oh_source.c oh_source.h \
 	playlist.c playlist.h \
 	shared_metadata.c shared_metadata.h

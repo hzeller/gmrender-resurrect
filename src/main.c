@@ -58,6 +58,7 @@
 #include "oh_info.h"
 #include "oh_time.h"
 #include "oh_product.h"
+#include "oh_volume.h"
 #include "oh_source.h"
 
 static gboolean show_version = FALSE;
@@ -294,6 +295,7 @@ int main(int argc, char **argv)
 		oh_playlist_init(device);
 		oh_info_init(device);
 		oh_time_init(device);
+		oh_volume_init(device);
 	}
 
 	if (show_devicedesc) {

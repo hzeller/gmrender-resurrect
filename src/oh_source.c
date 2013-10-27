@@ -48,6 +48,7 @@
 #include "oh_info.h"
 #include "oh_time.h"
 #include "oh_product.h"
+#include "oh_volume.h"
 
 #include "oh_source.h"
 #include "git-version.h"
@@ -127,12 +128,13 @@ void oh_source_dump_playlist_scpd(void)
 
 static int oh_source_init(void)
 {
-	static struct service *upnp_services[5];
+	static struct service *upnp_services[6];
 	upnp_services[0] = oh_product_get_service();
 	upnp_services[1] = oh_playlist_get_service();
 	upnp_services[2] = oh_info_get_service();
 	upnp_services[3] = oh_time_get_service();
-	upnp_services[4] = NULL;
+	upnp_services[4] = oh_volume_get_service();
+	upnp_services[5] = NULL;
 	source_device.services = upnp_services;
     return 0;
 }
