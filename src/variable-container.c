@@ -29,11 +29,26 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdint.h>
+#include <upnp/ithread.h>
 
 #include "upnp_device.h"
 #include "xmlescape.h"
 #include "xmldoc.h"
 
+
+static ithread_t notify_thread;
+static ithread_mutex_t  notify_mutex;
+static ithread_cond_t  notify_cond;
+static upnp_var_change_collector_t *notify_collector;
+
+static void *notification_thread_func(void * unused);
+
+void variable_container_init(void)
+{
+	ithread_mutex_init(&notify_mutex, NULL);
+	ithread_cond_init(&notify_cond, NULL);
+	ithread_create(&notify_thread, NULL, notification_thread_func, NULL);
+}
 
 // -- VariableContainer
 struct cb_list {
@@ -282,8 +297,11 @@ static void UPnPVarChangeCollector_notify_all(upnp_var_change_collector_t *obj)
 			changed_count++;
 		}
 	}
-	if (!changed_count)
+	if (!changed_count) {
+		obj->changed_variables = 0;
+		ithread_mutex_unlock(&notify_mutex);
 		return;
+	}
 	const char **varnames = malloc(sizeof(char*) * (changed_count + 1));
 	assert(varnames != NULL);;
 	const char **varvalues = malloc(sizeof(char*) * (changed_count + 1));
@@ -296,6 +314,8 @@ static void UPnPVarChangeCollector_notify_all(upnp_var_change_collector_t *obj)
 		varvalues[j] = xmlescape(obj->variable_container->values[i], 0);
 		j++;
 	}
+	obj->changed_variables = 0;
+	ithread_mutex_unlock(&notify_mutex);
 	varnames[changed_count] = NULL;
 	varvalues[changed_count] = NULL;
 	upnp_device_notify(obj->upnp_device, obj->service_id, varnames, varvalues, changed_count);
@@ -321,8 +341,11 @@ static void UPnPVarChangeCollector_notify_lastchange(upnp_var_change_collector_t
 		}
 	}
 	char *xml_doc_string = UPnPLastChangeBuilder_to_xml(obj->builder);
-	if (xml_doc_string == NULL)
+	if (xml_doc_string == NULL) {
+		obj->changed_variables = 0;
+		ithread_mutex_unlock(&notify_mutex);
 		return;
+	}
 
 	// Only if there is actually a change, send it over.
 	if (VariableContainer_change(obj->variable_container,
@@ -339,6 +362,8 @@ static void UPnPVarChangeCollector_notify_lastchange(upnp_var_change_collector_t
 		// XML so needs to be XML quoted. The time around 2000 was
 		// pretty sick - people did everything in XML.
 		varvalues[0] = xmlescape(xml_doc_string, 0);
+		obj->changed_variables = 0;
+		ithread_mutex_unlock(&notify_mutex);
 		//varvalues[0] = xml_doc_string;
 		upnp_device_notify(obj->upnp_device,
 				   obj->service_id,
@@ -356,14 +381,28 @@ static void UPnPVarChangeCollector_notify(upnp_var_change_collector_t *obj) {
 	if (obj->open_transactions != 0)
 		return;
 
-	// if LastChange variable is present, send update in that variable.
-	// Otherwise, use normal variable eventing.
-	if (obj->last_change_variable_num >= 0) {
-		UPnPVarChangeCollector_notify_lastchange(obj);
-	} else {
-		UPnPVarChangeCollector_notify_all(obj);
+	ithread_mutex_lock(&notify_mutex);
+	if (obj->changed_variables) {
+		notify_collector = obj;
+		ithread_cond_signal(&notify_cond);
 	}
-	obj->changed_variables = 0;
+	ithread_mutex_unlock(&notify_mutex);
+}
+
+static void *notification_thread_func(void * unused)
+{
+	for (;;) {
+		ithread_mutex_lock(&notify_mutex);
+		ithread_cond_wait(&notify_cond, &notify_mutex);
+		// if LastChange variable is present, send update in that variable.
+		// Otherwise, use normal variable eventing.
+		if (notify_collector->last_change_variable_num >= 0) {
+			UPnPVarChangeCollector_notify_lastchange(notify_collector);
+		} else {
+			UPnPVarChangeCollector_notify_all(notify_collector);
+		}
+	}
+	return NULL;
 }
 
 // The actual callback collecting changes by building an <Event/> XML document.

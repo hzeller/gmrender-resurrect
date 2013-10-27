@@ -127,6 +127,7 @@ UPnPVarChangeCollector_new(variable_container_t *variable_container,
 // 'finish'. This can be nested. 
 void UPnPVarChangeCollector_start(upnp_var_change_collector_t *object);
 void UPnPVarChangeCollector_finish(upnp_var_change_collector_t *object);
+void variable_container_init(void);
 
 // no delete yet. We leak that.
 #endif  /* VARIABLE_CONTAINER_H */

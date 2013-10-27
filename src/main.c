@@ -227,6 +227,7 @@ int main(int argc, char **argv)
 	}
 
 	init_logging(log_file);
+	variable_container_init();
 
 	// Now we're going to start threads etc, which means we need
 	// to become a daemon before that.
