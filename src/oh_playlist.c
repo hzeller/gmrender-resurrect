@@ -819,11 +819,11 @@ static int seek_index(struct action_event *event)
 	int idx = -1;
 	sscanf(idx_str, "%d", &idx);
 	free(idx_str);
+	service_lock();
 	if (playlist_set_current_index(playlist, idx, 0)) {
 		rc = -1;
 		upnp_set_error(event, 800, "Seek error");
 	}
-	/*
 	if (output_play(&inform_play_transition_from_output)) {
 		upnp_set_error(event, 800, "Playing failed");
 		change_playlist_state(PLAYLIST_STOPPED);
@@ -831,7 +831,7 @@ static int seek_index(struct action_event *event)
 	} else {
 		change_playlist_state(PLAYLIST_PLAYING);
 	}
-	*/
+	service_unlock();
 	return rc;
 }
 
