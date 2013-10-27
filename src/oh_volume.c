@@ -338,6 +338,7 @@ static int set_volume(struct action_event *event)
 	sscanf(str, "%u", &vol);
 	if (vol > 16) {
 		upnp_set_error(event, 800, "Invalid volume");
+		return -1;
 	}
 	free(str);
 	service_lock();
