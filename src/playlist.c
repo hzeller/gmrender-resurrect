@@ -74,7 +74,7 @@ void playlist_load(struct playlist *list)
 	if (list->filename == NULL)
 		return;
 	// prevent from re-saving empty list in callbacks
-	char *save = list->filename;
+	const char *save = list->filename;
 	list->filename = NULL;
 	playlist_clear(list);
 	list->filename = save;
@@ -82,17 +82,17 @@ void playlist_load(struct playlist *list)
 	if (doc == NULL)
 		return;
 	IXML_Node *root = ixmlNode_getFirstChild((IXML_Node *)doc);
-	char *name = ixmlNode_getNodeName(root);
+	const char *name = ixmlNode_getNodeName(root);
 	playlist_id_t after_id = 0;
 	if (name != NULL) {
 		if (!strcmp(name, "playlist")) {
 			IXML_Node *track = ixmlNode_getFirstChild(root);
 			while (track != NULL) {
-				char *uri = NULL;
+				const char *uri = NULL;
 				char *meta = NULL;
 				IXML_Node *node = ixmlNode_getFirstChild(track);
 				while (node != NULL) {
-					char *node_name = ixmlNode_getNodeName(node);
+					const char *node_name = ixmlNode_getNodeName(node);
 					if (node_name != NULL) {
 						if (uri == NULL && !strcmp(node_name, "uri")) {
 							IXML_Node *content = ixmlNode_getFirstChild(node);
