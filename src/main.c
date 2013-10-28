@@ -70,6 +70,8 @@ static gboolean show_outputs = FALSE;
 static gboolean daemon_mode = FALSE;
 static gboolean openhome_mode = FALSE;
 
+static gchar *playlist_file = NULL;
+
 // IP-address seems strange in libupnp: they actually don't bind to
 // that address, but to INADDR_ANY (miniserver.c in upnp library).
 // Apparently they just use this for the advertisement ? Anyway, 0.0.0.0 would
@@ -94,6 +96,8 @@ static GOptionEntry option_entries[] = {
 	  "Output version information and exit", NULL },
 	{ "openhome", 0, 0, G_OPTION_ARG_NONE, &openhome_mode,
 	  "Device mode (upnpav or openhome, defaults to upnpav)", NULL },
+	{ "playlist", 0, 0, G_OPTION_ARG_STRING, &playlist_file,
+	  "Filename to store playlist in OpenHome mode", NULL },
 	{ "ip-address", 'I', 0, G_OPTION_ARG_STRING, &ip_address,
 	  "The local IP address the service is running and advertised "
 	  "(only one, 0.0.0.0 won't work)", NULL },
@@ -268,6 +272,9 @@ int main(int argc, char **argv)
 			  "ERROR: Failed to initialize Output subsystem");
 		return EXIT_FAILURE;
 	}
+
+	if (openhome_mode && playlist_file != NULL)
+		oh_playlist_load(playlist_file);
 
 	struct upnp_device *device;
 	if (listen_port != 0 &&

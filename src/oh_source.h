@@ -33,4 +33,6 @@ void oh_source_dump_playlist_scpd(void);
 // Returned pointer not owned.
 struct upnp_device_descriptor *oh_source_descriptor(const char *name, const char *uuid);
 
+void oh_playlist_load(char *filename);
+
 #endif /* _OH_SOURCE_H */

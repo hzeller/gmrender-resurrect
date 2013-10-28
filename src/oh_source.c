@@ -53,6 +53,8 @@
 #include "oh_source.h"
 #include "git-version.h"
 
+static char *playlist_filename = NULL;
+
 static struct icon icon1 = {
         .width =        64,
         .height =       64,
@@ -93,6 +95,13 @@ static struct upnp_device_descriptor source_device = {
         .icons                  = renderer_icon,
 };
 
+void oh_playlist_load(char *filename)
+{
+	playlist_filename = filename;
+}
+
+
+
 void oh_source_dump_product_scpd(void)
 {
 	char *buf;
@@ -120,7 +129,7 @@ void oh_source_dump_time_scpd(void)
 void oh_source_dump_playlist_scpd(void)
 {
 	char *buf;
-	buf = upnp_get_scpd(oh_playlist_get_service());
+	buf = upnp_get_scpd(oh_playlist_get_service(playlist_filename));
 	assert(buf != NULL);
 	fputs(buf, stdout);
 }
@@ -130,7 +139,7 @@ static int oh_source_init(void)
 {
 	static struct service *upnp_services[6];
 	upnp_services[0] = oh_product_get_service();
-	upnp_services[1] = oh_playlist_get_service();
+	upnp_services[1] = oh_playlist_get_service(playlist_filename);
 	upnp_services[2] = oh_info_get_service();
 	upnp_services[3] = oh_time_get_service();
 	upnp_services[4] = oh_volume_get_service();

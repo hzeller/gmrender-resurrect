@@ -21,13 +21,24 @@
  *
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <upnp/ixml.h>
 
 #include "playlist.h"
+#include "xmlescape.h"
 
 #define ALLOC_STEP 50
+
+#define PLAYLIST_HEADER "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" \
+	"<playlist>"
+#define TRACK_HEADER "<track>"
+#define URI_HEADER "<uri>"
+#define URI_FOOTER "</uri>"
+#define TRACK_FOOTER "</track>"
+#define PLAYLIST_FOOTER "</playlist>"
 
 typedef struct {
 	char *uri;
@@ -48,11 +59,82 @@ struct playlist {
 	int next_index;
 	uint32_t token;
 
+	const char *filename;
+
 	playlist_list_change_listener_t list_change_listener;
 	playlist_current_change_listener_t current_change_listener;
 	playlist_current_remove_listener_t current_remove_listener;
 	playlist_next_change_listener_t next_change_listener;
 };
+
+
+void playlist_load(struct playlist *list)
+{
+	assert(list != NULL);
+	if (list->filename == NULL)
+		return;
+	// prevent from re-saving empty list in callbacks
+	char *save = list->filename;
+	list->filename = NULL;
+	playlist_clear(list);
+	list->filename = save;
+	IXML_Document* doc = ixmlLoadDocument(list->filename);
+	if (doc == NULL)
+		return;
+	IXML_Node *root = ixmlNode_getFirstChild((IXML_Node *)doc);
+	char *name = ixmlNode_getNodeName(root);
+	playlist_id_t after_id = 0;
+	if (name != NULL) {
+		if (!strcmp(name, "playlist")) {
+			IXML_Node *track = ixmlNode_getFirstChild(root);
+			while (track != NULL) {
+				char *uri = NULL;
+				char *meta = NULL;
+				IXML_Node *node = ixmlNode_getFirstChild(track);
+				while (node != NULL) {
+					char *node_name = ixmlNode_getNodeName(node);
+					if (node_name != NULL) {
+						if (uri == NULL && !strcmp(node_name, "uri")) {
+							IXML_Node *content = ixmlNode_getFirstChild(node);
+							if (content != NULL) {
+								uri = ixmlNode_getNodeValue(content);
+							}
+						} else if (meta == NULL && !strcmp(node_name, "DIDL-Lite")) {
+							meta = ixmlNodetoString(node);
+						}
+					}
+					node = ixmlNode_getNextSibling(node);
+				}
+				track = ixmlNode_getNextSibling(track);
+				if (meta != NULL && uri != NULL) {
+					playlist_add(list, after_id, strdup(uri), meta, &after_id);
+				} else {
+					free(meta);
+				}
+			}
+		}
+	}
+	ixmlDocument_free(doc);
+}
+
+static void playlist_save(struct playlist *list)
+{
+	assert(list != NULL);
+	if (list->filename == NULL)
+		return;
+	FILE *f = fopen(list->filename, "w");
+	fprintf(f, "%s\n", PLAYLIST_HEADER);
+	for (int i = 0; i < list->list_size; i++) {
+		fprintf(f, "%s\n", TRACK_HEADER);
+		char *uri = xmlescape(list->items[i].uri, 0);
+		fprintf(f, "%s%s%s\n", URI_HEADER, uri, URI_FOOTER);
+		free(uri);
+		fprintf(f, "%s\n", list->items[i].metadata);
+		fprintf(f, "%s\n", TRACK_FOOTER);
+	}
+	fprintf(f, "%s\n", PLAYLIST_FOOTER);
+	fclose(f);
+}
 
 static void ensure_capacity(struct playlist *list, int size)
 {
@@ -122,6 +204,7 @@ struct playlist *playlist_create(void)
 	list->current_index = -1;
 	list->next_index = -1;
 	list->token = 1;
+	list->filename = NULL;
 	return list;
 }
 
@@ -191,6 +274,7 @@ int playlist_add(struct playlist *list, playlist_id_t after_id, char *uri, char 
 		list->current_index++;
 	}
 	assign_next(list);
+	playlist_save(list);
 	return 0;
 }
 
@@ -220,6 +304,7 @@ int playlist_clear(struct playlist *list)
 		}
 		assign_next(list);
 	}
+	playlist_save(list);
 	return 0;
 }
 
@@ -270,6 +355,7 @@ int playlist_remove(struct playlist *list, playlist_id_t id)
 	if (list->list_change_listener != NULL) {
 		list->list_change_listener(list);
 	}
+	playlist_save(list);
 
 	return 0;
 }
@@ -363,3 +449,10 @@ uint32_t playlist_get_token(struct playlist *list)
 	assert(list != NULL);
 	return list->token;
 }
+
+void playlist_set_filename(struct playlist *list, char *filename)
+{
+	assert(list != NULL);
+	list->filename = filename;
+}
+

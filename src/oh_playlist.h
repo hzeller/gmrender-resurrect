@@ -28,7 +28,7 @@
 #include "upnp_device.h"
 #include "variable-container.h"
 
-struct service *oh_playlist_get_service(void);
+struct service *oh_playlist_get_service(char * filename);
 void oh_playlist_init(struct upnp_device *device);
 void oh_playlist_register_variable_listener(variable_change_listener_t cb, void *userdata);
 

@@ -64,5 +64,7 @@ playlist_id_t * playlist_get_ids(struct playlist *list);
 int playlist_next_uri(struct playlist *list, char **uri);
 uint32_t playlist_get_token(struct playlist *list);
 
+void playlist_set_filename(struct playlist *list, char *filename);
+void playlist_load(struct playlist *list);
 
 #endif /* _PLAYLIST_H */

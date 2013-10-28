@@ -450,8 +450,9 @@ static void update_repeat_state(int state)
 }
 
 
-static void update_playlist(void)
+static gchar * encode_playlist(void)
 {
+	gchar *encoded;
 	int size = playlist_get_size(playlist);
 	if (size > 0) {
 		// Andrey Demenev: I do not know if we can rely on system-supplied
@@ -470,14 +471,20 @@ static void update_playlist(void)
 			}
 		}
 		const guchar *data = (const guchar*)(swapped_ids == NULL ? orig_ids : swapped_ids);
-		gchar *encoded = g_base64_encode(data, sizeof(playlist_id_t) * size);
-		replace_var(PLAYLIST_VAR_ID_ARRRAY, encoded);
-		g_free(encoded);
+		encoded = g_base64_encode(data, sizeof(playlist_id_t) * size);
 		if (swapped_ids != NULL)
 			free(swapped_ids);
 	} else {
-		replace_var(PLAYLIST_VAR_ID_ARRRAY, "");
+		encoded = strdup("");
 	}
+	return encoded;
+}
+
+static void update_playlist(void)
+{
+	gchar *encoded = encode_playlist();
+	replace_var(PLAYLIST_VAR_ID_ARRRAY, encoded);
+	g_free(encoded);
 }
 
 static void *thread_update_playlist(void *userdata)
@@ -951,8 +958,14 @@ static struct action playlist_actions[] = {
 	[PLAYLIST_CMD_UNKNOWN] =                  {NULL, NULL}
 };
 
-struct service *oh_playlist_get_service(void) {
+struct service *oh_playlist_get_service(char *filename) {
 	if (playlist_service_.variable_container == NULL) {
+	
+		playlist = playlist_create();
+		playlist_set_filename(playlist, filename);
+		playlist_load(playlist);
+		playlist_default_values[PLAYLIST_VAR_ID_ARRRAY] = encode_playlist();
+
 		state_variables_ =
 			VariableContainer_new(PLAYLIST_VAR_COUNT,
 						  &playlist_service_,
@@ -964,12 +977,13 @@ struct service *oh_playlist_get_service(void) {
 
 void oh_playlist_init(struct upnp_device *device) {
 	assert(playlist_service_.var_change_collector == NULL);
+		
 	playlist_service_.var_change_collector =
 		UPnPVarChangeCollector_new(state_variables_,
 		"",  /* const char *event_xml_namespace - not used, since we do not provide LastChange variable */
 		device, PLAYLIST_SERVICE_ID);
 
-	playlist = playlist_create();
+
 	playlist_set_list_change_listener(playlist, playlist_list_change);
 	playlist_set_current_change_listener(playlist, playlist_current_change);
 	playlist_set_current_remove_listener(playlist, playlist_current_remove);
@@ -989,8 +1003,6 @@ void oh_playlist_register_variable_listener(variable_change_listener_t cb,
 					       void *userdata) {
 	VariableContainer_register_callback(state_variables_, cb, userdata);
 }
-
-
 
 
 struct service playlist_service_ = {
