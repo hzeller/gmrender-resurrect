@@ -286,33 +286,6 @@ static variable_container_t *state_variables_ = NULL;
 
 static ithread_mutex_t product_mutex;
 
-static void service_lock(void)
-{
-	ithread_mutex_lock(&product_mutex);
-	if (product_service_.var_change_collector) {
-		UPnPVarChangeCollector_start(product_service_.var_change_collector);
-	}
-}
-
-static void service_unlock(void)
-{
-	if (product_service_.var_change_collector) {
-		UPnPVarChangeCollector_finish(product_service_.var_change_collector);
-	}
-	ithread_mutex_unlock(&product_mutex);
-}
-
-static int replace_var(product_variable_t varnum, const char *new_value) {
-	return VariableContainer_change(state_variables_, varnum, new_value);
-}
-
-static int replace_var_uint(product_variable_t varnum, unsigned int new_value)
-{
-	char buf[32];
-	sprintf(buf, "%u", new_value);
-	return replace_var(varnum, buf);
-}
-
 static int cmd_source_count(struct action_event *event)
 {
 	upnp_append_variable(event, PRODUCT_VAR_SOURCE_COUNT, "Value");
