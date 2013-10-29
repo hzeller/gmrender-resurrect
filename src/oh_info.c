@@ -290,8 +290,8 @@ static void shared_meta_song_change(char *uri, char *meta)
 static void shared_meta_meta_change(char *meta)
 {
 	service_lock();
-	if (replace_var(INFO_VAR_METADATA, meta)) {
-		track_count++;
+	if (replace_var(INFO_VAR_METATEXT, meta)) {
+		metatext_count++;
 		update_counter_vars();
 	}
 	service_unlock();
