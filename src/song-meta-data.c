@@ -65,6 +65,7 @@ static char *generate_DIDL(const char *id,
 		 "\t<upnp:album>%s</upnp:album>\n"
 		 "\t<upnp:genre>%s</upnp:genre>\n"
 		 "\t<upnp:creator>%s</upnp:creator>\n"
+		 "\t<upnp:class>object.item</upnp:class>\n"
 		 "</item>\n%s",
 		 kDidlHeader, id,
 		 title ? title : "", artist ? artist : "",
