@@ -34,13 +34,13 @@ gstreamer 0.10 up to 1.0.7. There was a [leaking thread bug][gst-bug-699794]
 whose fix showed up in GStreamer 1.0.8.
 If you are using an older version, then only restart of gmrender-resurrect
 helps in these situations.
-Unfortunately, in  gstreamer 1.0.x version, there is another bug, a
-[race condition][gst-bug-698750], that affects gapless playing with some
-file formats (FLAC is ok, OGG has trouble), but apparantly, this is being
-fixed in the development version of gstreamer (not verified yet).
+There is a [bug][gst-bug-698750] before gstreamer 1.2 that affects gapless
+playback.
+
+Bottomline: use at least gstreamer 1.2.
 
 If you want to use OpenMAX support, [there are reports][open-max-support], that
-this works with a recent version of gstreamer 1.0.9.
+this works with a recent version of gstreamer >= 1.0.9.
 
 Installation
 ------------
