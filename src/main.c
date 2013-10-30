@@ -192,6 +192,10 @@ int main(int argc, char **argv)
 	int rc;
 	struct upnp_device_descriptor *upnp_renderer;
 
+#if !GLIB_CHECK_VERSION(2,32,0)
+	g_thread_init (NULL);  // Was necessary < glib 2.32, deprecated since.
+#endif
+
 	if (!process_cmdline(argc, argv)) {
 		return EXIT_FAILURE;
 	}
@@ -236,13 +240,6 @@ int main(int argc, char **argv)
 		fprintf(pid_file_stream, "%d\n", getpid());
 		fclose(pid_file_stream);
 	}
-
-#if !GLIB_CHECK_VERSION(2, 32, 0)
-	// Only older version of glib require this.
-	if (!g_thread_get_initialized()) {
-		g_thread_init(NULL);
-	}
-#endif
 
 	upnp_renderer = upnp_renderer_descriptor(friendly_name, uuid);
 	if (upnp_renderer == NULL) {
