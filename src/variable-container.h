@@ -45,6 +45,7 @@
 #ifndef VARIABLE_CONTAINER_H
 #define VARIABLE_CONTAINER_H
 
+// TODO : remove this include - need to resolve cross-dependecies first
 #include <upnp/ithread.h>
 #include "upnp.h"
 
