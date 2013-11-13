@@ -404,6 +404,7 @@ static void playlist_current_change(struct playlist *list, playlist_id_t id, int
 	if (!playlist_get(playlist, id, &uri, NULL)) {
 		output_set_uri(uri, NULL);
 		if (!automatic && playlist_state_ != PLAYLIST_STOPPED) {
+			output_stop();
 			if (output_play(&inform_play_transition_from_output))  {
 				change_playlist_state(PLAYLIST_STOPPED);
 			} else {
