@@ -221,7 +221,7 @@ char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder) {
 struct upnp_var_change_collector {
 	variable_container_t *variable_container;
 	int last_change_variable_num;      // the variable we manipulate.
-	uint32_t changed_variables;  // variables not to event on.
+	uint32_t changed_variables;  // bit mask for variables changed in current transaction
 	struct upnp_device *upnp_device;
 	const char *service_id;
 	int open_transactions;
@@ -366,7 +366,6 @@ static void UPnPVarChangeCollector_notify_lastchange(upnp_var_change_collector_t
 		varvalues[0] = xmlescape(xml_doc_string, 0);
 		obj->changed_variables = 0;
 		ithread_mutex_unlock(&notify_mutex);
-		//varvalues[0] = xml_doc_string;
 		upnp_device_notify(obj->upnp_device,
 				   obj->service_id,
 				   varnames, varvalues, 1);
