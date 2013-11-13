@@ -64,6 +64,8 @@ struct variable_container {
 	struct cb_list *callbacks;
 };
 
+// Andrey Demenev:
+// TODO: Only pass requred data, instead of complete struct service
 variable_container_t *VariableContainer_new(int variable_num,
 					    struct service *service_desc,
 					    const char **variable_init_values) {
