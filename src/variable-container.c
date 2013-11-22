@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdint.h>
+#include <unistd.h>
 #include <upnp/ithread.h>
 
 #include "upnp_device.h"
@@ -440,6 +441,7 @@ static void *notification_thread_func(void * unused)
 
 			collector = collector->next;
 		}
+		usleep(150000);
 	}
 	return NULL;
 }
