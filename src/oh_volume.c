@@ -224,11 +224,9 @@ extern struct service volume_service_;
 static variable_container_t *state_variables_ = NULL;
 static uint32_t current_volume = 16;
 
-static ithread_mutex_t volume_mutex;
 
 static void service_lock(void)
 {
-	ithread_mutex_lock(&volume_mutex);
 	if (volume_service_.var_change_collector) {
 		UPnPVarChangeCollector_start(volume_service_.var_change_collector);
 	}
@@ -239,7 +237,6 @@ static void service_unlock(void)
 	if (volume_service_.var_change_collector) {
 		UPnPVarChangeCollector_finish(volume_service_.var_change_collector);
 	}
-	ithread_mutex_unlock(&volume_mutex);
 }
 
 static int replace_var(volume_variable_t varnum, const char *new_value) {
@@ -403,6 +400,5 @@ struct service volume_service_ = {
 	.variable_meta =        volume_var_meta,
 	.variable_count =       VOLUME_VAR_UNKNOWN,
 	.command_count =        VOLUME_CMD_UNKNOWN,
-	.service_mutex =        &volume_mutex
 };
 

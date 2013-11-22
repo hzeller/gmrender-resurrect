@@ -39,7 +39,8 @@
 static ithread_t notify_thread;
 static ithread_mutex_t  notify_mutex;
 static ithread_cond_t  notify_cond;
-static upnp_var_change_collector_t *notify_collector;
+static int send_notifications = 0;
+static upnp_var_change_collector_t *collectors = NULL;
 
 static void *notification_thread_func(void * unused);
 
@@ -61,6 +62,7 @@ struct variable_container {
 	int variable_num;
 	struct service *service_desc;
 	char **values;
+	ithread_mutex_t mutex;
 	struct cb_list *callbacks;
 };
 
@@ -81,6 +83,7 @@ variable_container_t *VariableContainer_new(int variable_num,
 					   ? variable_init_values[i]
 					   : "");
 	}
+	ithread_mutex_init(&result->mutex, NULL);
 	return result;
 }
 
@@ -144,6 +147,17 @@ void VariableContainer_register_callback(variable_container_t *object,
 	item->callback = callback;
 	object->callbacks = item;
 }
+
+void VariableContainer_lock(variable_container_t *object)
+{
+	ithread_mutex_lock(&object->mutex);
+}
+
+void VariableContainer_unlock(variable_container_t *object)
+{
+	ithread_mutex_unlock(&object->mutex);
+}
+
 
 // -- UPnPLastChangeBuilder
 struct upnp_last_change_builder {
@@ -226,6 +240,7 @@ struct upnp_var_change_collector {
 	const char *service_id;
 	int open_transactions;
 	upnp_last_change_builder_t *builder;
+	struct upnp_var_change_collector *next;
 };
 
 static void UPnPVarChangeCollector_notify(upnp_var_change_collector_t *obj);
@@ -271,6 +286,10 @@ UPnPVarChangeCollector_new(variable_container_t *variable_container,
 		}
 		result->changed_variables |= (1 << i);
 	}
+
+	result->next = collectors;
+	collectors = result;
+
 	UPnPVarChangeCollector_notify(result);
 
 	VariableContainer_register_callback(variable_container,
@@ -280,17 +299,21 @@ UPnPVarChangeCollector_new(variable_container_t *variable_container,
 }
 
 void UPnPVarChangeCollector_start(upnp_var_change_collector_t *object) {
+	VariableContainer_lock(object->variable_container);
 	object->open_transactions += 1;
+	VariableContainer_unlock(object->variable_container);
 }
 
 void UPnPVarChangeCollector_finish(upnp_var_change_collector_t *object) {
+	VariableContainer_lock(object->variable_container);
 	assert(object->open_transactions >= 1);
 	object->open_transactions -= 1;
+	VariableContainer_unlock(object->variable_container);
 	UPnPVarChangeCollector_notify(object);
 }
 
 
-static void UPnPVarChangeCollector_notify_all(upnp_var_change_collector_t *obj)
+static int UPnPVarChangeCollector_collect_all(upnp_var_change_collector_t *obj, const char ***varnames, const char ***varvalues)
 {
 	int i, j;
 	int changed_count = 0;
@@ -300,35 +323,26 @@ static void UPnPVarChangeCollector_notify_all(upnp_var_change_collector_t *obj)
 		}
 	}
 	if (!changed_count) {
-		obj->changed_variables = 0;
-		ithread_mutex_unlock(&notify_mutex);
-		return;
+		return 0;
 	}
-	const char **varnames = malloc(sizeof(char*) * (changed_count + 1));
-	assert(varnames != NULL);;
-	const char **varvalues = malloc(sizeof(char*) * (changed_count + 1));
-	assert(varvalues != NULL);
+	*varnames = malloc(sizeof(char*) * (changed_count + 1));
+	assert(*varnames != NULL);;
+	*varvalues = malloc(sizeof(char*) * (changed_count + 1));
+	assert(*varvalues != NULL);
 	j = 0;
 	for (i = 0; i < obj->variable_container->variable_num; i++) {
 		if (!(obj->changed_variables & (1 << i)))
 			continue;
-		varnames[j] = obj->variable_container->service_desc->variable_names[i];
-		varvalues[j] = xmlescape(obj->variable_container->values[i], 0);
+		(*varnames)[j] = obj->variable_container->service_desc->variable_names[i];
+		(*varvalues)[j] = xmlescape(obj->variable_container->values[i], 0);
 		j++;
 	}
-	obj->changed_variables = 0;
-	ithread_mutex_unlock(&notify_mutex);
-	varnames[changed_count] = NULL;
-	varvalues[changed_count] = NULL;
-	upnp_device_notify(obj->upnp_device, obj->service_id, varnames, varvalues, changed_count);
-	for (i = 0; i < changed_count; i++) {
-		free((char*)varvalues[i]);
-	}
-	free(varnames);
-	free(varvalues);
+	(*varnames)[changed_count] = NULL;
+	(*varvalues)[changed_count] = NULL;
+	return changed_count;
 }
 
-static void UPnPVarChangeCollector_notify_lastchange(upnp_var_change_collector_t *obj)
+static int UPnPVarChangeCollector_collect_lastchange(upnp_var_change_collector_t *obj, const char ***varnames, const char ***varvalues)
 {
 	int i;
 	for (i = 0; i < obj->variable_container->variable_num; i++) {
@@ -344,47 +358,41 @@ static void UPnPVarChangeCollector_notify_lastchange(upnp_var_change_collector_t
 	}
 	char *xml_doc_string = UPnPLastChangeBuilder_to_xml(obj->builder);
 	if (xml_doc_string == NULL) {
-		obj->changed_variables = 0;
-		ithread_mutex_unlock(&notify_mutex);
-		return;
+		return 0;
 	}
 
 	// Only if there is actually a change, send it over.
 	if (VariableContainer_change(obj->variable_container,
 				     obj->last_change_variable_num,
 				     xml_doc_string)) {
-		const char *varnames[] = {
-			"LastChange",
-			NULL
-		};
-		const char *varvalues[] = {
-			NULL, NULL
-		};
+		*varnames = malloc(sizeof(char*) * 2);
+		*varvalues = malloc(sizeof(char*) * 2);
+		(*varnames)[0] = "LastChange";
+		(*varnames)[1] = NULL;
+		(*varvalues)[0] = NULL;
+		(*varvalues)[1] = NULL;
 		// Yes, now, the whole XML document is encapsulated in
 		// XML so needs to be XML quoted. The time around 2000 was
 		// pretty sick - people did everything in XML.
-		varvalues[0] = xmlescape(xml_doc_string, 0);
-		obj->changed_variables = 0;
-		ithread_mutex_unlock(&notify_mutex);
-		upnp_device_notify(obj->upnp_device,
-				   obj->service_id,
-				   varnames, varvalues, 1);
-		free((char*)varvalues[0]);
+		(*varvalues)[0] = xmlescape(xml_doc_string, 0);
 	}
 
 	free(xml_doc_string);
+	return 1;
 }
 
 
 // TODO(hzeller): add rate limiting. The standard talks about some limited
 // amount of events per time-unit.
 static void UPnPVarChangeCollector_notify(upnp_var_change_collector_t *obj) {
-	if (obj->open_transactions != 0)
-		return;
-
 	ithread_mutex_lock(&notify_mutex);
+	if (obj->open_transactions != 0) {
+		ithread_mutex_unlock(&notify_mutex);
+		return;
+	}
+
 	if (obj->changed_variables) {
-		notify_collector = obj;
+		send_notifications = 1;
 		ithread_cond_signal(&notify_cond);
 	}
 	ithread_mutex_unlock(&notify_mutex);
@@ -394,13 +402,43 @@ static void *notification_thread_func(void * unused)
 {
 	for (;;) {
 		ithread_mutex_lock(&notify_mutex);
-		ithread_cond_wait(&notify_cond, &notify_mutex);
-		// if LastChange variable is present, send update in that variable.
-		// Otherwise, use normal variable eventing.
-		if (notify_collector->last_change_variable_num >= 0) {
-			UPnPVarChangeCollector_notify_lastchange(notify_collector);
-		} else {
-			UPnPVarChangeCollector_notify_all(notify_collector);
+		// send_notifications could be set by other threads 
+		// while previous notifications were being sent.
+		// If that is true, do not wait for condition
+		if (!send_notifications)
+			ithread_cond_wait(&notify_cond, &notify_mutex);
+		// check for spurious wakeup
+		if (!send_notifications) {
+			ithread_mutex_unlock(&notify_mutex);
+			continue;
+		}
+		send_notifications = 0;
+		ithread_mutex_unlock(&notify_mutex);
+		upnp_var_change_collector_t *collector = collectors;
+		while (collector != NULL) {
+			VariableContainer_lock(collector->variable_container);
+			// if LastChange variable is present, send update in that variable.
+			// Otherwise, use normal variable eventing.
+			const char **varnames = NULL, **varvalues = NULL;
+			int num_vars;
+			if (collector->last_change_variable_num >= 0) {
+				num_vars = UPnPVarChangeCollector_collect_lastchange(collector, &varnames, &varvalues);
+			} else {
+				num_vars = UPnPVarChangeCollector_collect_all(collector, &varnames, &varvalues);
+			}
+			collector->changed_variables = 0;
+			VariableContainer_unlock(collector->variable_container);
+
+			if (num_vars > 0) {
+				upnp_device_notify(collector->upnp_device, collector->service_id, varnames, varvalues, num_vars);
+				for (int i = 0; i < num_vars; i++) {
+					free((char*)varvalues[i]);
+				}
+				free(varnames);
+				free(varvalues);
+			}
+
+			collector = collector->next;
 		}
 	}
 	return NULL;

@@ -87,7 +87,6 @@ struct icon {
 };
 
 struct service {
-	ithread_mutex_t *service_mutex;
 	const char *service_id;
 	const char *service_type;
 	const char *scpd_url;

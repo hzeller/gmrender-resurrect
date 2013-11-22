@@ -94,13 +94,13 @@ void upnp_append_variable(struct action_event *event,
 	assert(event != NULL);
 	assert(paramname != NULL);
 
-	ithread_mutex_lock(service->service_mutex);
+	VariableContainer_lock(service->variable_container);
 
 	value = VariableContainer_get(service->variable_container, varnum, NULL, NULL);
 	assert(value != NULL);   // triggers on invalid variable.
 	upnp_add_response(event, paramname, value);
 
-	ithread_mutex_unlock(service->service_mutex);
+	VariableContainer_unlock(service->variable_container);
 }
 
 void upnp_set_error(struct action_event *event, int error_code,
@@ -179,7 +179,7 @@ static int handle_subscription_request(struct upnp_device *priv,
 
 	// Build the current state of the variables as one gigantic initial
 	// LastChange update.
-	ithread_mutex_lock(srv->service_mutex);
+	VariableContainer_lock(srv->variable_container);
 	const int var_count =
 		VariableContainer_get_num_vars(srv->variable_container);
 
@@ -198,7 +198,6 @@ static int handle_subscription_request(struct upnp_device *priv,
 		}
 	}
 
-	ithread_mutex_unlock(srv->service_mutex);
 	const char **eventvar_names;
 	const char **eventvar_values;
 	if (has_last_change) {
@@ -256,6 +255,7 @@ static int handle_subscription_request(struct upnp_device *priv,
 		eventvar_names = eventvar_names_;
 		eventvar_values = eventvar_values_;
 	}
+	VariableContainer_unlock(srv->variable_container);
 
 	rc = UpnpAcceptSubscription(priv->device_handle,
 				    sr_event->UDN, sr_event->ServiceId,
@@ -305,7 +305,7 @@ static int handle_var_request(struct upnp_device *priv,
 		return -1;
 	}
 
-	ithread_mutex_lock(srv->service_mutex);
+	VariableContainer_lock(srv->variable_container);
 
 	char *result = NULL;
 	const int var_count =
@@ -320,7 +320,7 @@ static int handle_var_request(struct upnp_device *priv,
 		}
 	}
 
-	ithread_mutex_unlock(srv->service_mutex);
+	VariableContainer_unlock(srv->variable_container);
 
 	var_event->CurrentVal = result;
 	var_event->ErrCode = (result == NULL)
@@ -364,9 +364,7 @@ static int handle_action_request(struct upnp_device *priv,
 	// It would be good to enqueue the upnp_device_notify() after
 	// the action event is finished.
 	if (event_service->var_change_collector) {
-		ithread_mutex_lock(event_service->service_mutex);
 		UPnPVarChangeCollector_start(event_service->var_change_collector);
-		ithread_mutex_unlock(event_service->service_mutex);
 	}
 
 #ifdef ENABLE_ACTION_LOGGING
@@ -430,9 +428,7 @@ static int handle_action_request(struct upnp_device *priv,
 	}
 
 	if (event_service->var_change_collector) {   // See comment above.
-		ithread_mutex_lock(event_service->service_mutex);
 		UPnPVarChangeCollector_finish(event_service->var_change_collector);
-		ithread_mutex_unlock(event_service->service_mutex);
 	}
 	return 0;
 }

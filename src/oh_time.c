@@ -114,11 +114,9 @@ static variable_container_t *state_variables_ = NULL;
 static uint32_t track_count = 0;
 static char *last_uri;
 
-static ithread_mutex_t time_mutex;
 
 static void service_lock(void)
 {
-	ithread_mutex_lock(&time_mutex);
 	if (time_service_.var_change_collector) {
 		UPnPVarChangeCollector_start(time_service_.var_change_collector);
 	}
@@ -129,7 +127,6 @@ static void service_unlock(void)
 	if (time_service_.var_change_collector) {
 		UPnPVarChangeCollector_finish(time_service_.var_change_collector);
 	}
-	ithread_mutex_unlock(&time_mutex);
 }
 
 static int replace_var(time_variable_t varnum, const char *new_value) {
@@ -214,6 +211,5 @@ struct service time_service_ = {
 	.variable_meta =        time_var_meta,
 	.variable_count =       TIME_VAR_UNKNOWN,
 	.command_count =        TIME_CMD_UNKNOWN,
-	.service_mutex =        &time_mutex
 };
 

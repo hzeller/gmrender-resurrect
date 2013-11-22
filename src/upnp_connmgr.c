@@ -183,8 +183,6 @@ static struct var_meta connmgr_var_meta[] = {
 	[CONNMGR_VAR_UNKNOWN] =		{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
 };
 
-static ithread_mutex_t connmgr_mutex;
-
 int connmgr_init(void) {
 
 	struct service *srv = upnp_connmgr_get_service();
@@ -279,5 +277,4 @@ struct service connmgr_service_ = {
         .variable_meta =        connmgr_var_meta,
         .variable_count =       CONNMGR_VAR_UNKNOWN,
         .command_count =        CONNMGR_CMD_UNKNOWN,
-        .service_mutex =        &connmgr_mutex
 };

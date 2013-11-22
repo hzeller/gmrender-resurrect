@@ -88,6 +88,8 @@ typedef void (*variable_change_listener_t)(void *userdata,
 void VariableContainer_register_callback(variable_container_t *object,
 					 variable_change_listener_t callback,
 					 void *userdata);
+void VariableContainer_lock(variable_container_t *object);
+void VariableContainer_unlock(variable_container_t *object);
 
 // -- UPnP LastChange Builder - builds a LastChange XML document from
 // added name/value pairs.

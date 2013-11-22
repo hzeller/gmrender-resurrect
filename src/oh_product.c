@@ -284,8 +284,6 @@ static struct argument **argument_list[] = {
 extern struct service product_service_;
 static variable_container_t *state_variables_ = NULL;
 
-static ithread_mutex_t product_mutex;
-
 static int cmd_source_count(struct action_event *event)
 {
 	upnp_append_variable(event, PRODUCT_VAR_SOURCE_COUNT, "Value");
@@ -449,6 +447,5 @@ struct service product_service_ = {
 	.variable_meta =        product_var_meta,
 	.variable_count =       PRODUCT_VAR_UNKNOWN,
 	.command_count =        PRODUCT_CMD_UNKNOWN,
-	.service_mutex =        &product_mutex
 };
 

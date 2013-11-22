@@ -347,8 +347,6 @@ static variable_container_t *state_variables_ = NULL;
 
 /* protects transport_values, and service-specific state */
 
-static ithread_mutex_t playlist_mutex;
-
 static ithread_mutex_t  playlist_update_mutex;
 static ithread_cond_t  playlist_update_cond;
 
@@ -356,7 +354,6 @@ static void inform_play_transition_from_output(enum PlayFeedback fb);
 
 static void service_lock(void)
 {
-	ithread_mutex_lock(&playlist_mutex);
 	if (playlist_service_.var_change_collector) {
 		UPnPVarChangeCollector_start(playlist_service_.var_change_collector);
 	}
@@ -367,7 +364,6 @@ static void service_unlock(void)
 	if (playlist_service_.var_change_collector) {
 		UPnPVarChangeCollector_finish(playlist_service_.var_change_collector);
 	}
-	ithread_mutex_unlock(&playlist_mutex);
 }
 
 
@@ -1020,5 +1016,4 @@ struct service playlist_service_ = {
 	.variable_meta =        player_var_meta,
 	.variable_count =       PLAYLIST_VAR_UNKNOWN,
 	.command_count =        PLAYLIST_CMD_UNKNOWN,
-	.service_mutex =        &playlist_mutex
 };

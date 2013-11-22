@@ -256,11 +256,8 @@ static const char *control_default_values[] = {
 extern struct service control_service_;   // Defined below.
 static variable_container_t *state_variables_ = NULL;
 
-static ithread_mutex_t control_mutex;
-
 static void service_lock(void)
 {
-	ithread_mutex_lock(&control_mutex);
 	if (control_service_.var_change_collector) {
 		UPnPVarChangeCollector_start(control_service_.var_change_collector);
 	}
@@ -271,7 +268,6 @@ static void service_unlock(void)
 	if (control_service_.var_change_collector) {
 		UPnPVarChangeCollector_finish(control_service_.var_change_collector);
 	}
-	ithread_mutex_unlock(&control_mutex);
 }
 
 static struct argument *arguments_list_presets[] = {
@@ -826,5 +822,4 @@ struct service control_service_ = {
 	.variable_meta =	control_var_meta,
 	.variable_count =	CONTROL_VAR_UNKNOWN,
 	.command_count =	CONTROL_CMD_UNKNOWN,
-	.service_mutex =	&control_mutex
 };

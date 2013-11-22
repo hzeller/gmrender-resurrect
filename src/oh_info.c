@@ -178,11 +178,9 @@ static uint32_t track_count = 0;
 static uint32_t details_count = 0;
 static uint32_t metatext_count = 0;
 
-static ithread_mutex_t info_mutex;
 
 static void service_lock(void)
 {
-	ithread_mutex_lock(&info_mutex);
 	if (info_service_.var_change_collector) {
 		UPnPVarChangeCollector_start(info_service_.var_change_collector);
 	}
@@ -193,7 +191,6 @@ static void service_unlock(void)
 	if (info_service_.var_change_collector) {
 		UPnPVarChangeCollector_finish(info_service_.var_change_collector);
 	}
-	ithread_mutex_unlock(&info_mutex);
 }
 
 
@@ -352,6 +349,5 @@ struct service info_service_ = {
 	.variable_meta =        info_var_meta,
 	.variable_count =       INFO_VAR_UNKNOWN,
 	.command_count =        INFO_CMD_UNKNOWN,
-	.service_mutex =        &info_mutex
 };
 

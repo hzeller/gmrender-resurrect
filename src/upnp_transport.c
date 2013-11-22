@@ -503,11 +503,8 @@ static variable_container_t *state_variables_ = NULL;
 
 /* protects transport_values, and service-specific state */
 
-static ithread_mutex_t transport_mutex;
-
 static void service_lock(void)
 {
-	ithread_mutex_lock(&transport_mutex);
 	if (transport_service_.var_change_collector) {
 		UPnPVarChangeCollector_start(transport_service_.var_change_collector);
 	}
@@ -518,7 +515,6 @@ static void service_unlock(void)
 	if (transport_service_.var_change_collector) {
 		UPnPVarChangeCollector_finish(transport_service_.var_change_collector);
 	}
-	ithread_mutex_unlock(&transport_mutex);
 }
 
 static int obtain_instanceid(struct action_event *event, int *instance)
@@ -1046,5 +1042,4 @@ struct service transport_service_ = {
 	.variable_meta =        transport_var_meta,
 	.variable_count =       TRANSPORT_VAR_UNKNOWN,
 	.command_count =        TRANSPORT_CMD_UNKNOWN,
-	.service_mutex =        &transport_mutex
 };
