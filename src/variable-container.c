@@ -61,7 +61,7 @@ struct cb_list {
 
 struct variable_container {
 	int variable_num;
-	struct service *service_desc;
+	struct var_meta *variable_meta;
 	char **values;
 	ithread_mutex_t mutex;
 	struct cb_list *callbacks;
@@ -70,13 +70,13 @@ struct variable_container {
 // Andrey Demenev:
 // TODO: Only pass requred data, instead of complete struct service
 variable_container_t *VariableContainer_new(int variable_num,
-					    struct service *service_desc,
+					    struct var_meta *variable_meta,
 					    const char **variable_init_values) {
 	assert(variable_num > 0);
 	variable_container_t *result
 		= (variable_container_t*)malloc(sizeof(variable_container_t));
 	result->variable_num = variable_num;
-	result->service_desc = service_desc;
+	result->variable_meta = variable_meta;
 	result->values = (char **) malloc(variable_num * sizeof(char*));
 	result->callbacks = NULL;
 	for (int i = 0; i < variable_num; ++i) {
@@ -111,10 +111,10 @@ const char *VariableContainer_get(variable_container_t *object,
 				  int var, const char **name, param_event *evented) {
 	if (var < 0 || var >= object->variable_num)
 		return NULL;
-	const char *varname = object->service_desc->variable_names[var];
+	const char *varname = object->variable_meta[var].name;
 	if (name) *name = varname;
 	if (evented)
-		*evented = object->service_desc->variable_meta[var].sendevents;
+		*evented = object->variable_meta[var].sendevents;
 	// Names of not used variables are set to NULL.
 	return varname ? object->values[var] : NULL;
 }
@@ -131,7 +131,7 @@ int VariableContainer_change(variable_container_t *object,
 	object->values[var_num] = new_value;
 	for (struct cb_list *it = object->callbacks; it; it = it->next) {
 		it->callback(it->userdata,
-			     var_num, object->service_desc->variable_names[var_num],
+			     var_num, object->variable_meta[var_num].name,
 			     old_value, new_value);
 	}
 	free(old_value);
@@ -282,7 +282,7 @@ UPnPVarChangeCollector_new(variable_container_t *variable_container,
 			result->last_change_variable_num = i;
 			continue;
 		}
-		if (variable_container->service_desc->variable_meta[i].sendevents != SENDEVENT_YES) {
+		if (variable_container->variable_meta[i].sendevents != SENDEVENT_YES) {
 			continue;
 		}
 		result->changed_variables |= (1 << i);
@@ -334,7 +334,7 @@ static int UPnPVarChangeCollector_collect_all(upnp_var_change_collector_t *obj, 
 	for (i = 0; i < obj->variable_container->variable_num; i++) {
 		if (!(obj->changed_variables & (1 << i)))
 			continue;
-		(*varnames)[j] = obj->variable_container->service_desc->variable_names[i];
+		(*varnames)[j] = obj->variable_container->variable_meta[i].name;
 		(*varvalues)[j] = xmlescape(obj->variable_container->values[i], 0);
 		j++;
 	}
@@ -349,10 +349,10 @@ static int UPnPVarChangeCollector_collect_lastchange(upnp_var_change_collector_t
 	for (i = 0; i < obj->variable_container->variable_num; i++) {
 		if (i == obj->last_change_variable_num);
 		if (obj->changed_variables & (1 << i)) {
-			if (obj->variable_container->service_desc->variable_names[i] != NULL) {
+			if (obj->variable_container->variable_meta[i].name != NULL) {
 				UPnPLastChangeBuilder_add(
 						obj->builder, 
-						obj->variable_container->service_desc->variable_names[i], 
+						obj->variable_container->variable_meta[i].name, 
 						obj->variable_container->values[i]);
 			}
 		}
@@ -459,7 +459,7 @@ static void UPnPVarChangeCollector_callback(void *userdata,
 	if (var_num == object->last_change_variable_num) {
 		return;
 	}
-	if (object->variable_container->service_desc->variable_meta[var_num].sendevents != SENDEVENT_YES) {
+	if (object->variable_container->variable_meta[var_num].sendevents != SENDEVENT_YES) {
 		return;  // ignore changes on non-eventable variables.
 	}
 	object->changed_variables |= (1 << var_num);

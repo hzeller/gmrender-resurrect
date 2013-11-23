@@ -133,39 +133,6 @@ enum UPNPTransportError {
 	UPNP_TRANSPORT_E_INVALID_IID	= 718,
 };
 
-static const char *transport_variable_names[] = {
-	[TRANSPORT_VAR_TRANSPORT_STATE] = "TransportState",
-	[TRANSPORT_VAR_TRANSPORT_STATUS] = "TransportStatus",
-	[TRANSPORT_VAR_PLAY_MEDIUM] = "PlaybackStorageMedium",
-	[TRANSPORT_VAR_REC_MEDIUM] = "RecordStorageMedium",
-	[TRANSPORT_VAR_PLAY_MEDIA] = "PossiblePlaybackStorageMedia",
-	[TRANSPORT_VAR_REC_MEDIA] = "PossibleRecordStorageMedia",
-	[TRANSPORT_VAR_CUR_PLAY_MODE] = "CurrentPlayMode",
-	[TRANSPORT_VAR_TRANSPORT_PLAY_SPEED] = "TransportPlaySpeed",
-	[TRANSPORT_VAR_REC_MEDIUM_WR_STATUS] = "RecordMediumWriteStatus",
-	[TRANSPORT_VAR_CUR_REC_QUAL_MODE] = "CurrentRecordQualityMode",
-	[TRANSPORT_VAR_POS_REC_QUAL_MODE] = "PossibleRecordQualityModes",
-	[TRANSPORT_VAR_NR_TRACKS] = "NumberOfTracks",
-	[TRANSPORT_VAR_CUR_TRACK] = "CurrentTrack",
-	[TRANSPORT_VAR_CUR_TRACK_DUR] = "CurrentTrackDuration",
-	[TRANSPORT_VAR_CUR_MEDIA_DUR] = "CurrentMediaDuration",
-	[TRANSPORT_VAR_CUR_TRACK_META] = "CurrentTrackMetaData",
-	[TRANSPORT_VAR_CUR_TRACK_URI] = "CurrentTrackURI",
-	[TRANSPORT_VAR_AV_URI] = "AVTransportURI",
-	[TRANSPORT_VAR_AV_URI_META] = "AVTransportURIMetaData",
-	[TRANSPORT_VAR_NEXT_AV_URI] = "NextAVTransportURI",
-	[TRANSPORT_VAR_NEXT_AV_URI_META] = "NextAVTransportURIMetaData",
-	[TRANSPORT_VAR_REL_TIME_POS] = "RelativeTimePosition",
-	[TRANSPORT_VAR_ABS_TIME_POS] = "AbsoluteTimePosition",
-	[TRANSPORT_VAR_REL_CTR_POS] = "RelativeCounterPosition",
-	[TRANSPORT_VAR_ABS_CTR_POS] = "AbsoluteCounterPosition",
-	[TRANSPORT_VAR_LAST_CHANGE] = "LastChange",
-	[TRANSPORT_VAR_AAT_SEEK_MODE] = "A_ARG_TYPE_SeekMode",
-	[TRANSPORT_VAR_AAT_SEEK_TARGET] = "A_ARG_TYPE_SeekTarget",
-	[TRANSPORT_VAR_AAT_INSTANCE_ID] = "A_ARG_TYPE_InstanceID",
-	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] = "CurrentTransportActions",
-	[TRANSPORT_VAR_UNKNOWN] = NULL
-};
 
 static const char kZeroTime[] = "0:00:00";
 static const char *transport_default_values[] = {
@@ -328,37 +295,37 @@ static struct param_range track_nr_range = {
 };
 
 static struct var_meta transport_var_meta[] = {
-	[TRANSPORT_VAR_TRANSPORT_STATE] =		{ SENDEVENT_YES, DATATYPE_STRING, transport_states, NULL },
-	[TRANSPORT_VAR_TRANSPORT_STATUS] =		{ SENDEVENT_YES, DATATYPE_STRING, transport_stati, NULL },
-	[TRANSPORT_VAR_PLAY_MEDIUM] =			{ SENDEVENT_YES, DATATYPE_STRING, media, NULL },
-	[TRANSPORT_VAR_REC_MEDIUM] =			{ SENDEVENT_YES, DATATYPE_STRING, media, NULL },
-	[TRANSPORT_VAR_PLAY_MEDIA] =			{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_REC_MEDIA] =			{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_CUR_PLAY_MODE] =			{ SENDEVENT_YES, DATATYPE_STRING, playmodi, NULL, "NORMAL" },
-	[TRANSPORT_VAR_TRANSPORT_PLAY_SPEED] =		{ SENDEVENT_YES, DATATYPE_STRING, playspeeds, NULL },
-	[TRANSPORT_VAR_REC_MEDIUM_WR_STATUS] =		{ SENDEVENT_YES, DATATYPE_STRING, rec_write_stati, NULL },
-	[TRANSPORT_VAR_CUR_REC_QUAL_MODE] =		{ SENDEVENT_YES, DATATYPE_STRING, rec_quality_modi, NULL },
-	[TRANSPORT_VAR_POS_REC_QUAL_MODE] =		{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_NR_TRACKS] =			{ SENDEVENT_YES, DATATYPE_UI4, NULL, &track_nr_range }, /* no step */
-	[TRANSPORT_VAR_CUR_TRACK] =			{ SENDEVENT_YES, DATATYPE_UI4, NULL, &track_range },
-	[TRANSPORT_VAR_CUR_TRACK_DUR] =			{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_CUR_MEDIA_DUR] =			{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_CUR_TRACK_META] =		{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_CUR_TRACK_URI] =			{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_AV_URI] =			{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_AV_URI_META] =			{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_NEXT_AV_URI] =			{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_NEXT_AV_URI_META] =		{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_REL_TIME_POS] =			{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_ABS_TIME_POS] =			{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_REL_CTR_POS] =			{ SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
-	[TRANSPORT_VAR_ABS_CTR_POS] =			{ SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
-	[TRANSPORT_VAR_LAST_CHANGE] =			{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_AAT_SEEK_MODE] =			{ SENDEVENT_NO, DATATYPE_STRING, aat_seekmodi, NULL },
-	[TRANSPORT_VAR_AAT_SEEK_TARGET] =		{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_AAT_INSTANCE_ID] =		{ SENDEVENT_NO, DATATYPE_UI4, NULL, NULL },
-	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] =		{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_UNKNOWN] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
+	[TRANSPORT_VAR_TRANSPORT_STATE] =       { "TransportState", SENDEVENT_YES, DATATYPE_STRING, transport_states, NULL },
+	[TRANSPORT_VAR_TRANSPORT_STATUS] =      { "TransportStatus", SENDEVENT_YES, DATATYPE_STRING, transport_stati, NULL },
+	[TRANSPORT_VAR_PLAY_MEDIUM] =           { "PlaybackStorageMedium", SENDEVENT_YES, DATATYPE_STRING, media, NULL },
+	[TRANSPORT_VAR_REC_MEDIUM] =            { "RecordStorageMedium", SENDEVENT_YES, DATATYPE_STRING, media, NULL },
+	[TRANSPORT_VAR_PLAY_MEDIA] =            { "PossiblePlaybackStorageMedia", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[TRANSPORT_VAR_REC_MEDIA] =             { "PossibleRecordStorageMedia", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[TRANSPORT_VAR_CUR_PLAY_MODE] =         { "CurrentPlayMode", SENDEVENT_YES, DATATYPE_STRING, playmodi, NULL, "NORMAL" },
+	[TRANSPORT_VAR_TRANSPORT_PLAY_SPEED] =  { "TransportPlaySpeed", SENDEVENT_YES, DATATYPE_STRING, playspeeds, NULL },
+	[TRANSPORT_VAR_REC_MEDIUM_WR_STATUS] =  { "RecordMediumWriteStatus", SENDEVENT_YES, DATATYPE_STRING, rec_write_stati, NULL },
+	[TRANSPORT_VAR_CUR_REC_QUAL_MODE] =     { "CurrentRecordQualityMode", SENDEVENT_YES, DATATYPE_STRING, rec_quality_modi, NULL },
+	[TRANSPORT_VAR_POS_REC_QUAL_MODE] =     { "PossibleRecordQualityModes", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[TRANSPORT_VAR_NR_TRACKS] =             { "NumberOfTracks", SENDEVENT_YES, DATATYPE_UI4, NULL, &track_nr_range }, /* no step */
+	[TRANSPORT_VAR_CUR_TRACK] =             { "CurrentTrack", SENDEVENT_YES, DATATYPE_UI4, NULL, &track_range },
+	[TRANSPORT_VAR_CUR_TRACK_DUR] =         { "CurrentTrackDuration", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[TRANSPORT_VAR_CUR_MEDIA_DUR] =         { "CurrentMediaDuration", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[TRANSPORT_VAR_CUR_TRACK_META] =        { "CurrentTrackMetaData", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[TRANSPORT_VAR_CUR_TRACK_URI] =         { "CurrentTrackURI", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[TRANSPORT_VAR_AV_URI] =                { "AVTransportURI", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[TRANSPORT_VAR_AV_URI_META] =           { "AVTransportURIMetaData", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[TRANSPORT_VAR_NEXT_AV_URI] =           { "NextAVTransportURI", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[TRANSPORT_VAR_NEXT_AV_URI_META] =      { "NextAVTransportURIMetaData", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[TRANSPORT_VAR_REL_TIME_POS] =          { "RelativeTimePosition", SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
+	[TRANSPORT_VAR_ABS_TIME_POS] =          { "AbsoluteTimePosition", SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
+	[TRANSPORT_VAR_REL_CTR_POS] =           { "RelativeCounterPosition", SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
+	[TRANSPORT_VAR_ABS_CTR_POS] =           { "AbsoluteCounterPosition", SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
+	[TRANSPORT_VAR_LAST_CHANGE] =           { "LastChange", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[TRANSPORT_VAR_AAT_SEEK_MODE] =         { "A_ARG_TYPE_SeekMode", SENDEVENT_NO, DATATYPE_STRING, aat_seekmodi, NULL },
+	[TRANSPORT_VAR_AAT_SEEK_TARGET] =       { "A_ARG_TYPE_SeekTarget", SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
+	[TRANSPORT_VAR_AAT_INSTANCE_ID] =       { "A_ARG_TYPE_InstanceID", SENDEVENT_NO, DATATYPE_UI4, NULL, NULL },
+	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] = { "CurrentTransportActions", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[TRANSPORT_VAR_UNKNOWN] =               { NULL, SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
 };
 
 static struct argument *arguments_setavtransporturi[] = {
@@ -1002,7 +969,7 @@ struct service *upnp_transport_get_service(void) {
 	if (transport_service_.variable_container == NULL) {
 		state_variables_ =
 			VariableContainer_new(TRANSPORT_VAR_COUNT,
-					      &transport_service_,
+					      transport_var_meta,
 					      transport_default_values);
 		transport_service_.variable_container = state_variables_;
 	}
@@ -1036,7 +1003,6 @@ struct service transport_service_ = {
 	.event_xml_ns =         TRANSPORT_EVENT_XML_NS,
 	.actions =              transport_actions,
 	.action_arguments =     argument_list,
-	.variable_names =       transport_variable_names,
 	.variable_container =   NULL, // set later.
 	.var_change_collector =          NULL,
 	.variable_meta =        transport_var_meta,

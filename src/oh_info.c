@@ -84,21 +84,6 @@ enum {
 	INFO_CMD_COUNT
 };
 
-static const char *info_variable_names[] = {
-	[INFO_VAR_TRACK_COUNT] = "TrackCount",
-	[INFO_VAR_DETAILS_COUNT] = "DetailsCount",
-	[INFO_VAR_METATEXT_COUNT] = "MetatextCount",
-	[INFO_VAR_URI] = "Uri",
-	[INFO_VAR_METADATA] = "Metadata",
-	[INFO_VAR_DURATION] = "Duration",
-	[INFO_VAR_BIT_RATE] = "BitRate",
-	[INFO_VAR_BIT_DEPTH] = "BitDepth",
-	[INFO_VAR_SAMPLE_RATE] = "SampleRate",
-	[INFO_VAR_LOSSLESS] = "Lossless",
-	[INFO_VAR_CODEC_NAME] = "CodecName",
-	[INFO_VAR_METATEXT] = "Metatext",
-	[INFO_VAR_UNKNOWN] = NULL,
-};
 
 static const char *info_default_values[] = {
 	[INFO_VAR_TRACK_COUNT] = "0",
@@ -118,19 +103,19 @@ static const char *info_default_values[] = {
 
 
 static struct var_meta info_var_meta[] = {
-	[INFO_VAR_TRACK_COUNT] =		{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-	[INFO_VAR_DETAILS_COUNT] =		{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-	[INFO_VAR_METATEXT_COUNT] =		{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-	[INFO_VAR_URI] =				{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[INFO_VAR_METADATA] =			{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[INFO_VAR_DURATION] =			{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-	[INFO_VAR_BIT_RATE] =			{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-	[INFO_VAR_BIT_DEPTH] =			{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-	[INFO_VAR_SAMPLE_RATE] =		{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-	[INFO_VAR_LOSSLESS] =			{ SENDEVENT_YES, DATATYPE_BOOLEAN, NULL, NULL },
-	[INFO_VAR_CODEC_NAME] =			{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[INFO_VAR_METATEXT] =			{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[INFO_VAR_UNKNOWN] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL },
+	[INFO_VAR_TRACK_COUNT] =    { "TrackCount", SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
+	[INFO_VAR_DETAILS_COUNT] =  { "DetailsCount", SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
+	[INFO_VAR_METATEXT_COUNT] = { "MetatextCount", SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
+	[INFO_VAR_URI] =            { "Uri", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[INFO_VAR_METADATA] =       { "Metadata", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[INFO_VAR_DURATION] =       { "Duration", SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
+	[INFO_VAR_BIT_RATE] =       { "BitRate", SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
+	[INFO_VAR_BIT_DEPTH] =      { "BitDepth", SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
+	[INFO_VAR_SAMPLE_RATE] =    { "SampleRate", SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
+	[INFO_VAR_LOSSLESS] =       { "Lossless", SENDEVENT_YES, DATATYPE_BOOLEAN, NULL, NULL },
+	[INFO_VAR_CODEC_NAME] =     { "CodecName", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[INFO_VAR_METATEXT] =       { "Metatext", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[INFO_VAR_UNKNOWN] =        { NULL, SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL },
 };
 
 static struct argument *arguments_counters[] = {
@@ -312,7 +297,7 @@ struct service *oh_info_get_service(void) {
 	if (info_service_.variable_container == NULL) {
 		state_variables_ =
 			VariableContainer_new(INFO_VAR_COUNT,
-					      &info_service_,
+					      info_var_meta,
 					      info_default_values);
 		info_service_.variable_container = state_variables_;
 	}
@@ -343,7 +328,6 @@ struct service info_service_ = {
 	.event_url =			INFO_EVENT_URL,
 	.actions =              info_actions,
 	.action_arguments =     argument_list,
-	.variable_names =       info_variable_names,
 	.variable_container =   NULL,
 	.var_change_collector =          NULL,
 	.variable_meta =        info_var_meta,

@@ -56,7 +56,7 @@ typedef struct variable_container variable_container_t;
 // Create a new variable container. The variable_names need to be valid for the
 // lifetime of this objec.
 variable_container_t *VariableContainer_new(int variable_num,
-					    struct service *service_desc,
+					    struct var_meta *variable_meta,
 					    const char **variable_init_values);
 void VariableContainer_delete(variable_container_t *object);
 

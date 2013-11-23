@@ -93,21 +93,6 @@ enum {
 	VOLUME_CMD_COUNT
 };
 
-static const char *volume_variable_names[] = {
-	[VOLUME_VAR_VOLUME] = "Volume",
-	[VOLUME_VAR_BALANCE] = "Balance",
-	[VOLUME_VAR_FADE] = "Fade",
-	[VOLUME_VAR_MUTE] = "Mute",
-	[VOLUME_VAR_VOLUME_LIMIT] = "VolumeLimit",
-	[VOLUME_VAR_VOLUME_MAX] = "VolumeMax",
-	[VOLUME_VAR_VOLUME_UNITY] = "VolumeUnity",
-	[VOLUME_VAR_VOLUME_STEPS] = "VolumeSteps",
-	[VOLUME_VAR_VOLUME_MILLI_DB_PER_STEP] = "VolumeMilliDbPerStep",
-	[VOLUME_VAR_BALANCE_MAX] = "BalanceMax",
-	[VOLUME_VAR_FADE_MAX] = "FadeMax",
-
-	[VOLUME_VAR_UNKNOWN] = NULL,
-};
 
 static const char *volume_default_values[] = {
 	[VOLUME_VAR_VOLUME] = "16",
@@ -127,19 +112,18 @@ static const char *volume_default_values[] = {
 
 
 static struct var_meta volume_var_meta[] = {
-	[VOLUME_VAR_VOLUME] =					{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-	[VOLUME_VAR_BALANCE] =					{ SENDEVENT_YES, DATATYPE_I4, NULL, NULL },
-	[VOLUME_VAR_FADE] =						{ SENDEVENT_YES, DATATYPE_I4, NULL, NULL },
-	[VOLUME_VAR_MUTE] =						{ SENDEVENT_YES, DATATYPE_BOOLEAN, NULL, NULL },
-	[VOLUME_VAR_VOLUME_LIMIT] =				{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-	[VOLUME_VAR_VOLUME_MAX] =				{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-	[VOLUME_VAR_VOLUME_UNITY] =				{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-	[VOLUME_VAR_VOLUME_STEPS] =				{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-	[VOLUME_VAR_VOLUME_MILLI_DB_PER_STEP] =	{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-	[VOLUME_VAR_BALANCE_MAX] =				{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-	[VOLUME_VAR_FADE_MAX] =					{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-
-	[VOLUME_VAR_UNKNOWN] =					{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL },
+	[VOLUME_VAR_VOLUME] =                   { "Volume", SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
+	[VOLUME_VAR_BALANCE] =                  { "Balance", SENDEVENT_YES, DATATYPE_I4, NULL, NULL },
+	[VOLUME_VAR_FADE] =                     { "Fade", SENDEVENT_YES, DATATYPE_I4, NULL, NULL },
+	[VOLUME_VAR_MUTE] =                     { "Mute", SENDEVENT_YES, DATATYPE_BOOLEAN, NULL, NULL },
+	[VOLUME_VAR_VOLUME_LIMIT] =             { "VolumeLimit", SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
+	[VOLUME_VAR_VOLUME_MAX] =               { "VolumeMax", SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
+	[VOLUME_VAR_VOLUME_UNITY] =             { "VolumeUnity", SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
+	[VOLUME_VAR_VOLUME_STEPS] =             { "VolumeSteps", SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
+	[VOLUME_VAR_VOLUME_MILLI_DB_PER_STEP] = { "VolumeMilliDbPerStep", SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
+	[VOLUME_VAR_BALANCE_MAX] =              { "BalanceMax", SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
+	[VOLUME_VAR_FADE_MAX] =                 { "FadeMax", SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
+	[VOLUME_VAR_UNKNOWN] =                  { NULL, SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL },
 };
 
 static struct argument *arguments_char[] = {
@@ -370,7 +354,7 @@ struct service *oh_volume_get_service(void) {
 	if (volume_service_.variable_container == NULL) {
 		state_variables_ =
 			VariableContainer_new(VOLUME_VAR_COUNT,
-						  &volume_service_,
+						  volume_var_meta,
 					      volume_default_values);
 		volume_service_.variable_container = state_variables_;
 	}
@@ -394,7 +378,6 @@ struct service volume_service_ = {
 	.event_url =			VOLUME_EVENT_URL,
 	.actions =              volume_actions,
 	.action_arguments =     argument_list,
-	.variable_names =       volume_variable_names,
 	.variable_container =   NULL,
 	.var_change_collector =          NULL,
 	.variable_meta =        volume_var_meta,

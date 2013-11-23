@@ -70,6 +70,7 @@ struct param_range {
 };
 
 struct var_meta {
+		const char *name;
         param_event     sendevents;
         param_datatype  datatype;
         const char      **allowed_values;
@@ -95,7 +96,6 @@ struct service {
 	const char *event_xml_ns;
 	struct action *actions;
 	struct argument ***action_arguments;
-	const char **variable_names;
 	struct variable_container *variable_container;
 	struct upnp_var_change_collector *var_change_collector;
 	struct var_meta *variable_meta;

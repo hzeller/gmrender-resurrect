@@ -128,30 +128,6 @@ typedef enum {
 
 static struct action control_actions[];
 
-static const char *control_variable_names[] = {
-	[CONTROL_VAR_LAST_CHANGE] = "LastChange",
-	[CONTROL_VAR_PRESET_NAME_LIST] = "PresetNameList",
-	[CONTROL_VAR_AAT_CHANNEL] = "A_ARG_TYPE_Channel",
-	[CONTROL_VAR_AAT_INSTANCE_ID] = "A_ARG_TYPE_InstanceID",
-	[CONTROL_VAR_AAT_PRESET_NAME] = "A_ARG_TYPE_PresetName",
-	[CONTROL_VAR_BRIGHTNESS] = "Brightness",
-	[CONTROL_VAR_CONTRAST] = "Contrast",
-	[CONTROL_VAR_SHARPNESS] = "Sharpness",
-	[CONTROL_VAR_R_GAIN] = "RedVideoGain",
-	[CONTROL_VAR_G_GAIN] = "GreenVideoGain",
-	[CONTROL_VAR_B_GAIN] = "BlueVideoGain",
-	[CONTROL_VAR_R_BLACK] = "RedVideoBlackLevel",
-	[CONTROL_VAR_G_BLACK] = "GreenVideoBlackLevel",
-	[CONTROL_VAR_B_BLACK] = "BlueVideoBlackLevel",
-	[CONTROL_VAR_COLOR_TEMP] = "ColorTemperature",
-	[CONTROL_VAR_HOR_KEYSTONE] = "HorizontalKeystone",
-	[CONTROL_VAR_VER_KEYSTONE] = "VerticalKeystone",
-	[CONTROL_VAR_MUTE] = "Mute",
-	[CONTROL_VAR_VOLUME] = "Volume",
-	[CONTROL_VAR_VOLUME_DB] = "VolumeDB",
-	[CONTROL_VAR_LOUDNESS] = "Loudness",
-	[CONTROL_VAR_UNKNOWN] = NULL
-};
 
 static const char *aat_presetnames[] =
 {
@@ -204,28 +180,28 @@ static struct param_range colortemp_range = { 0, 65535, 1 };
 static struct param_range keystone_range = { -32768, 32767, 1 };
 
 static struct var_meta control_var_meta[] = {
-	[CONTROL_VAR_LAST_CHANGE] =		{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[CONTROL_VAR_PRESET_NAME_LIST] =	{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[CONTROL_VAR_AAT_CHANNEL] =		{ SENDEVENT_NO, DATATYPE_STRING, aat_channels, NULL },
-	[CONTROL_VAR_AAT_INSTANCE_ID] =		{ SENDEVENT_NO, DATATYPE_UI4, NULL, NULL },
-	[CONTROL_VAR_AAT_PRESET_NAME] =		{ SENDEVENT_NO, DATATYPE_STRING, aat_presetnames, NULL },
-	[CONTROL_VAR_BRIGHTNESS] =		{ SENDEVENT_YES, DATATYPE_UI2, NULL, &brightness_range },
-	[CONTROL_VAR_CONTRAST] =		{ SENDEVENT_YES, DATATYPE_UI2, NULL, &contrast_range },
-	[CONTROL_VAR_SHARPNESS] =		{ SENDEVENT_YES, DATATYPE_UI2, NULL, &sharpness_range },
-	[CONTROL_VAR_R_GAIN] =			{ SENDEVENT_YES, DATATYPE_UI2, NULL, &vid_gain_range },
-	[CONTROL_VAR_G_GAIN] =			{ SENDEVENT_YES, DATATYPE_UI2, NULL, &vid_gain_range },
-	[CONTROL_VAR_B_GAIN] =			{ SENDEVENT_YES, DATATYPE_UI2, NULL, &vid_gain_range },
-	[CONTROL_VAR_R_BLACK] =			{ SENDEVENT_YES, DATATYPE_UI2, NULL, &vid_black_range },
-	[CONTROL_VAR_G_BLACK] =			{ SENDEVENT_YES, DATATYPE_UI2, NULL, &vid_black_range },
-	[CONTROL_VAR_B_BLACK] =			{ SENDEVENT_YES, DATATYPE_UI2, NULL, &vid_black_range },
-	[CONTROL_VAR_COLOR_TEMP] =		{ SENDEVENT_YES, DATATYPE_UI2, NULL, &colortemp_range },
-	[CONTROL_VAR_HOR_KEYSTONE] =		{ SENDEVENT_YES, DATATYPE_I2, NULL, &keystone_range },
-	[CONTROL_VAR_VER_KEYSTONE] =		{ SENDEVENT_YES, DATATYPE_I2, NULL, &keystone_range },
-	[CONTROL_VAR_MUTE] =			{ SENDEVENT_YES, DATATYPE_BOOLEAN, NULL, NULL },
-	[CONTROL_VAR_VOLUME] =			{ SENDEVENT_YES, DATATYPE_UI2, NULL, &volume_range },
-	[CONTROL_VAR_VOLUME_DB] =		{ SENDEVENT_YES, DATATYPE_I2, NULL, &volume_db_range },
-	[CONTROL_VAR_LOUDNESS] =		{ SENDEVENT_YES, DATATYPE_BOOLEAN, NULL, NULL },
-	[CONTROL_VAR_UNKNOWN] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
+	[CONTROL_VAR_LAST_CHANGE] =      { "LastChange", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[CONTROL_VAR_PRESET_NAME_LIST] = { "PresetNameList", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[CONTROL_VAR_AAT_CHANNEL] =      { "A_ARG_TYPE_Channel", SENDEVENT_NO, DATATYPE_STRING, aat_channels, NULL },
+	[CONTROL_VAR_AAT_INSTANCE_ID] =  { "A_ARG_TYPE_InstanceID", SENDEVENT_NO, DATATYPE_UI4, NULL, NULL },
+	[CONTROL_VAR_AAT_PRESET_NAME] =  { "A_ARG_TYPE_PresetName", SENDEVENT_NO, DATATYPE_STRING, aat_presetnames, NULL },
+	[CONTROL_VAR_BRIGHTNESS] =       { "Brightness", SENDEVENT_YES, DATATYPE_UI2, NULL, &brightness_range },
+	[CONTROL_VAR_CONTRAST] =         { "Contrast", SENDEVENT_YES, DATATYPE_UI2, NULL, &contrast_range },
+	[CONTROL_VAR_SHARPNESS] =        { "Sharpness", SENDEVENT_YES, DATATYPE_UI2, NULL, &sharpness_range },
+	[CONTROL_VAR_R_GAIN] =           { "RedVideoGain", SENDEVENT_YES, DATATYPE_UI2, NULL, &vid_gain_range },
+	[CONTROL_VAR_G_GAIN] =           { "GreenVideoGain", SENDEVENT_YES, DATATYPE_UI2, NULL, &vid_gain_range },
+	[CONTROL_VAR_B_GAIN] =           { "BlueVideoGain", SENDEVENT_YES, DATATYPE_UI2, NULL, &vid_gain_range },
+	[CONTROL_VAR_R_BLACK] =          { "RedVideoBlackLevel", SENDEVENT_YES, DATATYPE_UI2, NULL, &vid_black_range },
+	[CONTROL_VAR_G_BLACK] =          { "GreenVideoBlackLevel", SENDEVENT_YES, DATATYPE_UI2, NULL, &vid_black_range },
+	[CONTROL_VAR_B_BLACK] =          { "BlueVideoBlackLevel", SENDEVENT_YES, DATATYPE_UI2, NULL, &vid_black_range },
+	[CONTROL_VAR_COLOR_TEMP] =       { "ColorTemperature", SENDEVENT_YES, DATATYPE_UI2, NULL, &colortemp_range },
+	[CONTROL_VAR_HOR_KEYSTONE] =     { "HorizontalKeystone", SENDEVENT_YES, DATATYPE_I2, NULL, &keystone_range },
+	[CONTROL_VAR_VER_KEYSTONE] =     { "VerticalKeystone", SENDEVENT_YES, DATATYPE_I2, NULL, &keystone_range },
+	[CONTROL_VAR_MUTE] =             { "Mute", SENDEVENT_YES, DATATYPE_BOOLEAN, NULL, NULL },
+	[CONTROL_VAR_VOLUME] =           { "Volume", SENDEVENT_YES, DATATYPE_UI2, NULL, &volume_range },
+	[CONTROL_VAR_VOLUME_DB] =        { "VolumeDB", SENDEVENT_YES, DATATYPE_I2, NULL, &volume_db_range },
+	[CONTROL_VAR_LOUDNESS] =         { "Loudness", SENDEVENT_YES, DATATYPE_BOOLEAN, NULL, NULL },
+	[CONTROL_VAR_UNKNOWN] =          { NULL, SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
 };
 
 static const char *control_default_values[] = {
@@ -776,7 +752,7 @@ struct service *upnp_control_get_service(void) {
 	if (control_service_.variable_container == NULL) {
 		state_variables_ =
 			VariableContainer_new(CONTROL_VAR_COUNT,
-						  &control_service_,
+						  control_var_meta,
 					      control_default_values);
 		control_service_.variable_container = state_variables_;
 	}
@@ -816,7 +792,6 @@ struct service control_service_ = {
 	.event_xml_ns = CONTROL_EVENT_XML_NS, 
 	.actions =	control_actions,
 	.action_arguments =	argument_list,
-	.variable_names =	control_variable_names,
 	.variable_container =   NULL,  // set later.
 	.var_change_collector =          NULL,
 	.variable_meta =	control_var_meta,

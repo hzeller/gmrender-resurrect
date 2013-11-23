@@ -127,19 +127,6 @@ static struct argument **argument_list[] = {
 	[CONNMGR_CMD_UNKNOWN]	=	NULL
 };
 
-static const char *connmgr_variable_names[] = {
-	[CONNMGR_VAR_SRC_PROTO_INFO] = "SourceProtocolInfo",
-	[CONNMGR_VAR_SINK_PROTO_INFO] = "SinkProtocolInfo",
-	[CONNMGR_VAR_CUR_CONN_IDS] = "CurrentConnectionIDs",
-	[CONNMGR_VAR_AAT_CONN_STATUS] = "A_ARG_TYPE_ConnectionStatus",
-	[CONNMGR_VAR_AAT_CONN_MGR] = "A_ARG_TYPE_ConnectionManager",
-	[CONNMGR_VAR_AAT_DIR] = "A_ARG_TYPE_Direction",
-	[CONNMGR_VAR_AAT_PROTO_INFO] = "A_ARG_TYPE_ProtocolInfo",
-	[CONNMGR_VAR_AAT_CONN_ID] = "A_ARG_TYPE_ConnectionID",
-	[CONNMGR_VAR_AAT_AVT_ID] = "A_ARG_TYPE_AVTransportID",
-	[CONNMGR_VAR_AAT_RCS_ID] = "A_ARG_TYPE_RcsID",
-	[CONNMGR_VAR_UNKNOWN] = NULL
-};
 
 static const char *connmgr_default_values[] = {
 	[CONNMGR_VAR_SRC_PROTO_INFO] = "",
@@ -170,17 +157,17 @@ static const char *direction_values[] = {
 };
 
 static struct var_meta connmgr_var_meta[] = {
-	[CONNMGR_VAR_SRC_PROTO_INFO] =	{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[CONNMGR_VAR_SINK_PROTO_INFO] =	{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[CONNMGR_VAR_CUR_CONN_IDS] =	{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[CONNMGR_VAR_AAT_CONN_STATUS] =	{ SENDEVENT_NO, DATATYPE_STRING, connstatus_values, NULL },
-	[CONNMGR_VAR_AAT_CONN_MGR] =	{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[CONNMGR_VAR_AAT_DIR] =		{ SENDEVENT_NO, DATATYPE_STRING, direction_values, NULL },
-	[CONNMGR_VAR_AAT_PROTO_INFO] =	{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[CONNMGR_VAR_AAT_CONN_ID] =	{ SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
-	[CONNMGR_VAR_AAT_AVT_ID] =	{ SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
-	[CONNMGR_VAR_AAT_RCS_ID] =	{ SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
-	[CONNMGR_VAR_UNKNOWN] =		{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
+	[CONNMGR_VAR_SRC_PROTO_INFO] =  { "SourceProtocolInfo", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[CONNMGR_VAR_SINK_PROTO_INFO] = { "SinkProtocolInfo", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[CONNMGR_VAR_CUR_CONN_IDS] =    { "CurrentConnectionIDs", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[CONNMGR_VAR_AAT_CONN_STATUS] = { "A_ARG_TYPE_ConnectionStatus", SENDEVENT_NO, DATATYPE_STRING, connstatus_values, NULL },
+	[CONNMGR_VAR_AAT_CONN_MGR] =    { "A_ARG_TYPE_ConnectionManager", SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
+	[CONNMGR_VAR_AAT_DIR] =         { "A_ARG_TYPE_Direction", SENDEVENT_NO, DATATYPE_STRING, direction_values, NULL },
+	[CONNMGR_VAR_AAT_PROTO_INFO] =  { "A_ARG_TYPE_ProtocolInfo", SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
+	[CONNMGR_VAR_AAT_CONN_ID] =     { "A_ARG_TYPE_ConnectionID", SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
+	[CONNMGR_VAR_AAT_AVT_ID] =      { "A_ARG_TYPE_AVTransportID", SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
+	[CONNMGR_VAR_AAT_RCS_ID] =      { "A_ARG_TYPE_RcsID", SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
+	[CONNMGR_VAR_UNKNOWN] =         { NULL, SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
 };
 
 int connmgr_init(void) {
@@ -247,7 +234,7 @@ struct service *upnp_connmgr_get_service(void) {
 	if (connmgr_service_.variable_container == NULL) {
 		connmgr_service_.variable_container =
 			VariableContainer_new(CONNMGR_VAR_COUNT,
-						  &connmgr_service_,
+						  connmgr_var_meta,
 					      connmgr_default_values);
 		// no changes expected; no collector.
 	}
@@ -271,7 +258,6 @@ struct service connmgr_service_ = {
 	.event_url =		CONNMGR_EVENT_URL,
         .actions =		connmgr_actions,
         .action_arguments =     argument_list,
-        .variable_names =       connmgr_variable_names,
 	.variable_container =   NULL, // set later.
 	.var_change_collector =          NULL,
         .variable_meta =        connmgr_var_meta,

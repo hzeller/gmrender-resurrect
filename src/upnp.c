@@ -65,7 +65,7 @@ static struct xmlelement *gen_specversion(struct xmldoc *doc,
 static struct xmlelement *gen_scpd_action(struct xmldoc *doc,
                                           struct action *act,
                                           struct argument **arglist,
-                                          const char **varnames)
+                                          struct var_meta *meta)
 {
 	struct xmlelement *top;
 	struct xmlelement *parent,*child;
@@ -85,7 +85,7 @@ static struct xmlelement *gen_scpd_action(struct xmldoc *doc,
 					  (arg->direction == PARAM_DIR_IN)
 					  ? "in" : "out");
 			add_value_element(doc,child,"relatedStateVariable",
-					  varnames[arg->statevar]);
+					  meta[arg->statevar].name);
 			xmlelement_add_element(doc, parent,child);
 		}
 	}
@@ -103,12 +103,10 @@ static struct xmlelement *gen_scpd_actionlist(struct xmldoc *doc,
 	for(i=0; i<srv->command_count; i++) {
 		struct action *act;
 		struct argument **arglist;
-		const char **varnames;
 		act=&(srv->actions[i]);
 		arglist=srv->action_arguments[i];
-		varnames=srv->variable_names;
 		if (act) {
-			child=gen_scpd_action(doc, act, arglist, varnames);
+			child=gen_scpd_action(doc, act, arglist, srv->variable_meta);
 			xmlelement_add_element(doc, top, child);
 		}
 	}
@@ -166,7 +164,7 @@ static struct xmlelement *gen_scpd_servicestatetable(struct xmldoc *doc, struct 
 	top=xmlelement_new(doc, "serviceStateTable");
 	for(i=0; i<srv->variable_count; i++) {
 		struct var_meta *meta = &(srv->variable_meta[i]);
-		const char *name = srv->variable_names[i];
+		const char *name = srv->variable_meta[i].name;
 		child=gen_scpd_statevar(doc,name,meta);
 		xmlelement_add_element(doc, top, child);
 	}

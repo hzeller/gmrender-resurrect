@@ -121,25 +121,6 @@ enum {
 	PLAYLIST_CMD_COUNT
 };
 
-static const char *playlist_variable_names[] = {
-	[PLAYLIST_VAR_TRANSPORT_STATE] = "TransportState",
-	[PLAYLIST_VAR_REPEAT] = "Repeat",
-	[PLAYLIST_VAR_SHUFFLE] = "Shuffle",
-	[PLAYLIST_VAR_ID_ARRRAY] = "IdArray",
-	[PLAYLIST_VAR_ID] = "Id",
-	[PLAYLIST_VAR_TRACKS_MAX] = "TracksMax",
-	[PLAYLIST_VAR_PROTOCOL_INFO] = "ProtocolInfo",
-	[PLAYLIST_VAR_INDEX] = "Index",
-	[PLAYLIST_VAR_RELATIVE] = "Relative",
-	[PLAYLIST_VAR_ABSOLUTE] = "Absolute",
-	[PLAYLIST_VAR_ID_LIST] = "IdList",
-	[PLAYLIST_VAR_TRACK_LIST] = "TrackList",
-	[PLAYLIST_VAR_URI] = "Uri",
-	[PLAYLIST_VAR_METADATA] = "Metadata",
-	[PLAYLIST_VAR_ID_ARRAY_TOKEN] = "IdArrayToken",
-	[PLAYLIST_VAR_ID_ARRAY_CHANGED] = "IdArrayChanged",
-	[PLAYLIST_VAR_UNKNOWN] = NULL,
-};
 
 static const char kZeroTime[] = "0:00:00";
 
@@ -185,24 +166,23 @@ static struct param_range id_range = {
 
 
 static struct var_meta player_var_meta[] = {
-	[PLAYLIST_VAR_TRANSPORT_STATE] =    { SENDEVENT_YES, DATATYPE_STRING, playlist_states, NULL },
-	[PLAYLIST_VAR_REPEAT] =				{ SENDEVENT_YES, DATATYPE_BOOLEAN, NULL, NULL },
-	[PLAYLIST_VAR_SHUFFLE] =			{ SENDEVENT_YES, DATATYPE_BOOLEAN, NULL, NULL },
-	[PLAYLIST_VAR_ID_ARRRAY] =			{ SENDEVENT_YES, DATATYPE_BASE64, NULL, NULL },
-	[PLAYLIST_VAR_ID] =					{ SENDEVENT_YES, DATATYPE_UI4, NULL, &id_range },
-	[PLAYLIST_VAR_TRACKS_MAX] =			{ SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
-	[PLAYLIST_VAR_PROTOCOL_INFO] =		{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[PLAYLIST_VAR_INDEX] =				{ SENDEVENT_NO,  DATATYPE_UI4, NULL, NULL },
-	[PLAYLIST_VAR_RELATIVE] =			{ SENDEVENT_NO,  DATATYPE_I4, NULL, NULL },
-	[PLAYLIST_VAR_ABSOLUTE] =			{ SENDEVENT_NO,  DATATYPE_UI4, NULL, NULL },
-	[PLAYLIST_VAR_ID_LIST] =			{ SENDEVENT_NO,  DATATYPE_STRING, NULL, NULL },
-	[PLAYLIST_VAR_TRACK_LIST] =			{ SENDEVENT_NO,  DATATYPE_STRING, NULL, NULL },
-	[PLAYLIST_VAR_URI] =				{ SENDEVENT_NO,  DATATYPE_STRING, NULL, NULL },
-	[PLAYLIST_VAR_METADATA] =			{ SENDEVENT_NO,  DATATYPE_STRING, NULL, NULL },
-	[PLAYLIST_VAR_ID_ARRAY_TOKEN] =		{ SENDEVENT_NO,  DATATYPE_UI4, NULL, NULL },
-	[PLAYLIST_VAR_ID_ARRAY_CHANGED] =	{ SENDEVENT_NO,  DATATYPE_BOOLEAN, NULL, NULL },
-	
-	[PLAYLIST_VAR_UNKNOWN] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
+	[PLAYLIST_VAR_TRANSPORT_STATE] =  { "TransportState", SENDEVENT_YES, DATATYPE_STRING, playlist_states, NULL },
+	[PLAYLIST_VAR_REPEAT] =           { "Repeat", SENDEVENT_YES, DATATYPE_BOOLEAN, NULL, NULL },
+	[PLAYLIST_VAR_SHUFFLE] =          { "Shuffle", SENDEVENT_YES, DATATYPE_BOOLEAN, NULL, NULL },
+	[PLAYLIST_VAR_ID_ARRRAY] =        { "IdArray", SENDEVENT_YES, DATATYPE_BASE64, NULL, NULL },
+	[PLAYLIST_VAR_ID] =               { "Id", SENDEVENT_YES, DATATYPE_UI4, NULL, &id_range },
+	[PLAYLIST_VAR_TRACKS_MAX] =       { "TracksMax", SENDEVENT_YES, DATATYPE_UI4, NULL, NULL },
+	[PLAYLIST_VAR_PROTOCOL_INFO] =    { "ProtocolInfo", SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
+	[PLAYLIST_VAR_INDEX] =            { "Index", SENDEVENT_NO,  DATATYPE_UI4, NULL, NULL },
+	[PLAYLIST_VAR_RELATIVE] =         { "Relative", SENDEVENT_NO,  DATATYPE_I4, NULL, NULL },
+	[PLAYLIST_VAR_ABSOLUTE] =         { "Absolute", SENDEVENT_NO,  DATATYPE_UI4, NULL, NULL },
+	[PLAYLIST_VAR_ID_LIST] =          { "IdList", SENDEVENT_NO,  DATATYPE_STRING, NULL, NULL },
+	[PLAYLIST_VAR_TRACK_LIST] =       { "TrackList", SENDEVENT_NO,  DATATYPE_STRING, NULL, NULL },
+	[PLAYLIST_VAR_URI] =              { "Uri", SENDEVENT_NO,  DATATYPE_STRING, NULL, NULL },
+	[PLAYLIST_VAR_METADATA] =         { "Metadata", SENDEVENT_NO,  DATATYPE_STRING, NULL, NULL },
+	[PLAYLIST_VAR_ID_ARRAY_TOKEN] =   { "IdArrayToken", SENDEVENT_NO,  DATATYPE_UI4, NULL, NULL },
+	[PLAYLIST_VAR_ID_ARRAY_CHANGED] = { "IdArrayChanged", SENDEVENT_NO,  DATATYPE_BOOLEAN, NULL, NULL },
+	[PLAYLIST_VAR_UNKNOWN] =          { NULL, SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
 };
 
 static struct argument *arguments_setrepeat[] = {
@@ -965,7 +945,7 @@ struct service *oh_playlist_get_service(char *filename) {
 
 		state_variables_ =
 			VariableContainer_new(PLAYLIST_VAR_COUNT,
-						  &playlist_service_,
+						  player_var_meta,
 					      playlist_default_values);
 		playlist_service_.variable_container = state_variables_;
 	}
@@ -1010,7 +990,6 @@ struct service playlist_service_ = {
 	.event_url =		PLAYLIST_EVENT_URL,
 	.actions =              playlist_actions,
 	.action_arguments =     argument_list,
-	.variable_names =       playlist_variable_names,
 	.variable_container =   NULL, // set later.
 	.var_change_collector =          NULL,
 	.variable_meta =        player_var_meta,
