@@ -211,7 +211,7 @@ static int handle_subscription_request(struct upnp_device *priv,
 				continue;
 			// Send over all variables except "LastChange" itself
 			// and those marked as non-evented
-			if (value && strcmp("LastChange", name) != 0 && evented == SENDEVENT_YES) {
+			if (value && strcmp("LastChange", name) != 0 && evented == SENDEVENT_LASTCHANGE) {
 				UPnPLastChangeBuilder_add(builder, name, value);
 			}
 		}

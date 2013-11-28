@@ -280,7 +280,7 @@ UPnPVarChangeCollector_new(variable_container_t *variable_container,
 			result->last_change_variable_num = i;
 			continue;
 		}
-		if (variable_container->variable_meta[i].sendevents != SENDEVENT_YES) {
+		if (variable_container->variable_meta[i].sendevents != SENDEVENT_LASTCHANGE) {
 			continue;
 		}
 		result->changed_variables |= (1 << i);
@@ -457,7 +457,10 @@ static void UPnPVarChangeCollector_callback(void *userdata,
 	if (var_num == object->last_change_variable_num) {
 		return;
 	}
-	if (object->variable_container->variable_meta[var_num].sendevents != SENDEVENT_YES) {
+	if (object->last_change_variable_num >= 0 && object->variable_container->variable_meta[var_num].sendevents != SENDEVENT_LASTCHANGE) {
+		return;  // ignore changes on non-eventable variables.
+	}
+	if (object->last_change_variable_num < 0 && object->variable_container->variable_meta[var_num].sendevents != SENDEVENT_YES) {
 		return;  // ignore changes on non-eventable variables.
 	}
 	object->changed_variables |= (1 << var_num);

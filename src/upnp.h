@@ -60,7 +60,8 @@ typedef enum {
 
 typedef enum {
         SENDEVENT_NO,
-        SENDEVENT_YES
+        SENDEVENT_YES,
+        SENDEVENT_LASTCHANGE
 } param_event;
 
 struct param_range {
