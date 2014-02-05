@@ -1,0 +1,152 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" (C) Copyright 2014 Christi Scarborough <christi@coraline.org>,
+.\"
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.TH GMEDIARENDER 1 "February  4, 2014"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.\" Some roff macros, for reference:
+.\" .nh        disable hyphenation
+.\" .hy        enable hyphenation
+.\" .ad l      left justify
+.\" .ad b      justify to both left and right margins
+.\" .nf        disable filling
+.\" .fi        enable filling
+.\" .br        insert line break
+.\" .sp <n>    insert n+1 empty lines
+.\" for manpage-specific macros, see man(7)
+.SH NAME
+gmediarender \- UPNP-AV renderer daemon
+.SH SYNOPSIS
+.B gmediarender
+.RI [ options ] " files" ...
+.SH DESCRIPTION
+This manual page documents briefly the
+.B gmediarender
+command.
+.PP
+.\" TeX users may be more comfortable with the \fB<whatever>\fP and
+.\" \fI<whatever>\fP escape sequences to invode bold face and italics,
+.\" respectively.
+\fBgmediarender\fP is a daemon which acts as a UPNP-AV renderer on the 
+local network.  It can be controlled from a UPNP-AV control point to 
+play media files from a UPNP-AV media server through an audio device
+on the local system.
+.SH OPTIONS
+This program follows the usual GNU command line syntax, with long
+options starting with two dashes (`-').
+A summary of options is included below.
+.SS "Application options:"
+.TP
+.B \-d, \-\-daemon
+Runs the program as a daemon.
+.TP
+.B \-f, \-\-friendly\-name \fI\<name\>\fP
+Friendly name to advertise on the network.
+
+Usually, it is desirable for the renderer 
+to show up on controllers under a recognisable and unique name. This is 
+the option to set that name.
+.TP
+.B \-I, \-\-ip\-address \fI\<ip-address\>\fP
+The local IP address the service is running and advertised on.  
+
+This can 
+only be a single address, and must be explicitly specified (i.e. not 
+0.0.0.0).
+.TP
+.B \-p, \-\-port \fI\<port>\fP
+Port to listen to. [49152..65535].
+
+\fBlibupnp\fP does not use SO_REUSEADDR, 
+so it might be necessary to increment this number.
+.TP
+.B \-P, \-\-pid\-file \fI\<pidfile\>\fP                    
+Name of the file which the process ID should be written to.
+.TP
+.B \-u, \-\-uuid \fI\<uuid>\fP
+UUID to advertise on the network in the form \fIuser:group\fP.
+
+This sets the UPNP UUID that is advertised and used by controllers to 
+distinguish different renderers.
+Usually, \fBgmediarender\fP uses a built-in static id. 
+If there are multiple renderers running on the local network, they will all 
+share the same static ID.
+With this option, each renderer can be given its own id.
+One way to generate a UUID is to create a UUID once by running the 
+\fBuuidgen\fP tool.
+.SS "Audio options:"
+.TP
+\fB\-\-gstout\-audiosink\fP \fI\<sink\>\fP
+Set the audio sink.
+.TP
+\fB\-\-gstout\-audiodevice\fP \fI\<device\>\fP
+Set the audio device.
+
+The \fB\-\-gstout\-audio\.\.\.\fP options allow the user to configure 
+where the sound output from 
+\fBgmediarender\fP is sent.  The correct values will depend on which 
+method of audio output (e.g. ALSA) is being used.  
+.TP
+.B \-\-gstout\-initial\-volume\-db \fI\<volume\>\fP
+Sets the initial volume on startup in decibels.
+
+Values range from 0 (maximum volume) to \-60 (minimum volume. The decibel 
+scale is non\-linear: \-20db represents roughly half volume.  The 
+default value is 0.
+
+Note that this does not
+influence the hardware (e.g. ALSA) volume level, but only internal attenuation.
+It is advisable to set the hardware level to 100\% where possible.
+.TP
+.B \-\-list\-outputs
+List available output modules and exit.
+.TP
+.B \-o, \-\-output \fI\<module\>\fR
+Output module to use.
+
+Use \fB\-\-output\fP to obtain a list of valid modules.
+.SS "Debug options:"
+
+.TP
+\fB\-\-dump\-devicedesc\fR
+Dump device descriptor XML and exit.
+.TP
+\fB\-\-dump\-connmgr\-scpd\fR
+Dump Connection Manager service description XML and exit.
+.TP
+\fB\-\-dump\-control\-scpd\fR
+Dump Rendering Control service description XML and exit.
+.TP
+\fB\-\-dump\-transport\-scpd\fR
+Dump A/V Transport service description XML and exit.
+.TP
+.B \-\-logfile \fI\<logfile\>\fP              
+Name of a file to log output of the program to.  
+
+To log to the terminal use
+use \-\-logfile \/dev\/stdout
+This file can get quite large over time, so it is only recommended to use
+this option for debugging purposes.
+.SS "Help options"
+.TP
+.B \-h, \-\-help
+Show summary of options.
+.TP
+\fB\-\-help\-all\fR
+Show all help options.
+.TP
+\fB\-\-help\-gstout\fR
+Show GStreamer Output Options.
+.TP
+\fB\-\-help\-gst\fR
+Show GStreamer Options.
+.TP
+.B \-v, \-\-version
+Show the program version.
+
+.SH SEE ALSO
+.BR uuidgen (1).
+

@@ -1,1 +1,6 @@
-(needed)
+These files can be used with debconf to create a Debian package.
+
+A more up to date version of these files may be available at
+https://github.com/christiscarborough/gmrender-resurrect-debian
+
+Contributed by Christi Scarborough <christi@coraline.org>.
