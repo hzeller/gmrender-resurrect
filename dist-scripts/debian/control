@@ -1,0 +1,24 @@
+Source: gmrender-resurrect
+Maintainer: Henner Zeller <h.zeller@acm.org>
+Homepage: https://github.com/hzeller/gmrender-resurrect/
+Section: sound
+Priority: optional
+Standards-Version: 3.9.4
+Build-Depends: debhelper (>= 9), autoconf, automake, libtool, 
+ libupnp6-dev, libgstreamer0.10-dev, hardening-wrapper
+
+Package: gmrender-resurrect
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, gstreamer0.10-plugins-base, 
+ gstreamer0.10-plugins-good, gstreamer0.10-ffmpeg, 
+ gstreamer0.10-pulseaudio | gstreamer0.10-alsa,  
+ libupnp6
+Suggests: gstreamer0.10-plugins-bad, gstreamer0.10-plugins-ugly
+Description: Minimalist UPNP AV renderer
+ gmrender-resurrect is a minimalist UPNP AV renderer that can be used to 
+ play music controlled by a UPNP AV control point.  This package contains
+ only a renderer and will therefore require these things to be installed
+ either on this device or another device on the local network in order to
+ be usable.  gmrender-resurrect usese GStreamer to provide the
+ infrastructure for playing music.
+  

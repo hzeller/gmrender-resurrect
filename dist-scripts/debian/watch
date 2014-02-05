@@ -1,0 +1,3 @@
+version=3
+opts=filenamemangle=s/.+\/v?(\d\S*)\.tar\.gz/gmrender-resurrect-$1\.tar\.gz/ \
+  https://github.com/hzeller/gmrender-resurrect/tags .*/v?(\d\S*)\.tar\.gz
