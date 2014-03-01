@@ -20,8 +20,8 @@ EXTRA_GCC_DEBUG_CXXFLAGS=""
 if test -n "$GCC"; then
    EXTRA_GCC_DEBUG_CFLAGS="$CFLAGS"
    EXTRA_GCC_DEBUG_CXXFLAGS="$CXXFLAGS"
-   CFLAGS="-Wall -Wpointer-arith -Wmissing-prototypes -Wmissing-declarations -Wwrite-strings"
-   CXXFLAGS="-Wall -Wpointer-arith"
+   CFLAGS+=" -Wall -Wpointer-arith -Wmissing-prototypes -Wmissing-declarations -Wwrite-strings"
+   CXXFLAGS+=" -Wall -Wpointer-arith"
 fi  
 
 AC_CHECK_FUNCS([asprintf])
