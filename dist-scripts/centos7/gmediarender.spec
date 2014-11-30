@@ -4,8 +4,8 @@ Release:        1%{?dist}
 Summary:        Resource efficient UPnP/DLNA renderer
 
 License:        LGPLv2+
-URL:            http://github.com/hzeller/gmrender-resurrect
-Source0:        http://github.com/hzeller/gmrender-resurrect/%{name}-%{version}.tar.bz2
+URL:            https://github.com/hzeller/gmrender-resurrect
+Source0:        %{name}-%{version}.tar.bz2
 
 BuildRequires:  gstreamer1
 BuildRequires:  gstreamer1-devel
@@ -51,15 +51,15 @@ mkdir -p $RPM_BUILD_ROOT/%{_bindir}
 cp ./src/gmediarender $RPM_BUILD_ROOT/%{_bindir}
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
-cp ./dist-scripts/fedora/%{name}.service $RPM_BUILD_ROOT/%{_unitdir}
+cp ./dist-scripts/centos7/%{name}.service $RPM_BUILD_ROOT/%{_unitdir}
 
 mkdir -p $RPM_BUILD_ROOT/usr/share/gmediarender
 cp ./data/grender-64x64.png $RPM_BUILD_ROOT/usr/share/gmediarender
 cp ./data/grender-128x128.png $RPM_BUILD_ROOT/usr/share/gmediarender
 
 mkdir -p $RPM_BUILD_ROOT/usr/lib/firewalld/services
-cp ./dist-scripts/fedora/%{name}.xml $RPM_BUILD_ROOT/usr/lib/firewalld/services
-cp ./dist-scripts/fedora/ssdp.xml $RPM_BUILD_ROOT/usr/lib/firewalld/services
+cp ./dist-scripts/centos7/%{name}.xml $RPM_BUILD_ROOT/usr/lib/firewalld/services
+cp ./dist-scripts/centos7/ssdp.xml $RPM_BUILD_ROOT/usr/lib/firewalld/services
 
 %post
 %systemd_post %{name}.service
@@ -72,7 +72,6 @@ getent passwd gmediarender >/dev/null && userdel gmediarender
 getent group gmediarender >/dev/null && groupdel gmediarender
 %systemd_postun_with_restart %{name}.service
 
-
 %files
 %attr(0755,root,root) %{_bindir}/%{name}
 %config(noreplace) %{_unitdir}/%{name}.service
@@ -82,9 +81,10 @@ getent group gmediarender >/dev/null && groupdel gmediarender
 %attr(0644,gmediarender,gmediarender) /usr/share/%{name}/grender-64x64.png
 %attr(0644,gmediarender,gmediarender) /usr/share/%{name}/grender-128x128.png
 
-
 %changelog
 * Sun Mar 29 2015 <admin@vortexbox.org>
-- Updated for systemd snippets, added automatic system user/group add and removal upon installation, added FirewallD support
+- Updated for systemd snippets
+* Mon Dec 01 2014 <admin@vortexbox.org>
+- Updated for CentOS7, added automatic system user/group add and removal upon installation
 * Mon Sep 16 2013 <admin@vortexbox.org>
 - Initial release

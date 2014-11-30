@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>GMediaRender</short>
+  <description>GMediaRender is a small headless UPnP media renderer for Linux.</description>
+  <port protocol="tcp" port="49494"/>
+</service>
