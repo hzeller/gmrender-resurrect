@@ -4,8 +4,8 @@ Release:        1%{?dist}
 Summary:        Resource efficient UPnP/DLNA renderer
 
 License:        LGPLv2+
-URL:            http://github.com/hzeller/gmrender-resurrect
-Source0:        http://github.com/hzeller/gmrender-resurrect/%{name}-%{version}.tar.bz2
+URL:            https://github.com/martinstefany/gmrender-resurrect
+Source0:        https://github.com/martinstefany/gmrender-resurrect/%{name}-%{version}.tar.bz2
 
 BuildRequires:  gstreamer1
 BuildRequires:  gstreamer1-devel
@@ -21,11 +21,17 @@ Requires:  gstreamer1-plugins-bad-free
 Requires:  gstreamer1-plugins-base
 Requires:  gstreamer1-plugins-good
 Requires:  libupnp
+Requires(pre): /usr/sbin/useradd, /usr/bin/getent
+Requires(postun): /usr/sbin/userdel
+
 
 %description
 GMediaRender is a resource efficient UPnP/DLNA renderer.
 
 %prep
+/usr/bin/getent group gmediarender || /usr/sbin/groupadd -r gmediarender
+/usr/bin/getent passwd gmediarender || /usr/sbin/useradd -r -M -d /usr/share/gmediarender -s /sbin/nologin -G audio gmediarender
+
 %setup -q -n %{name}-%{version}
 ./autogen.sh
 
@@ -58,6 +64,8 @@ if [ $1 -eq 0 ] ; then
 fi
   
 %postun
+/usr/sbin/userdel gmediarender
+/usr/sbin/groupdel gmediarender
 /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 if [ $1 -ge 1 ] ; then
     # Package upgrade, not uninstall
