@@ -4,8 +4,8 @@ Release:        1%{?dist}
 Summary:        Resource efficient UPnP/DLNA renderer
 
 License:        LGPLv2+
-URL:            https://github.com/martinstefany/gmrender-resurrect
-Source0:        https://github.com/martinstefany/gmrender-resurrect/%{name}-%{version}.tar.bz2
+URL:            https://github.com/hzeller/gmrender-resurrect
+Source0:        https://github.com/hzeller/gmrender-resurrect/%{name}-%{version}.tar.bz2
 
 BuildRequires:  gstreamer1
 BuildRequires:  gstreamer1-devel
