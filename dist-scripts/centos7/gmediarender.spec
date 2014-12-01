@@ -27,6 +27,7 @@ Requires(pre): shadow-utils
 %description
 GMediaRender is a resource efficient UPnP/DLNA renderer.
 
+%prep
 %setup -q -n %{name}-%{version}
 ./autogen.sh
 
