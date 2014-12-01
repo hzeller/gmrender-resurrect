@@ -80,7 +80,7 @@ fi
 %attr(0644,gmediarender,gmediarender) /usr/share/gmediarender/grender-128x128.png
 
 %changelog
-* Mon Dec 01 2014
+* Mon Dec 01 2014 <admin@vortexbox.org>
 - Updated for CentOS7, added automatic system user/group add and removal upon installation
 * Mon Sep 16 2013 <admin@vortexbox.org>
 - Initial release
