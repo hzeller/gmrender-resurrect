@@ -21,16 +21,11 @@ Requires:  gstreamer1-plugins-bad-free
 Requires:  gstreamer1-plugins-base
 Requires:  gstreamer1-plugins-good
 Requires:  libupnp
-Requires(pre): /usr/sbin/useradd, /usr/bin/getent
-Requires(postun): /usr/sbin/userdel
+Requires(pre): shadow-utils
 
 
 %description
 GMediaRender is a resource efficient UPnP/DLNA renderer.
-
-%prep
-/usr/bin/getent group gmediarender || /usr/sbin/groupadd -r gmediarender
-/usr/bin/getent passwd gmediarender || /usr/sbin/useradd -r -M -d /usr/share/gmediarender -s /sbin/nologin -G audio gmediarender
 
 %setup -q -n %{name}-%{version}
 ./autogen.sh
@@ -38,6 +33,13 @@ GMediaRender is a resource efficient UPnP/DLNA renderer.
 %build
 %configure 
 make
+
+%pre
+getent group gmediarender >/dev/null || groupadd -r gmediarender
+getent passwd gmediarender >/dev/null || \
+    useradd -r -g gmediarender -G audio -M -d /usr/share/gmediarender -s /sbin/nologin \
+    -c "GMediaRender DLNA/UPnP Renderer" gmediarender
+exit 0
 
 %install
 mkdir -p $RPM_BUILD_ROOT/%{_bindir}
@@ -64,13 +66,14 @@ if [ $1 -eq 0 ] ; then
 fi
   
 %postun
-/usr/sbin/userdel gmediarender
-/usr/sbin/groupdel gmediarender
+getent passwd gmediarender >/dev/null && userdel gmediarender
+getent group gmediarender >/dev/null && groupdel gmediarender
 /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 if [ $1 -ge 1 ] ; then
     # Package upgrade, not uninstall
     /bin/systemctl try-restart %{name}.service >/dev/null 2>&1 || :
 fi
+exit 0
 
 %files
 %attr(0755,root,root) %{_bindir}/gmediarender
