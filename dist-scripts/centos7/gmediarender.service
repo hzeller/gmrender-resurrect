@@ -6,8 +6,7 @@ After=network.target sound.target
 Type=simple
 User=gmediarender
 Group=gmediarender
-PIDFile=/run/gmediarender.pid
-ExecStart=/usr/bin/gmediarender --daemon --pid-file=/run/gmediarender.pid --port=49494
+ExecStart=/usr/bin/gmediarender --port=49494
 
 [Install]
 WantedBy=multi-user.target
