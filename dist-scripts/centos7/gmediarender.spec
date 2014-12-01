@@ -53,6 +53,9 @@ mkdir -p $RPM_BUILD_ROOT/usr/share/gmediarender
 cp ./data/grender-64x64.png $RPM_BUILD_ROOT/usr/share/gmediarender
 cp ./data/grender-128x128.png $RPM_BUILD_ROOT/usr/share/gmediarender
 
+mkdir -p $RPM_BUILD_ROOT/usr/lib/firewalld/services
+cp ./dist-scripts/centos7/%{name}.xml $RPM_BUILD_ROOT/usr/lib/firewalld/services
+
 %post
 if [ $1 -eq 1 ] ; then
     /bin/systemctl enable %{name}.service >/dev/null 2>&1 || :
@@ -79,6 +82,7 @@ exit 0
 %files
 %attr(0755,root,root) %{_bindir}/gmediarender
 %config(noreplace) %{_unitdir}/%{name}.service
+%attr(0755,root,root) /usr/lib/firewalld/services/gmediarender.xml
 %attr(0755,gmediarender,gmediarender) /usr/share/gmediarender/
 %attr(0644,gmediarender,gmediarender) /usr/share/gmediarender/grender-64x64.png
 %attr(0644,gmediarender,gmediarender) /usr/share/gmediarender/grender-128x128.png
