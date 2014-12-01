@@ -7,7 +7,7 @@ Type=simple
 User=gmediarender
 Group=gmediarender
 PIDFile=/run/gmediarender.pid
-ExecStart=/usr/bin/gmediarender --daemon --pidfile=/run/gmediarender.pid
+ExecStart=/usr/bin/gmediarender --daemon --pid-file=/run/gmediarender.pid --port=49494
 
 [Install]
 WantedBy=multi-user.target
