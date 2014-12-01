@@ -81,3 +81,5 @@ fi
 %changelog
 * Mon Sep 16 2013 <admin@vortexbox.org>
 - Initial release
+* Mon Dec 01 2014
+- Updated for CentOS7, added automatic system user/group add and removal upon installation
