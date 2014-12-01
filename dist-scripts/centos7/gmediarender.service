@@ -3,7 +3,11 @@ Description=GMediaRender UPnP/DLNA renderer
 After=network.target sound.target
 
 [Service]
-ExecStart=/usr/bin/gmediarender
+Type=simple
+User=gmediarender
+Group=gmediarender
+PIDFile=/run/gmediarender.pid
+ExecStart=/usr/bin/gmediarender --daamon --pidfile=/run/gmediarender.pid
 
 [Install]
 WantedBy=multi-user.target
