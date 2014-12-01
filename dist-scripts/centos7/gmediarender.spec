@@ -76,8 +76,7 @@ fi
 %attr(0755,root,root) %{_bindir}/gmediarender
 %config(noreplace) %{_unitdir}/%{name}.service
 %attr(0755,gmediarender,gmediarender) /usr/share/gmediarender/
-%attr(0644,gmediarender,gmediarender) /usr/share/gmediarender/grender-64x64.png
-%attr(0644,gmediarender,gmediarender) /usr/share/gmediarender/grender-128x128.png
+
 
 %changelog
 * Mon Dec 01 2014 <admin@vortexbox.org>
