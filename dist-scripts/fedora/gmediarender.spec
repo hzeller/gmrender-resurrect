@@ -14,6 +14,7 @@ BuildRequires:  gstreamer1-plugins-bad-free
 BuildRequires:  gstreamer1-plugins-base
 BuildRequires:  gstreamer1-plugins-good
 BuildRequires:  libupnp-devel
+BuildRequires:  systemd
 
 Requires:  gstreamer1
 Requires:  gstreamer1-plugins-ugly
@@ -21,6 +22,11 @@ Requires:  gstreamer1-plugins-bad-free
 Requires:  gstreamer1-plugins-base
 Requires:  gstreamer1-plugins-good
 Requires:  libupnp
+Requires(pre): shadow-utils
+Requires(post): systemd
+Requires(preun): systemd
+Requires(postun): systemd
+
 
 %description
 GMediaRender is a resource efficient UPnP/DLNA renderer.
@@ -30,46 +36,55 @@ GMediaRender is a resource efficient UPnP/DLNA renderer.
 ./autogen.sh
 
 %build
-%configure 
+%configure
 make
+
+%pre
+getent group gmediarender >/dev/null || groupadd -r gmediarender
+getent passwd gmediarender >/dev/null || \
+    useradd -r -g gmediarender -G audio -M -d /usr/share/gmediarender -s /sbin/nologin \
+    -c "GMediaRender DLNA/UPnP Renderer" gmediarender
+exit 0
 
 %install
 mkdir -p $RPM_BUILD_ROOT/%{_bindir}
 cp ./src/gmediarender $RPM_BUILD_ROOT/%{_bindir}
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
-cp ./%{name}.service $RPM_BUILD_ROOT/%{_unitdir}
+cp ./dist-scripts/fedora/%{name}.service $RPM_BUILD_ROOT/%{_unitdir}
 
 mkdir -p $RPM_BUILD_ROOT/usr/share/gmediarender
 cp ./data/grender-64x64.png $RPM_BUILD_ROOT/usr/share/gmediarender
 cp ./data/grender-128x128.png $RPM_BUILD_ROOT/usr/share/gmediarender
 
+mkdir -p $RPM_BUILD_ROOT/usr/lib/firewalld/services
+cp ./dist-scripts/fedora/%{name}.xml $RPM_BUILD_ROOT/usr/lib/firewalld/services
+cp ./dist-scripts/fedora/ssdp.xml $RPM_BUILD_ROOT/usr/lib/firewalld/services
+
 %post
-if [ $1 -eq 1 ] ; then
-    /bin/systemctl enable %{name}.service >/dev/null 2>&1 || :
-    /bin/systemctl start %{name}.service >/dev/null 2>&1 || :
-fi
-  
+%systemd_post %{name}.service
+
 %preun
-if [ $1 -eq 0 ] ; then
-    # Package removal, not upgrade
-    /bin/systemctl --no-reload disable %{name}.service > /dev/null 2>&1 || :
-    /bin/systemctl stop %{name}.service > /dev/null 2>&1 || :
-fi
-  
+%systemd_preun %{name}.service
+
 %postun
-/bin/systemctl daemon-reload >/dev/null 2>&1 || :
-if [ $1 -ge 1 ] ; then
-    # Package upgrade, not uninstall
-    /bin/systemctl try-restart %{name}.service >/dev/null 2>&1 || :
-fi
+getent passwd gmediarender >/dev/null && userdel gmediarender
+getent group gmediarender >/dev/null && groupdel gmediarender
+%systemd_postun_with_restart %{name}.service
+
 
 %files
-%attr(0755,root,root) %{_bindir}/gmediarender
+%attr(0755,root,root) %{_bindir}/%{name}
 %config(noreplace) %{_unitdir}/%{name}.service
-/usr/share/gmediarender/grender-64x64.png
-/usr/share/gmediarender/grender-128x128.png
+%attr(0755,root,root) /usr/lib/firewalld/services/%{name}.xml
+%attr(0755,root,root) /usr/lib/firewalld/services/ssdp.xml
+%attr(0755,gmediarender,gmediarender) /usr/share/%{name}/
+%attr(0644,gmediarender,gmediarender) /usr/share/%{name}/grender-64x64.png
+%attr(0644,gmediarender,gmediarender) /usr/share/%{name}/grender-128x128.png
+
 
 %changelog
+* Sun Mar 29 2015 <admin@vortexbox.org>
+- Updated for systemd snippets, added automatic system user/group add and removal upon installation, added FirewallD support
 * Mon Sep 16 2013 <admin@vortexbox.org>
 - Initial release
