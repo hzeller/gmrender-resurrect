@@ -1,9 +1,9 @@
 How to compile, install and configure GMediaRender
 --------------------------------------------------
 
-Install and enable Nux's repository since we need 'ugly' plugins for gstreamer ::
+Install and enable RPMFusion repository since we need 'ugly' plugins for gstreamer ::
 
-    # yum -y install http://li.nux.ro/download/nux/dextop/el7/x86_64/nux-dextop-release-0-1.el7.nux.noarch.rpm
+    # yum -y install http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-21.noarch.rpm   # Fedora 21
     # yum -y update
 
 Install pre-requisite packages ::
@@ -27,13 +27,13 @@ Build the packages ::
     $ git clone https://github.com/martinstefany/gmrender-resurrect.git
     $ mv gmrender-resurrect gmediarender-0.0.7
     $ tar cjvf gmediarender-0.0.7.tar.bz2 gmediarender-0.0.7
-    $ rpmbuild -ba gmediarender-0.0.7/dist-scripts/centos7/gmediarender.spec
+    $ rpmbuild -ba gmediarender-0.0.7/dist-scripts/fedora/gmediarender.spec
 
 After the packages are built, they're be ready at ~/rpmbuild/RPMS/x86_64/ for installation. Source rpm will be ready at ~/rpmbuild/SRPMS/.
 
 Installation can be done easily by ::
 
-    # yum -y install gmediarender-0.0.7-1.el7.centos.x86_64.rpm
+    # yum -y install gmediarender-0.0.7-1.fc21.x86_64.rpm
 
 Note: I would avoid installing them by rpm -i or yum localinstall, as first alter db outside of yum, and latter is deprecated.
 
