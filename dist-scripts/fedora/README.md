@@ -47,4 +47,8 @@ Additional configuration is also recommended, sice there's no configuration file
     # systemctl daemon-reload
     # systemctl start gmediarender.service
 
-And you're done.
+If you are using FirewallD, you will also need to open firewall ports for GMediaRender. Custom service files are shipped with the package, just refresh FirewallD and add services to running (and permanent configuration, if desired) ::
+
+    # firewall-cmd --reload
+    # firewall-cmd --add-service=ssdp
+    # firewall-cmd --add-service=gmediarender
