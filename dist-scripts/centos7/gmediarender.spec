@@ -5,7 +5,7 @@ Summary:        Resource efficient UPnP/DLNA renderer
 
 License:        LGPLv2+
 URL:            https://github.com/hzeller/gmrender-resurrect
-Source0:        https://github.com/hzeller/gmrender-resurrect/%{name}-%{version}.tar.bz2
+Source0:        %{name}-%{version}.tar.bz2
 
 BuildRequires:  gstreamer1
 BuildRequires:  gstreamer1-devel
@@ -14,6 +14,7 @@ BuildRequires:  gstreamer1-plugins-bad-free
 BuildRequires:  gstreamer1-plugins-base
 BuildRequires:  gstreamer1-plugins-good
 BuildRequires:  libupnp-devel
+BuildRequires:  systemd
 
 Requires:  gstreamer1
 Requires:  gstreamer1-plugins-ugly
@@ -22,6 +23,9 @@ Requires:  gstreamer1-plugins-base
 Requires:  gstreamer1-plugins-good
 Requires:  libupnp
 Requires(pre): shadow-utils
+Requires(post): systemd
+Requires(preun): systemd
+Requires(postun): systemd
 
 
 %description
@@ -32,7 +36,7 @@ GMediaRender is a resource efficient UPnP/DLNA renderer.
 ./autogen.sh
 
 %build
-%configure 
+%configure
 make
 
 %pre
@@ -58,27 +62,15 @@ cp ./dist-scripts/centos7/%{name}.xml $RPM_BUILD_ROOT/usr/lib/firewalld/services
 cp ./dist-scripts/centos7/ssdp.xml $RPM_BUILD_ROOT/usr/lib/firewalld/services
 
 %post
-if [ $1 -eq 1 ] ; then
-    /bin/systemctl enable %{name}.service >/dev/null 2>&1 || :
-    /bin/systemctl start %{name}.service >/dev/null 2>&1 || :
-fi
-  
+%systemd_post %{name}.service
+
 %preun
-if [ $1 -eq 0 ] ; then
-    # Package removal, not upgrade
-    /bin/systemctl --no-reload disable %{name}.service > /dev/null 2>&1 || :
-    /bin/systemctl stop %{name}.service > /dev/null 2>&1 || :
-fi
-  
+%systemd_preun %{name}.service
+
 %postun
 getent passwd gmediarender >/dev/null && userdel gmediarender
 getent group gmediarender >/dev/null && groupdel gmediarender
-/bin/systemctl daemon-reload >/dev/null 2>&1 || :
-if [ $1 -ge 1 ] ; then
-    # Package upgrade, not uninstall
-    /bin/systemctl try-restart %{name}.service >/dev/null 2>&1 || :
-fi
-exit 0
+%systemd_postun_with_restart %{name}.service
 
 %files
 %attr(0755,root,root) %{_bindir}/%{name}
@@ -90,6 +82,8 @@ exit 0
 %attr(0644,gmediarender,gmediarender) /usr/share/%{name}/grender-128x128.png
 
 %changelog
+* Sun Mar 29 2015 <admin@vortexbox.org>
+- Updated for systemd snippets
 * Mon Dec 01 2014 <admin@vortexbox.org>
 - Updated for CentOS7, added automatic system user/group add and removal upon installation
 * Mon Sep 16 2013 <admin@vortexbox.org>
