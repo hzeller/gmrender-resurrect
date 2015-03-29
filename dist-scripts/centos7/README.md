@@ -33,7 +33,7 @@ After the packages are built, they're be ready at ~/rpmbuild/RPMS/x86_64/ for in
 
 Installation can be done easily by ::
 
-    # yum -y install /rpmbuild/RPMS/x86_64/gmediarender-0.0.7-1.el7.centos.x86_64.rpm
+    # yum -y install gmediarender-0.0.7-1.el7.centos.x86_64.rpm
 
 Note: I would avoid installing them by rpm -i or yum localinstall, as first alter db outside of yum, and latter is deprecated.
 
