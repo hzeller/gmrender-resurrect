@@ -2,21 +2,26 @@ How to compile, install and configure GMediaRender from GitHub sources
 ----------------------------------------------------------------------
 
 Install and enable Nux's repository since we need 'ugly' plugins for gstreamer ::
+
     # yum -y install http://li.nux.ro/download/nux/dextop/el7/x86_64/nux-dextop-release-0-1.el7.nux.noarch.rpm
     # yum -y update
 
 Install pre-requisite packages ::
+
     # yum -y install gstreamer1 gstreamer1-devel gstreamer1-plugins-ugly gstreamer1-plugins-bad-free gstreamer1-plugins-base gstreamer1-plugins-good libupnp-devel
 
 Install build tools ::
+
     # yum -y install autoconf automake gcc rpmdevtools git
 
 (Optionally, create less priviledged user for building the rpms' as you should not use root) ::
+
     # useradd makerpm
     # passwd makerpm
     # su - makerpm
 
 Build the packages ::
+
     $ rpmdev-setuptree
     $ cd rpmbuild/SOURCES
     $ git clone https://github.com/martinstefany/gmrender-resurrect.git
