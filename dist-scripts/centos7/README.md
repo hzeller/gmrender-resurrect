@@ -1,5 +1,7 @@
-How to compile, install and configure GMediaRender from GitHub sources
-----------------------------------------------------------------------
+How to compile, install and configure GMediaRender
+--------------------------------------------------
+
+This guide is based on Fedora procedure and .spec file is just modified Fedora version adjusted for CentOS 7.x (based on Fedora 19 anyway).
 
 Install and enable Nux's repository since we need 'ugly' plugins for gstreamer ::
 
