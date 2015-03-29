@@ -24,7 +24,7 @@ Build the packages ::
 
     $ rpmdev-setuptree
     $ cd rpmbuild/SOURCES
-    $ git clone https://github.com/martinstefany/gmrender-resurrect.git
+    $ git clone https://github.com/hzeller/gmrender-resurrect.git
     $ mv gmrender-resurrect gmediarender-0.0.7
     $ tar cjvf gmediarender-0.0.7.tar.bz2 gmediarender-0.0.7
     $ rpmbuild -ba gmediarender-0.0.7/dist-scripts/fedora/gmediarender.spec
