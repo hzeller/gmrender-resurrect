@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>SSDP</short>
+  <description>Microsoft SSDP Enables discovery of UPnP devices</description>
+  <port protocol="udp" port="1900"/>
+</service>
