@@ -3,7 +3,10 @@ Description=GMediaRender UPnP/DLNA renderer
 After=network.target sound.target
 
 [Service]
-ExecStart=/usr/bin/gmediarender
+Type=simple
+User=gmediarender
+Group=gmediarender
+ExecStart=/usr/bin/gmediarender --port=49494
 
 [Install]
 WantedBy=multi-user.target
