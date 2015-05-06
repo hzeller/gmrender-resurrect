@@ -168,8 +168,8 @@ static void log_variable_change(void *userdata, int var_num,
 }
 
 static void init_logging(const char *log_file) {
-	char *version;
-	asprintf(&version,  "[ gmediarender %s "
+	char version[1024];
+	snprintf(version, sizeof(version), "[ gmediarender %s "
 		 "(libupnp-%s; glib-%d.%d.%d; gstreamer-%d.%d.%d) ]",
 		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
 		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION,
@@ -184,7 +184,6 @@ static void init_logging(const char *log_file) {
 			"(e.g. --logfile=/dev/stdout for console)\n",
 			PACKAGE_STRING, version);
 	}
-	free(version);
 }
 
 int main(int argc, char **argv)
@@ -233,8 +232,12 @@ int main(int argc, char **argv)
 	if (pid_file) {
 		pid_file_stream = fopen(pid_file, "w");
 	}
+	// TODO: check for availability of daemon() in configure.
 	if (daemon_mode) {
-		daemon(0, 0);  // TODO: check for daemon() in configure.
+		if (daemon(0, 0) < 0) {
+			perror("Becoming daemon: ");
+			return EXIT_FAILURE;
+		}
 	}
 	if (pid_file_stream) {
 		fprintf(pid_file_stream, "%d\n", getpid());

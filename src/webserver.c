@@ -121,7 +121,11 @@ int webserver_register_file(const char *path, const char *content_type)
 			free(entry);
 			return -1;
 		}
-		fread(cbuf, buf.st_size, 1, in);
+		if (fread(cbuf, buf.st_size, 1, in) != 1) {
+			free(entry);
+			free(cbuf);
+			return -1;
+		}
 		fclose(in);
 		entry->len = buf.st_size;
 		entry->contents = cbuf;

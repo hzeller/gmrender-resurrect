@@ -54,24 +54,26 @@ static const char kDidlHeader[] = "<DIDL-Lite "
 	"xmlns:upnp=\"urn:schemas-upnp-org:metadata-1-0/upnp/\">";
 static const char kDidlFooter[] = "</DIDL-Lite>";
 
+// Allocates a new DIDL formatted XML and fill it with given data.
+// The input fields are expected to be already xml escaped.
 static char *generate_DIDL(const char *id,
 			   const char *title, const char *artist,
 			   const char *album, const char *genre,
 			   const char *composer) {
 	char *result = NULL;
-	asprintf(&result, "%s\n<item id=\"%s\">\n"
-		 "\t<dc:title>%s</dc:title>\n"
-		 "\t<upnp:artist>%s</upnp:artist>\n"
-		 "\t<upnp:album>%s</upnp:album>\n"
-		 "\t<upnp:genre>%s</upnp:genre>\n"
-		 "\t<upnp:creator>%s</upnp:creator>\n"
-		 "</item>\n%s",
-		 kDidlHeader, id,
-		 title ? title : "", artist ? artist : "",
-		 album ? album : "", genre ? genre : "",
-		 composer ? composer : "",
-		 kDidlFooter);
-	return result;
+	int ret = asprintf(&result, "%s\n<item id=\"%s\">\n"
+			  "\t<dc:title>%s</dc:title>\n"
+			  "\t<upnp:artist>%s</upnp:artist>\n"
+			  "\t<upnp:album>%s</upnp:album>\n"
+			  "\t<upnp:genre>%s</upnp:genre>\n"
+			  "\t<upnp:creator>%s</upnp:creator>\n"
+			  "</item>\n%s",
+			  kDidlHeader, id,
+			  title ? title : "", artist ? artist : "",
+			  album ? album : "", genre ? genre : "",
+			  composer ? composer : "",
+			  kDidlFooter);
+	return ret >= 0 ? result : NULL;
 }
 
 // Takes input, if it finds the given tag, then replaces the content between

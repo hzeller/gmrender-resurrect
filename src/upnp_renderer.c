@@ -128,11 +128,11 @@ struct upnp_device_descriptor *
 upnp_renderer_descriptor(const char *friendly_name,
 			 const char *uuid)
 {
-	char *udn;
-
 	render_device.friendly_name = friendly_name;
 
-	asprintf(&udn, "uuid:%s", uuid);
-	render_device.udn = udn;
+	char *udn = NULL;
+	if (asprintf(&udn, "uuid:%s", uuid) > 0) {
+		render_device.udn = udn;
+	}
 	return &render_device;
 }

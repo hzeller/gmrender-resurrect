@@ -198,9 +198,10 @@ void add_value_element_int(struct xmldoc *doc,
 {
         char *buf;
 
-        asprintf(&buf,"%d",value);
-        add_value_element(doc, parent, tagname, buf);
-        free(buf);
+        if (asprintf(&buf,"%d",value) >= 0) {
+		add_value_element(doc, parent, tagname, buf);
+		free(buf);
+	}
 }
 void add_value_element_long(struct xmldoc *doc,
                             struct xmlelement *parent,
@@ -208,8 +209,9 @@ void add_value_element_long(struct xmldoc *doc,
 {
         char *buf;
 
-        asprintf(&buf,"%lld",value);
-        add_value_element(doc, parent, tagname, buf);
-        free(buf);
+        if (asprintf(&buf,"%lld",value) >= 0) {
+		add_value_element(doc, parent, tagname, buf);
+		free(buf);
+	}
 }
 

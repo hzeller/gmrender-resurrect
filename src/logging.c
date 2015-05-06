@@ -89,7 +89,9 @@ static void Log_internal(int fd, const char *markup_start,
 	int already_newline 
 		= (parts[1].iov_len > 0 &&
 		   ((const char*)parts[1].iov_base)[parts[1].iov_len-1] == '\n');
-	writev(fd, parts, already_newline ? 2 : 3);
+	if (writev(fd, parts, already_newline ? 2 : 3) < 0) {
+		// Logging trouble. Ignore.
+	}
 
 	free(parts[0].iov_base);
 	free(parts[1].iov_base);
