@@ -6,19 +6,25 @@ compilation configuration:
     sudo apt-get install autoconf automake libtool
 
 .. and the libraries needed for gmrender, most notably gstreamer.
-On current Linux distributions, these are typically version 0.10 of gstreamer,
-but if possible, try to get a gstreamer version 1.0.x, the old version is not
-supported anymore. But, since this version is still quite common, here we go:
+On current Linux distributions, these are typically version 1.0 of gstreamer,
+older might have version 0.10 - gmrender-resurrect compiles with both.
 
-    sudo apt-get update
-    sudo apt-get install libupnp-dev libgstreamer0.10-dev \
-                gstreamer0.10-plugins-base gstreamer0.10-plugins-good \
-                gstreamer0.10-plugins-bad gstreamer0.10-plugins-ugly \
-                gstreamer0.10-ffmpeg \
-                gstreamer0.10-pulseaudio gstreamer0.10-alsa
+```
+sudo apt-get update
+sudo aptitude install libupnp-dev libgstreamer1.0-dev \
+             gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+             gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \
+             gstreamer1.0-libav
+```
+
+Then pulseaudio or alsa depending on what output you prefer (personally, I use
+alsa)
+
+    sudo aptitude install gstreamer1.0-alsa
+    sudo aptitude install gstreamer1.0-pulseaudio
 
 
-(See below for the Gstreamer 1.0 installation; essentially only the version
+(See below for the Gstreamer 0.10 installation; essentially only the version
 number is different, gmrender compiles with both versions).
 
 Get the source. If this is your first time using git, you first need to install
@@ -55,6 +61,8 @@ PREFIX in the configure step).
 
 There is a sample init script in `scripts/init.d/gmediarenderer` that could be
 a good start if you install things on your system.
+
+TBD: add systemd config.
 
 (To Linux distribution packagers: please let me know if you have some
 common changes that might be useful to have in upstream; other than that, just
@@ -152,22 +160,17 @@ logging, all in one file:
     src/gmediarender -f "MyRender" --logfile=/tmp/gmrender.log >> /tmp/gmrender.log 2>&1
 
 
-# GStreamer 1.0
-gmrender-resurrect is prepared to compile with gstreamer 1.0, already available
-on newer distributions. This is the preferred version as the older 0.10 version
-is not supported anymore. Instead of the 0.10 versions above, just install
-these:
+# GStreamer 0.10
 
-    sudo aptitude install libupnp-dev libgstreamer1.0-dev \
-             gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
-             gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \
-             gstreamer1.0-libav
-
-Then pulseaudio or alsa depending on what output you prefer (personally, I use
-alsa)
-
-    sudo aptitude install gstreamer1.0-alsa
-    sudo aptitude install gstreamer1.0-pulseaudio
+If your distribution does not have gstreamer 1.0 yet, you can also compile it with
+the old gstreamer.
+```
+sudo apt-get install libupnp-dev libgstreamer0.10-dev \
+                gstreamer0.10-plugins-base gstreamer0.10-plugins-good \
+                gstreamer0.10-plugins-bad gstreamer0.10-plugins-ugly \
+                gstreamer0.10-ffmpeg \
+                gstreamer0.10-pulseaudio gstreamer0.10-alsa
+```
 
 # Other installation resources
 ## Raspberry Pi
@@ -197,4 +200,3 @@ http://blog.scphillips.com/2013/07/playing-music-on-a-raspberry-pi-using-upnp-an
 ## Arch Linux
 There is an Arch package available here
  https://aur.archlinux.org/packages/gmrender-resurrect-git/
-
