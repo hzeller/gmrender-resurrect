@@ -45,7 +45,7 @@
 // For version strings of upnp and gstreamer
 #include <upnp/upnpconfig.h>
 #ifdef HAVE_GST
-#include <gst/gst.h>
+#  include <gst/gst.h>
 #endif
 
 #include "git-version.h"
@@ -172,18 +172,18 @@ static void log_variable_change(void *userdata, int var_num,
 static void init_logging(const char *log_file) {
 	char version[1024];
 
-	#ifdef HAVE_GST
+#ifdef HAVE_GST
 	snprintf(version, sizeof(version), "[ gmediarender %s "
 		 "(libupnp-%s; glib-%d.%d.%d; gstreamer-%d.%d.%d) ]",
 		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
 		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION,
 		 GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
-	#else
+#else
 	snprintf(version, sizeof(version), "[ gmediarender %s "
 		 "(libupnp-%s; glib-%d.%d.%d; without gstreamer.) ]",
 		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
 		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
-	#endif
+#endif
 
 	if (log_file != NULL) {
 		Log_init(log_file);
