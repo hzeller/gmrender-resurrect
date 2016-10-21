@@ -1,0 +1,15 @@
+[Unit]
+Description=gmrender-resurrect service
+After=network.target sound.target
+
+[Service]
+Environment="UPNP_DEVICE_NAME=Raspberry"
+Environment="UPNP_UUID=671ba82bb2add32f128675e011c453d0"
+
+ExecStart=/usr/local/bin/gmediarender -f "$UPNP_DEVICE_NAME" -u "$UPNP_UUID" \
+                                      --gstout-audiosink=alsasink --gstout-audiodevice=sysdefault \
+                                      --logfile=/tmp/gmediarenderer.log --gstout-initial-volume-db=-10
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
