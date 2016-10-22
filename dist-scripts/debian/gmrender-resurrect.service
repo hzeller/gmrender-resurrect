@@ -4,7 +4,7 @@ After=network.target sound.target
 
 [Service]
 Environment="UPNP_DEVICE_NAME=Raspberry"
-Environment="UPNP_UUID=671ba82bb2add32f128675e011c453d0"
+ExecStartPre=/bin/bash -c "/bin/systemctl set-environment UPNP_UUID=`ip link show | awk '/ether/ {print "salt:)-" $2}' | head -1 | md5sum | awk '{print $1}'`"
 
 ExecStart=/usr/local/bin/gmediarender -f "$UPNP_DEVICE_NAME" -u "$UPNP_UUID" \
                                       --gstout-audiosink=alsasink --gstout-audiodevice=sysdefault \
