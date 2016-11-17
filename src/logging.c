@@ -52,7 +52,15 @@ static const char *markup_end_ = "";
 void Log_init(const char *filename) {
 	if (filename == NULL)
 		return;
-	log_fd = open(filename, O_CREAT|O_APPEND|O_WRONLY, 0644);
+
+	if (!strcmp(filename, "stdout")) {
+		log_fd = 1;
+	} else if (!strcmp(filename, "stderr")) {
+		log_fd = 2;
+	} else {
+		log_fd = open(filename, O_CREAT|O_APPEND|O_WRONLY, 0644);
+	}
+
 	if (log_fd < 0) {
 		perror("Cannot open logfile");
 		return;
