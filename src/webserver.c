@@ -86,12 +86,12 @@ int webserver_register_buf(const char *path, const char *contents,
 
 int webserver_register_file(const char *path, const char *content_type)
 {
-	char local_fname[PATH_MAX];
+	char local_fname[512];  // PATH_MAX, but that is not defined everywhere
 	struct stat buf;
 	struct virtual_file *entry;
 	int rc;
 
-	snprintf(local_fname, PATH_MAX, "%s%s", PKG_DATADIR,
+	snprintf(local_fname, sizeof(local_fname), "%s%s", PKG_DATADIR,
 	         strrchr(path, '/'));
 
 	Log_info("webserver", "Provide %s (%s) from %s", path, content_type,
