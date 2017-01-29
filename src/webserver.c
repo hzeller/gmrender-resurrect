@@ -236,7 +236,7 @@ static int webserver_seek(UpnpWebFileHandle fh, off_t offset, int origin)
 		break;
 	}
 
-	if (newpos < 0 || newpos > file->len) {
+	if (newpos < 0 || newpos > (off_t) file->len) {
 		Log_error("webserver", "in %s: seek failed with %s",
 			  __FUNCTION__, strerror(errno));
 		return -1;
