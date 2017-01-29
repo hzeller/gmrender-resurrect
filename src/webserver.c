@@ -15,8 +15,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -31,7 +31,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
-#include <error.h>
 #include <string.h>
 #include <limits.h>
 #include <assert.h>
@@ -100,7 +99,8 @@ int webserver_register_file(const char *path, const char *content_type)
 
 	rc = stat(local_fname, &buf);
 	if (rc) {
-		error(0, errno, "Could not stat '%s'", local_fname);
+		Log_error("webserver", "Could not stat '%s': %s",
+			  local_fname, strerror(errno));
 		return -1;
 	}
 
@@ -204,7 +204,9 @@ static int webserver_read(UpnpWebFileHandle fh, char *buf, size_t buflen)
 	memcpy(buf, file->contents + file->pos, len);
 
 	if (len < 0) {
-		error(0, errno, "%s failed", __FUNCTION__);
+		Log_error("webserver", "In %s: %s",
+			  __FUNCTION__, strerror(errno));
+
 	} else {
 		file->pos += len;
 	}
@@ -221,7 +223,7 @@ static int webserver_seek(UpnpWebFileHandle fh, off_t offset, int origin)
 {
 	WebServerFile *file = (WebServerFile *) fh;
 	off_t newpos = -1;
-	
+
 	switch (origin) {
 	case SEEK_SET:
 		newpos = offset;
@@ -235,7 +237,8 @@ static int webserver_seek(UpnpWebFileHandle fh, off_t offset, int origin)
 	}
 
 	if (newpos < 0 || newpos > file->len) {
-		error(0, errno, "%s seek failed", __FUNCTION__);
+		Log_error("webserver", "in %s: seek failed with %s",
+			  __FUNCTION__, strerror(errno));
 		return -1;
 	}
 
