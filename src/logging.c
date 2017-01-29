@@ -15,8 +15,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -26,13 +26,14 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
-#include <sys/uio.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <time.h>
 #include <unistd.h>
-#include <stdlib.h>
 
 #include "logging.h"
 #include "config.h"
@@ -94,7 +95,7 @@ static void Log_internal(int fd, const char *markup_start,
 	parts[1].iov_len = vasprintf((char**) &parts[1].iov_base, format, ap);
 	parts[2].iov_base = (void*) "\n";
 	parts[2].iov_len = 1;
-	int already_newline 
+	int already_newline
 		= (parts[1].iov_len > 0 &&
 		   ((const char*)parts[1].iov_base)[parts[1].iov_len-1] == '\n');
 	if (writev(fd, parts, already_newline ? 2 : 3) < 0) {
@@ -120,4 +121,3 @@ void Log_error(const char *category, const char *format, ...) {
 		     error_markup_start_, category, format, ap);
 	va_end(ap);
 }
-
