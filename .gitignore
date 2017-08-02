@@ -1,0 +1,16 @@
+*.o
+aclocal.m4
+autom4te.cache
+config
+config.h
+config.h.in
+config.log
+config.status
+configure
+INSTALL
+Makefile
+Makefile.in
+src/.deps
+src/git-version.h
+src/gmediarender
+stamp-h1
