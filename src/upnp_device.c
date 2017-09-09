@@ -119,7 +119,7 @@ void upnp_set_error(struct action_event *event, int error_code,
 	Log_error("upnp", "%s: %s\n", __FUNCTION__, event->request->ErrStr);
 }
 
-char *upnp_get_string(struct action_event *event, const char *key)
+const char *upnp_get_string(struct action_event *event, const char *key)
 {
 	IXML_Node *node;
 
@@ -143,7 +143,7 @@ char *upnp_get_string(struct action_event *event, const char *key)
 			const char *node_value = (node != NULL
 						  ? ixmlNode_getNodeValue(node)
 						  : NULL);
-			return strdup(node_value != NULL ? node_value : "");
+			return node_value != NULL ? node_value : "";
 		}
 	}
 

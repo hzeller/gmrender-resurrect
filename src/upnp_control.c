@@ -104,7 +104,7 @@ typedef enum {
 	CONTROL_CMD_GET_VOL,
 	CONTROL_CMD_GET_VOL_DB,
 	CONTROL_CMD_GET_VOL_DBRANGE,
-	CONTROL_CMD_LIST_PRESETS,      
+	CONTROL_CMD_LIST_PRESETS,
 	//CONTROL_CMD_SELECT_PRESET,
 	//CONTROL_CMD_SET_BLUE_BLACK,
 	//CONTROL_CMD_SET_BLUE_GAIN,
@@ -114,7 +114,7 @@ typedef enum {
 	//CONTROL_CMD_SET_GREEN_BLACK,
 	//CONTROL_CMD_SET_GREEN_GAIN,
 	//CONTROL_CMD_SET_HOR_KEYSTONE,
-	//CONTROL_CMD_SET_LOUDNESS,       
+	//CONTROL_CMD_SET_LOUDNESS,
 	CONTROL_CMD_SET_MUTE,
 	//CONTROL_CMD_SET_RED_BLACK,
 	//CONTROL_CMD_SET_RED_GAIN,
@@ -284,7 +284,7 @@ static struct argument *arguments_list_presets[] = {
 // 	& (struct argument) { "PresetName", PARAM_DIR_IN, CONTROL_VAR_AAT_PRESET_NAME },
 // 	NULL
 // };
-static struct argument *arguments_get_brightness[] = {        
+static struct argument *arguments_get_brightness[] = {
 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
 	& (struct argument) { "CurrentBrightness", PARAM_DIR_OUT, CONTROL_VAR_BRIGHTNESS },
 	NULL
@@ -463,8 +463,8 @@ static struct argument *arguments_get_loudness[] = {
 
 static struct argument **argument_list[] = {
 	[CONTROL_CMD_LIST_PRESETS] =        	arguments_list_presets,
-	//[CONTROL_CMD_SELECT_PRESET] =       	arguments_select_preset, 
-	[CONTROL_CMD_GET_BRIGHTNESS] =      	arguments_get_brightness,        
+	//[CONTROL_CMD_SELECT_PRESET] =       	arguments_select_preset,
+	[CONTROL_CMD_GET_BRIGHTNESS] =      	arguments_get_brightness,
 	//[CONTROL_CMD_SET_BRIGHTNESS] =      	arguments_set_brightness,
 	[CONTROL_CMD_GET_CONTRAST] =        	arguments_get_contrast,
 	//[CONTROL_CMD_SET_CONTRAST] =        	arguments_set_contrast,
@@ -515,13 +515,12 @@ static int cmd_obtain_variable(struct action_event *event,
 			       control_variable_t varnum,
 			       const char *paramname)
 {
-	char *instance = upnp_get_string(event, "InstanceID");
+	const char *instance = upnp_get_string(event, "InstanceID");
 	if (instance == NULL) {
 		return -1;
 	}
 	Log_info("control", "%s: %s for instance %s\n",
 		 __FUNCTION__, paramname, instance);
-	free(instance);   // we don't care about that value for now.
 
 	upnp_append_variable(event, varnum, paramname);
 	return 0;

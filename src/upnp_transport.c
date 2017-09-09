@@ -523,13 +523,12 @@ static void service_unlock(void)
 
 static int obtain_instanceid(struct action_event *event, int *instance)
 {
-	char *value = upnp_get_string(event, "InstanceID");
+	const char *value = upnp_get_string(event, "InstanceID");
 	if (value == NULL) {
 		upnp_set_error(event, UPNP_SOAP_E_INVALID_ARGS,
 			       "Missing InstanceID");
 		return -1;
 	}
-	free(value);
 
 	// TODO - parse value, and store in *instance, if instance!=NULL
 
@@ -652,13 +651,13 @@ static int set_avtransport_uri(struct action_event *event)
 	if (obtain_instanceid(event, NULL) < 0) {
 		return -1;
 	}
-	char *uri = upnp_get_string(event, "CurrentURI");
+	const char *uri = upnp_get_string(event, "CurrentURI");
 	if (uri == NULL) {
 		return -1;
 	}
 
 	service_lock();
-	char *meta = upnp_get_string(event, "CurrentURIMetaData");
+	const char *meta = upnp_get_string(event, "CurrentURIMetaData");
 	// Transport URI/Meta set now, current URI/Meta when it starts playing.
 	int requires_meta_update = replace_transport_uri_and_meta(uri, meta);
 
@@ -676,9 +675,6 @@ static int set_avtransport_uri(struct action_event *event)
 			     : NULL));
 	service_unlock();
 
-	free(uri);
-	free(meta);
-
 	return 0;
 }
 
@@ -688,7 +684,7 @@ static int set_next_avtransport_uri(struct action_event *event)
 		return -1;
 	}
 
-	char *next_uri = upnp_get_string(event, "NextURI");
+	const char *next_uri = upnp_get_string(event, "NextURI");
 	if (next_uri == NULL) {
 		return -1;
 	}
@@ -699,7 +695,7 @@ static int set_next_avtransport_uri(struct action_event *event)
 	output_set_next_uri(next_uri);
 	replace_var(TRANSPORT_VAR_NEXT_AV_URI, next_uri);
 
-	char *next_uri_meta = upnp_get_string(event, "NextURIMetaData");
+	const char *next_uri_meta = upnp_get_string(event, "NextURIMetaData");
 	if (next_uri_meta == NULL) {
 		rc = -1;
 	} else {
@@ -707,9 +703,6 @@ static int set_next_avtransport_uri(struct action_event *event)
 	}
 
 	service_unlock();
-
-	free(next_uri);
-	free(next_uri_meta);
 
 	return rc;
 }
@@ -974,10 +967,10 @@ static int seek(struct action_event *event)
 		return -1;
 	}
 
-	char *unit = upnp_get_string(event, "Unit");
+	const char *unit = upnp_get_string(event, "Unit");
 	if (strcmp(unit, "REL_TIME") == 0) {
 		// This is the only thing we support right now.
-		char *target = upnp_get_string(event, "Target");
+		const char *target = upnp_get_string(event, "Target");
 		gint64 nanos = parse_upnp_time(target);
 		service_lock();
 		if (output_seek(nanos) == 0) {
@@ -988,9 +981,7 @@ static int seek(struct action_event *event)
 			replace_var(TRANSPORT_VAR_REL_TIME_POS, target);
 		}
 		service_unlock();
-		free(target);
 	}
-	free(unit);
 
 	return 0;
 }

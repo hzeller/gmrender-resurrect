@@ -73,11 +73,11 @@ typedef enum {
 typedef enum {
 	CONNMGR_CMD_GETCURRENTCONNECTIONIDS,
 	CONNMGR_CMD_SETCURRENTCONNECTIONINFO,
-	CONNMGR_CMD_GETPROTOCOLINFO,           
+	CONNMGR_CMD_GETPROTOCOLINFO,
 	CONNMGR_CMD_PREPAREFORCONNECTION,
 	//CONNMGR_CMD_CONNECTIONCOMPLETE,
-	CONNMGR_CMD_UNKNOWN,                  
-	CONNMGR_CMD_COUNT 
+	CONNMGR_CMD_UNKNOWN,
+	CONNMGR_CMD_COUNT
 } connmgr_cmd;
 
 static struct action connmgr_actions[];
@@ -118,7 +118,7 @@ static struct argument *arguments_prepareforconnection[] = {
 //};
 
 static struct argument **argument_list[] = {
-	[CONNMGR_CMD_GETPROTOCOLINFO] =			arguments_getprotocolinfo,           
+	[CONNMGR_CMD_GETPROTOCOLINFO] =			arguments_getprotocolinfo,
 	[CONNMGR_CMD_GETCURRENTCONNECTIONIDS] =		arguments_getcurrentconnectionids,
 	[CONNMGR_CMD_SETCURRENTCONNECTIONINFO] =	arguments_setcurrentconnectioninfo,
 	[CONNMGR_CMD_PREPAREFORCONNECTION] =		arguments_prepareforconnection,
@@ -291,7 +291,7 @@ int connmgr_init(void) {
 	}
 	*p = '\0';
 
-	VariableContainer_change(srv->variable_container, 
+	VariableContainer_change(srv->variable_container,
 				 CONNMGR_VAR_SINK_PROTO_INFO, buf);
 	free(buf);
 
@@ -324,12 +324,11 @@ static int prepare_for_connection(struct action_event *event) {
 
 static int get_current_conn_info(struct action_event *event)
 {
-	char *value = upnp_get_string(event, "ConnectionID");
+	const char *value = upnp_get_string(event, "ConnectionID");
 	if (value == NULL) {
 		return -1;
 	}
 	Log_info("connmgr", "Query ConnectionID='%s'", value);
-	free(value);  // we don't actually do anything with it.
 
 	upnp_append_variable(event, CONNMGR_VAR_AAT_RCS_ID, "RcsID");
 	upnp_append_variable(event, CONNMGR_VAR_AAT_AVT_ID, "AVTransportID");

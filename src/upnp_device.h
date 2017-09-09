@@ -58,8 +58,9 @@ int upnp_add_response(struct action_event *event,
 void upnp_set_error(struct action_event *event, int error_code,
                     const char *format, ...);
 
-// Returns a writable copy of the value.
-char *upnp_get_string(struct action_event *event, const char *key);
+// Returns a readonly value stored in the action event. Returned value
+// only valid for the life-time of "event".
+const char *upnp_get_string(struct action_event *event, const char *key);
 
 // Append variable, identified by the variable number, to the event,
 // store the value under the given parameter name. The caller needs to provide
