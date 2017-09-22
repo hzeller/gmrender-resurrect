@@ -1,0 +1,7 @@
+/var/log/gmediarender.log {
+  rotate 2
+  weekly
+  compress
+  missingok
+  notifempty
+}

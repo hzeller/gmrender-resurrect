@@ -13,7 +13,7 @@ DAEMON_USER="nobody:audio"
 # controller UI. Some string that helps you recognize the player, e.g. 
 # "Livingroom Player"
 # Default is the short hostname of this device
-UPNP_DEVICE_NAME=`hostname -s`
+UPNP_DEVICE_NAME="$HOSTNAME"
 
 # Initial volume in decibel. 0.0 is 'full volume', -10 correspondents to 
 # '75' on the exported volume scale (Note, this does not change the ALSA 
@@ -25,10 +25,21 @@ INITIAL_VOLUME_DB=-10
 # 'aplay -L'), then gmediarenderer will use that ALSA device to play 
 # audio. Otherwise, whatever default is configured for gstreamer for the 
 # '$DAEMON_USER' is used.
-ALSA_DEVICE="sysdefault"
-#ALSA_DEVICE="iec958"
+RET=`dpkg -l pulseaudio`
+if [ $? -eq 0 ] ; then
+       PULSEAUDIO_DEVICE=`aplay -l|awk '/^card 0/ {print $3}'`
+else
+       ALSA_DEVICE="sysdefault"
+fi
 
-if [ -n "$ALSA_DEVICE" ] ; then
+#ALSA_DEVICE="iec958"
+LOG_PATH='/var/log/gmediarender.log'
+[ ! -f "$LOG_PATH" ] && touch /var/log/gmediarender.log && chown pi $LOG_PATH
+
+if [ -n "$PULSEAUDIO_DEVICE" ] ; then
+       GS_SINK_PARAM="--gstout-audiosink=autoaudiosink"
+       GS_DEVICE_PARAM="--gstout-audiodevice=$PULSEAUDIO_DEVICE"
+elif [ -n "$ALSA_DEVICE" ] ; then
 	GS_SINK_PARAM="--gstout-audiosink=alsasink"
 	GS_DEVICE_PARAM="--gstout-audiodevice=$ALSA_DEVICE"
 fi
@@ -36,6 +47,7 @@ fi
 # A simple stable UUID, based on this systems' first ethernet 
 # device's MAC address, only using tools readily available to generate.
 UPNP_UUID=`ip link show | awk '/ether/ {print "salt:)-" $2}' | head -1 | md5sum | awk '{print $1}'`
+LOG="--logfile=$LOG_PATH"
 
 # Alternatively use the MD5 summ of the short host name.
 # UPNP_UUID=`hostname -s | md5sum | | awk '{print $1}'`
