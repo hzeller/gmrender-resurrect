@@ -7,8 +7,7 @@ User=pi
 Group=audio
 Environment="GS_SINK_PARAM=autoaudiosink"
 
-ExecStartPre=/bin/bash -c "[ ! -f '/tmp/gmrender-resurrect.var' ] || /bin/rm /tmp/gmrender-resurrect.var"
-ExecStartPre=/bin/sh -c "touch /tmp/gmrender-resurrect.vars"
+ExecStartPre=/bin/sh -c "/usr/bin/test -f '/tmp/gmrender-resurrect.vars' || /bin/rm /tmp/gmrender-resurrect.vars"
 ExecStartPre=/bin/sh -c "echo UPNP_DEVICE_NAME=`/bin/hostname` > /tmp/gmrender-resurrect.vars"
 ExecStartPre=/bin/sh -c "echo UPNP_UUID=`ip link show | awk '/ether/ {print \"salt:)-\" $2}' | head -1 | md5sum | awk '{print $1}'` >> /tmp/gmrender-resurrect.vars"
 ExecStartPre=/bin/sh -c "pulseaudio --version ||echo GS_SINK_PARAM=alsasink >>/tmp/gmrender-resurrect.vars"
