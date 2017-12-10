@@ -395,7 +395,7 @@ static GOptionEntry option_entries[] = {
 	  "(autovideosink, xvimagesink, ximagesink, ...)",
 	  NULL },
         { "gstout-initial-volume-db", 0, 0, G_OPTION_ARG_DOUBLE, &initial_db,
-          "GStreamer inital volume in decibel (e.g. 0.0 = max; -6 = 1/2 max) ",
+          "GStreamer initial volume in decibel (e.g. 0.0 = max; -6 = 1/2 max) ",
 	  NULL },
         { NULL }
 };
