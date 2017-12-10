@@ -793,7 +793,7 @@ void upnp_control_init(struct upnp_device *device) {
 	// Set initial volume.
 	float volume_fraction = 0;
 	if (output_get_volume(&volume_fraction) == 0) {
-		Log_info("control", "Output inital volume is %f; setting "
+		Log_info("control", "Output initial volume is %f; setting "
 			 "control variables accordingly.", volume_fraction);
 		change_volume_decibel(20 * log(volume_fraction) / log(10));
 	}
