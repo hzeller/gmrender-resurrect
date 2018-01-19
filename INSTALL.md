@@ -200,3 +200,7 @@ http://blog.scphillips.com/2013/07/playing-music-on-a-raspberry-pi-using-upnp-an
 ## Arch Linux
 There is an Arch package available here
  https://aur.archlinux.org/packages/gmrender-resurrect-git/
+
+## Debian
+Since Debian 8, the official `gmediarender` package uses the gmrender-resurrect code:
+ https://packages.debian.org/stretch/gmediarender
