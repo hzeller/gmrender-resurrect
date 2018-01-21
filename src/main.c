@@ -82,6 +82,7 @@ static const gchar *friendly_name = PACKAGE_NAME;
 static const gchar *output = NULL;
 static const gchar *pid_file = NULL;
 static const gchar *log_file = NULL;
+static const gchar *mime_filter = NULL;
 
 /* Generic GMediaRender options */
 static GOptionEntry option_entries[] = {
@@ -105,6 +106,8 @@ static GOptionEntry option_entries[] = {
 	  "File the process ID should be written to.", NULL },
 	{ "daemon", 'd', 0, G_OPTION_ARG_NONE, &daemon_mode,
 	  "Run as daemon.", NULL },
+	{ "mime-filter", 0, 0, G_OPTION_ARG_STRING, &mime_filter,
+	  "MIME type filter to apply to advertized support.", NULL },
 	{ "logfile", 0, 0, G_OPTION_ARG_STRING, &log_file,
 	  "Debug log filename. Use /dev/stdout to log to console.", NULL },
 	{ "list-outputs", 0, 0, G_OPTION_ARG_NONE, &show_outputs,
@@ -259,6 +262,8 @@ int main(int argc, char **argv)
 	if (upnp_renderer == NULL) {
 		return EXIT_FAILURE;
 	}
+
+	upnp_renderer_set_mime_filter(mime_filter);
 
 	rc = output_init(output);
 	if (rc != 0) {
