@@ -252,9 +252,9 @@ void register_mime_type(const char *mime_type) {
 static int filter_mime_type(const char* filterList, const char* mime_type) {
 	// Make a modifiable copy of the mime type
 	int length = strcspn(mime_type, "/");
-	char* type = malloc(length + 2); // For slash and terminating 0
-	strncpy(type, mime_type, length + 1);
-	type[length + 1] = 0;
+	char* type = malloc(length + 1); // For terminating 0
+	strncpy(type, mime_type, length);
+	type[length] = 0;
 
 	if (strstr(filterList, type) == NULL)
 		return 1;
