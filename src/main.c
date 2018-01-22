@@ -107,7 +107,7 @@ static GOptionEntry option_entries[] = {
 	{ "daemon", 'd', 0, G_OPTION_ARG_NONE, &daemon_mode,
 	  "Run as daemon.", NULL },
 	{ "mime-filter", 0, 0, G_OPTION_ARG_STRING, &mime_filter,
-	  "Top-level MIME type to advertize support for. e.g. audio,video,image", NULL },
+	  "Top-level MIME type to advertise support for. e.g. audio,video,image", NULL },
 	{ "logfile", 0, 0, G_OPTION_ARG_STRING, &log_file,
 	  "Debug log filename. Use /dev/stdout to log to console.", NULL },
 	{ "list-outputs", 0, 0, G_OPTION_ARG_NONE, &show_outputs,
