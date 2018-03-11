@@ -25,7 +25,7 @@
 #define _UPNP_CONNMGR_H
 
 struct service *upnp_connmgr_get_service(void);
-int connmgr_init(void);
+int connmgr_init(const char* filter);
 
 void register_mime_type(const char *mime_type);
 

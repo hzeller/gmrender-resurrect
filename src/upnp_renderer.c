@@ -121,7 +121,7 @@ static int upnp_renderer_init(void)
 	upnp_services[2] = upnp_control_get_service();
 	upnp_services[3] = NULL;
 	render_device.services = upnp_services;
-        return connmgr_init();
+        return connmgr_init(render_device.mime_filter);
 }
 
 struct upnp_device_descriptor *
@@ -135,4 +135,9 @@ upnp_renderer_descriptor(const char *friendly_name,
 		render_device.udn = udn;
 	}
 	return &render_device;
+}
+
+void upnp_renderer_set_mime_filter(const char* filter)
+{
+	render_device.mime_filter = filter;
 }
