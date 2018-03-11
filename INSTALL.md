@@ -62,7 +62,7 @@ PREFIX in the configure step).
 There is a sample init script in `scripts/init.d/gmediarenderer` that could be
 a good start if you install things on your system.
 
-TBD: add systemd config.
+A systemd unit file can be found in `dist-scripts/debian/gmrender-resurrect.service`.
 
 (To Linux distribution packagers: please let me know if you have some
 common changes that might be useful to have in upstream; other than that, just
@@ -200,3 +200,7 @@ http://blog.scphillips.com/2013/07/playing-music-on-a-raspberry-pi-using-upnp-an
 ## Arch Linux
 There is an Arch package available here
  https://aur.archlinux.org/packages/gmrender-resurrect-git/
+
+## Debian
+Since Debian 8, the official `gmediarender` package uses the gmrender-resurrect code:
+ https://packages.debian.org/stretch/gmediarender
