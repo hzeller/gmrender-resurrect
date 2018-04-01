@@ -104,7 +104,7 @@ Say, you want to use an ALSA device. You can see the available devices
 with `aplay -L`. The main ALSA device is typically called `sysdefault`,
 so this is how you select it on the command line:
 
-    gmediarenderer --gstout-audiosink=alsasink --gstout-audiodevice=sysdefault
+    gmediarender --gstout-audiosink=alsasink --gstout-audiodevice=sysdefault
 
 The options are described with
 
