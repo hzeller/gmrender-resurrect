@@ -363,8 +363,20 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 	}
 
 	case GST_MESSAGE_BUFFERING:
-		/* not caring about these right now */
+        {
+                gint percent = 0;
+                gst_message_parse_buffering (msg, &percent);
+
+                /* Maybe make an option, to disable buffering for
+                 * live-streams */
+
+                /* Pause playback until buffering is complete. */
+                if (percent < 100)
+                        gst_element_set_state(player_, GST_STATE_PAUSED);
+                else
+                        gst_element_set_state(player_, GST_STATE_PLAYING);
 		break;
+        }
 	default:
 		/*
 		g_print("GStreamer: %s: unhandled message type %d (%s)\n",
