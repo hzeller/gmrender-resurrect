@@ -543,6 +543,11 @@ static int output_gstreamer_init(void)
 	gst_bus_add_watch(bus, my_bus_callback, NULL);
 	gst_object_unref(bus);
 
+	if (audio_sink != NULL && audio_pipe != NULL) {
+		Log_error("gstreamer", "--gstout-audosink and --gstout-audiopipe are mutually exclusive.");
+		return 1;
+	}
+
 	if (audio_sink != NULL) {
 		GstElement *sink = NULL;
 		Log_info("gstreamer", "Setting audio sink to %s; device=%s\n",
