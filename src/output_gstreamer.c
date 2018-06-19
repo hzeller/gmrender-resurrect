@@ -3,6 +3,7 @@
  * Copyright (C) 2005-2007   Ivo Clarysse
  *
  * Adapted to gstreamer-0.10 2006 David Siorpaes
+ * Adapted to output to snapcast 2017 Daniel Jäcksch
  *
  * This file is part of GMediaRender.
  *
@@ -392,6 +393,7 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 
 static gchar *audio_sink = NULL;
 static gchar *audio_device = NULL;
+static gchar *audio_pipe = NULL;
 static gchar *videosink = NULL;
 static double initial_db = 0.0;
 
@@ -403,6 +405,10 @@ static GOptionEntry option_entries[] = {
 	  NULL },
         { "gstout-audiodevice", 0, 0, G_OPTION_ARG_STRING, &audio_device,
           "GStreamer device for the given audiosink. ",
+	  NULL },
+        { "gstout-audiopipe", 0, 0, G_OPTION_ARG_STRING, &audio_pipe,
+          "GStreamer audio sink to pipeline"
+          "(gst-launch format) useful for further output format conversion.",
 	  NULL },
         { "gstout-videosink", 0, 0, G_OPTION_ARG_STRING, &videosink,
           "GStreamer video sink to use "
@@ -537,6 +543,11 @@ static int output_gstreamer_init(void)
 	gst_bus_add_watch(bus, my_bus_callback, NULL);
 	gst_object_unref(bus);
 
+	if (audio_sink != NULL && audio_pipe != NULL) {
+		Log_error("gstreamer", "--gstout-audosink and --gstout-audiopipe are mutually exclusive.");
+		return 1;
+	}
+
 	if (audio_sink != NULL) {
 		GstElement *sink = NULL;
 		Log_info("gstreamer", "Setting audio sink to %s; device=%s\n",
@@ -550,6 +561,17 @@ static int output_gstreamer_init(void)
 		    g_object_set (G_OBJECT(sink), "device", audio_device, NULL);
 		  }
 		  g_object_set (G_OBJECT (player_), "audio-sink", sink, NULL);
+		}
+	}
+	if (audio_pipe != NULL) {
+		GstElement *sink = NULL;
+		Log_info("gstreamer", "Setting audio sink-pipeline to %s\n",audio_pipe);
+		sink = gst_parse_bin_from_description(audio_pipe, TRUE, NULL);
+
+		if (sink == NULL) {
+			Log_error("gstreamer", "Could not create pipeline.");
+		} else {
+			g_object_set (G_OBJECT (player_), "audio-sink", sink, NULL);
 		}
 	}
 	if (videosink != NULL) {
