@@ -109,7 +109,7 @@ static GOptionEntry option_entries[] = {
 	{ "mime-filter", 0, 0, G_OPTION_ARG_STRING, &mime_filter,
 	  "Top-level MIME type to advertise support for. e.g. audio,video,image", NULL },
 	{ "logfile", 0, 0, G_OPTION_ARG_STRING, &log_file,
-	  "Debug log filename. Use /dev/stdout to log to console.", NULL },
+	  "Debug log filename. Use 'stdout' or 'stderr' to log to console.", NULL },
 	{ "list-outputs", 0, 0, G_OPTION_ARG_NONE, &show_outputs,
 	  "List available output modules and exit", NULL },
 	{ "dump-devicedesc", 0, 0, G_OPTION_ARG_NONE, &show_devicedesc,
@@ -195,7 +195,7 @@ static void init_logging(const char *log_file) {
 	} else {
 		fprintf(stderr, "%s started %s.\nLogging switched off. "
 			"Enable with --logfile=<filename> "
-			"(e.g. --logfile=/dev/stdout for console)\n",
+			"(or --logfile=stdout for console)\n",
 			PACKAGE_STRING, version);
 	}
 }
