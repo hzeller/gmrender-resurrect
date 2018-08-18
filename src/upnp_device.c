@@ -412,8 +412,19 @@ static gboolean initialize_device(struct upnp_device_descriptor *device_def,
 	char *buf;
 
 	rc = UpnpInit(ip_address, port);
+	/* There have been situations reported in which UPNP had issues
+	 * initializing right after network came up. #129
+	 */
+	int retries_left = 60;
+	static const int kRetryTimeMs = 1000;
+	while (rc != UPNP_E_SUCCESS && retries_left--) {
+		usleep(kRetryTimeMs * 1000);
+		Log_error("upnp", "UpnpInit(ip=%s, port=%d) Error: %s (%d). Retrying... (%ds)",
+			  ip_address, port, UpnpGetErrorMessage(rc), rc, retries_left);
+		rc = UpnpInit(ip_address, port);
+	}
 	if (UPNP_E_SUCCESS != rc) {
-		Log_error("upnp", "UpnpInit(ip=%s, port=%d) Error: %s (%d)",
+		Log_error("upnp", "UpnpInit(ip=%s, port=%d) Error: %s (%d). Giving up.",
 			  ip_address, port, UpnpGetErrorMessage(rc), rc);
 		return FALSE;
 	}
