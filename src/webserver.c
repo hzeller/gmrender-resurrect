@@ -142,20 +142,20 @@ int webserver_register_file(const char *path, const char *content_type)
 	return 0;
 }
 
-static int webserver_get_info(const char *filename, struct File_Info *info)
+static int webserver_get_info(const char *filename, UpnpFileInfo *info)
 {
 	struct virtual_file *virtfile = virtual_files;
 
 	while (virtfile != NULL) {
 		if (strcmp(filename, virtfile->virtual_fname) == 0) {
-			info->file_length = virtfile->len;
-			info->last_modified = 0;
-			info->is_directory = 0;
-			info->is_readable = 1;
-			info->content_type =
-			    ixmlCloneDOMString(virtfile->content_type);
+			UpnpFileInfo_set_FileLength(info, virtfile->len);
+			UpnpFileInfo_set_LastModified(info, 0);
+			UpnpFileInfo_set_IsDirectory(info, 0);
+			UpnpFileInfo_set_IsReadable(info, 1);
+			UpnpFileInfo_set_ContentType(info,
+			    ixmlCloneDOMString(virtfile->content_type));
 			Log_info("webserver", "Access %s (%s) len=%zd",
-				 filename, info->content_type, virtfile->len);
+				 filename, UpnpFileInfo_get_ContentType(info), virtfile->len);
 			return 0;
 		}
 		virtfile = virtfile->next;
