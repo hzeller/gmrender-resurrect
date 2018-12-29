@@ -24,6 +24,12 @@
 #ifndef _UPNP_H
 #define _UPNP_H
 
+#include <upnp/upnp.h>
+
+#if UPNP_VERSION >= 10803
+#define UpnpAddVirtualDir(x) UpnpAddVirtualDir(x, NULL, NULL)
+#endif
+
 struct action;
 struct service;
 struct action_event;
@@ -106,7 +112,7 @@ struct service {
 };
 
 struct action_event {
-	struct Upnp_Action_Request *request;
+	UpnpActionRequest *request;
 	int status;
 	struct service *service;
 	struct upnp_device *device;

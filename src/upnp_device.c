@@ -63,6 +63,9 @@ struct upnp_device {
 int upnp_add_response(struct action_event *event,
 		      const char *key, const char *value)
 {
+	IXML_Document *actionResult;
+	const char *actionName;
+
 	assert(event != NULL);
 	assert(key != NULL);
 	assert(value != NULL);
@@ -71,15 +74,19 @@ int upnp_add_response(struct action_event *event,
 		return -1;
 	}
 
+	actionResult = UpnpActionRequest_get_ActionResult(event->request);
+	actionName = UpnpActionRequest_get_ActionName_cstr(event->request);
 	int rc;
-	rc = UpnpAddToActionResponse(&event->request->ActionResult,
-				     event->request->ActionName,
+	rc = UpnpAddToActionResponse(&actionResult, actionName,
 				     event->service->service_type, key, value);
 	if (rc != UPNP_E_SUCCESS) {
 		/* report custom error */
-		event->request->ActionResult = NULL;
-		event->request->ErrCode = UPNP_SOAP_E_ACTION_FAILED;
-		strcpy(event->request->ErrStr, UpnpGetErrorMessage(rc));
+		UpnpString *errorMessage = UpnpString_new();
+		UpnpString_set_String(errorMessage, UpnpGetErrorMessage(rc));
+		UpnpActionRequest_set_ActionResult(event->request, NULL);
+		UpnpActionRequest_set_ErrCode(event->request,
+					      UPNP_SOAP_E_ACTION_FAILED);
+		UpnpActionRequest_set_ErrStr(event->request, errorMessage);
 		return -1;
 	}
 	return 0;
@@ -106,24 +113,28 @@ void upnp_append_variable(struct action_event *event,
 void upnp_set_error(struct action_event *event, int error_code,
 		    const char *format, ...)
 {
+	static char buffer[80];
+	UpnpString *errStr = UpnpString_new();
+	const char *errStrC;
 	event->status = -1;
 
 	va_list ap;
 	va_start(ap, format);
-	event->request->ActionResult = NULL;
-	event->request->ErrCode = UPNP_SOAP_E_ACTION_FAILED;
-	vsnprintf(event->request->ErrStr, sizeof(event->request->ErrStr),
-		  format, ap);
-
+	vsnprintf(buffer, sizeof(buffer), format, ap);
 	va_end(ap);
-	Log_error("upnp", "%s: %s\n", __FUNCTION__, event->request->ErrStr);
+	UpnpActionRequest_set_ActionResult(event->request, NULL);
+	UpnpActionRequest_set_ErrCode(event->request, UPNP_SOAP_E_ACTION_FAILED);
+	UpnpString_set_String(errStr, buffer);
+	UpnpActionRequest_set_ErrStr(event->request, errStr);
+	errStrC = UpnpActionRequest_get_ErrStr_cstr(event->request);
+	Log_error("upnp", "%s: %s\n", __FUNCTION__, errStrC);
 }
 
 const char *upnp_get_string(struct action_event *event, const char *key)
 {
 	IXML_Node *node;
 
-	node = (IXML_Node *) event->request->ActionRequest;
+	node = (IXML_Node *)UpnpActionRequest_get_ActionRequest(event->request);
 	if (node == NULL) {
 		upnp_set_error(event, UPNP_SOAP_E_INVALID_ARGS,
 			       "Invalid action request document");
@@ -153,21 +164,21 @@ const char *upnp_get_string(struct action_event *event, const char *key)
 }
 
 static int handle_subscription_request(struct upnp_device *priv,
-                                       struct Upnp_Subscription_Request
-                                              *sr_event)
+				       UpnpSubscriptionRequest *sr_event)
 {
 	struct service *srv;
 	int rc;
 
 	assert(priv != NULL);
 
-	Log_info("upnp", "Subscription request for %s (%s)",
-		 sr_event->ServiceId, sr_event->UDN);
-
-	srv = find_service(priv->upnp_device_descriptor, sr_event->ServiceId);
+	const char *serviceId =
+		UpnpSubscriptionRequest_get_ServiceId_cstr(sr_event);
+	const char *udn = UpnpSubscriptionRequest_get_UDN_cstr(sr_event);
+	Log_info("upnp", "Subscription request for %s (%s)", serviceId, udn);
+	srv = find_service(priv->upnp_device_descriptor, serviceId);
 	if (srv == NULL) {
 		Log_error("upnp", "%s: Unknown service '%s'", __FUNCTION__,
-			  sr_event->ServiceId);
+			serviceId);
 		return -1;
 	}
 
@@ -208,10 +219,10 @@ static int handle_subscription_request(struct upnp_device *priv,
 	free(xml_value);
 	UPnPLastChangeBuilder_delete(builder);
 
+	const char *sid = UpnpSubscriptionRequest_get_SID_cstr(sr_event);
 	rc = UpnpAcceptSubscription(priv->device_handle,
-				    sr_event->UDN, sr_event->ServiceId,
-				    eventvar_names, eventvar_values, 1,
-				    sr_event->Sid);
+				    udn, serviceId,
+				    eventvar_names, eventvar_values, 1, sid);
 	if (rc == UPNP_E_SUCCESS) {
 		result = 0;
 	} else {
@@ -240,11 +251,13 @@ int upnp_device_notify(struct upnp_device *device,
 
 
 static int handle_var_request(struct upnp_device *priv,
-			      struct Upnp_State_Var_Request *var_event) {
-	struct service *srv = find_service(priv->upnp_device_descriptor,
-					   var_event->ServiceID);
+			      UpnpStateVarRequest *event)
+{
+	const char *serviceID = UpnpStateVarRequest_get_ServiceID_cstr(event);
+
+	struct service *srv = find_service(priv->upnp_device_descriptor, serviceID);
 	if (srv == NULL) {
-		var_event->ErrCode = UPNP_SOAP_E_INVALID_ARGS;
+		UpnpStateVarRequest_set_ErrCode(event, UPNP_SOAP_E_INVALID_ARGS);
 		return -1;
 	}
 
@@ -257,7 +270,9 @@ static int handle_var_request(struct upnp_device *priv,
 		const char *name;
 		const char *value =
 			VariableContainer_get(srv->variable_container, i, &name);
-		if (value && strcmp(var_event->StateVarName, name) == 0) {
+		const char *stateVarName =
+			UpnpStateVarRequest_get_StateVarName_cstr(event);
+		if (value && strcmp(stateVarName, name) == 0) {
 			result = strdup(value);
 			break;
 		}
@@ -265,30 +280,34 @@ static int handle_var_request(struct upnp_device *priv,
 
 	ithread_mutex_unlock(srv->service_mutex);
 
-	var_event->CurrentVal = result;
-	var_event->ErrCode = (result == NULL)
+	UpnpStateVarRequest_set_CurrentVal(event, result);
+	int errCode = (result == NULL)
 		? UPNP_SOAP_E_INVALID_VAR
 		: UPNP_E_SUCCESS;
+	UpnpStateVarRequest_set_ErrCode(event, errCode);
+	const char *stateVarName =
+		UpnpStateVarRequest_get_StateVarName_cstr(event);
 	Log_info("upnp", "Variable request %s -> %s (%s)",
-		 var_event->StateVarName, result, var_event->ServiceID);
+		stateVarName, result, serviceID);
 	return 0;
 }
 
 static int handle_action_request(struct upnp_device *priv,
-                                 struct Upnp_Action_Request *ar_event)
+				 UpnpActionRequest *ar_event)
 {
 	struct service *event_service;
 	struct action *event_action;
 
-	event_service = find_service(priv->upnp_device_descriptor,
-				     ar_event->ServiceID);
-	event_action = find_action(event_service, ar_event->ActionName);
+	const char *serviceID = UpnpActionRequest_get_ServiceID_cstr(ar_event);
+	const char *actionName = UpnpActionRequest_get_ActionName_cstr(ar_event);
 
+	event_service = find_service(priv->upnp_device_descriptor, serviceID);
+	event_action = find_action(event_service, actionName);
 	if (event_action == NULL) {
 		Log_error("upnp", "Unknown action '%s' for service '%s'",
-			  ar_event->ActionName, ar_event->ServiceID);
-		ar_event->ActionResult = NULL;
-		ar_event->ErrCode = 401;
+			  actionName, serviceID);
+		UpnpActionRequest_set_ActionResult(ar_event, NULL);
+		UpnpActionRequest_set_ErrCode(ar_event, 401);
 		return -1;
 	}
 
@@ -335,7 +354,7 @@ static int handle_action_request(struct upnp_device *priv,
 
 		rc = (event_action->callback) (&event);
 		if (rc == 0) {
-			ar_event->ErrCode = UPNP_E_SUCCESS;
+			UpnpActionRequest_set_ErrCode(event.request, UPNP_E_SUCCESS);
 #ifdef ENABLE_ACTION_LOGGING
 			if (ar_event->ActionResult) {
 				char *action_result_xml = NULL;
@@ -351,13 +370,22 @@ static int handle_action_request(struct upnp_device *priv,
 			}
 #endif
 		}
-		if (ar_event->ActionResult == NULL) {
-			ar_event->ActionResult =
-			    UpnpMakeActionResponse(ar_event->ActionName,
+		IXML_Document *actionResult =
+			UpnpActionRequest_get_ActionResult(ar_event);
+		if (actionResult == NULL) {
+			actionResult =
+			    UpnpMakeActionResponse(actionName,
 						   event_service->service_type,
 						   0, NULL);
+			UpnpActionRequest_set_ActionResult(event.request, actionResult);
 		}
 	} else {
+		int errCode = UpnpActionRequest_get_ErrCode(ar_event);
+		int sock = UpnpActionRequest_get_Socket(ar_event);
+		const char *errStr = UpnpActionRequest_get_ErrStr_cstr(ar_event);
+		const char *actionName = UpnpActionRequest_get_ActionName_cstr(ar_event);
+		const char *devUDN = UpnpActionRequest_get_DevUDN_cstr(ar_event);
+		const char *serviceID = UpnpActionRequest_get_ServiceID_cstr(ar_event);
 		Log_error("upnp",
 			  "Got a valid action, but no handler defined (!)\n"
 			  "  ErrCode:    %d\n"
@@ -366,10 +394,8 @@ static int handle_action_request(struct upnp_device *priv,
 			  "  ActionName: '%s'\n"
 			  "  DevUDN:     '%s'\n"
 			  "  ServiceID:  '%s'\n",
-			  ar_event->ErrCode, ar_event->Socket, ar_event->ErrStr,
-			  ar_event->ActionName, ar_event->DevUDN,
-			  ar_event->ServiceID);
-		ar_event->ErrCode = UPNP_E_SUCCESS;
+			  errCode, sock, errStr, actionName, devUDN, serviceID);
+		UpnpActionRequest_set_ErrCode(ar_event, UPNP_E_SUCCESS);
 	}
 
 	if (event_service->last_change) {   // See comment above.
