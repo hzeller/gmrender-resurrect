@@ -28,6 +28,8 @@
 #include "config.h"
 #endif
 
+#include <glib.h>
+
 #include <assert.h>
 #include <gst/gst.h>
 #include <math.h>

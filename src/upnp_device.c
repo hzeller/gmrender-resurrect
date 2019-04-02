@@ -32,7 +32,6 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <string.h>
-#include <glib.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -403,7 +402,7 @@ static int event_handler(Upnp_EventType EventType, void *event, void *userdata)
 	return 0;
 }
 
-static gboolean initialize_device(struct upnp_device_descriptor *device_def,
+static int initialize_device(struct upnp_device_descriptor *device_def,
 				  struct upnp_device *result_device,
 				  const char *ip_address,
 				  unsigned short port)

@@ -24,7 +24,6 @@
 #ifndef _OUTPUT_H
 #define _OUTPUT_H
 
-#include <glib.h>
 #include "song-meta-data.h"
 
 struct output_module;
@@ -51,8 +50,8 @@ void output_set_next_uri(const char *uri);
 int output_play(output_transition_cb_t done_callback);
 int output_stop(void);
 int output_pause(void);
-int output_get_position(gint64 *track_dur_nanos, gint64 *track_pos_nanos);
-int output_seek(gint64 position_nanos);
+int output_get_position(int64_t *track_dur_nanos, int64_t *track_pos_nanos);
+int output_seek(int64_t position_nanos);
 
 int output_get_volume(float *v);
 int output_set_volume(float v);
