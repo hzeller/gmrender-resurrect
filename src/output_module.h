@@ -29,7 +29,7 @@
 struct output_module {
         const char *shortname;
         const char *description;
-	int (*add_options)(GOptionContext *ctx);
+	int (*add_goptions)(GOptionContext *ctx);
 
 	// Commands.
 	int (*init)(void);
@@ -48,6 +48,11 @@ struct output_module {
 	int (*get_mute)(int *);
 	int (*set_mute)(int);
 };
+
+void output_module_dump_modules(void);
+const struct output_module *output_module_get(const char *shortname);
+int output_module_add_goptions(GOptionContext *ctx);
+
 
 #endif
 

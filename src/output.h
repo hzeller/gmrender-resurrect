@@ -27,6 +27,8 @@
 #include <glib.h>
 #include "song-meta-data.h"
 
+struct output_module;
+
 // Feedback for the controlling part what is happening with the
 // output.
 enum PlayFeedback {
@@ -39,9 +41,7 @@ typedef void (*output_transition_cb_t)(enum PlayFeedback);
 // callback with changes we send back to the controlling layer.
 typedef void (*output_update_meta_cb_t)(const struct SongMetaData *);
 
-int output_init(const char *shortname);
-int output_add_options(GOptionContext *ctx);
-void output_dump_modules(void);
+int output_init(const struct output_module *module);
 
 int output_loop(void);
 

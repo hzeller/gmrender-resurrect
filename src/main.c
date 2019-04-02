@@ -51,6 +51,7 @@
 #include "git-version.h"
 #include "logging.h"
 #include "output.h"
+#include "output_module.h"
 #include "upnp.h"
 #include "upnp_control.h"
 #include "upnp_device.h"
@@ -202,7 +203,6 @@ static void init_logging(const char *log_file) {
 
 int main(int argc, char **argv)
 {
-	int rc;
 	struct upnp_device_descriptor *upnp_renderer;
 
 #if !GLIB_CHECK_VERSION(2,32,0)
@@ -231,7 +231,7 @@ int main(int argc, char **argv)
 	}
 
 	if (show_outputs) {
-		output_dump_modules();
+		output_module_dump_modules();
 		exit(EXIT_SUCCESS);
 	}
 
@@ -265,11 +265,18 @@ int main(int argc, char **argv)
 
 	upnp_renderer_set_mime_filter(mime_filter);
 
-	rc = output_init(output);
-	if (rc != 0) {
-		Log_error("main",
-			  "ERROR: Failed to initialize Output subsystem");
-		return EXIT_FAILURE;
+	const struct output_module *module = output_module_get(output);
+	if (module != NULL) {
+		int rc;
+		rc = output_init(module);
+		if (rc != 0) {
+			Log_error("main",
+				  "ERROR: Failed to initialize Output subsystem");
+			return EXIT_FAILURE;
+		}
+	} else {
+		Log_error("error", "ERROR: No such output module: '%s'",
+			  output);
 	}
 
 	struct upnp_device *device;
