@@ -26,12 +26,16 @@
 
 #include "output.h"
 
+#ifdef HAVE_GLIB
 typedef struct _GOptionContext GOptionContext;
+#endif
 
 struct output_module {
         const char *shortname;
         const char *description;
+#ifdef HAVE_GLIB
 	int (*add_goptions)(GOptionContext *ctx);
+#endif
 
 	// Commands.
 	int (*init)(void);
@@ -53,8 +57,9 @@ struct output_module {
 
 void output_module_dump_modules(void);
 const struct output_module *output_module_get(const char *shortname);
+#ifdef HAVE_GLIB
 int output_module_add_goptions(GOptionContext *ctx);
-
+#endif
 
 #endif
 

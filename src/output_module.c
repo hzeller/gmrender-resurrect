@@ -93,6 +93,7 @@ const struct output_module *output_module_get(const char *shortname)
 	return output_module;
 }
 
+#ifdef HAVE_GLIB
 int output_module_add_goptions(GOptionContext *ctx)
 {
 	int count, i;
@@ -108,3 +109,4 @@ int output_module_add_goptions(GOptionContext *ctx)
 	}
 	return 0;
 }
+#endif

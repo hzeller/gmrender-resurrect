@@ -28,7 +28,11 @@
 #endif
 
 #include <assert.h>
+#ifdef HAVE_GLIB
 #include <glib.h>
+#else
+#include <getopt.h>
+#endif
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,6 +62,11 @@
 #include "upnp_renderer.h"
 #include "upnp_transport.h"
 
+#ifndef FALSE
+#define FALSE ((int)0)
+#define TRUE ((int)1)
+#endif
+
 static int show_version = FALSE;
 static int show_devicedesc = FALSE;
 static int show_connmgr_scpd = FALSE;
@@ -85,6 +94,7 @@ static const char *pid_file = NULL;
 static const char *log_file = NULL;
 static const char *mime_filter = NULL;
 
+#ifdef HAVE_GLIB
 /* Generic GMediaRender options */
 static GOptionEntry option_entries[] = {
 	{ "version", 0, 0, G_OPTION_ARG_NONE, &show_version,
@@ -123,6 +133,28 @@ static GOptionEntry option_entries[] = {
 	  "Dump A/V Transport service description XML and exit.", NULL },
 	{ NULL }
 };
+#else
+static struct option long_options[] =
+{
+	/* These options set a flag. */
+	{"version", no_argument, &show_version, 1},
+	{"ip-address",   required_argument, 0, 'I'},
+	{"port",     required_argument,       0, 'p'},
+	{"uuid",  required_argument, 0, 'u'},
+	{"friendly-name",  required_argument, 0, 'f'},
+	{"output",    required_argument, 0, 'o'},
+	{"pid-file",    required_argument, 0, 'P'},
+	{"daemon",    no_argument, &daemon_mode, 'd'},
+	{"mime-filter",    required_argument, 0, 0},
+	{"logfile",    required_argument, 0, 0},
+	{"list-outputs",    no_argument, &show_outputs, 1},
+	{"dump-devicedesc",    no_argument, &show_devicedesc, 1},
+	{"dump-connmgr-scpd",    no_argument, &show_connmgr_scpd, 1},
+	{"dump-control-scpd",    no_argument, &show_control_scpd, 1},
+	{"dump-transport-scpd",    no_argument, &show_transport_scpd, 1},
+	{0, 0, 0, 0}
+};
+#endif
 
 static void do_show_version(void)
 {
@@ -137,6 +169,7 @@ static void do_show_version(void)
 
 static int process_cmdline(int argc, char **argv)
 {
+#ifdef HAVE_GLIB
 	GOptionContext *ctx;
 	GError *err = NULL;
 	int rc;
@@ -155,7 +188,53 @@ static int process_cmdline(int argc, char **argv)
 		g_error_free (err);
 		return FALSE;
 	}
+#else
+	int c;
+	while (1) {
+		int option_index = 0;
 
+		c = getopt_long (argc, argv, "I:p:u:f:o:p:d",
+			long_options, &option_index);
+
+		/* Detect the end of the options. */
+		if (c == -1)
+		break;
+
+		switch (c)
+		{
+		case 0:
+			/* If this option set a flag, do nothing else now. */
+			if (long_options[option_index].flag != 0)
+				break;
+			if (!strcmp(long_options[option_index].name, "mime-filter"))
+				mime_filter = optarg;
+			if (!strcmp(long_options[option_index].name, "logfile"))
+				log_file = optarg;
+		break;
+		case 'I':
+			ip_address = optarg;
+		break;
+		case 'p':
+			listen_port = atoi(optarg);
+		break;
+		case 'u':
+			uuid = optarg;
+		break;
+		case 'f':
+			friendly_name = optarg;
+		break;
+		case 'o':
+			output = optarg;
+		break;
+		case 'P':
+			pid_file = optarg;
+		break;
+		case 'd':
+			
+		break;
+		}
+	}
+#endif
 	return TRUE;
 }
 
@@ -177,7 +256,10 @@ static void init_logging(const char *log_file) {
 	char version[1024];
 
 	snprintf(version, sizeof(version), "[ gmediarender %s "
-		 "(libupnp-%s; glib-%d.%d.%d; "
+		 "(libupnp-%s; "
+#ifdef HAVE_GLIB
+		 "glib-%d.%d.%d; "
+#endif
 #ifdef HAVE_GST
 		 "gstreamer-%d.%d.%d; "
 #endif
@@ -186,7 +268,9 @@ static void init_logging(const char *log_file) {
 #endif
 			" ) ]",
 		 GM_COMPILE_VERSION, UPNP_VERSION_STRING
+#ifdef HAVE_GLIB
 		 ,GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION
+#endif
 #ifdef HAVE_GST
 		 ,GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO
 #endif
@@ -210,9 +294,10 @@ static void init_logging(const char *log_file) {
 int main(int argc, char **argv)
 {
 	struct upnp_device_descriptor *upnp_renderer;
-
+#if defined(HAVE_GLIB)
 #if !GLIB_CHECK_VERSION(2,32,0)
 	g_thread_init (NULL);  // Was necessary < glib 2.32, deprecated since.
+#endif
 #endif
 
 	if (!process_cmdline(argc, argv)) {

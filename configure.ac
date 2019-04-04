@@ -36,7 +36,27 @@ fi
 
 PKG_PROG_PKG_CONFIG
 
-PKG_CHECK_MODULES(GLIB, glib-2.0 gthread-2.0, HAVE_GLIB=yes, HAVE_GLIB=no)
+AC_ARG_WITH( glib,
+  AC_HELP_STRING([--without-glib],[compile without Glib support]),
+  try_glib=$withval, try_glib=yes )
+HAVE_GLIB=no
+if test x$try_glib = xyes; then
+  dnl check for Glib
+  PKG_CHECK_MODULES(GLIB, glib-2.0 gthread-2.0, 
+      [
+      HAVE_GLIB=yes
+      AC_SUBST(GLIB_CFLAGS)
+      AC_SUBST(GLIB_LIBS)
+
+    ],
+	HAVE_GLIB=no)
+fi
+if test x$HAVE_GLIB = xyes; then
+  AC_DEFINE(HAVE_GLIB, , [Use Glib])
+fi
+AC_SUBST(HAVE_GLIB)
+AM_CONDITIONAL(HAVE_GLIB, test x$HAVE_GLIB = xyes)
+
 
 # This is a bit crude, someone with more configure-fu please fix :)
 # We want either the new, or if that fails, the old version of gstreamer.
