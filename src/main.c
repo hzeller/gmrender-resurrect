@@ -176,18 +176,24 @@ static void log_variable_change(void *userdata, int var_num,
 static void init_logging(const char *log_file) {
 	char version[1024];
 
-#ifdef HAVE_GST
 	snprintf(version, sizeof(version), "[ gmediarender %s "
-		 "(libupnp-%s; glib-%d.%d.%d; gstreamer-%d.%d.%d) ]",
+		 "(libupnp-%s; glib-%d.%d.%d; "
+#ifdef HAVE_GST
+		 "gstreamer-%d.%d.%d; "
+#endif
+#ifdef HAVE_MPG123
+		 "mpg123-%d.%s.%s; "
+#endif
+			" ) ]",
 		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
 		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION,
-		 GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
-#else
-	snprintf(version, sizeof(version), "[ gmediarender %s "
-		 "(libupnp-%s; glib-%d.%d.%d; without gstreamer.) ]",
-		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
-		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
+#ifdef HAVE_GST
+		 GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO
 #endif
+#ifdef HAVE_MPG123
+		 1, "2X", "Y"
+#endif
+		 );
 
 	if (log_file != NULL) {
 		Log_init(log_file);
