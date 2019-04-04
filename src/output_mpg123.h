@@ -1,6 +1,6 @@
-/* output_gstreamer.h - Definitions for GStreamer output module
+/* output_mpg123.h - Definitions for GStreamer output module
  *
- * Copyright (C) 2005-2007   Ivo Clarysse
+ * Copyright (C) 2014-2019   Mar Chalain
  *
  * This file is part of GMediaRender.
  *
@@ -21,9 +21,9 @@
  *
  */
 
-#ifndef _OUTPUT_GSTREAMER_H
-#define _OUTPUT_GSTREAMER_H
+#ifndef _OUTPUT_MPG123_H
+#define _OUTPUT_MPG123_H
 
-extern const struct output_module gstreamer_output;
+extern const struct output_module mpg123_output;
 
-#endif /*  _OUTPUT_GSTREAMER_H */
+#endif /*  _OUTPUT_MPG123_H */

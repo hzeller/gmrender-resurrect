@@ -44,6 +44,9 @@ static const struct output_module *modules[] = {
 #ifdef HAVE_GST
 	&gstreamer_output,
 #endif
+#ifdef HAVE_MPG123
+	&mpg123_output,
+#endif
 };
 
 void output_module_dump_modules(void)

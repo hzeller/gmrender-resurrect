@@ -82,6 +82,42 @@ fi
 AC_SUBST(HAVE_GST)
 AM_CONDITIONAL(HAVE_GST, test x$HAVE_GST = xyes)
 
+AC_ARG_WITH( mpg123,
+  AC_HELP_STRING([--without-mpg123],[compile without mpg123 support]),
+  try_mpg123=$withval, try_mpg123=yes )
+HAVE_MPG123=no
+if test x$try_mpg123 = xyes; then
+  dnl check for mpg123
+  PKG_CHECK_MODULES(MPG123, libmpg123,
+    [
+      HAVE_MPG123=yes
+      AC_SUBST(MPG123_CFLAGS)
+      AC_SUBST(MPG123_LIBS)
+    ],
+    [
+      HAVE_MPG123=no
+    ])
+fi
+if test x$HAVE_MPG123 = xyes; then
+  AC_DEFINE(HAVE_MPG123, , [Use mpg123])
+fi
+AC_SUBST(HAVE_MPG123)
+AM_CONDITIONAL(HAVE_MPG123, test x$HAVE_MPG123 = xyes)
+
+if test x$HAVE_MPG123 = xyes; then
+  PKG_CHECK_MODULES(ALSA, alsa,
+    [
+      HAVE_ALSA=yes
+      AC_SUBST(ALSA_CFLAGS)
+      AC_SUBST(ALSA_LIBS)
+    ],
+    HAVE_ALSA=no)
+fi
+if test x$HAVE_ALSA = xyes; then
+  AC_DEFINE(HAVE_ALSA, , [Use alsa])
+fi
+AC_SUBST(HAVE_ALSA)
+AM_CONDITIONAL(HAVE_ALSA, test x$HAVE_ALSA = xyes)
 
 LIBUPNP_REQUIRED=1.6.0
 AC_ARG_WITH( libupnp,

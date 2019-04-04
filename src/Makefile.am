@@ -19,6 +19,18 @@ gmediarender_SOURCES += \
 	output_gstreamer.c  output_gstreamer.h
 endif
 
+if HAVE_MPG123
+gmediarender_SOURCES += \
+	output_mpg123.c  output_mpg123.h \
+	sound_module.c sound_module.h \
+	webclient.c webclient.h
+
+if HAVE_ALSA
+gmediarender_SOURCES += \
+	sound_alsa.c
+endif
+endif
+
 main.c : git-version.h
 
 git-version.h: .FORCE
@@ -28,5 +40,5 @@ git-version.h: .FORCE
 
 .FORCE:
 
-AM_CPPFLAGS = $(GLIB_CFLAGS) $(GST_CFLAGS) $(LIBUPNP_CFLAGS) -DPKG_DATADIR=\"$(datadir)/gmediarender\"
-gmediarender_LDADD = $(GLIB_LIBS) $(GST_LIBS) $(LIBUPNP_LIBS) 
+AM_CPPFLAGS = $(GLIB_CFLAGS) $(GST_CFLAGS) $(LIBUPNP_CFLAGS) $(MPG123_CFLAGS) $(ALSA_CFLAGS) -DPKG_DATADIR=\"$(datadir)/gmediarender\"
+gmediarender_LDADD = $(GLIB_LIBS) $(GST_LIBS) $(LIBUPNP_LIBS) $(MPG123_LIBS) $(ALSA_LIBS)

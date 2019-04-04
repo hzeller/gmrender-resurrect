@@ -1,6 +1,6 @@
-/* output_gstreamer.h - Definitions for GStreamer output module
+/* sound_module.h - Audio sink module
  *
- * Copyright (C) 2005-2007   Ivo Clarysse
+ * Copyright (C) 2014-2019   Marc Chalain
  *
  * This file is part of GMediaRender.
  *
@@ -21,9 +21,22 @@
  *
  */
 
-#ifndef _OUTPUT_GSTREAMER_H
-#define _OUTPUT_GSTREAMER_H
+#ifndef _SOUND_MODULE_H
+#define _SOUND_MODULE_H
+struct sound_module
+{
+	const char *name;
+	int (*open)(int channels, int encoding, unsigned int rate);
+	ssize_t (*write)(unsigned char *buffer, ssize_t size);
+	int (*close)(void);
+	int (*get_volume)(float *);
+	int (*set_volume)(float);
+	int (*get_mute)(int *);
+	int (*set_mute)(int);
+};
 
-extern const struct output_module gstreamer_output;
+const struct sound_module *sound_module_get(void);
 
-#endif /*  _OUTPUT_GSTREAMER_H */
+extern const struct sound_module *g_sound_alsa;
+
+#endif
