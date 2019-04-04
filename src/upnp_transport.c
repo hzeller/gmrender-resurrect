@@ -34,8 +34,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include <glib.h>
-
 #include <upnp/upnp.h>
 #include <upnp/ithread.h>
 
@@ -743,38 +741,38 @@ static int get_transport_settings(struct action_event *event)
 }
 
 // Print UPnP formatted time into given buffer. time given in nanoseconds.
-static int divide_leave_remainder(gint64 *val, gint64 divisor) {
+static int divide_leave_remainder(int64_t *val, int64_t divisor) {
 	int result = *val / divisor;
 	*val %= divisor;
 	return result;
 }
-static void print_upnp_time(char *result, size_t size, gint64 t) {
-	const gint64 one_sec = 1000000000LL;  // units are in nanoseconds.
+static void print_upnp_time(char *result, size_t size, int64_t t) {
+	const int64_t one_sec = 1000000000LL;  // units are in nanoseconds.
 	const int hour = divide_leave_remainder(&t, 3600LL * one_sec);
 	const int minute = divide_leave_remainder(&t, 60LL * one_sec);
 	const int second = divide_leave_remainder(&t, one_sec);
 	snprintf(result, size, "%d:%02d:%02d", hour, minute, second);
 }
 
-static gint64 parse_upnp_time(const char *time_string) {
+static int64_t parse_upnp_time(const char *time_string) {
 	int hour = 0;
 	int minute = 0;
 	int second = 0;
 	sscanf(time_string, "%d:%02d:%02d", &hour, &minute, &second);
-	const gint64 seconds = (hour * 3600 + minute * 60 + second);
-	const gint64 one_sec_unit = 1000000000LL;
+	const int64_t seconds = (hour * 3600 + minute * 60 + second);
+	const int64_t one_sec_unit = 1000000000LL;
 	return one_sec_unit * seconds;
 }
 
 // We constantly update the track time to event about it to our clients.
 static void *thread_update_track_time(void *userdata) {
-	const gint64 one_sec_unit = 1000000000LL;
+	const int64_t one_sec_unit = 1000000000LL;
 	char tbuf[32];
-	gint64 last_duration = -1, last_position = -1;
+	int64_t last_duration = -1, last_position = -1;
 	for (;;) {
 		usleep(500000);  // 500ms
 		service_lock();
-		gint64 duration, position;
+		int64_t duration, position;
 		const int pos_result = output_get_position(&duration, &position);
 		if (pos_result == 0) {
 			if (duration != last_duration) {
@@ -971,7 +969,7 @@ static int seek(struct action_event *event)
 	if (strcmp(unit, "REL_TIME") == 0) {
 		// This is the only thing we support right now.
 		const char *target = upnp_get_string(event, "Target");
-		gint64 nanos = parse_upnp_time(target);
+		int64_t nanos = parse_upnp_time(target);
 		service_lock();
 		if (output_seek(nanos) == 0) {
 			// TODO(hzeller): Seeking might take some time,
