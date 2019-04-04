@@ -1,15 +1,15 @@
-/* output_gstreamer.h - Definitions for GStreamer output module
+/* output_module.c - Sound module frontend
  *
- * Copyright (C) 2005-2007   Ivo Clarysse
+ * Copyright (C) 2014 - 2019 Marc Chalain
  *
  * This file is part of GMediaRender.
  *
- * GMediaRender is free software; you can redistribute it and/or modify
+ * uplaymusic is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * GMediaRender is distributed in the hope that it will be useful,
+ * uplaymusic is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Library General Public License for more details.
@@ -19,11 +19,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
  * MA 02110-1301, USA.
  *
- */
+ */ 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#ifndef _OUTPUT_GSTREAMER_H
-#define _OUTPUT_GSTREAMER_H
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
-extern const struct output_module gstreamer_output;
+#include "sound_module.h"
 
-#endif /*  _OUTPUT_GSTREAMER_H */
+const struct sound_module *sound_module_get(void)
+{
+#ifdef HAVE_ALSA
+	return g_sound_alsa;
+#endif
+}

@@ -618,7 +618,7 @@ static int output_gstreamer_loop(void)
         return 0;
 }
 
-struct output_module gstreamer_output = {
+const struct output_module gstreamer_output = {
         .shortname = "gst",
 	.description = "GStreamer multimedia framework",
 	.init        = output_gstreamer_init,
