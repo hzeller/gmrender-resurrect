@@ -423,21 +423,6 @@ static GOptionEntry option_entries[] = {
         { NULL }
 };
 
-
-static int output_gstreamer_add_options(GOptionContext *ctx)
-{
-	GOptionGroup *option_group;
-	option_group = g_option_group_new("gstout", "GStreamer Output Options",
-	                                  "Show GStreamer Output Options",
-	                                  NULL, NULL);
-	g_option_group_add_entries(option_group, option_entries);
-
-	g_option_context_add_group (ctx, option_group);
-	
-	g_option_context_add_group (ctx, gst_init_get_option_group ());
-	return 0;
-}
-
 static int output_gstreamer_get_position(gint64 *track_duration,
 					 gint64 *track_pos) {
 	*track_duration = last_known_time_.duration;
@@ -507,6 +492,20 @@ static void prepare_next_stream(GstElement *obj, gpointer userdata) {
 			play_trans_callback_(PLAY_STARTED_NEXT_STREAM);
 		}
 	}
+}
+
+static int output_gstreamer_add_goptions(GOptionContext *ctx)
+{
+	GOptionGroup *option_group;
+	option_group = g_option_group_new("gstout", "GStreamer Output Options",
+	                                  "Show GStreamer Output Options",
+	                                  NULL, NULL);
+	g_option_group_add_entries(option_group, option_entries);
+
+	g_option_context_add_group ((GOptionContext *)ctx, option_group);
+
+	g_option_context_add_group ((GOptionContext *)ctx, gst_init_get_option_group ());
+	return 0;
 }
 
 static int output_gstreamer_init(void)
@@ -596,11 +595,33 @@ static int output_gstreamer_init(void)
 	return 0;
 }
 
+static GMainLoop *main_loop_ = NULL;
+static void exit_loop_sighandler(int sig) {
+	if (main_loop_) {
+		// TODO(hzeller): revisit - this is not safe to do.
+		g_main_loop_quit(main_loop_);
+	}
+}
+
+static int output_gstreamer_loop(void)
+{
+        /* Create a main loop that runs the default GLib main context */
+        main_loop_ = g_main_loop_new(NULL, FALSE);
+
+	signal(SIGINT, &exit_loop_sighandler);
+	signal(SIGTERM, &exit_loop_sighandler);
+
+        g_main_loop_run(main_loop_);
+
+        return 0;
+}
+
 struct output_module gstreamer_output = {
         .shortname = "gst",
 	.description = "GStreamer multimedia framework",
 	.init        = output_gstreamer_init,
-	.add_options = output_gstreamer_add_options,
+	.loop        = output_gstreamer_loop,
+	.add_goptions = output_gstreamer_add_goptions,
 	.set_uri     = output_gstreamer_set_uri,
 	.set_next_uri= output_gstreamer_set_next_uri,
 	.play        = output_gstreamer_play,
