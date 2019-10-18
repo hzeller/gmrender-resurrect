@@ -41,6 +41,7 @@
 
 #include "logging.h"
 #include "webserver.h"
+#include "upnp_compat.h"
 
 typedef struct {
 	off_t pos;
