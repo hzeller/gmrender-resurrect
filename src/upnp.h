@@ -25,10 +25,7 @@
 #define _UPNP_H
 
 #include <upnp/upnp.h>
-
-#if UPNP_VERSION >= 10803
-#define UpnpAddVirtualDir(x) UpnpAddVirtualDir(x, NULL, NULL)
-#endif
+#include "upnp_compat.h"
 
 struct action;
 struct service;
