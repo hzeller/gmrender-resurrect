@@ -194,7 +194,7 @@ static struct xmldoc *generate_scpd(struct service *srv)
 }
 
 struct action *find_action(struct service *event_service,
-			   char *action_name)
+			   const char *action_name)
 {
 	struct action *event_action;
 	int actionNum = 0;
