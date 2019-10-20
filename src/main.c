@@ -40,6 +40,7 @@
 # error "To have gmrender any useful, you need to have libupnp installed."
 #endif
 
+#include <upnp/upnp.h>
 #include <upnp/ithread.h>
 
 // For version strings of upnp and gstreamer
