@@ -405,20 +405,20 @@ static int handle_action_request(struct upnp_device *priv,
 	return 0;
 }
 
-static int event_handler(Upnp_EventType EventType, void *event, void *userdata)
+static UPNP_CALLBACK(event_handler, EventType, event, userdata)
 {
 	struct upnp_device *priv = (struct upnp_device *) userdata;
 	switch (EventType) {
 	case UPNP_CONTROL_ACTION_REQUEST:
-		handle_action_request(priv, event);
+		handle_action_request(priv, (void*) event);
 		break;
 
 	case UPNP_CONTROL_GET_VAR_REQUEST:
-		handle_var_request(priv, event);
+		handle_var_request(priv, (void*) event);
 		break;
 
 	case UPNP_EVENT_SUBSCRIPTION_REQUEST:
-		handle_subscription_request(priv, event);
+		handle_subscription_request(priv, (void*) event);
 		break;
 
 	default:

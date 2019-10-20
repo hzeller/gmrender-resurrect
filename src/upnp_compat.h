@@ -44,6 +44,12 @@
 #define VD_CLOSE_CALLBACK(NAME, HANDLE, COOKIE) int NAME(UpnpWebFileHandle HANDLE)
 #endif
 
+#if UPNP_VERSION >= 10800
+#define UPNP_CALLBACK(NAME, TYPE, EVENT, COOKIE) int NAME(Upnp_EventType TYPE, const void* EVENT, void* COOKIE)
+#else
+#define UPNP_CALLBACK(NAME, TYPE, EVENT, COOKIE) int NAME(Upnp_EventType TYPE, void* EVENT, void* COOKIE)
+#endif
+
 #if UPNP_VERSION < 10626
 // Compatibility defines from libupnp 1.6.26 to allow code targeting v1.8.x
 // to compile for v1.6.x
