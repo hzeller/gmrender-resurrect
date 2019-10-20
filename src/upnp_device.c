@@ -112,21 +112,20 @@ void upnp_append_variable(struct action_event *event,
 void upnp_set_error(struct action_event *event, int error_code,
 		    const char *format, ...)
 {
-	static char buffer[80];
-	UpnpString *errStr = UpnpString_new();
-	const char *errStrC;
 	event->status = -1;
 
 	va_list ap;
 	va_start(ap, format);
+	char buffer[LINE_SIZE];
 	vsnprintf(buffer, sizeof(buffer), format, ap);
 	va_end(ap);
+
 	UpnpActionRequest_set_ActionResult(event->request, NULL);
 	UpnpActionRequest_set_ErrCode(event->request, UPNP_SOAP_E_ACTION_FAILED);
+	UpnpString *errStr = UpnpString_new();
 	UpnpString_set_String(errStr, buffer);
 	UpnpActionRequest_set_ErrStr(event->request, errStr);
-	errStrC = UpnpActionRequest_get_ErrStr_cstr(event->request);
-	Log_error("upnp", "%s: %s\n", __FUNCTION__, errStrC);
+	Log_error("upnp", "%s: %s\n", __FUNCTION__, UpnpActionRequest_get_ErrStr_cstr(event->request));
 }
 
 const char *upnp_get_string(struct action_event *event, const char *key)
