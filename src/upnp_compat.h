@@ -29,8 +29,22 @@
 
 #if UPNP_VERSION >= 10803
 #define UpnpAddVirtualDir(x) UpnpAddVirtualDir(x, NULL, NULL)
-#elif UPNP_VERSION < 10626
+#define VD_GET_INFO_CALLBACK(NAME, FILENAME, INFO, COOKIE) int NAME(const char* FILENAME, UpnpFileInfo* INFO, const void* COOKIE)
+#define VD_OPEN_CALLBACK(NAME, FILENAME, MODE, COOKIE) UpnpWebFileHandle NAME(const char* FILENAME, enum UpnpOpenFileMode MODE, const void* COOKIE)
+#define VD_READ_CALLBACK(NAME, HANDLE, BUFFER, LENGTH, COOKIE) int NAME(UpnpWebFileHandle HANDLE, char* BUFFER, size_t LENGTH, const void* COOKIE)
+#define VD_WRITE_CALLBACK(...) VD_READ_CALLBACK(__VA_ARGS__)
+#define VD_SEEK_CALLBACK(NAME, HANDLE, OFFSET, ORIGIN, COOKIE) int NAME(UpnpWebFileHandle HANDLE, off_t OFFSET, int ORIGIN, const void* COOKIE)
+#define VD_CLOSE_CALLBACK(NAME, HANDLE, COOKIE) int NAME(UpnpWebFileHandle HANDLE, const void* COOKIE)
+#else
+#define VD_GET_INFO_CALLBACK(NAME, FILENAME, INFO, COOKIE) int NAME(const char* FILENAME, UpnpFileInfo* INFO)
+#define VD_OPEN_CALLBACK(NAME, FILENAME, MODE, COOKIE) UpnpWebFileHandle NAME(const char* FILENAME, enum UpnpOpenFileMode MODE)
+#define VD_READ_CALLBACK(NAME, HANDLE, BUFFER, LENGTH, COOKIE) int NAME(UpnpWebFileHandle HANDLE, char* BUFFER, size_t LENGTH)
+#define VD_WRITE_CALLBACK(...) VD_READ_CALLBACK(__VA_ARGS__)
+#define VD_SEEK_CALLBACK(NAME, HANDLE, OFFSET, ORIGIN, COOKIE) int NAME(UpnpWebFileHandle HANDLE, off_t OFFSET, int ORIGIN)
+#define VD_CLOSE_CALLBACK(NAME, HANDLE, COOKIE) int NAME(UpnpWebFileHandle HANDLE)
+#endif
 
+#if UPNP_VERSION < 10626
 // Compatibility defines from libupnp 1.6.26 to allow code targeting v1.8.x
 // to compile for v1.6.x
 

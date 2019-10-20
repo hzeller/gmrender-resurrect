@@ -143,7 +143,7 @@ int webserver_register_file(const char *path, const char *content_type)
 	return 0;
 }
 
-static int webserver_get_info(const char *filename, UpnpFileInfo *info)
+static VD_GET_INFO_CALLBACK(webserver_get_info, filename, info, cookie)
 {
 	struct virtual_file *virtfile = virtual_files;
 
@@ -155,7 +155,7 @@ static int webserver_get_info(const char *filename, UpnpFileInfo *info)
 			UpnpFileInfo_set_IsReadable(info, 1);
 			const char *contentType =
 				ixmlCloneDOMString(virtfile->content_type);
-			UpnpFileInfo_set_ContentType(info, contentType);
+			UpnpFileInfo_set_ContentType(info, (char*) contentType);
 			Log_info("webserver", "Access %s (%s) len=%zd",
 				 filename, contentType, virtfile->len);
 			return 0;
@@ -169,8 +169,7 @@ static int webserver_get_info(const char *filename, UpnpFileInfo *info)
 	return -1;
 }
 
-static UpnpWebFileHandle
-webserver_open(const char *filename, enum UpnpOpenFileMode mode)
+static VD_OPEN_CALLBACK(webserver_open, filename, mode, cookie)
 {
 	if (mode != UPNP_READ) {
 		Log_error("webserver",
@@ -197,7 +196,7 @@ static inline int minimum(int a, int b)
 	return (a<b)?a:b;
 }
 
-static int webserver_read(UpnpWebFileHandle fh, char *buf, size_t buflen)
+static VD_READ_CALLBACK(webserver_read, fh, buf, buflen, cookie)
 {
 	WebServerFile *file = (WebServerFile *) fh;
 	ssize_t len = -1;
@@ -216,12 +215,12 @@ static int webserver_read(UpnpWebFileHandle fh, char *buf, size_t buflen)
 	return len;
 }
 
-static int webserver_write(UpnpWebFileHandle fh, char *buf, size_t buflen)
+static VD_WRITE_CALLBACK(webserver_write, fh, buf, buflen, cookie)
 {
 	return -1;
 }
 
-static int webserver_seek(UpnpWebFileHandle fh, off_t offset, int origin)
+static VD_SEEK_CALLBACK(webserver_seek, fh, offset, origin, cookie)
 {
 	WebServerFile *file = (WebServerFile *) fh;
 	off_t newpos = -1;
@@ -248,7 +247,7 @@ static int webserver_seek(UpnpWebFileHandle fh, off_t offset, int origin)
 	return 0;
 }
 
-static int webserver_close(UpnpWebFileHandle fh)
+static VD_CLOSE_CALLBACK(webserver_close, fh, cookie)
 {
 	WebServerFile *file = (WebServerFile *) fh;
 
