@@ -334,12 +334,12 @@ static int handle_action_request(struct upnp_device *priv,
 #ifdef ENABLE_ACTION_LOGGING
 	{
 		char *action_request_xml = NULL;
-		if (ar_event->ActionRequest) {
+		if (UpnpActionRequest_get_ActionRequest(ar_event)) {
 			action_request_xml = ixmlDocumenttoString(
-					   ar_event->ActionRequest);
+					   UpnpActionRequest_get_ActionRequest(ar_event));
 		}
 		Log_info("upnp", "Action '%s'; Request: %s",
-			 ar_event->ActionName, action_request_xml);
+			 UpnpActionRequest_get_ActionName_cstr(ar_event), action_request_xml);
 		free(action_request_xml);
 	}
 #endif
@@ -356,17 +356,17 @@ static int handle_action_request(struct upnp_device *priv,
 		if (rc == 0) {
 			UpnpActionRequest_set_ErrCode(event.request, UPNP_E_SUCCESS);
 #ifdef ENABLE_ACTION_LOGGING
-			if (ar_event->ActionResult) {
+			if (UpnpActionRequest_get_ActionResult(ar_event)) {
 				char *action_result_xml = NULL;
 				action_result_xml = ixmlDocumenttoString(
-						ar_event->ActionResult);
+						UpnpActionRequest_get_ActionResult(ar_event));
 				Log_info("upnp", "Action '%s' OK; Response %s",
-					 ar_event->ActionName,
+					 UpnpActionRequest_get_ActionName_cstr(ar_event),
 					 action_result_xml);
 				free(action_result_xml);
 			} else {
 				Log_info("upnp", "Action '%s' OK",
-					 ar_event->ActionName);
+					 UpnpActionRequest_get_ActionName_cstr(ar_event));
 			}
 #endif
 		}
