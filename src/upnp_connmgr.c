@@ -267,17 +267,23 @@ static int filter_mime_type(const char* filterList, const char* mime_type) {
 	return result;
 }
 
+// Append string, does not nul-terminate.
+// Return pointer to new end of buffer.
+static char* str_append_no_termination(char *dest, const char *str) {
+	const size_t len = strlen(str);
+	memcpy(dest, str, len);
+	return dest + len;
+}
+
 int connmgr_init(const char* filter) {
 	struct mime_type *entry;
 	char *buf = NULL;
-	char *p;
 	int offset;
 	int bufsize = 0;
 
 	struct service *srv = upnp_connmgr_get_service();
 
 	buf = malloc(bufsize);
-	p = buf;
 	assert(buf);  // We assume an implementation that does 0-mallocs.
 	if (buf == NULL) {
 		fprintf(stderr, "%s: initial malloc failed\n",
@@ -285,13 +291,14 @@ int connmgr_init(const char* filter) {
 		return -1;
 	}
 
+	char *p = buf;
 	for (entry = supported_types; entry; entry = entry->next) {
-		
+
 		// Filter mime types
 		if (filter != NULL && filter_mime_type(filter, entry->mime_type))
 			continue;
 
-		bufsize += strlen(entry->mime_type) + 1 + 8 + 3 + 2;
+		bufsize += 11 + strlen(entry->mime_type) + 3;
 		offset = p - buf;
 		buf = realloc(buf, bufsize);
 		if (buf == NULL) {
@@ -301,21 +308,17 @@ int connmgr_init(const char* filter) {
 		}
 		p = buf;
 		p += offset;
-		strncpy(p, "http-get:*:", 11);
-		p += 11;
-		strncpy(p, entry->mime_type, strlen(entry->mime_type));
-		p += strlen(entry->mime_type);
-		strncpy(p, ":*,", 3);
-		p += 3;
+		p = str_append_no_termination(p, "http-get:*:");
+		p = str_append_no_termination(p, entry->mime_type);
+		p = str_append_no_termination(p, ":*,");
 	}
-	if (p > buf) {
-		p--;
-		*p = '\0';
-	}
-	*p = '\0';
 
-	VariableContainer_change(srv->variable_container,
-				 CONNMGR_VAR_SINK_PROTO_INFO, buf);
+	if (bufsize > 0) {
+		p--;        // Don't include last comma
+		*p = '\0';
+		VariableContainer_change(srv->variable_container,
+					 CONNMGR_VAR_SINK_PROTO_INFO, buf);
+	}
 	free(buf);
 
 	return 0;

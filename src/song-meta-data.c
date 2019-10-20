@@ -15,11 +15,11 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
- */ 
+ */
 
 // TODO: we're assuming that the namespaces are abbreviated with 'dc' and 'upnp'
 // ... but if I understand that correctly, that doesn't need to be the case.
@@ -81,7 +81,7 @@ static char *generate_DIDL(const char *id,
 // returned string is valid.
 // updates "edit_count" if there was a change.
 // Very crude way to edit XML.
-static char *replace_range(char *input,
+static char *replace_range(char *const input,
 			   const char *tag_start, const char *tag_end,
 			   const char *content,
 			   int *edit_count) {
@@ -91,25 +91,25 @@ static char *replace_range(char *input,
 	const char *start_pos = strstr(input, tag_start);
 	if (start_pos == NULL) return input;
 	start_pos += strlen(tag_start);
+	const int offset = start_pos - input;
 	const char *end_pos = strstr(start_pos, tag_end);
 	if (end_pos == NULL) return input;
-	int old_content_len = end_pos - start_pos;
-	int new_content_len = strlen(content);
+	const int old_content_len = end_pos - start_pos;
+	const int new_content_len = strlen(content);
 	char *result = NULL;
 	if (old_content_len != new_content_len) {
 		result = (char*)malloc(total_len
 				       + new_content_len - old_content_len + 1);
-		strncpy(result, input, start_pos - input);
-		strncpy(result + (start_pos - input), content, new_content_len);
-		strcpy(result + (start_pos - input) + new_content_len, end_pos);
+		memcpy(result, input, start_pos - input);
+		memcpy(result + offset, content, new_content_len);
+		strcpy(result + offset + new_content_len, end_pos); // remaining
 		free(input);
 		++*edit_count;
 	} else {
 		// Typically, we replace the same content with itself - same
 		// length. No realloc in this case.
 		if (strncmp(start_pos, content, new_content_len) != 0) {
-			const int offset = start_pos - input;
-			strncpy(input + offset, content, new_content_len);
+			memcpy(input + offset, content, new_content_len);
 			++*edit_count;
 		}
 		result = input;
@@ -191,8 +191,8 @@ char *SongMetaData_to_DIDL(const struct SongMetaData *object,
 		if (edits) {
 			// Only if we changed the content, we generate a new
 			// unique id.
-			result = replace_range(result, "id=\"", "\"", unique_id,
-					       &edits);
+			result = replace_range(result, " id=\"", "\"",
+					       unique_id, &edits);
 		}
 	}
 	free(title);
