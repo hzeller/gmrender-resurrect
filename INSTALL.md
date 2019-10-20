@@ -204,3 +204,7 @@ There is an Arch package available here
 ## Debian
 Since Debian 8, the official `gmediarender` package uses the gmrender-resurrect code:
  https://packages.debian.org/stretch/gmediarender
+
+## Nix
+There is a Nix package available:
+ https://nixos.org/nixos/packages.html?attr=gmrender-resurrect
