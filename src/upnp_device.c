@@ -73,7 +73,8 @@ int upnp_add_response(struct action_event *event,
 
 	IXML_Document* actionResult = UpnpActionRequest_get_ActionResult(event->request);
 	const char* actionName = UpnpActionRequest_get_ActionName_cstr(event->request);
-	int rc = UpnpAddToActionResponse(&actionResult, actionName, event->service->service_type, key, value);
+	int rc = UpnpAddToActionResponse(&actionResult, actionName,
+				     event->service->service_type, key, value);
 	if (rc != UPNP_E_SUCCESS) {
 		/* report custom error */
 		UpnpString *errorMessage = UpnpString_new();
@@ -122,7 +123,8 @@ void upnp_set_error(struct action_event *event, int error_code,
 	UpnpString *errStr = UpnpString_new();
 	UpnpString_set_String(errStr, buffer);
 	UpnpActionRequest_set_ErrStr(event->request, errStr);
-	Log_error("upnp", "%s: %s\n", __FUNCTION__, UpnpActionRequest_get_ErrStr_cstr(event->request));
+	Log_error("upnp", "%s: %s\n", __FUNCTION__, 
+			     UpnpActionRequest_get_ErrStr_cstr(event->request));
 }
 
 const char *upnp_get_string(struct action_event *event, const char *key)
@@ -158,7 +160,8 @@ const char *upnp_get_string(struct action_event *event, const char *key)
 	return NULL;
 }
 
-static int handle_subscription_request(struct upnp_device *priv, UpnpSubscriptionRequest *sr_event)
+static int handle_subscription_request(struct upnp_device *priv,
+				       UpnpSubscriptionRequest *sr_event)
 {
 	struct service *srv;
 	int rc;
@@ -213,7 +216,9 @@ static int handle_subscription_request(struct upnp_device *priv, UpnpSubscriptio
 	UPnPLastChangeBuilder_delete(builder);
 
 	const char *sid = UpnpSubscriptionRequest_get_SID_cstr(sr_event);
-	rc = UpnpAcceptSubscription(priv->device_handle, udn, serviceId, eventvar_names, eventvar_values, 1, sid);
+	rc = UpnpAcceptSubscription(priv->device_handle,
+				    udn, serviceId,
+				    eventvar_names, eventvar_values, 1, sid);
 	if (rc == UPNP_E_SUCCESS) {
 		result = 0;
 	} else {
@@ -241,7 +246,8 @@ int upnp_device_notify(struct upnp_device *device,
 }
 
 
-static int handle_var_request(struct upnp_device *priv, UpnpStateVarRequest *event)
+static int handle_var_request(struct upnp_device *priv,
+			      UpnpStateVarRequest *event)
 {
 	const char *serviceID = UpnpStateVarRequest_get_ServiceID_cstr(event);
 
@@ -269,13 +275,15 @@ static int handle_var_request(struct upnp_device *priv, UpnpStateVarRequest *eve
 	ithread_mutex_unlock(srv->service_mutex);
 
 	UpnpStateVarRequest_set_CurrentVal(event, result);
-	UpnpStateVarRequest_set_ErrCode(event, (result == NULL) ? UPNP_SOAP_E_INVALID_VAR : UPNP_E_SUCCESS);
+	int errCode = (result == NULL) ? UPNP_SOAP_E_INVALID_VAR : UPNP_E_SUCCESS;
+	UpnpStateVarRequest_set_ErrCode(event, errCode);
 	Log_info("upnp", "Variable request %s -> %s (%s)",
 		UpnpStateVarRequest_get_StateVarName_cstr(event), result, serviceID);
 	return 0;
 }
 
-static int handle_action_request(struct upnp_device *priv, UpnpActionRequest *ar_event)
+static int handle_action_request(struct upnp_device *priv,
+				 UpnpActionRequest *ar_event)
 {
 	const char *serviceID = UpnpActionRequest_get_ServiceID_cstr(ar_event);
 	const char *actionName = UpnpActionRequest_get_ActionName_cstr(ar_event);
@@ -314,7 +322,8 @@ static int handle_action_request(struct upnp_device *priv, UpnpActionRequest *ar
 	{
 		char *action_request_xml = NULL;
 		if (UpnpActionRequest_get_ActionRequest(ar_event)) {
-			action_request_xml = ixmlDocumenttoString(UpnpActionRequest_get_ActionRequest(ar_event));
+			action_request_xml = ixmlDocumenttoString(
+					   UpnpActionRequest_get_ActionRequest(ar_event));
 		}
 		Log_info("upnp", "Action '%s'; Request: %s",
 			 UpnpActionRequest_get_ActionName_cstr(ar_event), action_request_xml);
@@ -335,7 +344,8 @@ static int handle_action_request(struct upnp_device *priv, UpnpActionRequest *ar
 			UpnpActionRequest_set_ErrCode(event.request, UPNP_E_SUCCESS);
 #ifdef ENABLE_ACTION_LOGGING
 			if (UpnpActionRequest_get_ActionResult(ar_event)) {
-				char *action_result_xml = ixmlDocumenttoString(UpnpActionRequest_get_ActionResult(ar_event));
+				char *action_result_xml = ixmlDocumenttoString(
+						UpnpActionRequest_get_ActionResult(ar_event));
 				Log_info("upnp", "Action '%s' OK; Response %s",
 					 UpnpActionRequest_get_ActionName_cstr(ar_event),
 					 action_result_xml);
@@ -348,7 +358,8 @@ static int handle_action_request(struct upnp_device *priv, UpnpActionRequest *ar
 		}
 		IXML_Document *actionResult = UpnpActionRequest_get_ActionResult(ar_event);
 		if (actionResult == NULL) {
-			actionResult = UpnpMakeActionResponse(actionName, event_service->service_type, 0, NULL);
+			actionResult = UpnpMakeActionResponse(actionName, 
+						   event_service->service_type, 0, NULL);
 			UpnpActionRequest_set_ActionResult(event.request, actionResult);
 		}
 	} else {
