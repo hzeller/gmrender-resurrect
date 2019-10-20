@@ -1,6 +1,6 @@
 /* upnp_compat.h - libupnp v1.8.x/v1.6.x compatibilty layer
  *
- * Copyright (C) 2005-2007   Ivo Clarysse
+ * Copyright (C) 2019 Tucker Kern
  *
  * This file is part of GMediaRender.
  *
