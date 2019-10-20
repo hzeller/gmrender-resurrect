@@ -63,9 +63,6 @@ struct upnp_device {
 int upnp_add_response(struct action_event *event,
 		      const char *key, const char *value)
 {
-	IXML_Document *actionResult;
-	const char *actionName;
-
 	assert(event != NULL);
 	assert(key != NULL);
 	assert(value != NULL);
@@ -74,8 +71,8 @@ int upnp_add_response(struct action_event *event,
 		return -1;
 	}
 
-	actionResult = UpnpActionRequest_get_ActionResult(event->request);
-	actionName = UpnpActionRequest_get_ActionName_cstr(event->request);
+	IXML_Document* actionResult = UpnpActionRequest_get_ActionResult(event->request);
+	const char* actionName = UpnpActionRequest_get_ActionName_cstr(event->request);
 	int rc;
 	rc = UpnpAddToActionResponse(&actionResult, actionName,
 				     event->service->service_type, key, value);
@@ -89,6 +86,8 @@ int upnp_add_response(struct action_event *event,
 		UpnpActionRequest_set_ErrStr(event->request, errorMessage);
 		return -1;
 	}
+	
+	UpnpActionRequest_set_ActionResult(event->request, actionResult);
 	return 0;
 }
 
