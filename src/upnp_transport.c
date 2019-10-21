@@ -27,7 +27,9 @@
 
 #include "upnp_transport.h"
 
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+#  define _GNU_SOURCE
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -1045,6 +1047,7 @@ void upnp_transport_register_variable_listener(variable_change_listener_t cb,
 }
 
 struct service transport_service_ = {
+	.service_mutex =        &transport_mutex,
 	.service_id =           TRANSPORT_SERVICE_ID,
 	.service_type =         TRANSPORT_TYPE,
 	.scpd_url =		TRANSPORT_SCPD_URL,
@@ -1059,5 +1062,4 @@ struct service transport_service_ = {
 	.variable_meta =        transport_var_meta,
 	.variable_count =       TRANSPORT_VAR_UNKNOWN,
 	.command_count =        TRANSPORT_CMD_UNKNOWN,
-	.service_mutex =        &transport_mutex
 };

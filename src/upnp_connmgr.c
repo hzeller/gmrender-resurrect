@@ -80,8 +80,6 @@ typedef enum {
 	CONNMGR_CMD_COUNT
 } connmgr_cmd;
 
-static struct action connmgr_actions[];
-
 static struct argument *arguments_getprotocolinfo[] = {
 	& (struct argument) { "Source", PARAM_DIR_OUT, CONNMGR_VAR_SRC_PROTO_INFO },
 	& (struct argument) { "Sink", PARAM_DIR_OUT, CONNMGR_VAR_SINK_PROTO_INFO },
@@ -200,7 +198,7 @@ static void register_mime_type_internal(const char *mime_type) {
 	}
 	Log_info("connmgr", "Registering support for '%s'", mime_type);
 
-	entry = malloc(sizeof(struct mime_type));
+	entry = (struct mime_type*) malloc(sizeof(struct mime_type));
 	entry->mime_type = strdup(mime_type);
 	entry->next = supported_types;
 	supported_types = entry;
@@ -251,7 +249,7 @@ void register_mime_type(const char *mime_type) {
 
 static int filter_mime_type(const char* filterList, const char* mime_type) {
 	// Make a modifiable copy of the mime type
-	char* type = malloc(strlen(mime_type) + 1);
+	char* type = (char*)malloc(strlen(mime_type) + 1);
 	if (type == NULL)
 		return 0;
 
@@ -283,7 +281,7 @@ int connmgr_init(const char* filter) {
 
 	struct service *srv = upnp_connmgr_get_service();
 
-	buf = malloc(bufsize);
+	buf = (char*)malloc(bufsize);
 	assert(buf);  // We assume an implementation that does 0-mallocs.
 	if (buf == NULL) {
 		fprintf(stderr, "%s: initial malloc failed\n",
@@ -300,7 +298,7 @@ int connmgr_init(const char* filter) {
 
 		bufsize += 11 + strlen(entry->mime_type) + 3;
 		offset = p - buf;
-		buf = realloc(buf, bufsize);
+		buf = (char*)realloc(buf, bufsize);
 		if (buf == NULL) {
 			fprintf(stderr, "%s: realloc failed\n",
 				__FUNCTION__);
@@ -390,6 +388,7 @@ static struct action connmgr_actions[] = {
 };
 
 struct service connmgr_service_ = {
+	.service_mutex =        &connmgr_mutex,
         .service_id =		CONNMGR_SERVICE_ID,
         .service_type =		CONNMGR_TYPE,
 	.scpd_url =		CONNMGR_SCPD_URL,
@@ -403,5 +402,4 @@ struct service connmgr_service_ = {
         .variable_meta =        connmgr_var_meta,
         .variable_count =       CONNMGR_VAR_UNKNOWN,
         .command_count =        CONNMGR_CMD_UNKNOWN,
-        .service_mutex =        &connmgr_mutex
 };

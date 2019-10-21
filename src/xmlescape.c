@@ -85,7 +85,7 @@ char *xmlescape(const char *str, int attribute)
 	char *out;
 
 	xmlescape_real(str, NULL, &len, attribute);
-	out = malloc(len + 1);
+	out = (char*)malloc(len + 1);
 	xmlescape_real(str, out, NULL, attribute);
 	return out;
 }

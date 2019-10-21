@@ -27,7 +27,9 @@
 
 #include "upnp_control.h"
 
-#define _GNU_SOURCE         /* See feature_test_macros(7) */
+#ifndef _GNU_SOURCE
+#  define _GNU_SOURCE         /* See feature_test_macros(7) */
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -125,8 +127,6 @@ typedef enum {
 	CONTROL_CMD_UNKNOWN,
 	CONTROL_CMD_COUNT
 } control_cmd;
-
-static struct action control_actions[];
 
 static const char *control_variable_names[] = {
 	[CONTROL_VAR_LAST_CHANGE] = "LastChange",
@@ -819,6 +819,7 @@ void upnp_control_register_variable_listener(variable_change_listener_t cb,
 }
 
 struct service control_service_ = {
+	.service_mutex =       &control_mutex,
 	.service_id =	       CONTROL_SERVICE_ID,
 	.service_type =	       CONTROL_TYPE,
         .scpd_url =            CONTROL_SCPD_URL,
@@ -833,5 +834,4 @@ struct service control_service_ = {
 	.variable_meta =       control_var_meta,
 	.variable_count =      CONTROL_VAR_UNKNOWN,
 	.command_count =       CONTROL_CMD_UNKNOWN,
-	.service_mutex =       &control_mutex
 };

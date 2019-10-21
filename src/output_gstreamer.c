@@ -73,15 +73,15 @@ static void scan_pad_templates_info(GstElement *element,
 {
 	const GList *pads;
 	GstPadTemplate *padtemplate;
-	GstElementClass *class;
+	GstElementClass *element_class;
 
-	class = GST_ELEMENT_GET_CLASS(element);
+	element_class = GST_ELEMENT_GET_CLASS(element);
 
-	if (!class->numpadtemplates) {
+	if (!element_class->numpadtemplates) {
 		return;
 	}
 
-	pads = class->padtemplates;
+	pads = element_class->padtemplates;
 	while (pads) {
 		padtemplate = (GstPadTemplate *) (pads->data);
 		//GstPad *pad = (GstPad *) (pads->data);
@@ -600,8 +600,8 @@ static int output_gstreamer_init(void)
 struct output_module gstreamer_output = {
         .shortname = "gst",
 	.description = "GStreamer multimedia framework",
-	.init        = output_gstreamer_init,
 	.add_options = output_gstreamer_add_options,
+	.init        = output_gstreamer_init,
 	.set_uri     = output_gstreamer_set_uri,
 	.set_next_uri= output_gstreamer_set_next_uri,
 	.play        = output_gstreamer_play,

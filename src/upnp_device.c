@@ -498,7 +498,7 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 		}
 	}
 
-	struct upnp_device *result_device = malloc(sizeof(*result_device));
+	struct upnp_device *result_device = (struct upnp_device*)malloc(sizeof(*result_device));
 	result_device->upnp_device_descriptor = device_def;
 	ithread_mutex_init(&(result_device->device_mutex), NULL);
 

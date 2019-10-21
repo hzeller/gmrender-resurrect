@@ -71,7 +71,7 @@ int webserver_register_buf(const char *path, const char *contents,
 	assert(contents != NULL);
 	assert(content_type != NULL);
 
-	entry = malloc(sizeof(struct virtual_file));
+	entry = (struct virtual_file*)malloc(sizeof(struct virtual_file));
 	if (entry == NULL) {
 		return -1;
 	}
@@ -105,7 +105,7 @@ int webserver_register_file(const char *path, const char *content_type)
 		return -1;
 	}
 
-	entry = malloc(sizeof(struct virtual_file));
+	entry = (struct virtual_file*)malloc(sizeof(struct virtual_file));
 	if (entry == NULL) {
 		return -1;
 	}
@@ -117,7 +117,7 @@ int webserver_register_file(const char *path, const char *content_type)
 			free(entry);
 			return -1;
 		}
-		cbuf = malloc(buf.st_size);
+		cbuf = (char*)malloc(buf.st_size);
 		if (cbuf == NULL) {
 			free(entry);
 			return -1;
@@ -180,7 +180,7 @@ static VD_OPEN_CALLBACK(webserver_open, filename, mode, cookie)
 
 	for (struct virtual_file *vf = virtual_files; vf; vf = vf->next) {
 		if (strcmp(filename, vf->virtual_fname) == 0) {
-			WebServerFile *file = malloc(sizeof(WebServerFile));
+			WebServerFile *file = (WebServerFile*)malloc(sizeof(WebServerFile));
 			file->pos = 0;
 			file->len = vf->len;
 			file->contents = vf->contents;
