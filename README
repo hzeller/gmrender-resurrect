@@ -5,8 +5,8 @@ Introduction
 ------------
 
 GMediaRender is a UPnP(tm) media renderer for POSIX(r)-compliant
-systems, such as Linux(r) or UNIX(r). It implements the server 
-component that provides UPnP controllers a means to render media 
+systems, such as Linux(r) or UNIX(r). It implements the server
+component that provides UPnP controllers a means to render media
 content (audio, video and images) from a UPnP media server.
 
 Copyright
@@ -38,7 +38,7 @@ advertising clause). This license is compatible with the GNU GPL.
 
 Note that GMediaRender does not ship with any codecs, and is licensed
 without exception to the GNU GPL. For more info, contact your lawyer,
-check out the FSF website, or have a look at: 
+check out the FSF website, or have a look at:
 
        http://gstreamer.freedesktop.org/documentation/licensing.html
 
@@ -66,11 +66,12 @@ The following programs are required to build GMediaRender:
 
 The following libraries are required to build and run GMediaRender:
 
-    * Portable SDK for UPnP Devices (libupnp), 1.6.0 or later (BSD license)
+    * Portable SDK for UPnP Devices (libupnp), 1.6.0 or later, including
+      the latest 1.8.x versions (BSD license).
         http://pupnp.sourceforge.net/
-	
-    * GStreamer 0.10 (LGPL)
-	http://www.gstreamer.net/
+
+    * GStreamer 1.x (LGPL).
+         https://gstreamer.freedesktop.org/
 
 
 Note that GMediaRender completely relies on GStreamer for rendering
@@ -85,9 +86,9 @@ You can test this from the command line:
 Trademarks
 ----------
 
-UPnP(tm) is a trademark of the UPnP Implementers Corporation. 
+UPnP(tm) is a trademark of the UPnP Implementers Corporation.
 "POSIX" is a registered trademark of the IEEE in the United States.
-Linux(r) is the registered trademark of Linus Torvalds in the U.S. 
-and other countries. UNIX(r) is a registered trademark of The Open 
-Group. All other trademarks are the property of their respective 
+Linux(r) is the registered trademark of Linus Torvalds in the U.S.
+and other countries. UNIX(r) is a registered trademark of The Open
+Group. All other trademarks are the property of their respective
 owners.

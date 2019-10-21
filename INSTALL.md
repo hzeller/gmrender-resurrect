@@ -6,8 +6,6 @@ compilation configuration:
     sudo apt-get install autoconf automake libtool pkg-config
 
 .. and the libraries needed for gmrender, most notably gstreamer.
-On current Linux distributions, these are typically version 1.0 of gstreamer,
-older might have version 0.10 - gmrender-resurrect compiles with both.
 
 ```
 sudo apt-get update
@@ -17,15 +15,14 @@ sudo aptitude install libupnp-dev libgstreamer1.0-dev \
              gstreamer1.0-libav
 ```
 
+(The code will also compile with the older 0.10 of gstreamer)
+
 Then pulseaudio or alsa depending on what output you prefer (personally, I use
 alsa)
 
     sudo aptitude install gstreamer1.0-alsa
     sudo aptitude install gstreamer1.0-pulseaudio
 
-
-(See below for the Gstreamer 0.10 installation; essentially only the version
-number is different, gmrender compiles with both versions).
 
 Get the source. If this is your first time using git, you first need to install
 it:
@@ -158,19 +155,6 @@ log entries that might come from gstreamer plugins not using the gmediarender
 logging, all in one file:
 
     src/gmediarender -f "MyRender" --logfile=/tmp/gmrender.log >> /tmp/gmrender.log 2>&1
-
-
-# GStreamer 0.10
-
-If your distribution does not have gstreamer 1.0 yet, you can also compile it with
-the old gstreamer.
-```
-sudo apt-get install libupnp-dev libgstreamer0.10-dev \
-                gstreamer0.10-plugins-base gstreamer0.10-plugins-good \
-                gstreamer0.10-plugins-bad gstreamer0.10-plugins-ugly \
-                gstreamer0.10-ffmpeg \
-                gstreamer0.10-pulseaudio gstreamer0.10-alsa
-```
 
 # Other installation resources
 ## Raspberry Pi
