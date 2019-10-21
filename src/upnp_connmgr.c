@@ -34,6 +34,10 @@
 #include <upnp.h>
 #include <ithread.h>
 
+// Can't include above upnp.h breaks stdbool?
+#include <stdbool.h>
+#include <glib.h>
+
 #include "upnp_connmgr.h"
 
 #include "logging.h"
@@ -184,13 +188,41 @@ static struct var_meta connmgr_var_meta[] = {
 
 static ithread_mutex_t connmgr_mutex;
 
-struct mime_type;
-static struct mime_type {
-	const char *mime_type;
-	struct mime_type *next;
-} *supported_types = NULL;
+static GSList* supported_types_list;
 
 static const char *mime_filter;
+
+static bool add_mime_type(const char* mime_type) 
+{
+	// Check for duplicate MIME type
+	if (g_slist_find_custom(supported_types_list, mime_type, (GCompareFunc) strcmp) != NULL)
+		return false;
+	
+	supported_types_list = g_slist_insert_sorted(supported_types_list, strdup(mime_type), (GCompareFunc) strcmp);
+
+	return true;
+}
+
+static bool remove_mime_type(const char* mime_type)
+{
+	// Check that the list exists
+	if (supported_types_list == NULL)
+		return false;
+
+	// Search for the MIME type
+	GSList* entry = g_slist_find_custom(supported_types_list, mime_type, (GCompareFunc) strcmp);
+	if (entry != NULL)
+	{
+		// Free the string pointer
+		free(entry->data);
+
+		// Free the list entry
+		supported_types_list = g_slist_delete_link(supported_types_list, entry);
+		return true;
+	}
+	
+	return false;
+}
 
 static int filter_mime_type(const char* filterList, const char* mime_type) {
 	// Make a modifiable copy of the mime type
@@ -211,8 +243,6 @@ static int filter_mime_type(const char* filterList, const char* mime_type) {
 }
 
 static void register_mime_type_internal(const char *mime_type) {
-	struct mime_type *entry;
-	
 	// Filter mime types
 	if (mime_filter != NULL && filter_mime_type(mime_filter, mime_type))
 	{
@@ -220,18 +250,8 @@ static void register_mime_type_internal(const char *mime_type) {
 		return;
 	}
 
-	for (entry = supported_types; entry; entry = entry->next) {
-		if (strcmp(entry->mime_type, mime_type) == 0) {
-			return;
-		}
-	}
-
-	Log_info("connmgr", "Registering support for '%s'", mime_type);
-
-	entry = (struct mime_type*) malloc(sizeof(struct mime_type));
-	entry->mime_type = strdup(mime_type);
-	entry->next = supported_types;
-	supported_types = entry;
+	if (add_mime_type(mime_type))
+		Log_info("connmgr", "Registering support for '%s'", mime_type);
 }
 
 void register_mime_type(const char *mime_type) {
@@ -294,7 +314,6 @@ static char* str_append_no_termination(char *dest, const char *str) {
 }
 
 int connmgr_init(void) {
-	struct mime_type *entry;
 	char *buf = NULL;
 	int offset;
 	int bufsize = 0;
@@ -310,9 +329,9 @@ int connmgr_init(void) {
 	}
 
 	char *p = buf;
-	for (entry = supported_types; entry; entry = entry->next) {
-
-		bufsize += 11 + strlen(entry->mime_type) + 3;
+	for (GSList* entry = supported_types_list; entry != NULL; entry = g_slist_next(entry))
+	{
+		bufsize += 11 + strlen(entry->data) + 3;
 		offset = p - buf;
 		buf = (char*)realloc(buf, bufsize);
 		if (buf == NULL) {
@@ -323,7 +342,7 @@ int connmgr_init(void) {
 		p = buf;
 		p += offset;
 		p = str_append_no_termination(p, "http-get:*:");
-		p = str_append_no_termination(p, entry->mime_type);
+		p = str_append_no_termination(p, entry->data);
 		p = str_append_no_termination(p, ":*,");
 	}
 
