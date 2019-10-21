@@ -18,8 +18,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -41,7 +41,7 @@
 #include "output_module.h"
 #include "output_gstreamer.h"
 
-static double buffer_duration = 1.0; /* Buffer one second by default. */
+static double buffer_duration = 0.0; /* Buffer disbled by default, see #182 */
 
 static void scan_caps(const GstCaps * caps)
 {
@@ -347,7 +347,7 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 
 	case GST_MESSAGE_TAG: {
 		GstTagList *tags = NULL;
-    
+
 		if (meta_update_callback_ != NULL) {
 			gst_message_parse_tag(msg, &tags);
 			/*g_print("GStreamer: Got tags from element %s\n",
@@ -367,11 +367,11 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 
 	case GST_MESSAGE_BUFFERING:
         {
+                if (buffer_duration <= 0.0) break;  /* nothing to buffer */
+
                 gint percent = 0;
                 gst_message_parse_buffering (msg, &percent);
 
-                /* check if buffering is disabled */
-                if (buffer_duration <= 0) break;
 
                 /* Pause playback until buffering is complete. */
                 if (percent < 100)
@@ -433,7 +433,7 @@ static int output_gstreamer_add_options(GOptionContext *ctx)
 	g_option_group_add_entries(option_group, option_entries);
 
 	g_option_context_add_group (ctx, option_group);
-	
+
 	g_option_context_add_group (ctx, gst_init_get_option_group ());
 	return 0;
 }
@@ -452,7 +452,7 @@ static int output_gstreamer_get_position(gint64 *track_duration,
 	GstFormat* query_type = &fmt;
 #else
 	GstFormat query_type = GST_FORMAT_TIME;
-#endif	
+#endif
 	if (!gst_element_query_duration(player_, query_type, track_duration)) {
 		Log_error("gstreamer", "Failed to get track duration.");
 		rc = -1;
@@ -536,7 +536,8 @@ static int output_gstreamer_init(void)
                              buffer_duration_ns,
                              NULL);
         } else {
-                Log_info("gstreamer", "Buffering disabled");
+                Log_info("gstreamer",
+			 "Buffering disabled (--gstout-buffer-duration)");
         }
 
 	bus = gst_pipeline_get_bus(GST_PIPELINE(player_));
