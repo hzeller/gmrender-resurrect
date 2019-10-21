@@ -124,15 +124,35 @@ static GOptionEntry option_entries[] = {
 	{ NULL }
 };
 
+// Fill buffer with version information. Returns pointer to beginning of string.
+static const char *GetVersionInfo(char *buffer, size_t len) {
+#ifdef HAVE_GST
+	snprintf(buffer, len, "gmediarender %s "
+		 "(libupnp-%s; glib-%d.%d.%d; gstreamer-%d.%d.%d)",
+		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
+		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION,
+		 GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
+#else
+	snprintf(buffer, len, "gmediarender %s "
+		 "(libupnp-%s; glib-%d.%d.%d; without gstreamer.)",
+		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
+		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
+#endif
+	return buffer;
+}
+
 static void do_show_version(void)
 {
-	puts( PACKAGE_STRING "; " GM_COMPILE_VERSION "\n"
-        	"This is free software. "
-		"You may redistribute copies of it under the terms of\n"
-		"the GNU General Public License "
-		"<http://www.gnu.org/licenses/gpl.html>.\n"
-		"There is NO WARRANTY, to the extent permitted by law."
-	);
+	char version[1024];
+	GetVersionInfo(version, sizeof(version));
+
+	printf("%s; %s\n"
+	       "This is free software. "
+	       "You may redistribute copies of it under the terms of\n"
+	       "the GNU General Public License "
+	       "<http://www.gnu.org/licenses/gpl.html>.\n"
+	       "There is NO WARRANTY, to the extent permitted by law.\n",
+	       PACKAGE_STRING, version);
 }
 
 static gboolean process_cmdline(int argc, char **argv)
@@ -175,26 +195,15 @@ static void log_variable_change(void *userdata, int var_num,
 
 static void init_logging(const char *log_file) {
 	char version[1024];
-
-#ifdef HAVE_GST
-	snprintf(version, sizeof(version), "[ gmediarender %s "
-		 "(libupnp-%s; glib-%d.%d.%d; gstreamer-%d.%d.%d) ]",
-		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
-		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION,
-		 GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
-#else
-	snprintf(version, sizeof(version), "[ gmediarender %s "
-		 "(libupnp-%s; glib-%d.%d.%d; without gstreamer.) ]",
-		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
-		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
-#endif
+	GetVersionInfo(version, sizeof(version));
 
 	if (log_file != NULL) {
 		Log_init(log_file);
-		Log_info("main", "%s log started %s", PACKAGE_STRING, version);
+		Log_info("main", "%s log started [ %s ]",
+			 PACKAGE_STRING, version);
 
 	} else {
-		fprintf(stderr, "%s started %s.\nLogging switched off. "
+		fprintf(stderr, "%s started [ %s ].\nLogging switched off. "
 			"Enable with --logfile=<filename> "
 			"(or --logfile=stdout for console)\n",
 			PACKAGE_STRING, version);
