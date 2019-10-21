@@ -14,15 +14,17 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
- */ 
+ */
 
 #include "variable-container.h"
 
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+#  define _GNU_SOURCE
+#endif
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -314,7 +316,7 @@ static void UPnPLastChangeCollector_callback(void *userdata,
 					     int var_num, const char *var_name,
 					     const char *old_value,
 					     const char *new_value) {
-	upnp_last_change_collector_t *object = 
+	upnp_last_change_collector_t *object =
 		(upnp_last_change_collector_t*) userdata;
 
 	if (object->not_eventable_variables & (1 << var_num)) {

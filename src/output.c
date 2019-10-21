@@ -15,17 +15,19 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
- */ 
+ */
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#  include "config.h"
 #endif
 
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+#  define _GNU_SOURCE
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -55,7 +57,7 @@ static struct output_module *output_module = NULL;
 void output_dump_modules(void)
 {
 	int count;
-	
+
 	count = sizeof(modules) / sizeof(struct output_module *);
 	if (count == 0) {
 		puts("  NONE!");
@@ -90,7 +92,7 @@ int output_init(const char *shortname)
 			}
 		}
 	}
-	
+
 	if (output_module == NULL) {
 		Log_error("error", "ERROR: No such output module: '%s'",
 			  shortname);
