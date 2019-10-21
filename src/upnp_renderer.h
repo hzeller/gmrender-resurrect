@@ -27,7 +27,6 @@
 void upnp_renderer_dump_connmgr_scpd(void);
 void upnp_renderer_dump_control_scpd(void);
 void upnp_renderer_dump_transport_scpd(void);
-void upnp_renderer_set_mime_filter(const char* filter);
 
 // Returned pointer not owned.
 struct upnp_device_descriptor *upnp_renderer_descriptor(const char *name,

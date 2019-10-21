@@ -39,7 +39,6 @@ struct upnp_device_descriptor {
         const char *udn;
         const char *upc;
         const char *presentation_url;
-	const char *mime_filter;
 	struct icon **icons;
 	struct service **services;
 };

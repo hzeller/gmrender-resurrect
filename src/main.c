@@ -59,6 +59,7 @@
 #include "upnp_device.h"
 #include "upnp_renderer.h"
 #include "upnp_transport.h"
+#include "upnp_connmgr.h"
 
 static gboolean show_version = FALSE;
 static gboolean show_devicedesc = FALSE;
@@ -278,7 +279,7 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	upnp_renderer_set_mime_filter(mime_filter);
+	connmgr_set_mime_filter(mime_filter);
 
 	rc = output_init(output);
 	if (rc != 0) {

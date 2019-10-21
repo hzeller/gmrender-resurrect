@@ -190,14 +190,42 @@ static struct mime_type {
 	struct mime_type *next;
 } *supported_types = NULL;
 
+static const char *mime_filter;
+
+static int filter_mime_type(const char* filterList, const char* mime_type) {
+	// Make a modifiable copy of the mime type
+	char* type = malloc(strlen(mime_type) + 1);
+	if (type == NULL)
+		return 0;
+
+	strcpy(type, mime_type);
+
+	// Fetch the base type
+	char* base = strtok(type, "/");
+
+	// Check for base type in filter
+	int result = (strstr(filterList, base) == NULL);
+
+	free(type);
+	return result;
+}
+
 static void register_mime_type_internal(const char *mime_type) {
 	struct mime_type *entry;
+	
+	// Filter mime types
+	if (mime_filter != NULL && filter_mime_type(mime_filter, mime_type))
+	{
+		Log_info("connmgr", "Filtered support for '%s'", mime_type);
+		return;
+	}
 
 	for (entry = supported_types; entry; entry = entry->next) {
 		if (strcmp(entry->mime_type, mime_type) == 0) {
 			return;
 		}
 	}
+
 	Log_info("connmgr", "Registering support for '%s'", mime_type);
 
 	entry = (struct mime_type*) malloc(sizeof(struct mime_type));
@@ -249,22 +277,12 @@ void register_mime_type(const char *mime_type) {
 	}
 }
 
-static int filter_mime_type(const char* filterList, const char* mime_type) {
-	// Make a modifiable copy of the mime type
-	char* type = (char*)malloc(strlen(mime_type) + 1);
-	if (type == NULL)
-		return 0;
-
-	strcpy(type, mime_type);
-
-	// Fetch the base type
-	char* base = strtok(type, "/");
-
-	// Check for base type in filter
-	int result = (strstr(filterList, base) == NULL);
-
-	free(type);
-	return result;
+void connmgr_set_mime_filter(const char* filter)
+{
+	mime_filter = filter;
+	
+	if (mime_filter != NULL)
+		Log_info("connmgr", "MIME filter set: %s", mime_filter);
 }
 
 // Append string, does not nul-terminate.
@@ -275,7 +293,7 @@ static char* str_append_no_termination(char *dest, const char *str) {
 	return dest + len;
 }
 
-int connmgr_init(const char* filter) {
+int connmgr_init(void) {
 	struct mime_type *entry;
 	char *buf = NULL;
 	int offset;
@@ -293,10 +311,6 @@ int connmgr_init(const char* filter) {
 
 	char *p = buf;
 	for (entry = supported_types; entry; entry = entry->next) {
-
-		// Filter mime types
-		if (filter != NULL && filter_mime_type(filter, entry->mime_type))
-			continue;
 
 		bufsize += 11 + strlen(entry->mime_type) + 3;
 		offset = p - buf;
