@@ -1,5 +1,5 @@
 AC_PREREQ(2.59)
-AC_INIT(gmediarender, 0.0.7-git, https://github.com/hzeller/gmrender-resurrect)
+AC_INIT(gmediarender, 0.0.8, https://github.com/hzeller/gmrender-resurrect)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_SRCDIR(src/main.c)
 AC_CONFIG_HEADERS(config.h)

@@ -1,3 +1,7 @@
+2019-10-20 Bump version number: GMediaRender 0.0.8
+	- Various small changes over the last years.
+	- Now compiles with old and new libupnp (1.6.x and 1.8.x)
+
 2013-...  Ongoing changes in git.
 2013-05-18: (there are ongoing changes in git, but these are notable features)
 	- Various state variable handling that should improve robustness and

@@ -21,7 +21,7 @@ endif
 main.c : git-version.h
 
 git-version.h: .FORCE
-	$(AM_V_GEN)(echo "#define GM_COMPILE_VERSION \"$(shell git log -n1 --date=short --format='%cd_%h' 2>/dev/null || echo -n '0.0.7-git')\"" > $@-new; \
+	$(AM_V_GEN)(echo "#define GM_COMPILE_VERSION \"$(shell git log -n1 --date=short --format='0.0.8_git%cd_%h' 2>/dev/null || echo -n '0.0.8')\"" > $@-new; \
 	cmp -s $@ $@-new || cp $@-new $@; \
 	rm $@-new)
 
