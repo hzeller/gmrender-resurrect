@@ -35,9 +35,9 @@
 #include <limits.h>
 #include <assert.h>
 
-#include <upnp/upnp.h>
-#include <upnp/upnptools.h>  // UpnpGetErrorMessage
-#include <upnp/ithread.h>
+#include <upnp.h>
+#include <upnptools.h>  // UpnpGetErrorMessage
+#include <ithread.h>
 
 #include "logging.h"
 #include "webserver.h"

@@ -24,7 +24,7 @@
 #ifndef _UPNP_SERVICE_H
 #define _UPNP_SERVICE_H
 
-#include <upnp/upnp.h>
+#include <upnp.h>
 #include "upnp_compat.h"
 
 struct action;

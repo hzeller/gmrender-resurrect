@@ -33,7 +33,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include <upnp/ithread.h>
+#include <ithread.h>
 
 #include "xmldoc.h"
 #include "upnp_service.h"

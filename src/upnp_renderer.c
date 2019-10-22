@@ -40,8 +40,8 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#include <upnp/upnp.h>
-#include <upnp/ithread.h>
+#include <upnp.h>
+#include <ithread.h>
 
 #include "webserver.h"
 #include "upnp_service.h"

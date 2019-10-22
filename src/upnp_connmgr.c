@@ -31,8 +31,8 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <upnp/upnp.h>
-#include <upnp/ithread.h>
+#include <upnp.h>
+#include <ithread.h>
 
 #include "upnp_connmgr.h"
 

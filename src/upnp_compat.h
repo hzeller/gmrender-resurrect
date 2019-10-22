@@ -24,8 +24,8 @@
 #ifndef _UPNP_COMPAT_H
 #define _UPNP_COMPAT_H
 
-#include <upnp/upnp.h>
-#include <upnp/UpnpString.h>
+#include <upnp.h>
+#include <UpnpString.h>
 
 #if UPNP_VERSION >= 10803
 #define UpnpAddVirtualDir(x) UpnpAddVirtualDir(x, NULL, NULL)

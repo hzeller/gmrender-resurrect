@@ -34,7 +34,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include <upnp/ixml.h>
+#include <ixml.h>
 
 #include "xmldoc.h"
 

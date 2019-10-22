@@ -38,8 +38,8 @@
 
 #include <glib.h>
 
-#include <upnp/upnp.h>
-#include <upnp/ithread.h>
+#include <upnp.h>
+#include <ithread.h>
 
 #include "output.h"
 #include "upnp_service.h"

@@ -37,8 +37,8 @@
 #include <math.h>
 #include <string.h>
 
-#include <upnp/upnp.h>
-#include <upnp/ithread.h>
+#include <upnp.h>
+#include <ithread.h>
 
 #include "logging.h"
 #include "webserver.h"
