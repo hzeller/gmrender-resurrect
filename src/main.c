@@ -185,6 +185,9 @@ static void log_variable_change(void *userdata, int var_num,
 				const char *variable_name,
 				const char *old_value,
 				const char *variable_value) {
+	(void)var_num;
+	(void)old_value;
+
 	const char *category = (const char*) userdata;
 	int needs_newline = variable_value[strlen(variable_value) - 1] != '\n';
 	// Silly terminal codes. Set to empty strings if not needed.

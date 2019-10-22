@@ -71,6 +71,8 @@ static void scan_caps(const GstCaps * caps)
 static void scan_pad_templates_info(GstElement *element,
 				    GstElementFactory *factory)
 {
+	(void)factory;
+
 	const GList *pads;
 	GstPadTemplate *padtemplate;
 	GstElementClass *element_class;
@@ -289,7 +291,9 @@ static void MetaModify_add_tag(const GstTagList *list, const gchar *tag,
 static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 				gpointer data)
 {
-	//GMainLoop *loop = (GMainLoop *) data;
+	(void)bus;
+	(void)data;
+
 	GstMessageType msgType;
 	const GstObject *msgSrc;
 	const gchar *msgSrcName;
@@ -493,6 +497,9 @@ static int output_gstreamer_set_mute(int m) {
 }
 
 static void prepare_next_stream(GstElement *obj, gpointer userdata) {
+	(void)obj;
+	(void)userdata;
+
 	Log_info("gstreamer", "about-to-finish cb: setting uri %s",
 		 gs_next_uri_);
 	free(gsuri_);

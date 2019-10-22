@@ -523,23 +523,19 @@ static void service_unlock(void)
 	ithread_mutex_unlock(&transport_mutex);
 }
 
-static int obtain_instanceid(struct action_event *event, int *instance)
+static char has_instance_id(struct action_event *event)
 {
-	const char *value = upnp_get_string(event, "InstanceID");
+	const char *const value = upnp_get_string(event, "InstanceID");
 	if (value == NULL) {
 		upnp_set_error(event, UPNP_SOAP_E_INVALID_ARGS,
 			       "Missing InstanceID");
-		return -1;
 	}
-
-	// TODO - parse value, and store in *instance, if instance!=NULL
-
-	return 0;
+	return value != NULL;
 }
 
 static int get_media_info(struct action_event *event)
 {
-	if (obtain_instanceid(event, NULL) < 0) {
+	if (!has_instance_id(event)) {
 		return -1;
 	}
 
@@ -650,7 +646,7 @@ static void update_meta_from_stream(const struct SongMetaData *meta) {
 
 static int set_avtransport_uri(struct action_event *event)
 {
-	if (obtain_instanceid(event, NULL) < 0) {
+	if (!has_instance_id(event)) {
 		return -1;
 	}
 	const char *uri = upnp_get_string(event, "CurrentURI");
@@ -682,7 +678,7 @@ static int set_avtransport_uri(struct action_event *event)
 
 static int set_next_avtransport_uri(struct action_event *event)
 {
-	if (obtain_instanceid(event, NULL) < 0) {
+	if (!has_instance_id(event)) {
 		return -1;
 	}
 
@@ -711,7 +707,7 @@ static int set_next_avtransport_uri(struct action_event *event)
 
 static int get_transport_info(struct action_event *event)
 {
-	if (obtain_instanceid(event, NULL) < 0) {
+	if (!has_instance_id(event)) {
 		return -1;
 	}
 
@@ -726,7 +722,7 @@ static int get_transport_info(struct action_event *event)
 
 static int get_current_transportactions(struct action_event *event)
 {
-	if (obtain_instanceid(event, NULL) < 0) {
+	if (!has_instance_id(event)) {
 		return -1;
 	}
 
@@ -737,7 +733,7 @@ static int get_current_transportactions(struct action_event *event)
 
 static int get_transport_settings(struct action_event *event)
 {
-	if (obtain_instanceid(event, NULL) < 0) {
+	if (!has_instance_id(event)) {
 		return -1;
 	}
 	// TODO: what variables to add ?
@@ -770,6 +766,7 @@ static gint64 parse_upnp_time(const char *time_string) {
 
 // We constantly update the track time to event about it to our clients.
 static void *thread_update_track_time(void *userdata) {
+	(void)userdata;
 	const gint64 one_sec_unit = 1000000000LL;
 	char tbuf[32];
 	gint64 last_duration = -1, last_position = -1;
@@ -797,7 +794,7 @@ static void *thread_update_track_time(void *userdata) {
 
 static int get_position_info(struct action_event *event)
 {
-	if (obtain_instanceid(event, NULL) < 0) {
+	if (!has_instance_id(event)) {
 		return -1;
 	}
 
@@ -817,7 +814,7 @@ static int get_position_info(struct action_event *event)
 
 static int get_device_caps(struct action_event *event)
 {
-	if (obtain_instanceid(event, NULL) < 0) {
+	if (!has_instance_id(event)) {
 		return -1;
 	}
 	// TODO: implement ?
@@ -826,7 +823,7 @@ static int get_device_caps(struct action_event *event)
 
 static int stop(struct action_event *event)
 {
-	if (obtain_instanceid(event, NULL) < 0) {
+	if (!has_instance_id(event)) {
 		return -1;
 	}
 
@@ -881,7 +878,7 @@ static void inform_play_transition_from_output(enum PlayFeedback fb) {
 
 static int play(struct action_event *event)
 {
-	if (obtain_instanceid(event, NULL) < 0) {
+	if (!has_instance_id(event)) {
 		return -1;
 	}
 
@@ -931,7 +928,7 @@ static int play(struct action_event *event)
 
 static int pause_stream(struct action_event *event)
 {
-	if (obtain_instanceid(event, NULL) < 0) {
+	if (!has_instance_id(event)) {
 		return -1;
 	}
 
@@ -965,7 +962,7 @@ static int pause_stream(struct action_event *event)
 
 static int seek(struct action_event *event)
 {
-	if (obtain_instanceid(event, NULL) < 0) {
+	if (!has_instance_id(event)) {
 		return -1;
 	}
 

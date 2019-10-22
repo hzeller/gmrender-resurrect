@@ -84,7 +84,7 @@ int upnp_add_response(struct action_event *event,
 		UpnpActionRequest_set_ErrStr(event->request, errorMessage);
 		return -1;
 	}
-	
+
 	UpnpActionRequest_set_ActionResult(event->request, actionResult);
 	return 0;
 }
@@ -123,8 +123,9 @@ void upnp_set_error(struct action_event *event, int error_code,
 	UpnpString *errStr = UpnpString_new();
 	UpnpString_set_String(errStr, buffer);
 	UpnpActionRequest_set_ErrStr(event->request, errStr);
-	Log_error("upnp", "%s: %s\n", __FUNCTION__, 
-			     UpnpActionRequest_get_ErrStr_cstr(event->request));
+	Log_error("upnp", "%s: %s (%d)\n", __FUNCTION__,
+		  UpnpActionRequest_get_ErrStr_cstr(event->request),
+		  error_code);
 }
 
 const char *upnp_get_string(struct action_event *event, const char *key)
@@ -358,7 +359,7 @@ static int handle_action_request(struct upnp_device *priv,
 		}
 		IXML_Document *actionResult = UpnpActionRequest_get_ActionResult(ar_event);
 		if (actionResult == NULL) {
-			actionResult = UpnpMakeActionResponse(actionName, 
+			actionResult = UpnpMakeActionResponse(actionName,
 						   event_service->service_type, 0, NULL);
 			UpnpActionRequest_set_ActionResult(event.request, actionResult);
 		}

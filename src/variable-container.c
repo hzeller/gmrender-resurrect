@@ -316,6 +316,7 @@ static void UPnPLastChangeCollector_callback(void *userdata,
 					     int var_num, const char *var_name,
 					     const char *old_value,
 					     const char *new_value) {
+	(void)old_value;
 	upnp_last_change_collector_t *object =
 		(upnp_last_change_collector_t*) userdata;
 
