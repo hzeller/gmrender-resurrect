@@ -3,7 +3,7 @@
 On a typical Ubuntu or Debian system, you need tools to be able to bootstrap the
 compilation configuration:
 
-    sudo apt-get install autoconf automake libtool pkg-config
+    sudo apt-get install build-essential autoconf automake libtool pkg-config
 
 .. and the libraries needed for gmrender, most notably gstreamer.
 
