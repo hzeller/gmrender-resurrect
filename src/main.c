@@ -54,7 +54,7 @@
 #include "git-version.h"
 #include "logging.h"
 #include "output.h"
-#include "upnp.h"
+#include "upnp_service.h"
 #include "upnp_control.h"
 #include "upnp_device.h"
 #include "upnp_renderer.h"

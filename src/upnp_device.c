@@ -47,7 +47,7 @@
 #include "xmlescape.h"
 #include "webserver.h"
 #include "xmldoc.h"
-#include "upnp.h"
+#include "upnp_service.h"
 #include "upnp_device.h"
 #include "variable-container.h"
 

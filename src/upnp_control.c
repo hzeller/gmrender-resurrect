@@ -42,7 +42,7 @@
 
 #include "logging.h"
 #include "webserver.h"
-#include "upnp.h"
+#include "upnp_service.h"
 #include "upnp_device.h"
 #include "output.h"
 #include "xmlescape.h"

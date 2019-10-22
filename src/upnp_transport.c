@@ -42,7 +42,7 @@
 #include <upnp/ithread.h>
 
 #include "output.h"
-#include "upnp.h"
+#include "upnp_service.h"
 #include "upnp_device.h"
 #include "variable-container.h"
 #include "xmlescape.h"

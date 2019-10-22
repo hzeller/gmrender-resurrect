@@ -22,7 +22,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#  include "config.h"
 #endif
 
 #include <stdio.h>
@@ -36,7 +36,7 @@
 #include <upnp/ithread.h>
 
 #include "xmldoc.h"
-#include "upnp.h"
+#include "upnp_service.h"
 
 static const char *param_datatype_names[] = {
         [DATATYPE_STRING] =     "string",

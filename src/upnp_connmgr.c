@@ -37,7 +37,7 @@
 #include "upnp_connmgr.h"
 
 #include "logging.h"
-#include "upnp.h"
+#include "upnp_service.h"
 #include "upnp_device.h"
 #include "variable-container.h"
 

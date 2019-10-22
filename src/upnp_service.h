@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef _UPNP_H
-#define _UPNP_H
+#ifndef _UPNP_SERVICE_H
+#define _UPNP_SERVICE_H
 
 #include <upnp/upnp.h>
 #include "upnp_compat.h"
@@ -120,4 +120,4 @@ struct action *find_action(struct service *event_service,
 
 char *upnp_get_scpd(struct service *srv);
 
-#endif /* _UPNP_H */
+#endif /* _UPNP_SERVICE_H */

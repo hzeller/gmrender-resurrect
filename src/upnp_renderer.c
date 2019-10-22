@@ -44,7 +44,7 @@
 #include <upnp/ithread.h>
 
 #include "webserver.h"
-#include "upnp.h"
+#include "upnp_service.h"
 #include "upnp_device.h"
 #include "upnp_connmgr.h"
 #include "upnp_control.h"
