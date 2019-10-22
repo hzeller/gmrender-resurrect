@@ -97,7 +97,7 @@ struct service {
 	const char *event_url;
 	const char *event_xml_ns;
 	struct action *actions;
-	struct argument ***action_arguments;
+	struct argument **action_arguments;
 	const char **variable_names;
 	struct variable_container *variable_container;
 	struct upnp_last_change_collector *last_change;

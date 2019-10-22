@@ -274,194 +274,194 @@ static void service_unlock(void)
 	ithread_mutex_unlock(&control_mutex);
 }
 
-static struct argument *arguments_list_presets[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "CurrentPresetNameList", PARAM_DIR_OUT, CONTROL_VAR_PRESET_NAME_LIST },
-	NULL
+static struct argument arguments_list_presets[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "CurrentPresetNameList", PARAM_DIR_OUT, CONTROL_VAR_PRESET_NAME_LIST },
+	{ NULL }
 };
-// static struct argument *arguments_select_preset[] = {
-// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	& (struct argument) { "PresetName", PARAM_DIR_IN, CONTROL_VAR_AAT_PRESET_NAME },
-// 	NULL
+// static struct argument arguments_select_preset[] = {
+// 	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "PresetName", PARAM_DIR_IN, CONTROL_VAR_AAT_PRESET_NAME },
+// 	{ NULL }
 // };
-static struct argument *arguments_get_brightness[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "CurrentBrightness", PARAM_DIR_OUT, CONTROL_VAR_BRIGHTNESS },
-	NULL
+static struct argument arguments_get_brightness[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "CurrentBrightness", PARAM_DIR_OUT, CONTROL_VAR_BRIGHTNESS },
+	{ NULL }
 };
-// static struct argument *arguments_set_brightness[] = {
-// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	& (struct argument) { "DesiredBrightness", PARAM_DIR_IN, CONTROL_VAR_BRIGHTNESS },
-// 	NULL
+// static struct argument arguments_set_brightness[] = {
+// 	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredBrightness", PARAM_DIR_IN, CONTROL_VAR_BRIGHTNESS },
+// 	{ NULL }
 // };
-static struct argument *arguments_get_contrast[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "CurrentContrast", PARAM_DIR_OUT, CONTROL_VAR_CONTRAST },
-	NULL
+static struct argument arguments_get_contrast[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "CurrentContrast", PARAM_DIR_OUT, CONTROL_VAR_CONTRAST },
+        { NULL }
 };
-// static struct argument *arguments_set_contrast[] = {
-// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	& (struct argument) { "DesiredContrast", PARAM_DIR_IN, CONTROL_VAR_CONTRAST },
-// 	NULL
+// static struct argument arguments_set_contrast[] = {
+// 	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredContrast", PARAM_DIR_IN, CONTROL_VAR_CONTRAST },
+// 	{ NULL }
 // };
-static struct argument *arguments_get_sharpness[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "CurrentSharpness", PARAM_DIR_OUT, CONTROL_VAR_SHARPNESS },
-	NULL
+static struct argument arguments_get_sharpness[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "CurrentSharpness", PARAM_DIR_OUT, CONTROL_VAR_SHARPNESS },
+	{ NULL }
 };
-// static struct argument *arguments_set_sharpness[] = {
-// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	& (struct argument) { "DesiredSharpness", PARAM_DIR_IN, CONTROL_VAR_SHARPNESS },
-// 	NULL
+// static struct argument arguments_set_sharpness[] = {
+// 	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredSharpness", PARAM_DIR_IN, CONTROL_VAR_SHARPNESS },
+// 	{ NULL }
 // };
-static struct argument *arguments_get_red_gain[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "CurrentRedVideoGain", PARAM_DIR_OUT, CONTROL_VAR_R_GAIN },
-	NULL
+static struct argument arguments_get_red_gain[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "CurrentRedVideoGain", PARAM_DIR_OUT, CONTROL_VAR_R_GAIN },
+	{ NULL }
 };
-// static struct argument *arguments_set_red_gain[] = {
-// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	& (struct argument) { "DesiredRedVideoGain", PARAM_DIR_IN, CONTROL_VAR_R_GAIN },
-// 	NULL
+// static struct argument arguments_set_red_gain[] = {
+// 	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredRedVideoGain", PARAM_DIR_IN, CONTROL_VAR_R_GAIN },
+//      { NULL }
 // };
-static struct argument *arguments_get_green_gain[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "CurrentGreenVideoGain", PARAM_DIR_OUT, CONTROL_VAR_G_GAIN },
-	NULL
+static struct argument arguments_get_green_gain[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "CurrentGreenVideoGain", PARAM_DIR_OUT, CONTROL_VAR_G_GAIN },
+	{ NULL }
 };
-// static struct argument *arguments_set_green_gain[] = {
-// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	& (struct argument) { "DesiredGreenVideoGain", PARAM_DIR_IN, CONTROL_VAR_G_GAIN },
-// 	NULL
+// static struct argument arguments_set_green_gain[] = {
+// 	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredGreenVideoGain", PARAM_DIR_IN, CONTROL_VAR_G_GAIN },
+// 	{ NULL }
 // };
-static struct argument *arguments_get_blue_gain[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "CurrentBlueVideoGain", PARAM_DIR_OUT, CONTROL_VAR_B_GAIN },
-	NULL
+static struct argument arguments_get_blue_gain[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "CurrentBlueVideoGain", PARAM_DIR_OUT, CONTROL_VAR_B_GAIN },
+	{ NULL }
 };
-// static struct argument *arguments_set_blue_gain[] = {
-// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	& (struct argument) { "DesiredBlueVideoGain", PARAM_DIR_IN, CONTROL_VAR_B_GAIN },
-// 	NULL
+// static struct argument arguments_set_blue_gain[] = {
+// 	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredBlueVideoGain", PARAM_DIR_IN, CONTROL_VAR_B_GAIN },
+// 	{ NULL }
 // };
-static struct argument *arguments_get_red_black[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "CurrentRedVideoBlackLevel", PARAM_DIR_OUT, CONTROL_VAR_R_BLACK },
-	NULL
+static struct argument arguments_get_red_black[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "CurrentRedVideoBlackLevel", PARAM_DIR_OUT, CONTROL_VAR_R_BLACK },
+	{ NULL }
 };
-// static struct argument *arguments_set_red_black[] = {
-// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	& (struct argument) { "DesiredRedVideoBlackLevel", PARAM_DIR_IN, CONTROL_VAR_R_BLACK },
-// 	NULL
+// static struct argument arguments_set_red_black[] = {
+// 	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredRedVideoBlackLevel", PARAM_DIR_IN, CONTROL_VAR_R_BLACK },
+// 	{ NULL }
 // };
-static struct argument *arguments_get_green_black[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "CurrentGreenVideoBlackLevel", PARAM_DIR_OUT, CONTROL_VAR_G_BLACK },
-	NULL
+static struct argument arguments_get_green_black[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "CurrentGreenVideoBlackLevel", PARAM_DIR_OUT, CONTROL_VAR_G_BLACK },
+	{ NULL }
 };
-// static struct argument *arguments_set_green_black[] = {
-// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	& (struct argument) { "DesiredGreenVideoBlackLevel", PARAM_DIR_IN, CONTROL_VAR_G_BLACK },
-// 	NULL
+// static struct argument arguments_set_green_black[] = {
+// 	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredGreenVideoBlackLevel", PARAM_DIR_IN, CONTROL_VAR_G_BLACK },
+// 	{ NULL }
 // };
-static struct argument *arguments_get_blue_black[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "CurrentBlueVideoBlackLevel", PARAM_DIR_OUT, CONTROL_VAR_B_BLACK },
-	NULL
+static struct argument arguments_get_blue_black[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "CurrentBlueVideoBlackLevel", PARAM_DIR_OUT, CONTROL_VAR_B_BLACK },
+	{ NULL }
 };
-// static struct argument *arguments_set_blue_black[] = {
-// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	& (struct argument) { "DesiredBlueVideoBlackLevel", PARAM_DIR_IN, CONTROL_VAR_B_BLACK },
-// 	NULL
+// static struct argument arguments_set_blue_black[] = {
+// 	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredBlueVideoBlackLevel", PARAM_DIR_IN, CONTROL_VAR_B_BLACK },
+// 	{ NULL }
 // };
-static struct argument *arguments_get_color_temp[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "CurrentColorTemperature", PARAM_DIR_OUT, CONTROL_VAR_COLOR_TEMP },
-	NULL
+static struct argument arguments_get_color_temp[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "CurrentColorTemperature", PARAM_DIR_OUT, CONTROL_VAR_COLOR_TEMP },
+	{ NULL }
 };
-// static struct argument *arguments_set_color_temp[] = {
-// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	& (struct argument) { "DesiredColorTemperature", PARAM_DIR_IN, CONTROL_VAR_COLOR_TEMP },
-// 	NULL
+// static struct argument arguments_set_color_temp[] = {
+// 	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredColorTemperature", PARAM_DIR_IN, CONTROL_VAR_COLOR_TEMP },
+// 	{ NULL }
 // };
-static struct argument *arguments_get_hor_keystone[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "CurrentHorizontalKeystone", PARAM_DIR_OUT, CONTROL_VAR_HOR_KEYSTONE },
-	NULL
+static struct argument arguments_get_hor_keystone[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "CurrentHorizontalKeystone", PARAM_DIR_OUT, CONTROL_VAR_HOR_KEYSTONE },
+	{ NULL }
 };
-// static struct argument *arguments_set_hor_keystone[] = {
-// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	& (struct argument) { "DesiredHorizontalKeystone", PARAM_DIR_IN, CONTROL_VAR_HOR_KEYSTONE },
-// 	NULL
+// static struct argument arguments_set_hor_keystone[] = {
+// 	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredHorizontalKeystone", PARAM_DIR_IN, CONTROL_VAR_HOR_KEYSTONE },
+// 	{ NULL }
 // };
-static struct argument *arguments_get_vert_keystone[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "CurrentVerticalKeystone", PARAM_DIR_OUT, CONTROL_VAR_VER_KEYSTONE },
-	NULL
+static struct argument arguments_get_vert_keystone[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "CurrentVerticalKeystone", PARAM_DIR_OUT, CONTROL_VAR_VER_KEYSTONE },
+	{ NULL }
 };
-// static struct argument *arguments_set_vert_keystone[] = {
-// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	& (struct argument) { "DesiredVerticalKeystone", PARAM_DIR_IN, CONTROL_VAR_VER_KEYSTONE },
-// 	NULL
+// static struct argument arguments_set_vert_keystone[] = {
+// 	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredVerticalKeystone", PARAM_DIR_IN, CONTROL_VAR_VER_KEYSTONE },
+// 	{ NULL }
 // };
-static struct argument *arguments_get_mute[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
-	& (struct argument) { "CurrentMute", PARAM_DIR_OUT, CONTROL_VAR_MUTE },
-	NULL
+static struct argument arguments_get_mute[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
+	{ "CurrentMute", PARAM_DIR_OUT, CONTROL_VAR_MUTE },
+	{ NULL }
 };
-static struct argument *arguments_set_mute[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
-	& (struct argument) { "DesiredMute", PARAM_DIR_IN, CONTROL_VAR_MUTE },
-	NULL
+static struct argument arguments_set_mute[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
+	{ "DesiredMute", PARAM_DIR_IN, CONTROL_VAR_MUTE },
+	{ NULL }
 };
-static struct argument *arguments_get_vol[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
-	& (struct argument) { "CurrentVolume", PARAM_DIR_OUT, CONTROL_VAR_VOLUME },
-	NULL
+static struct argument arguments_get_vol[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
+	{ "CurrentVolume", PARAM_DIR_OUT, CONTROL_VAR_VOLUME },
+	{ NULL }
 };
-static struct argument *arguments_set_vol[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
-	& (struct argument) { "DesiredVolume", PARAM_DIR_IN, CONTROL_VAR_VOLUME },
-	NULL
+static struct argument arguments_set_vol[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
+	{ "DesiredVolume", PARAM_DIR_IN, CONTROL_VAR_VOLUME },
+	{ NULL }
 };
-static struct argument *arguments_get_vol_db[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
-	& (struct argument) { "CurrentVolume", PARAM_DIR_OUT, CONTROL_VAR_VOLUME_DB },
-	NULL
+static struct argument arguments_get_vol_db[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
+	{ "CurrentVolume", PARAM_DIR_OUT, CONTROL_VAR_VOLUME_DB },
+	{ NULL }
 };
-static struct argument *arguments_set_vol_db[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
-	& (struct argument) { "DesiredVolume", PARAM_DIR_IN, CONTROL_VAR_VOLUME_DB },
-	NULL
+static struct argument arguments_set_vol_db[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
+	{ "DesiredVolume", PARAM_DIR_IN, CONTROL_VAR_VOLUME_DB },
+	{ NULL }
 };
-static struct argument *arguments_get_vol_dbrange[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
-	& (struct argument) { "MinValue", PARAM_DIR_OUT, CONTROL_VAR_VOLUME_DB },
-	& (struct argument) { "MaxValue", PARAM_DIR_OUT, CONTROL_VAR_VOLUME_DB },
-	NULL
+static struct argument arguments_get_vol_dbrange[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
+	{ "MinValue", PARAM_DIR_OUT, CONTROL_VAR_VOLUME_DB },
+	{ "MaxValue", PARAM_DIR_OUT, CONTROL_VAR_VOLUME_DB },
+	{ NULL }
 };
-static struct argument *arguments_get_loudness[] = {
-	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-	& (struct argument) { "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
-	& (struct argument) { "CurrentLoudness", PARAM_DIR_OUT, CONTROL_VAR_LOUDNESS },
-	NULL
+static struct argument arguments_get_loudness[] = {
+	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+	{ "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
+	{ "CurrentLoudness", PARAM_DIR_OUT, CONTROL_VAR_LOUDNESS },
+	{ NULL }
 };
-// static struct argument *arguments_set_loudness[] = {
-// 	& (struct argument) { "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	& (struct argument) { "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
-// 	& (struct argument) { "DesiredLoudness", PARAM_DIR_IN, CONTROL_VAR_LOUDNESS },
-// 	NULL
+// static struct argument arguments_set_loudness[] = {
+// 	{ "InstanceID", PARAM_DIR_IN, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "Channel", PARAM_DIR_IN, CONTROL_VAR_AAT_CHANNEL },
+// 	{ "DesiredLoudness", PARAM_DIR_IN, CONTROL_VAR_LOUDNESS },
+// 	{ NULL }
 // };
 
 
-static struct argument **argument_list[] = {
+static struct argument *argument_list[] = {
 	[CONTROL_CMD_LIST_PRESETS] =        	arguments_list_presets,
 	//[CONTROL_CMD_SELECT_PRESET] =       	arguments_select_preset,
 	[CONTROL_CMD_GET_BRIGHTNESS] =      	arguments_get_brightness,

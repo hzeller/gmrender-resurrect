@@ -15,8 +15,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -63,7 +63,7 @@ static struct xmlelement *gen_specversion(struct xmldoc *doc,
 
 static struct xmlelement *gen_scpd_action(struct xmldoc *doc,
                                           struct action *act,
-                                          struct argument **arglist,
+                                          struct argument *arglist,
                                           const char **varnames)
 {
 	struct xmlelement *top;
@@ -77,7 +77,8 @@ static struct xmlelement *gen_scpd_action(struct xmldoc *doc,
 		int j;
 		parent=xmlelement_new(doc, "argumentList");
 		xmlelement_add_element(doc, top, parent);
-		for(j=0; (arg=arglist[j]); j++) {
+		/* a NULL name is the sentinel for 'end of list' */
+		for(j=0; (arg=&arglist[j], arg->name); j++) {
 			child=xmlelement_new(doc, "argument");
 			add_value_element(doc,child,"name", arg->name);
 			add_value_element(doc,child,"direction",
@@ -101,7 +102,7 @@ static struct xmlelement *gen_scpd_actionlist(struct xmldoc *doc,
 	top=xmlelement_new(doc, "actionList");
 	for(i=0; i<srv->command_count; i++) {
 		struct action *act;
-		struct argument **arglist;
+		struct argument *arglist;
 		const char **varnames;
 		act=&(srv->actions[i]);
 		arglist=srv->action_arguments[i];
@@ -139,7 +140,7 @@ static struct xmlelement *gen_scpd_statevar(struct xmldoc *doc,
 		xmlelement_add_element(doc, top, parent);
 		for(i=0; (allowed_value=valuelist[i]); i++) {
 			add_value_element(doc,parent,"allowedValue", allowed_value);
-		} 
+		}
 	}
 	if (range) {
 		parent=xmlelement_new(doc, "allowedValueRange");
@@ -189,7 +190,7 @@ static struct xmldoc *generate_scpd(struct service *srv)
 
 	child=gen_scpd_servicestatetable(doc,srv);
 	xmlelement_add_element(doc, root, child);
-	
+
 	return doc;
 }
 
@@ -223,5 +224,3 @@ char *upnp_get_scpd(struct service *srv)
 	}
 	return result;
 }
-
-

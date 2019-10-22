@@ -80,47 +80,49 @@ typedef enum {
 	CONNMGR_CMD_COUNT
 } connmgr_cmd;
 
-static struct argument *arguments_getprotocolinfo[] = {
-	& (struct argument) { "Source", PARAM_DIR_OUT, CONNMGR_VAR_SRC_PROTO_INFO },
-	& (struct argument) { "Sink", PARAM_DIR_OUT, CONNMGR_VAR_SINK_PROTO_INFO },
-        NULL
+static struct argument arguments_getprotocolinfo[] = {
+	{ "Source", PARAM_DIR_OUT, CONNMGR_VAR_SRC_PROTO_INFO },
+	{ "Sink", PARAM_DIR_OUT, CONNMGR_VAR_SINK_PROTO_INFO },
+        { NULL },
 };
-static struct argument *arguments_getcurrentconnectionids[] = {
-	& (struct argument) { "ConnectionIDs", PARAM_DIR_OUT, CONNMGR_VAR_CUR_CONN_IDS },
-        NULL
+
+static struct argument arguments_getcurrentconnectionids[] = {
+	{ "ConnectionIDs", PARAM_DIR_OUT, CONNMGR_VAR_CUR_CONN_IDS },
+        { NULL }
 };
-static struct argument *arguments_setcurrentconnectioninfo[] = {
-	& (struct argument) { "ConnectionID", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_ID },
-	& (struct argument) { "RcsID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_RCS_ID },
-	& (struct argument) { "AVTransportID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_AVT_ID },
-	& (struct argument) { "ProtocolInfo", PARAM_DIR_OUT, CONNMGR_VAR_AAT_PROTO_INFO },
-	& (struct argument) { "PeerConnectionManager", PARAM_DIR_OUT, CONNMGR_VAR_AAT_CONN_MGR },
-	& (struct argument) { "PeerConnectionID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_CONN_ID },
-	& (struct argument) { "Direction", PARAM_DIR_OUT, CONNMGR_VAR_AAT_DIR },
-	& (struct argument) { "Status", PARAM_DIR_OUT, CONNMGR_VAR_AAT_CONN_STATUS },
-        NULL
+
+static struct argument arguments_setcurrentconnectioninfo[] = {
+	{ "ConnectionID", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_ID },
+	{ "RcsID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_RCS_ID },
+	{ "AVTransportID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_AVT_ID },
+	{ "ProtocolInfo", PARAM_DIR_OUT, CONNMGR_VAR_AAT_PROTO_INFO },
+	{ "PeerConnectionManager", PARAM_DIR_OUT, CONNMGR_VAR_AAT_CONN_MGR },
+	{ "PeerConnectionID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_CONN_ID },
+	{ "Direction", PARAM_DIR_OUT, CONNMGR_VAR_AAT_DIR },
+	{ "Status", PARAM_DIR_OUT, CONNMGR_VAR_AAT_CONN_STATUS },
+        { NULL }
 };
-static struct argument *arguments_prepareforconnection[] = {
-	& (struct argument) { "RemoteProtocolInfo", PARAM_DIR_IN, CONNMGR_VAR_AAT_PROTO_INFO },
-	& (struct argument) { "PeerConnectionManager", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_MGR },
-	& (struct argument) { "PeerConnectionID", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_ID },
-	& (struct argument) { "Direction", PARAM_DIR_IN, CONNMGR_VAR_AAT_DIR },
-	& (struct argument) { "ConnectionID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_CONN_ID },
-	& (struct argument) { "AVTransportID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_AVT_ID },
-	& (struct argument) { "RcsID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_RCS_ID },
-	NULL
+static struct argument arguments_prepareforconnection[] = {
+	{ "RemoteProtocolInfo", PARAM_DIR_IN, CONNMGR_VAR_AAT_PROTO_INFO },
+	{ "PeerConnectionManager", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_MGR },
+	{ "PeerConnectionID", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_ID },
+	{ "Direction", PARAM_DIR_IN, CONNMGR_VAR_AAT_DIR },
+	{ "ConnectionID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_CONN_ID },
+	{ "AVTransportID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_AVT_ID },
+	{ "RcsID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_RCS_ID },
+	{ NULL }
 };
 //static struct argument *arguments_connectioncomplete[] = {
-//	& (struct argument) { "ConnectionID", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_ID },
+//	{ "ConnectionID", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_ID },
 //        NULL
 //};
 
-static struct argument **argument_list[] = {
-	[CONNMGR_CMD_GETPROTOCOLINFO] =			arguments_getprotocolinfo,
-	[CONNMGR_CMD_GETCURRENTCONNECTIONIDS] =		arguments_getcurrentconnectionids,
-	[CONNMGR_CMD_SETCURRENTCONNECTIONINFO] =	arguments_setcurrentconnectioninfo,
-	[CONNMGR_CMD_PREPAREFORCONNECTION] =		arguments_prepareforconnection,
-	//[CONNMGR_CMD_CONNECTIONCOMPLETE] =		arguments_connectioncomplete,
+static struct argument *argument_list[] = {
+	[CONNMGR_CMD_GETPROTOCOLINFO] =	 arguments_getprotocolinfo,
+	[CONNMGR_CMD_GETCURRENTCONNECTIONIDS] =	arguments_getcurrentconnectionids,
+	[CONNMGR_CMD_SETCURRENTCONNECTIONINFO] = arguments_setcurrentconnectioninfo,
+	[CONNMGR_CMD_PREPAREFORCONNECTION] = arguments_prepareforconnection,
+	//[CONNMGR_CMD_CONNECTIONCOMPLETE] = arguments_connectioncomplete,
 	[CONNMGR_CMD_UNKNOWN]	=	NULL
 };
 
