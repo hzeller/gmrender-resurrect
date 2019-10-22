@@ -190,7 +190,12 @@ static ithread_mutex_t connmgr_mutex;
 
 static GSList* supported_types_list;
 
-static const char *mime_filter;
+static struct
+{
+	GSList* allowed_roots;
+	GSList* removed_types;
+	GSList* added_types;
+} mime_filter;
 
 static bool add_mime_type(const char* mime_type) 
 {
@@ -198,6 +203,7 @@ static bool add_mime_type(const char* mime_type)
 	if (g_slist_find_custom(supported_types_list, mime_type, (GCompareFunc) strcmp) != NULL)
 		return false;
 	
+	// Sorted insert into list
 	supported_types_list = g_slist_insert_sorted(supported_types_list, strdup(mime_type), (GCompareFunc) strcmp);
 
 	return true;
@@ -224,31 +230,32 @@ static bool remove_mime_type(const char* mime_type)
 	return false;
 }
 
-static int filter_mime_type(const char* filterList, const char* mime_type) {
-	// Make a modifiable copy of the mime type
-	char* type = malloc(strlen(mime_type) + 1);
-	if (type == NULL)
-		return 0;
+static gint g_compare_mime_root(gconstpointer a, gconstpointer b)
+{
+	size_t aLen = strlen(a);
+	size_t bLen = strlen(b);
+	
+	// Only compare up to the small string
+	int min = (aLen < bLen) ? aLen : bLen;
 
-	strcpy(type, mime_type);
+	return strncmp((const char*) a, (const char*) b, min);
+}
 
-	// Fetch the base type
-	char* base = strtok(type, "/");
+static void g_add_mime_type(gpointer data, gpointer user_data)
+{
+	add_mime_type((const char*) data);
+}
 
-	// Check for base type in filter
-	int result = (strstr(filterList, base) == NULL);
-
-	free(type);
-	return result;
+static void g_remove_mime_type(gpointer data, gpointer user_data)
+{
+	remove_mime_type((const char*) data);
 }
 
 static void register_mime_type_internal(const char *mime_type) {
-	// Filter mime types
-	if (mime_filter != NULL && filter_mime_type(mime_filter, mime_type))
-	{
-		Log_info("connmgr", "Filtered support for '%s'", mime_type);
+
+	// Filter MIME type on allowed roots
+	if (mime_filter.allowed_roots != NULL && g_slist_find_custom(mime_filter.allowed_roots, mime_type, g_compare_mime_root) == NULL)
 		return;
-	}
 
 	if (add_mime_type(mime_type))
 		Log_info("connmgr", "Registering support for '%s'", mime_type);
@@ -299,10 +306,22 @@ void register_mime_type(const char *mime_type) {
 
 void connmgr_set_mime_filter(const char* filter)
 {
-	mime_filter = filter;
+	char* filters = strdup(filter);
+
+	char* token = strtok(filters, ",;");
+	while(token != NULL)
+	{
+		if (token[0] == '+')
+			mime_filter.added_types = g_slist_prepend(mime_filter.added_types, strdup(&token[1]));
+		else if (token[0] == '-')
+			mime_filter.removed_types = g_slist_prepend(mime_filter.removed_types, strdup(&token[1]));
+		else
+			mime_filter.allowed_roots = g_slist_prepend(mime_filter.allowed_roots, strdup(token));
+
+		token = strtok(NULL, ",;");
+	}
 	
-	if (mime_filter != NULL)
-		Log_info("connmgr", "MIME filter set: %s", mime_filter);
+	free(filters);
 }
 
 // Append string, does not nul-terminate.
@@ -328,6 +347,12 @@ int connmgr_init(void) {
 		return -1;
 	}
 
+	// Manually add additional MIME types
+	g_slist_foreach(mime_filter.added_types, g_add_mime_type, NULL);
+	
+	// Remove disallowed MIME types
+	g_slist_foreach(mime_filter.removed_types, g_remove_mime_type, NULL);
+	
 	char *p = buf;
 	for (GSList* entry = supported_types_list; entry != NULL; entry = g_slist_next(entry))
 	{
@@ -353,6 +378,12 @@ int connmgr_init(void) {
 					 CONNMGR_VAR_SINK_PROTO_INFO, buf);
 	}
 	free(buf);
+
+	// Free all lists that were generated
+	g_slist_free_full(supported_types_list, free);
+	g_slist_free_full(mime_filter.allowed_roots, free);
+	g_slist_free_full(mime_filter.added_types, free);
+	g_slist_free_full(mime_filter.removed_types, free);
 
 	return 0;
 }
