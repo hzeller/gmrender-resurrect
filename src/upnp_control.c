@@ -84,7 +84,6 @@ typedef enum {
 	CONTROL_VAR_PRESET_NAME_LIST,
 	CONTROL_VAR_CONTRAST,
 	CONTROL_VAR_BRIGHTNESS,
-	CONTROL_VAR_UNKNOWN,
 	CONTROL_VAR_COUNT
 } control_variable_t;
 
@@ -124,7 +123,6 @@ typedef enum {
 	//CONTROL_CMD_SET_VERT_KEYSTONE,
 	CONTROL_CMD_SET_VOL,
 	CONTROL_CMD_SET_VOL_DB,
-	CONTROL_CMD_UNKNOWN,
 	CONTROL_CMD_COUNT
 } control_cmd;
 
@@ -150,7 +148,7 @@ static const char *control_variable_names[] = {
 	[CONTROL_VAR_VOLUME] = "Volume",
 	[CONTROL_VAR_VOLUME_DB] = "VolumeDB",
 	[CONTROL_VAR_LOUDNESS] = "Loudness",
-	[CONTROL_VAR_UNKNOWN] = NULL
+	[CONTROL_VAR_COUNT] = NULL
 };
 
 static const char *aat_presetnames[] =
@@ -225,7 +223,7 @@ static struct var_meta control_var_meta[] = {
 	[CONTROL_VAR_VOLUME] =			{ SENDEVENT_NO, DATATYPE_UI2, NULL, &volume_range },
 	[CONTROL_VAR_VOLUME_DB] =		{ SENDEVENT_NO, DATATYPE_I2, NULL, &volume_db_range },
 	[CONTROL_VAR_LOUDNESS] =		{ SENDEVENT_NO, DATATYPE_BOOLEAN, NULL, NULL },
-	[CONTROL_VAR_UNKNOWN] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
+	[CONTROL_VAR_COUNT] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
 };
 
 static const char *control_default_values[] = {
@@ -250,7 +248,7 @@ static const char *control_default_values[] = {
 	[CONTROL_VAR_VOLUME] = "0",
 	[CONTROL_VAR_VOLUME_DB] = "0",
 	[CONTROL_VAR_LOUDNESS] = "0",
-	[CONTROL_VAR_UNKNOWN] = NULL
+	[CONTROL_VAR_COUNT] = NULL
 };
 
 extern struct service control_service_;   // Defined below.
@@ -497,7 +495,7 @@ static struct argument *argument_list[] = {
 	[CONTROL_CMD_GET_VOL_DBRANGE] =     	arguments_get_vol_dbrange,
 	[CONTROL_CMD_GET_LOUDNESS] =        	arguments_get_loudness,
 	//[CONTROL_CMD_SET_LOUDNESS] =        	arguments_set_loudness,
-	[CONTROL_CMD_UNKNOWN] =			NULL
+	[CONTROL_CMD_COUNT] =			NULL
 };
 
 
@@ -772,7 +770,7 @@ static struct action control_actions[] = {
 	[CONTROL_CMD_GET_VOL_DBRANGE] =     	{"GetVolumeDBRange", get_volume_dbrange}, /* optional */
 	[CONTROL_CMD_GET_LOUDNESS] =        	{"GetLoudness", get_loudness}, /* optional */
 	//[CONTROL_CMD_SET_LOUDNESS] =        	{"SetLoudness", NULL}, /* optional */
-	[CONTROL_CMD_UNKNOWN] =			{NULL, NULL}
+	[CONTROL_CMD_COUNT] =			{NULL, NULL}
 };
 
 struct service *upnp_control_get_service(void) {
@@ -832,6 +830,6 @@ struct service control_service_ = {
 	.variable_container =  NULL,  // set later.
 	.last_change =         NULL,
 	.variable_meta =       control_var_meta,
-	.variable_count =      CONTROL_VAR_UNKNOWN,
-	.command_count =       CONTROL_CMD_UNKNOWN,
+	.variable_count =      CONTROL_VAR_COUNT,
+	.command_count =       CONTROL_CMD_COUNT,
 };

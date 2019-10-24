@@ -66,7 +66,6 @@ typedef enum {
 	CONNMGR_VAR_AAT_CONN_ID,
 	CONNMGR_VAR_SRC_PROTO_INFO,
 	CONNMGR_VAR_CUR_CONN_IDS,
-	CONNMGR_VAR_UNKNOWN,
 	CONNMGR_VAR_COUNT
 } connmgr_variable;
 
@@ -76,7 +75,6 @@ typedef enum {
 	CONNMGR_CMD_GETPROTOCOLINFO,
 	CONNMGR_CMD_PREPAREFORCONNECTION,
 	//CONNMGR_CMD_CONNECTIONCOMPLETE,
-	CONNMGR_CMD_UNKNOWN,
 	CONNMGR_CMD_COUNT
 } connmgr_cmd;
 
@@ -123,7 +121,7 @@ static struct argument *argument_list[] = {
 	[CONNMGR_CMD_SETCURRENTCONNECTIONINFO] = arguments_setcurrentconnectioninfo,
 	[CONNMGR_CMD_PREPAREFORCONNECTION] = arguments_prepareforconnection,
 	//[CONNMGR_CMD_CONNECTIONCOMPLETE] = arguments_connectioncomplete,
-	[CONNMGR_CMD_UNKNOWN]	=	NULL
+	[CONNMGR_CMD_COUNT]	=	NULL
 };
 
 static const char *connmgr_variable_names[] = {
@@ -137,7 +135,7 @@ static const char *connmgr_variable_names[] = {
 	[CONNMGR_VAR_AAT_CONN_ID] = "A_ARG_TYPE_ConnectionID",
 	[CONNMGR_VAR_AAT_AVT_ID] = "A_ARG_TYPE_AVTransportID",
 	[CONNMGR_VAR_AAT_RCS_ID] = "A_ARG_TYPE_RcsID",
-	[CONNMGR_VAR_UNKNOWN] = NULL
+	[CONNMGR_VAR_COUNT] = NULL
 };
 
 static const char *connmgr_default_values[] = {
@@ -151,7 +149,7 @@ static const char *connmgr_default_values[] = {
 	[CONNMGR_VAR_AAT_CONN_ID] = "-1",
 	[CONNMGR_VAR_AAT_AVT_ID] = "0",
 	[CONNMGR_VAR_AAT_RCS_ID] = "0",
-	[CONNMGR_VAR_UNKNOWN] = NULL
+	[CONNMGR_VAR_COUNT] = NULL
 };
 
 static const char *connstatus_values[] = {
@@ -179,7 +177,7 @@ static struct var_meta connmgr_var_meta[] = {
 	[CONNMGR_VAR_AAT_CONN_ID] =	{ SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
 	[CONNMGR_VAR_AAT_AVT_ID] =	{ SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
 	[CONNMGR_VAR_AAT_RCS_ID] =	{ SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
-	[CONNMGR_VAR_UNKNOWN] =		{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
+	[CONNMGR_VAR_COUNT] =		{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
 };
 
 static ithread_mutex_t connmgr_mutex;
@@ -386,7 +384,7 @@ static struct action connmgr_actions[] = {
 	[CONNMGR_CMD_SETCURRENTCONNECTIONINFO] ={"GetCurrentConnectionInfo", get_current_conn_info},
 	[CONNMGR_CMD_PREPAREFORCONNECTION] =	{"PrepareForConnection", prepare_for_connection}, /* optional */
 	//[CONNMGR_CMD_CONNECTIONCOMPLETE] =	{"ConnectionComplete", NULL},	/* optional */
-	[CONNMGR_CMD_UNKNOWN] =			{NULL, NULL}
+	[CONNMGR_CMD_COUNT] =			{NULL, NULL}
 };
 
 struct service connmgr_service_ = {
@@ -402,6 +400,6 @@ struct service connmgr_service_ = {
 	.variable_container =   NULL, // set later.
 	.last_change =          NULL,
         .variable_meta =        connmgr_var_meta,
-        .variable_count =       CONNMGR_VAR_UNKNOWN,
-        .command_count =        CONNMGR_CMD_UNKNOWN,
+        .variable_count =       CONNMGR_VAR_COUNT,
+        .command_count =        CONNMGR_CMD_COUNT,
 };

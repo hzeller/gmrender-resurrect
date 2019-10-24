@@ -88,7 +88,6 @@ typedef enum {
 	TRANSPORT_VAR_CUR_TRACK_DUR,
 	TRANSPORT_VAR_TRANSPORT_STATE,
 	TRANSPORT_VAR_POS_REC_QUAL_MODE,
-	TRANSPORT_VAR_UNKNOWN,
 	TRANSPORT_VAR_COUNT
 } transport_variable_t;
 
@@ -110,7 +109,6 @@ enum {
 	TRANSPORT_CMD_SETNEXTAVTRANSPORTURI,
 	//TRANSPORT_CMD_RECORD,
 	//TRANSPORT_CMD_SETRECORDQUALITYMODE,
-	TRANSPORT_CMD_UNKNOWN,
 	TRANSPORT_CMD_COUNT
 };
 
@@ -166,7 +164,7 @@ static const char *transport_variable_names[] = {
 	[TRANSPORT_VAR_AAT_SEEK_TARGET] = "A_ARG_TYPE_SeekTarget",
 	[TRANSPORT_VAR_AAT_INSTANCE_ID] = "A_ARG_TYPE_InstanceID",
 	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] = "CurrentTransportActions",
-	[TRANSPORT_VAR_UNKNOWN] = NULL
+	[TRANSPORT_VAR_COUNT] = NULL
 };
 
 static const char kZeroTime[] = "0:00:00";
@@ -201,7 +199,7 @@ static const char *transport_default_values[] = {
 	[TRANSPORT_VAR_AAT_SEEK_TARGET] = "",
 	[TRANSPORT_VAR_AAT_INSTANCE_ID] = "0",
 	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] = "PLAY",
-	[TRANSPORT_VAR_UNKNOWN] = NULL
+	[TRANSPORT_VAR_COUNT] = NULL
 };
 
 enum transport_state {
@@ -360,7 +358,7 @@ static struct var_meta transport_var_meta[] = {
 	[TRANSPORT_VAR_AAT_SEEK_TARGET] =		{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
 	[TRANSPORT_VAR_AAT_INSTANCE_ID] =		{ SENDEVENT_NO, DATATYPE_UI4, NULL, NULL },
 	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] =		{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_UNKNOWN] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
+	[TRANSPORT_VAR_COUNT] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
 };
 
 static struct argument arguments_setavtransporturi[] = {
@@ -494,7 +492,7 @@ static struct argument *argument_list[] = {
 	//[TRANSPORT_CMD_SETPLAYMODE] =               arguments_setplaymode,
 	//[TRANSPORT_CMD_SETRECORDQUALITYMODE] =      arguments_setrecordqualitymode,
 	[TRANSPORT_CMD_GETCURRENTTRANSPORTACTIONS] = arguments_getcurrenttransportactions,
-	[TRANSPORT_CMD_UNKNOWN] =	NULL
+	[TRANSPORT_CMD_COUNT] =	NULL
 };
 
 
@@ -1003,7 +1001,7 @@ static struct action transport_actions[] = {
 	//[TRANSPORT_CMD_PREVIOUS] =                  {"Previous", previous},
 	//[TRANSPORT_CMD_SETPLAYMODE] =               {"SetPlayMode", NULL},	/* optional */
 	//[TRANSPORT_CMD_SETRECORDQUALITYMODE] =      {"SetRecordQualityMode", NULL},	/* optional */
-	[TRANSPORT_CMD_UNKNOWN] =                  {NULL, NULL}
+	[TRANSPORT_CMD_COUNT] =                  {NULL, NULL}
 };
 
 struct service *upnp_transport_get_service(void) {
@@ -1057,6 +1055,6 @@ struct service transport_service_ = {
 	.variable_container =   NULL, // set later.
 	.last_change =          NULL,
 	.variable_meta =        transport_var_meta,
-	.variable_count =       TRANSPORT_VAR_UNKNOWN,
-	.command_count =        TRANSPORT_CMD_UNKNOWN,
+	.variable_count =       TRANSPORT_VAR_COUNT,
+	.command_count =        TRANSPORT_CMD_COUNT,
 };

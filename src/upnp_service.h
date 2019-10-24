@@ -56,8 +56,7 @@ typedef enum {
         DATATYPE_I4,
         DATATYPE_UI2,
         DATATYPE_UI4,
-        DATATYPE_UNKNOWN,
-        DATATYPE_COUNT
+        DATATYPE_UNKNOWN
 } param_datatype;
 
 typedef enum {
