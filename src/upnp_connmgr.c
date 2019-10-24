@@ -243,12 +243,14 @@ static gint g_compare_mime_root(gconstpointer a, gconstpointer b)
 
 static void g_add_mime_type(gpointer data, gpointer user_data)
 {
-	add_mime_type((const char*) data);
+	if (add_mime_type((const char*) data))
+		Log_info("connmgr", "Manually registering support for '%s'", (const char*) data);
 }
 
 static void g_remove_mime_type(gpointer data, gpointer user_data)
 {
-	remove_mime_type((const char*) data);
+	if (remove_mime_type((const char*) data))
+		Log_info("connmgr", "Deregistering support for '%s'", (const char*) data);
 }
 
 static void register_mime_type_internal(const char *mime_type) {
