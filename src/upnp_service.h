@@ -104,8 +104,6 @@ struct service {
 	struct var_meta *variable_meta;
 	int variable_count;
 	int command_count;
-	const char **eventvar_names;
-	const char **eventvar_values;
 };
 
 struct action_event {
