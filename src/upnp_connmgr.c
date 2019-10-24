@@ -306,6 +306,9 @@ void register_mime_type(const char *mime_type) {
 
 void connmgr_set_mime_filter(const char* filter)
 {
+	if (filter == NULL)
+		return;
+
 	char* filters = strdup(filter);
 
 	char* token = strtok(filters, ",;");
