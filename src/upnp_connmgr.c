@@ -313,7 +313,9 @@ void connmgr_set_mime_filter(const char* filter)
 
 	char* filters = strdup(filter);
 
-	char* token = strtok_r(filters, ",");
+	char* saveptr = NULL; // State pointer for strtok_r
+
+	char* token = strtok_r(filters, ",", &saveptr);
 	while(token != NULL)
 	{
 		if (token[0] == '+')
@@ -332,7 +334,7 @@ void connmgr_set_mime_filter(const char* filter)
 				strdup(token));
 		}
 
-		token = strtok_r(NULL, ",");
+		token = strtok_r(NULL, ",", &saveptr);
 	}
 	
 	free(filters);
