@@ -317,11 +317,20 @@ void connmgr_set_mime_filter(const char* filter)
 	while(token != NULL)
 	{
 		if (token[0] == '+')
-			mime_filter.added_types = g_slist_prepend(mime_filter.added_types, strdup(&token[1]));
+		{
+			mime_filter.added_types = g_slist_prepend(mime_filter.added_types, 
+				strdup(&token[1]));
+		}
 		else if (token[0] == '-')
-			mime_filter.removed_types = g_slist_prepend(mime_filter.removed_types, strdup(&token[1]));
+		{
+			mime_filter.removed_types = g_slist_prepend(mime_filter.removed_types, 
+				strdup(&token[1]));
+		}
 		else
-			mime_filter.allowed_roots = g_slist_prepend(mime_filter.allowed_roots, strdup(token));
+		{
+			mime_filter.allowed_roots = g_slist_prepend(mime_filter.allowed_roots, 
+				strdup(token));
+		}
 
 		token = strtok(NULL, ",;");
 	}
