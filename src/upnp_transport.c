@@ -57,40 +57,6 @@
 // Namespace, see UPnP-av-AVTransport-v3-Service-20101231.pdf page 15
 #define TRANSPORT_EVENT_XML_NS "urn:schemas-upnp-org:metadata-1-0/AVT/"
 
-typedef enum {
-	TRANSPORT_VAR_TRANSPORT_STATUS,
-	TRANSPORT_VAR_NEXT_AV_URI,
-	TRANSPORT_VAR_NEXT_AV_URI_META,
-	TRANSPORT_VAR_CUR_TRACK_META,
-	TRANSPORT_VAR_REL_CTR_POS,
-	TRANSPORT_VAR_AAT_INSTANCE_ID,
-	TRANSPORT_VAR_AAT_SEEK_TARGET,
-	TRANSPORT_VAR_PLAY_MEDIUM,
-	TRANSPORT_VAR_REL_TIME_POS,
-	TRANSPORT_VAR_REC_MEDIA,
-	TRANSPORT_VAR_CUR_PLAY_MODE,
-	TRANSPORT_VAR_TRANSPORT_PLAY_SPEED,
-	TRANSPORT_VAR_PLAY_MEDIA,
-	TRANSPORT_VAR_ABS_TIME_POS,
-	TRANSPORT_VAR_CUR_TRACK,
-	TRANSPORT_VAR_CUR_TRACK_URI,
-	TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS,
-	TRANSPORT_VAR_NR_TRACKS,
-	TRANSPORT_VAR_AV_URI,
-	TRANSPORT_VAR_ABS_CTR_POS,
-	TRANSPORT_VAR_CUR_REC_QUAL_MODE,
-	TRANSPORT_VAR_CUR_MEDIA_DUR,
-	TRANSPORT_VAR_AAT_SEEK_MODE,
-	TRANSPORT_VAR_AV_URI_META,
-	TRANSPORT_VAR_REC_MEDIUM,
-	TRANSPORT_VAR_REC_MEDIUM_WR_STATUS,
-	TRANSPORT_VAR_LAST_CHANGE,
-	TRANSPORT_VAR_CUR_TRACK_DUR,
-	TRANSPORT_VAR_TRANSPORT_STATE,
-	TRANSPORT_VAR_POS_REC_QUAL_MODE,
-	TRANSPORT_VAR_COUNT
-} transport_variable_t;
-
 enum {
 	TRANSPORT_CMD_GETCURRENTTRANSPORTACTIONS,
 	TRANSPORT_CMD_GETDEVICECAPABILITIES,
@@ -133,74 +99,7 @@ enum UPNPTransportError {
 	UPNP_TRANSPORT_E_INVALID_IID	= 718,
 };
 
-static const char *transport_variable_names[] = {
-	[TRANSPORT_VAR_TRANSPORT_STATE] = "TransportState",
-	[TRANSPORT_VAR_TRANSPORT_STATUS] = "TransportStatus",
-	[TRANSPORT_VAR_PLAY_MEDIUM] = "PlaybackStorageMedium",
-	[TRANSPORT_VAR_REC_MEDIUM] = "RecordStorageMedium",
-	[TRANSPORT_VAR_PLAY_MEDIA] = "PossiblePlaybackStorageMedia",
-	[TRANSPORT_VAR_REC_MEDIA] = "PossibleRecordStorageMedia",
-	[TRANSPORT_VAR_CUR_PLAY_MODE] = "CurrentPlayMode",
-	[TRANSPORT_VAR_TRANSPORT_PLAY_SPEED] = "TransportPlaySpeed",
-	[TRANSPORT_VAR_REC_MEDIUM_WR_STATUS] = "RecordMediumWriteStatus",
-	[TRANSPORT_VAR_CUR_REC_QUAL_MODE] = "CurrentRecordQualityMode",
-	[TRANSPORT_VAR_POS_REC_QUAL_MODE] = "PossibleRecordQualityModes",
-	[TRANSPORT_VAR_NR_TRACKS] = "NumberOfTracks",
-	[TRANSPORT_VAR_CUR_TRACK] = "CurrentTrack",
-	[TRANSPORT_VAR_CUR_TRACK_DUR] = "CurrentTrackDuration",
-	[TRANSPORT_VAR_CUR_MEDIA_DUR] = "CurrentMediaDuration",
-	[TRANSPORT_VAR_CUR_TRACK_META] = "CurrentTrackMetaData",
-	[TRANSPORT_VAR_CUR_TRACK_URI] = "CurrentTrackURI",
-	[TRANSPORT_VAR_AV_URI] = "AVTransportURI",
-	[TRANSPORT_VAR_AV_URI_META] = "AVTransportURIMetaData",
-	[TRANSPORT_VAR_NEXT_AV_URI] = "NextAVTransportURI",
-	[TRANSPORT_VAR_NEXT_AV_URI_META] = "NextAVTransportURIMetaData",
-	[TRANSPORT_VAR_REL_TIME_POS] = "RelativeTimePosition",
-	[TRANSPORT_VAR_ABS_TIME_POS] = "AbsoluteTimePosition",
-	[TRANSPORT_VAR_REL_CTR_POS] = "RelativeCounterPosition",
-	[TRANSPORT_VAR_ABS_CTR_POS] = "AbsoluteCounterPosition",
-	[TRANSPORT_VAR_LAST_CHANGE] = "LastChange",
-	[TRANSPORT_VAR_AAT_SEEK_MODE] = "A_ARG_TYPE_SeekMode",
-	[TRANSPORT_VAR_AAT_SEEK_TARGET] = "A_ARG_TYPE_SeekTarget",
-	[TRANSPORT_VAR_AAT_INSTANCE_ID] = "A_ARG_TYPE_InstanceID",
-	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] = "CurrentTransportActions",
-	[TRANSPORT_VAR_COUNT] = NULL
-};
-
 static const char kZeroTime[] = "0:00:00";
-static const char *transport_default_values[] = {
-	[TRANSPORT_VAR_TRANSPORT_STATE] = "STOPPED",
-	[TRANSPORT_VAR_TRANSPORT_STATUS] = "OK",
-	[TRANSPORT_VAR_PLAY_MEDIUM] = "UNKNOWN",
-	[TRANSPORT_VAR_REC_MEDIUM] = "NOT_IMPLEMENTED",
-	[TRANSPORT_VAR_PLAY_MEDIA] = "NETWORK,UNKNOWN",
-	[TRANSPORT_VAR_REC_MEDIA] = "NOT_IMPLEMENTED",
-	[TRANSPORT_VAR_CUR_PLAY_MODE] = "NORMAL",
-	[TRANSPORT_VAR_TRANSPORT_PLAY_SPEED] = "1",
-	[TRANSPORT_VAR_REC_MEDIUM_WR_STATUS] = "NOT_IMPLEMENTED",
-	[TRANSPORT_VAR_CUR_REC_QUAL_MODE] = "NOT_IMPLEMENTED",
-	[TRANSPORT_VAR_POS_REC_QUAL_MODE] = "NOT_IMPLEMENTED",
-	[TRANSPORT_VAR_NR_TRACKS] = "0",
-	[TRANSPORT_VAR_CUR_TRACK] = "0",
-	[TRANSPORT_VAR_CUR_TRACK_DUR] = kZeroTime,
-	[TRANSPORT_VAR_CUR_MEDIA_DUR] = "",
-	[TRANSPORT_VAR_CUR_TRACK_META] = "",
-	[TRANSPORT_VAR_CUR_TRACK_URI] = "",
-	[TRANSPORT_VAR_AV_URI] = "",
-	[TRANSPORT_VAR_AV_URI_META] = "",
-	[TRANSPORT_VAR_NEXT_AV_URI] = "",
-	[TRANSPORT_VAR_NEXT_AV_URI_META] = "",
-	[TRANSPORT_VAR_REL_TIME_POS] = kZeroTime,
-	[TRANSPORT_VAR_ABS_TIME_POS] = "NOT_IMPLEMENTED",
-	[TRANSPORT_VAR_REL_CTR_POS] = "2147483647",
-	[TRANSPORT_VAR_ABS_CTR_POS] = "2147483647",
-        [TRANSPORT_VAR_LAST_CHANGE] = "<Event xmlns=\"urn:schemas-upnp-org:metadata-1-0/AVT/\"/>",
-	[TRANSPORT_VAR_AAT_SEEK_MODE] = "TRACK_NR",
-	[TRANSPORT_VAR_AAT_SEEK_TARGET] = "",
-	[TRANSPORT_VAR_AAT_INSTANCE_ID] = "0",
-	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] = "PLAY",
-	[TRANSPORT_VAR_COUNT] = NULL
-};
 
 enum transport_state {
 	TRANSPORT_STOPPED,
@@ -327,39 +226,39 @@ static struct param_range track_nr_range = {
 	0
 };
 
-static struct var_meta transport_var_meta[] = {
-	[TRANSPORT_VAR_TRANSPORT_STATE] =		{ SENDEVENT_NO, DATATYPE_STRING, transport_states, NULL },
-	[TRANSPORT_VAR_TRANSPORT_STATUS] =		{ SENDEVENT_NO, DATATYPE_STRING, transport_stati, NULL },
-	[TRANSPORT_VAR_PLAY_MEDIUM] =			{ SENDEVENT_NO, DATATYPE_STRING, media, NULL },
-	[TRANSPORT_VAR_REC_MEDIUM] =			{ SENDEVENT_NO, DATATYPE_STRING, media, NULL },
-	[TRANSPORT_VAR_PLAY_MEDIA] =			{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_REC_MEDIA] =			{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_CUR_PLAY_MODE] =			{ SENDEVENT_NO, DATATYPE_STRING, playmodi, NULL, "NORMAL" },
-	[TRANSPORT_VAR_TRANSPORT_PLAY_SPEED] =		{ SENDEVENT_NO, DATATYPE_STRING, playspeeds, NULL },
-	[TRANSPORT_VAR_REC_MEDIUM_WR_STATUS] =		{ SENDEVENT_NO, DATATYPE_STRING, rec_write_stati, NULL },
-	[TRANSPORT_VAR_CUR_REC_QUAL_MODE] =		{ SENDEVENT_NO, DATATYPE_STRING, rec_quality_modi, NULL },
-	[TRANSPORT_VAR_POS_REC_QUAL_MODE] =		{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_NR_TRACKS] =			{ SENDEVENT_NO, DATATYPE_UI4, NULL, &track_nr_range }, /* no step */
-	[TRANSPORT_VAR_CUR_TRACK] =			{ SENDEVENT_NO, DATATYPE_UI4, NULL, &track_range },
-	[TRANSPORT_VAR_CUR_TRACK_DUR] =			{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_CUR_MEDIA_DUR] =			{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_CUR_TRACK_META] =		{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_CUR_TRACK_URI] =			{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_AV_URI] =			{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_AV_URI_META] =			{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_NEXT_AV_URI] =			{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_NEXT_AV_URI_META] =		{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_REL_TIME_POS] =			{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_ABS_TIME_POS] =			{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_REL_CTR_POS] =			{ SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
-	[TRANSPORT_VAR_ABS_CTR_POS] =			{ SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
-	[TRANSPORT_VAR_LAST_CHANGE] =			{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_AAT_SEEK_MODE] =			{ SENDEVENT_NO, DATATYPE_STRING, aat_seekmodi, NULL },
-	[TRANSPORT_VAR_AAT_SEEK_TARGET] =		{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_AAT_INSTANCE_ID] =		{ SENDEVENT_NO, DATATYPE_UI4, NULL, NULL },
-	[TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS] =		{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[TRANSPORT_VAR_COUNT] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
-};
+typedef enum {
+	TRANSPORT_VAR_TRANSPORT_STATUS,
+	TRANSPORT_VAR_NEXT_AV_URI,
+	TRANSPORT_VAR_NEXT_AV_URI_META,
+	TRANSPORT_VAR_CUR_TRACK_META,
+	TRANSPORT_VAR_REL_CTR_POS,
+	TRANSPORT_VAR_AAT_INSTANCE_ID,
+	TRANSPORT_VAR_AAT_SEEK_TARGET,
+	TRANSPORT_VAR_PLAY_MEDIUM,
+	TRANSPORT_VAR_REL_TIME_POS,
+	TRANSPORT_VAR_REC_MEDIA,
+	TRANSPORT_VAR_CUR_PLAY_MODE,
+	TRANSPORT_VAR_TRANSPORT_PLAY_SPEED,
+	TRANSPORT_VAR_PLAY_MEDIA,
+	TRANSPORT_VAR_ABS_TIME_POS,
+	TRANSPORT_VAR_CUR_TRACK,
+	TRANSPORT_VAR_CUR_TRACK_URI,
+	TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS,
+	TRANSPORT_VAR_NR_TRACKS,
+	TRANSPORT_VAR_AV_URI,
+	TRANSPORT_VAR_ABS_CTR_POS,
+	TRANSPORT_VAR_CUR_REC_QUAL_MODE,
+	TRANSPORT_VAR_CUR_MEDIA_DUR,
+	TRANSPORT_VAR_AAT_SEEK_MODE,
+	TRANSPORT_VAR_AV_URI_META,
+	TRANSPORT_VAR_REC_MEDIUM,
+	TRANSPORT_VAR_REC_MEDIUM_WR_STATUS,
+	TRANSPORT_VAR_LAST_CHANGE,
+	TRANSPORT_VAR_CUR_TRACK_DUR,
+	TRANSPORT_VAR_TRANSPORT_STATE,
+	TRANSPORT_VAR_POS_REC_QUAL_MODE,
+	TRANSPORT_VAR_COUNT
+} transport_variable_t;
 
 static struct argument arguments_setavtransporturi[] = {
         { "InstanceID", PARAM_DIR_IN, TRANSPORT_VAR_AAT_INSTANCE_ID },
@@ -498,7 +397,6 @@ static struct argument *argument_list[] = {
 
 // Our 'instance' variables.
 static enum transport_state transport_state_ = TRANSPORT_STOPPED;
-extern struct service transport_service_;   // Defined below.
 static variable_container_t *state_variables_ = NULL;
 
 /* protects transport_values, and service-specific state */
@@ -508,15 +406,20 @@ static ithread_mutex_t transport_mutex;
 static void service_lock(void)
 {
 	ithread_mutex_lock(&transport_mutex);
-	if (transport_service_.last_change) {
-		UPnPLastChangeCollector_start(transport_service_.last_change);
+
+	struct upnp_last_change_collector *
+		collector = upnp_transport_get_service()->last_change;
+	if (collector) {
+		UPnPLastChangeCollector_start(collector);
 	}
 }
 
 static void service_unlock(void)
 {
-	if (transport_service_.last_change) {
-		UPnPLastChangeCollector_finish(transport_service_.last_change);
+	struct upnp_last_change_collector *
+		collector = upnp_transport_get_service()->last_change;
+	if (collector) {
+		UPnPLastChangeCollector_finish(collector);
 	}
 	ithread_mutex_unlock(&transport_mutex);
 }
@@ -1005,31 +908,110 @@ static struct action transport_actions[] = {
 };
 
 struct service *upnp_transport_get_service(void) {
+	static struct service transport_service_ = {
+		.service_mutex =        &transport_mutex,
+		.service_id =           TRANSPORT_SERVICE_ID,
+		.service_type =         TRANSPORT_TYPE,
+		.scpd_url =		TRANSPORT_SCPD_URL,
+		.control_url =		TRANSPORT_CONTROL_URL,
+		.event_url =		TRANSPORT_EVENT_URL,
+		.event_xml_ns =         TRANSPORT_EVENT_XML_NS,
+		.actions =              transport_actions,
+		.action_arguments =     argument_list,
+		.variable_container =   NULL, // set later.
+		.last_change =          NULL,
+		.command_count =        TRANSPORT_CMD_COUNT,
+	};
+
+	static struct var_meta transport_var_meta[] = {
+		{TRANSPORT_VAR_TRANSPORT_STATE, "TransportState", "STOPPED",
+		 EV_NO, DATATYPE_STRING, transport_states, NULL },
+		{TRANSPORT_VAR_TRANSPORT_STATUS, "TransportStatus", "OK",
+		 EV_NO, DATATYPE_STRING, transport_stati, NULL },
+		{TRANSPORT_VAR_PLAY_MEDIUM, "PlaybackStorageMedium", "UNKNOWN",
+		 EV_NO, DATATYPE_STRING, media, NULL },
+		{TRANSPORT_VAR_REC_MEDIUM, "RecordStorageMedium", "NOT_IMPLEMENTED",
+		 EV_NO, DATATYPE_STRING, media, NULL },
+		{TRANSPORT_VAR_PLAY_MEDIA, "PossiblePlaybackStorageMedia", "NETWORK,UNKNOWN",
+		 EV_NO, DATATYPE_STRING, NULL, NULL },
+		{TRANSPORT_VAR_REC_MEDIA, "PossibleRecordStorageMedia","NOT_IMPLEMENTED",
+		 EV_NO, DATATYPE_STRING, NULL, NULL },
+		{TRANSPORT_VAR_CUR_PLAY_MODE, "CurrentPlayMode", "NORMAL",
+		 EV_NO, DATATYPE_STRING, playmodi, NULL},
+		{TRANSPORT_VAR_TRANSPORT_PLAY_SPEED, "TransportPlaySpeed", "1",
+		 EV_NO, DATATYPE_STRING, playspeeds, NULL },
+		{TRANSPORT_VAR_REC_MEDIUM_WR_STATUS, "RecordMediumWriteStatus", "NOT_IMPLEMENTED",
+		 EV_NO, DATATYPE_STRING, rec_write_stati, NULL },
+		{TRANSPORT_VAR_CUR_REC_QUAL_MODE, "CurrentRecordQualityMode","NOT_IMPLEMENTED",
+		 EV_NO, DATATYPE_STRING, rec_quality_modi, NULL },
+		{TRANSPORT_VAR_POS_REC_QUAL_MODE, "PossibleRecordQualityModes", "NOT_IMPLEMENTED",
+		 EV_NO, DATATYPE_STRING, NULL, NULL },
+		{TRANSPORT_VAR_NR_TRACKS, "NumberOfTracks", "0",
+		 EV_NO, DATATYPE_UI4, NULL, &track_nr_range }, /* no step */
+		{TRANSPORT_VAR_CUR_TRACK, "CurrentTrack", "0",
+		 EV_NO, DATATYPE_UI4, NULL, &track_range },
+		{TRANSPORT_VAR_CUR_TRACK_DUR, "CurrentTrackDuration", kZeroTime,
+		 EV_NO, DATATYPE_STRING, NULL, NULL },
+		{TRANSPORT_VAR_CUR_MEDIA_DUR, "CurrentMediaDuration", "",
+		 EV_NO, DATATYPE_STRING, NULL, NULL },
+		{TRANSPORT_VAR_CUR_TRACK_META, "CurrentTrackMetaData", "",
+		 EV_NO, DATATYPE_STRING, NULL, NULL },
+		{TRANSPORT_VAR_CUR_TRACK_URI, "CurrentTrackURI", "",
+		 EV_NO, DATATYPE_STRING, NULL, NULL },
+		{TRANSPORT_VAR_AV_URI, "AVTransportURI", "",
+		 EV_NO, DATATYPE_STRING, NULL, NULL },
+		{TRANSPORT_VAR_AV_URI_META, "AVTransportURIMetaData", "",
+		 EV_NO, DATATYPE_STRING, NULL, NULL },
+		{TRANSPORT_VAR_NEXT_AV_URI, "NextAVTransportURI", "",
+		 EV_NO, DATATYPE_STRING, NULL, NULL },
+		{TRANSPORT_VAR_NEXT_AV_URI_META, "NextAVTransportURIMetaData", "",
+		 EV_NO, DATATYPE_STRING, NULL, NULL },
+		{TRANSPORT_VAR_REL_TIME_POS, "RelativeTimePosition", kZeroTime,
+		 EV_NO, DATATYPE_STRING, NULL, NULL },
+		{TRANSPORT_VAR_ABS_TIME_POS, "AbsoluteTimePosition", "NOT_IMPLEMENTED",
+		 EV_NO, DATATYPE_STRING, NULL, NULL },
+		{TRANSPORT_VAR_REL_CTR_POS, "RelativeCounterPosition", "2147483647",
+		 EV_NO, DATATYPE_I4, NULL, NULL },
+		{TRANSPORT_VAR_ABS_CTR_POS, "AbsoluteCounterPosition", "2147483647",
+		 EV_NO, DATATYPE_I4, NULL, NULL },
+		{TRANSPORT_VAR_LAST_CHANGE, "LastChange", "<Event xmlns=\"urn:schemas-upnp-org:metadata-1-0/AVT/\"/>",
+		 EV_YES, DATATYPE_STRING, NULL, NULL },
+		{TRANSPORT_VAR_AAT_SEEK_MODE, "A_ARG_TYPE_SeekMode", "TRACK_NR",
+		 EV_NO, DATATYPE_STRING, aat_seekmodi, NULL },
+		{TRANSPORT_VAR_AAT_SEEK_TARGET, "A_ARG_TYPE_SeekTarget", "",
+		 EV_NO, DATATYPE_STRING, NULL, NULL },
+		{TRANSPORT_VAR_AAT_INSTANCE_ID, "A_ARG_TYPE_InstanceID", "0",
+		 EV_NO, DATATYPE_UI4, NULL, NULL },
+		{TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS, "CurrentTransportActions", "PLAY",
+		 EV_NO, DATATYPE_STRING, NULL, NULL },
+
+		{TRANSPORT_VAR_COUNT, NULL, NULL, EV_NO, DATATYPE_UNKNOWN, NULL, NULL }
+	};
+
 	if (transport_service_.variable_container == NULL) {
-		state_variables_ =
-			VariableContainer_new(TRANSPORT_VAR_COUNT,
-					      transport_variable_names,
-					      transport_default_values);
+		state_variables_ = VariableContainer_new(TRANSPORT_VAR_COUNT,
+							 transport_var_meta);
 		transport_service_.variable_container = state_variables_;
 	}
 	return &transport_service_;
 }
 
 void upnp_transport_init(struct upnp_device *device) {
-	assert(transport_service_.last_change == NULL);
-	transport_service_.last_change =
-		UPnPLastChangeCollector_new(state_variables_,
+	struct service *service = upnp_transport_get_service();
+	assert(service->last_change == NULL);
+	service->last_change =
+		UPnPLastChangeCollector_new(service->variable_container,
 					    TRANSPORT_EVENT_XML_NS,
 					    device, TRANSPORT_SERVICE_ID);
 	// Times and counters should not be evented. We only change REL_TIME
 	// right now anyway (AVTransport-v1 document, 2.3.1 Event Model)
-	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
+	UPnPLastChangeCollector_add_ignore(service->last_change,
 					   TRANSPORT_VAR_REL_TIME_POS);
-	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
+	UPnPLastChangeCollector_add_ignore(service->last_change,
 					   TRANSPORT_VAR_ABS_TIME_POS);
-	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
+	UPnPLastChangeCollector_add_ignore(service->last_change,
 					   TRANSPORT_VAR_REL_CTR_POS);
-	UPnPLastChangeCollector_add_ignore(transport_service_.last_change,
+	UPnPLastChangeCollector_add_ignore(service->last_change,
 					   TRANSPORT_VAR_ABS_CTR_POS);
 
 	pthread_t thread;
@@ -1040,21 +1022,3 @@ void upnp_transport_register_variable_listener(variable_change_listener_t cb,
 					       void *userdata) {
 	VariableContainer_register_callback(state_variables_, cb, userdata);
 }
-
-struct service transport_service_ = {
-	.service_mutex =        &transport_mutex,
-	.service_id =           TRANSPORT_SERVICE_ID,
-	.service_type =         TRANSPORT_TYPE,
-	.scpd_url =		TRANSPORT_SCPD_URL,
-	.control_url =		TRANSPORT_CONTROL_URL,
-	.event_url =		TRANSPORT_EVENT_URL,
-	.event_xml_ns =         TRANSPORT_EVENT_XML_NS,
-	.actions =              transport_actions,
-	.action_arguments =     argument_list,
-	.variable_names =       transport_variable_names,
-	.variable_container =   NULL, // set later.
-	.last_change =          NULL,
-	.variable_meta =        transport_var_meta,
-	.variable_count =       TRANSPORT_VAR_COUNT,
-	.command_count =        TRANSPORT_CMD_COUNT,
-};

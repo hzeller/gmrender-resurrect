@@ -37,6 +37,7 @@
 
 #include "xmldoc.h"
 #include "upnp_service.h"
+#include "variable-container.h"
 
 static const char *param_datatype_names[] = {
         [DATATYPE_STRING] =     "string",
@@ -64,7 +65,7 @@ static struct xmlelement *gen_specversion(struct xmldoc *doc,
 static struct xmlelement *gen_scpd_action(struct xmldoc *doc,
                                           struct action *act,
                                           struct argument *arglist,
-                                          const char **varnames)
+                                          const struct var_meta *meta_array)
 {
 	struct xmlelement *top;
 	struct xmlelement *parent,*child;
@@ -85,7 +86,7 @@ static struct xmlelement *gen_scpd_action(struct xmldoc *doc,
 					  (arg->direction == PARAM_DIR_IN)
 					  ? "in" : "out");
 			add_value_element(doc,child,"relatedStateVariable",
-					  varnames[arg->statevar]);
+					  meta_array[arg->statevar].name);
 			xmlelement_add_element(doc, parent,child);
 		}
 	}
@@ -99,16 +100,16 @@ static struct xmlelement *gen_scpd_actionlist(struct xmldoc *doc,
 	struct xmlelement *child;
 	int i;
 
+	const struct var_meta* meta_array = VariableContainer_get_meta(
+	  			             srv->variable_container, NULL);
 	top=xmlelement_new(doc, "actionList");
 	for(i=0; i<srv->command_count; i++) {
 		struct action *act;
 		struct argument *arglist;
-		const char **varnames;
 		act=&(srv->actions[i]);
 		arglist=srv->action_arguments[i];
-		varnames=srv->variable_names;
-		if (act) {
-			child=gen_scpd_action(doc, act, arglist, varnames);
+       		if (act) {
+			child=gen_scpd_action(doc, act, arglist, meta_array);
 			xmlelement_add_element(doc, top, child);
 		}
 	}
@@ -116,21 +117,18 @@ static struct xmlelement *gen_scpd_actionlist(struct xmldoc *doc,
 }
 
 static struct xmlelement *gen_scpd_statevar(struct xmldoc *doc,
-					    const char *name,
-					    struct var_meta *meta) {
+					    const struct var_meta *meta) {
 	struct xmlelement *top,*parent;
 	const char **valuelist;
-	const char *default_value;
 	struct param_range *range;
 
 	valuelist = meta->allowed_values;
 	range = meta->allowed_range;
-	default_value = meta->default_value;
 
 	top=xmlelement_new(doc, "stateVariable");
 
-	xmlelement_set_attribute(doc, top, "sendEvents",(meta->sendevents==SENDEVENT_YES)?"yes":"no");
-	add_value_element(doc,top,"name", name);
+	xmlelement_set_attribute(doc, top, "sendEvents",(meta->sendevents==EV_YES)?"yes":"no");
+	add_value_element(doc,top,"name", meta->name);
 	add_value_element(doc,top,"dataType", param_datatype_names[meta->datatype]);
 
 	if (valuelist) {
@@ -151,23 +149,47 @@ static struct xmlelement *gen_scpd_statevar(struct xmldoc *doc,
 			add_value_element_long(doc,parent,"step",range->step);
 		}
 	}
-	if (default_value) {
-		add_value_element(doc,top,"defaultValue", default_value);
+	assert(!(valuelist && range));  // Discrete values _and_ range ?
+
+	if (meta->default_value) {
+		// Reconsider: we never set the default value before, mostly
+		// because there/ were 'initial values' (also called default)
+		// and default values in the service meta-data. Was it confusion
+		// or intent ? Hard to tell.
+		//
+		// Now, the default/init values are all in the meta-data struct,
+		// the XML would be populated with a lot more default values.
+		// Let's find what the reference documentation says about this.
+		//
+		// Previously, there was exactly _one_ variable in the XML that
+		// set the default value, which is CurrentPlayMode = "NORMAL".
+		// To make sure that we're not breaking anything accidentally,
+		// the following condition is _very_ specific keep it this way.
+		// (technical changes should be separate from functional changes)
+		if (strcmp(meta->name, "CurrentPlayMode") == 0 &&
+		    strcmp(meta->default_value, "NORMAL") == 0) {
+			add_value_element(doc,top,"defaultValue",
+					  meta->default_value);
+		}
 	}
+
 	return top;
 }
 
-static struct xmlelement *gen_scpd_servicestatetable(struct xmldoc *doc, struct service *srv)
+static struct xmlelement *gen_scpd_servicestatetable(struct xmldoc *doc,
+						     struct service *srv)
 {
 	struct xmlelement *top;
 	struct xmlelement *child;
 	int i;
 
 	top=xmlelement_new(doc, "serviceStateTable");
-	for(i=0; i<srv->variable_count; i++) {
-		struct var_meta *meta = &(srv->variable_meta[i]);
-		const char *name = srv->variable_names[i];
-		child=gen_scpd_statevar(doc,name,meta);
+	int var_count;
+	const struct var_meta* meta_array = VariableContainer_get_meta(
+					 srv->variable_container, &var_count);
+	for (i = 0; i < var_count; i++) {
+		const struct var_meta *meta = &(meta_array[i]);
+		child=gen_scpd_statevar(doc, meta);
 		xmlelement_add_element(doc, top, child);
 	}
 	return top;

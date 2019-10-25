@@ -14,8 +14,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  * -----------------
@@ -41,7 +41,7 @@
  *   Hooks into the callback mechanism of the variable_container to assemble
  *   the LastChange variable to be sent over (using the last change builder).
  *
- */ 
+ */
 #ifndef VARIABLE_CONTAINER_H
 #define VARIABLE_CONTAINER_H
 
@@ -49,15 +49,22 @@
 struct variable_container;
 typedef struct variable_container variable_container_t;
 
-// Create a new variable container. The variable_names need to be valid for the
-// lifetime of this objec.
+struct var_meta;
+
+// Create a new variable container. The variable names mentioned
+// in the meta-data need to be valid for the lifetime of this object.
 variable_container_t *VariableContainer_new(int variable_num,
-					    const char **variable_names,
-					    const char **variable_init_values);
+					    const struct var_meta *var_array);
 void VariableContainer_delete(variable_container_t *object);
 
 // Get number of variables.
 int VariableContainer_get_num_vars(variable_container_t *object);
+
+// Get meta-data; returns count in return *count.
+// TODO(hzeller): this breaks abstraction, but this is to make sure to
+// simplify the transition.
+const struct var_meta *VariableContainer_get_meta(variable_container_t *object,
+						  int *count);
 
 // Get variable name/value. if OUT parameter 'name' is not NULL, returns
 // name of variable for given number.

@@ -63,31 +63,6 @@
 #define CONTROL_EVENT_XML_NS "urn:schemas-upnp-org:metadata-1-0/RCS/"
 
 typedef enum {
-	CONTROL_VAR_G_GAIN,
-	CONTROL_VAR_B_BLACK,
-	CONTROL_VAR_VER_KEYSTONE,
-	CONTROL_VAR_G_BLACK,
-	CONTROL_VAR_VOLUME,
-	CONTROL_VAR_LOUDNESS,
-	CONTROL_VAR_AAT_INSTANCE_ID,
-	CONTROL_VAR_R_GAIN,
-	CONTROL_VAR_COLOR_TEMP,
-	CONTROL_VAR_SHARPNESS,
-	CONTROL_VAR_AAT_PRESET_NAME,
-	CONTROL_VAR_R_BLACK,
-	CONTROL_VAR_B_GAIN,
-	CONTROL_VAR_MUTE,
-	CONTROL_VAR_LAST_CHANGE,
-	CONTROL_VAR_AAT_CHANNEL,
-	CONTROL_VAR_HOR_KEYSTONE,
-	CONTROL_VAR_VOLUME_DB,
-	CONTROL_VAR_PRESET_NAME_LIST,
-	CONTROL_VAR_CONTRAST,
-	CONTROL_VAR_BRIGHTNESS,
-	CONTROL_VAR_COUNT
-} control_variable_t;
-
-typedef enum {
 	CONTROL_CMD_GET_BLUE_BLACK,
 	CONTROL_CMD_GET_BLUE_GAIN,
 	CONTROL_CMD_GET_BRIGHTNESS,
@@ -125,31 +100,6 @@ typedef enum {
 	CONTROL_CMD_SET_VOL_DB,
 	CONTROL_CMD_COUNT
 } control_cmd;
-
-static const char *control_variable_names[] = {
-	[CONTROL_VAR_LAST_CHANGE] = "LastChange",
-	[CONTROL_VAR_PRESET_NAME_LIST] = "PresetNameList",
-	[CONTROL_VAR_AAT_CHANNEL] = "A_ARG_TYPE_Channel",
-	[CONTROL_VAR_AAT_INSTANCE_ID] = "A_ARG_TYPE_InstanceID",
-	[CONTROL_VAR_AAT_PRESET_NAME] = "A_ARG_TYPE_PresetName",
-	[CONTROL_VAR_BRIGHTNESS] = "Brightness",
-	[CONTROL_VAR_CONTRAST] = "Contrast",
-	[CONTROL_VAR_SHARPNESS] = "Sharpness",
-	[CONTROL_VAR_R_GAIN] = "RedVideoGain",
-	[CONTROL_VAR_G_GAIN] = "GreenVideoGain",
-	[CONTROL_VAR_B_GAIN] = "BlueVideoGain",
-	[CONTROL_VAR_R_BLACK] = "RedVideoBlackLevel",
-	[CONTROL_VAR_G_BLACK] = "GreenVideoBlackLevel",
-	[CONTROL_VAR_B_BLACK] = "BlueVideoBlackLevel",
-	[CONTROL_VAR_COLOR_TEMP] = "ColorTemperature",
-	[CONTROL_VAR_HOR_KEYSTONE] = "HorizontalKeystone",
-	[CONTROL_VAR_VER_KEYSTONE] = "VerticalKeystone",
-	[CONTROL_VAR_MUTE] = "Mute",
-	[CONTROL_VAR_VOLUME] = "Volume",
-	[CONTROL_VAR_VOLUME_DB] = "VolumeDB",
-	[CONTROL_VAR_LOUDNESS] = "Loudness",
-	[CONTROL_VAR_COUNT] = NULL
-};
 
 static const char *aat_presetnames[] =
 {
@@ -201,57 +151,31 @@ static struct param_range vid_black_range = { 0, 100, 1 };
 static struct param_range colortemp_range = { 0, 65535, 1 };
 static struct param_range keystone_range = { -32768, 32767, 1 };
 
-static struct var_meta control_var_meta[] = {
-	[CONTROL_VAR_LAST_CHANGE] =		{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[CONTROL_VAR_PRESET_NAME_LIST] =	{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[CONTROL_VAR_AAT_CHANNEL] =		{ SENDEVENT_NO, DATATYPE_STRING, aat_channels, NULL },
-	[CONTROL_VAR_AAT_INSTANCE_ID] =		{ SENDEVENT_NO, DATATYPE_UI4, NULL, NULL },
-	[CONTROL_VAR_AAT_PRESET_NAME] =		{ SENDEVENT_NO, DATATYPE_STRING, aat_presetnames, NULL },
-	[CONTROL_VAR_BRIGHTNESS] =		{ SENDEVENT_NO, DATATYPE_UI2, NULL, &brightness_range },
-	[CONTROL_VAR_CONTRAST] =		{ SENDEVENT_NO, DATATYPE_UI2, NULL, &contrast_range },
-	[CONTROL_VAR_SHARPNESS] =		{ SENDEVENT_NO, DATATYPE_UI2, NULL, &sharpness_range },
-	[CONTROL_VAR_R_GAIN] =			{ SENDEVENT_NO, DATATYPE_UI2, NULL, &vid_gain_range },
-	[CONTROL_VAR_G_GAIN] =			{ SENDEVENT_NO, DATATYPE_UI2, NULL, &vid_gain_range },
-	[CONTROL_VAR_B_GAIN] =			{ SENDEVENT_NO, DATATYPE_UI2, NULL, &vid_gain_range },
-	[CONTROL_VAR_R_BLACK] =			{ SENDEVENT_NO, DATATYPE_UI2, NULL, &vid_black_range },
-	[CONTROL_VAR_G_BLACK] =			{ SENDEVENT_NO, DATATYPE_UI2, NULL, &vid_black_range },
-	[CONTROL_VAR_B_BLACK] =			{ SENDEVENT_NO, DATATYPE_UI2, NULL, &vid_black_range },
-	[CONTROL_VAR_COLOR_TEMP] =		{ SENDEVENT_NO, DATATYPE_UI2, NULL, &colortemp_range },
-	[CONTROL_VAR_HOR_KEYSTONE] =		{ SENDEVENT_NO, DATATYPE_I2, NULL, &keystone_range },
-	[CONTROL_VAR_VER_KEYSTONE] =		{ SENDEVENT_NO, DATATYPE_I2, NULL, &keystone_range },
-	[CONTROL_VAR_MUTE] =			{ SENDEVENT_NO, DATATYPE_BOOLEAN, NULL, NULL },
-	[CONTROL_VAR_VOLUME] =			{ SENDEVENT_NO, DATATYPE_UI2, NULL, &volume_range },
-	[CONTROL_VAR_VOLUME_DB] =		{ SENDEVENT_NO, DATATYPE_I2, NULL, &volume_db_range },
-	[CONTROL_VAR_LOUDNESS] =		{ SENDEVENT_NO, DATATYPE_BOOLEAN, NULL, NULL },
-	[CONTROL_VAR_COUNT] =			{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
-};
+typedef enum {
+	CONTROL_VAR_G_GAIN,
+	CONTROL_VAR_B_BLACK,
+	CONTROL_VAR_VER_KEYSTONE,
+	CONTROL_VAR_G_BLACK,
+	CONTROL_VAR_VOLUME,
+	CONTROL_VAR_LOUDNESS,
+	CONTROL_VAR_AAT_INSTANCE_ID,
+	CONTROL_VAR_R_GAIN,
+	CONTROL_VAR_COLOR_TEMP,
+	CONTROL_VAR_SHARPNESS,
+	CONTROL_VAR_AAT_PRESET_NAME,
+	CONTROL_VAR_R_BLACK,
+	CONTROL_VAR_B_GAIN,
+	CONTROL_VAR_MUTE,
+	CONTROL_VAR_LAST_CHANGE,
+	CONTROL_VAR_AAT_CHANNEL,
+	CONTROL_VAR_HOR_KEYSTONE,
+	CONTROL_VAR_VOLUME_DB,
+	CONTROL_VAR_PRESET_NAME_LIST,
+	CONTROL_VAR_CONTRAST,
+	CONTROL_VAR_BRIGHTNESS,
+	CONTROL_VAR_COUNT
+} control_variable_t;
 
-static const char *control_default_values[] = {
-	[CONTROL_VAR_LAST_CHANGE] = "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/RCS/\"/>",
-	[CONTROL_VAR_PRESET_NAME_LIST] = "",
-	[CONTROL_VAR_AAT_CHANNEL] = "",
-	[CONTROL_VAR_AAT_INSTANCE_ID] = "0",
-	[CONTROL_VAR_AAT_PRESET_NAME] = "",
-	[CONTROL_VAR_BRIGHTNESS] = "0",
-	[CONTROL_VAR_CONTRAST] = "0",
-	[CONTROL_VAR_SHARPNESS] = "0",
-	[CONTROL_VAR_R_GAIN] = "0",
-	[CONTROL_VAR_G_GAIN] = "0",
-	[CONTROL_VAR_B_GAIN] = "0",
-	[CONTROL_VAR_R_BLACK] = "0",
-	[CONTROL_VAR_G_BLACK] = "0",
-	[CONTROL_VAR_B_BLACK] = "0",
-	[CONTROL_VAR_COLOR_TEMP] = "0",
-	[CONTROL_VAR_HOR_KEYSTONE] = "0",
-	[CONTROL_VAR_VER_KEYSTONE] = "0",
-	[CONTROL_VAR_MUTE] = "0",
-	[CONTROL_VAR_VOLUME] = "0",
-	[CONTROL_VAR_VOLUME_DB] = "0",
-	[CONTROL_VAR_LOUDNESS] = "0",
-	[CONTROL_VAR_COUNT] = NULL
-};
-
-extern struct service control_service_;   // Defined below.
 static variable_container_t *state_variables_ = NULL;
 
 static ithread_mutex_t control_mutex;
@@ -259,15 +183,19 @@ static ithread_mutex_t control_mutex;
 static void service_lock(void)
 {
 	ithread_mutex_lock(&control_mutex);
-	if (control_service_.last_change) {
-		UPnPLastChangeCollector_start(control_service_.last_change);
+	struct upnp_last_change_collector*
+		collector = upnp_control_get_service()->last_change;
+	if (collector) {
+		UPnPLastChangeCollector_start(collector);
 	}
 }
 
 static void service_unlock(void)
 {
-	if (control_service_.last_change) {
-		UPnPLastChangeCollector_finish(control_service_.last_change);
+	struct upnp_last_change_collector*
+		collector = upnp_control_get_service()->last_change;
+	if (collector) {
+		UPnPLastChangeCollector_finish(collector);
 	}
 	ithread_mutex_unlock(&control_mutex);
 }
@@ -774,11 +702,72 @@ static struct action control_actions[] = {
 };
 
 struct service *upnp_control_get_service(void) {
+	static struct service control_service_ = {
+		.service_mutex =       &control_mutex,
+		.service_id =	       CONTROL_SERVICE_ID,
+		.service_type =	       CONTROL_TYPE,
+		.scpd_url =            CONTROL_SCPD_URL,
+		.control_url =         CONTROL_CONTROL_URL,
+		.event_url =           CONTROL_EVENT_URL,
+		.event_xml_ns =        CONTROL_EVENT_XML_NS,
+		.actions =	       control_actions,
+		.action_arguments =    argument_list,
+		.variable_container =  NULL,  // set later.
+		.last_change =         NULL,
+		.command_count =       CONTROL_CMD_COUNT,
+	};
+
+	static struct var_meta control_var_meta[] = {
+		{CONTROL_VAR_LAST_CHANGE, "LastChange", "<Event xmlns = \"urn:schemas-upnp-org:metadata-1-0/RCS/\"/>",
+		 EV_YES, DATATYPE_STRING, NULL, NULL },
+		{CONTROL_VAR_PRESET_NAME_LIST, "PresetNameList", "",
+		 EV_NO, DATATYPE_STRING, NULL, NULL },
+		{CONTROL_VAR_AAT_CHANNEL, "A_ARG_TYPE_Channel", "",
+		 EV_NO, DATATYPE_STRING, aat_channels, NULL },
+		{CONTROL_VAR_AAT_INSTANCE_ID, "A_ARG_TYPE_InstanceID", "0",
+		 EV_NO, DATATYPE_UI4, NULL, NULL },
+		{CONTROL_VAR_AAT_PRESET_NAME, "A_ARG_TYPE_PresetName", "",
+		 EV_NO, DATATYPE_STRING, aat_presetnames, NULL },
+		{CONTROL_VAR_BRIGHTNESS, "Brightness", "0",
+		 EV_NO, DATATYPE_UI2, NULL, &brightness_range },
+		{CONTROL_VAR_CONTRAST, "Contrast", "0",
+		 EV_NO, DATATYPE_UI2, NULL, &contrast_range },
+		{CONTROL_VAR_SHARPNESS, "Sharpness", "0",
+		 EV_NO, DATATYPE_UI2, NULL, &sharpness_range },
+		{CONTROL_VAR_R_GAIN, "RedVideoGain", "0",
+		 EV_NO, DATATYPE_UI2, NULL, &vid_gain_range },
+		{CONTROL_VAR_G_GAIN, "GreenVideoGain", "0",
+		 EV_NO, DATATYPE_UI2, NULL, &vid_gain_range },
+		{CONTROL_VAR_B_GAIN, "BlueVideoGain", "0",
+		 EV_NO, DATATYPE_UI2, NULL, &vid_gain_range },
+		{CONTROL_VAR_R_BLACK, "RedVideoBlackLevel", "0",
+		 EV_NO, DATATYPE_UI2, NULL, &vid_black_range },
+		{CONTROL_VAR_G_BLACK, "GreenVideoBlackLevel", "0",
+		 EV_NO, DATATYPE_UI2, NULL, &vid_black_range },
+		{CONTROL_VAR_B_BLACK, "BlueVideoBlackLevel", "0",
+		 EV_NO, DATATYPE_UI2, NULL, &vid_black_range },
+		{CONTROL_VAR_COLOR_TEMP, "ColorTemperature", "0",
+		 EV_NO, DATATYPE_UI2, NULL, &colortemp_range },
+		{CONTROL_VAR_HOR_KEYSTONE, "HorizontalKeystone", "0",
+		 EV_NO, DATATYPE_I2, NULL, &keystone_range },
+		{CONTROL_VAR_VER_KEYSTONE, "VerticalKeystone", "0",
+		 EV_NO, DATATYPE_I2, NULL, &keystone_range },
+		{CONTROL_VAR_MUTE, "Mute", "0",
+		 EV_NO, DATATYPE_BOOLEAN, NULL, NULL },
+		{CONTROL_VAR_VOLUME, "Volume", "0",
+		 EV_NO, DATATYPE_UI2, NULL, &volume_range },
+		{CONTROL_VAR_VOLUME_DB, "VolumeDB", "0",
+		 EV_NO, DATATYPE_I2, NULL, &volume_db_range },
+		{CONTROL_VAR_LOUDNESS, "Loudness", "0",
+		 EV_NO, DATATYPE_BOOLEAN, NULL, NULL },
+
+		{CONTROL_VAR_COUNT, NULL, NULL, EV_NO, DATATYPE_UNKNOWN, NULL, NULL }
+	};
+
 	if (control_service_.variable_container == NULL) {
 		state_variables_ =
 			VariableContainer_new(CONTROL_VAR_COUNT,
-					      control_variable_names,
-					      control_default_values);
+					      control_var_meta);
 		control_service_.variable_container = state_variables_;
 	}
 
@@ -786,7 +775,7 @@ struct service *upnp_control_get_service(void) {
 }
 
 void upnp_control_init(struct upnp_device *device) {
-	upnp_control_get_service();
+	struct service *service = upnp_control_get_service();
 
 	// Set initial volume.
 	float volume_fraction = 0;
@@ -796,18 +785,19 @@ void upnp_control_init(struct upnp_device *device) {
 		change_volume_decibel(20 * log(volume_fraction) / log(10));
 	}
 
-	assert(control_service_.last_change == NULL);
-	control_service_.last_change =
-		UPnPLastChangeCollector_new(state_variables_, CONTROL_EVENT_XML_NS,
+	assert(service->last_change == NULL);
+	service->last_change =
+		UPnPLastChangeCollector_new(service->variable_container,
+					    CONTROL_EVENT_XML_NS,
 					    device,
 					    CONTROL_SERVICE_ID);
 	// According to UPnP-av-RenderingControl-v3-Service-20101231.pdf, 2.3.1
 	// page 51, the A_ARG_TYPE* variables are not evented.
-	UPnPLastChangeCollector_add_ignore(control_service_.last_change,
+	UPnPLastChangeCollector_add_ignore(service->last_change,
 					   CONTROL_VAR_AAT_CHANNEL);
-	UPnPLastChangeCollector_add_ignore(control_service_.last_change,
+	UPnPLastChangeCollector_add_ignore(service->last_change,
 					   CONTROL_VAR_AAT_INSTANCE_ID);
-	UPnPLastChangeCollector_add_ignore(control_service_.last_change,
+	UPnPLastChangeCollector_add_ignore(service->last_change,
 					   CONTROL_VAR_AAT_PRESET_NAME);
 }
 
@@ -815,21 +805,3 @@ void upnp_control_register_variable_listener(variable_change_listener_t cb,
 					     void *userdata) {
 	VariableContainer_register_callback(state_variables_, cb, userdata);
 }
-
-struct service control_service_ = {
-	.service_mutex =       &control_mutex,
-	.service_id =	       CONTROL_SERVICE_ID,
-	.service_type =	       CONTROL_TYPE,
-        .scpd_url =            CONTROL_SCPD_URL,
-        .control_url =         CONTROL_CONTROL_URL,
-        .event_url =           CONTROL_EVENT_URL,
-	.event_xml_ns =        CONTROL_EVENT_XML_NS,
-	.actions =	       control_actions,
-	.action_arguments =    argument_list,
-	.variable_names =      control_variable_names,
-	.variable_container =  NULL,  // set later.
-	.last_change =         NULL,
-	.variable_meta =       control_var_meta,
-	.variable_count =      CONTROL_VAR_COUNT,
-	.command_count =       CONTROL_CMD_COUNT,
-};

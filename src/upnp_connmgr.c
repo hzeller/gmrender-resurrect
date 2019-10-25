@@ -53,8 +53,6 @@
 #define CONNMGR_CONTROL_URL "/upnp/control/renderconnmgr1"
 #define CONNMGR_EVENT_URL "/upnp/event/renderconnmgr1"
 
-extern struct service connmgr_service_;   // Defined below.
-
 typedef enum {
 	CONNMGR_VAR_AAT_CONN_MGR,
 	CONNMGR_VAR_SINK_PROTO_INFO,
@@ -124,34 +122,6 @@ static struct argument *argument_list[] = {
 	[CONNMGR_CMD_COUNT]	=	NULL
 };
 
-static const char *connmgr_variable_names[] = {
-	[CONNMGR_VAR_SRC_PROTO_INFO] = "SourceProtocolInfo",
-	[CONNMGR_VAR_SINK_PROTO_INFO] = "SinkProtocolInfo",
-	[CONNMGR_VAR_CUR_CONN_IDS] = "CurrentConnectionIDs",
-	[CONNMGR_VAR_AAT_CONN_STATUS] = "A_ARG_TYPE_ConnectionStatus",
-	[CONNMGR_VAR_AAT_CONN_MGR] = "A_ARG_TYPE_ConnectionManager",
-	[CONNMGR_VAR_AAT_DIR] = "A_ARG_TYPE_Direction",
-	[CONNMGR_VAR_AAT_PROTO_INFO] = "A_ARG_TYPE_ProtocolInfo",
-	[CONNMGR_VAR_AAT_CONN_ID] = "A_ARG_TYPE_ConnectionID",
-	[CONNMGR_VAR_AAT_AVT_ID] = "A_ARG_TYPE_AVTransportID",
-	[CONNMGR_VAR_AAT_RCS_ID] = "A_ARG_TYPE_RcsID",
-	[CONNMGR_VAR_COUNT] = NULL
-};
-
-static const char *connmgr_default_values[] = {
-	[CONNMGR_VAR_SRC_PROTO_INFO] = "",
-	[CONNMGR_VAR_SINK_PROTO_INFO] = "http-get:*:audio/mpeg:*",
-	[CONNMGR_VAR_CUR_CONN_IDS] = "0",
-	[CONNMGR_VAR_AAT_CONN_STATUS] = "Unknown",
-	[CONNMGR_VAR_AAT_CONN_MGR] = "/",
-	[CONNMGR_VAR_AAT_DIR] = "Input",
-	[CONNMGR_VAR_AAT_PROTO_INFO] = ":::",
-	[CONNMGR_VAR_AAT_CONN_ID] = "-1",
-	[CONNMGR_VAR_AAT_AVT_ID] = "0",
-	[CONNMGR_VAR_AAT_RCS_ID] = "0",
-	[CONNMGR_VAR_COUNT] = NULL
-};
-
 static const char *connstatus_values[] = {
 	"OK",
 	"ContentFormatMismatch",
@@ -164,20 +134,6 @@ static const char *direction_values[] = {
 	"Input",
 	"Output",
 	NULL
-};
-
-static struct var_meta connmgr_var_meta[] = {
-	[CONNMGR_VAR_SRC_PROTO_INFO] =	{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[CONNMGR_VAR_SINK_PROTO_INFO] =	{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[CONNMGR_VAR_CUR_CONN_IDS] =	{ SENDEVENT_YES, DATATYPE_STRING, NULL, NULL },
-	[CONNMGR_VAR_AAT_CONN_STATUS] =	{ SENDEVENT_NO, DATATYPE_STRING, connstatus_values, NULL },
-	[CONNMGR_VAR_AAT_CONN_MGR] =	{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[CONNMGR_VAR_AAT_DIR] =		{ SENDEVENT_NO, DATATYPE_STRING, direction_values, NULL },
-	[CONNMGR_VAR_AAT_PROTO_INFO] =	{ SENDEVENT_NO, DATATYPE_STRING, NULL, NULL },
-	[CONNMGR_VAR_AAT_CONN_ID] =	{ SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
-	[CONNMGR_VAR_AAT_AVT_ID] =	{ SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
-	[CONNMGR_VAR_AAT_RCS_ID] =	{ SENDEVENT_NO, DATATYPE_I4, NULL, NULL },
-	[CONNMGR_VAR_COUNT] =		{ SENDEVENT_NO, DATATYPE_UNKNOWN, NULL, NULL }
 };
 
 static ithread_mutex_t connmgr_mutex;
@@ -366,18 +322,6 @@ static int get_current_conn_info(struct action_event *event)
 	return 0;
 }
 
-
-struct service *upnp_connmgr_get_service(void) {
-	if (connmgr_service_.variable_container == NULL) {
-		connmgr_service_.variable_container =
-			VariableContainer_new(CONNMGR_VAR_COUNT,
-					      connmgr_variable_names,
-					      connmgr_default_values);
-		// no changes expected; no collector.
-	}
-	return &connmgr_service_;
-}
-
 static struct action connmgr_actions[] = {
 	[CONNMGR_CMD_GETPROTOCOLINFO] =		{"GetProtocolInfo", get_protocol_info},
 	[CONNMGR_CMD_GETCURRENTCONNECTIONIDS] =	{"GetCurrentConnectionIDs", get_current_conn_ids},
@@ -387,19 +331,52 @@ static struct action connmgr_actions[] = {
 	[CONNMGR_CMD_COUNT] =			{NULL, NULL}
 };
 
-struct service connmgr_service_ = {
-	.service_mutex =        &connmgr_mutex,
-        .service_id =		CONNMGR_SERVICE_ID,
-        .service_type =		CONNMGR_TYPE,
-	.scpd_url =		CONNMGR_SCPD_URL,
-	.control_url =		CONNMGR_CONTROL_URL,
-	.event_url =		CONNMGR_EVENT_URL,
-        .actions =		connmgr_actions,
-        .action_arguments =     argument_list,
-        .variable_names =       connmgr_variable_names,
-	.variable_container =   NULL, // set later.
-	.last_change =          NULL,
-        .variable_meta =        connmgr_var_meta,
-        .variable_count =       CONNMGR_VAR_COUNT,
-        .command_count =        CONNMGR_CMD_COUNT,
-};
+struct service *upnp_connmgr_get_service(void) {
+	static struct service connmgr_service_ = {
+		.service_mutex =        &connmgr_mutex,
+		.service_id =		CONNMGR_SERVICE_ID,
+		.service_type =		CONNMGR_TYPE,
+		.scpd_url =		CONNMGR_SCPD_URL,
+		.control_url =		CONNMGR_CONTROL_URL,
+		.event_url =		CONNMGR_EVENT_URL,
+		.actions =		connmgr_actions,
+		.action_arguments =     argument_list,
+		.variable_container =   NULL, // initialized below
+		.last_change =          NULL,
+		.command_count =        CONNMGR_CMD_COUNT,
+	};
+
+	static struct var_meta connmgr_var_meta[] = {
+		{ CONNMGR_VAR_SRC_PROTO_INFO, "SourceProtocolInfo", "",
+		  EV_YES, DATATYPE_STRING, NULL, NULL },
+		{ CONNMGR_VAR_SINK_PROTO_INFO, "SinkProtocolInfo", "http-get:*:audio/mpeg:*",
+		  EV_YES, DATATYPE_STRING, NULL, NULL },
+		{ CONNMGR_VAR_CUR_CONN_IDS, "CurrentConnectionIDs", "0",
+		  EV_YES, DATATYPE_STRING, NULL, NULL },
+
+		{ CONNMGR_VAR_AAT_CONN_STATUS,"A_ARG_TYPE_ConnectionStatus", "Unknown",
+		  EV_NO, DATATYPE_STRING, connstatus_values, NULL },
+		{ CONNMGR_VAR_AAT_CONN_MGR, "A_ARG_TYPE_ConnectionManager", "/",
+		  EV_NO, DATATYPE_STRING, NULL, NULL },
+		{ CONNMGR_VAR_AAT_DIR, "A_ARG_TYPE_Direction", "Input",
+		  EV_NO, DATATYPE_STRING, direction_values, NULL },
+		{ CONNMGR_VAR_AAT_PROTO_INFO, "A_ARG_TYPE_ProtocolInfo", ":::",
+		  EV_NO, DATATYPE_STRING, NULL, NULL },
+		{ CONNMGR_VAR_AAT_CONN_ID, "A_ARG_TYPE_ConnectionID", "-1",
+		  EV_NO, DATATYPE_I4, NULL, NULL },
+		{ CONNMGR_VAR_AAT_AVT_ID, "A_ARG_TYPE_AVTransportID", "0",
+		  EV_NO, DATATYPE_I4, NULL, NULL },
+		{ CONNMGR_VAR_AAT_RCS_ID, "A_ARG_TYPE_RcsID", "0",
+		  EV_NO, DATATYPE_I4, NULL, NULL },
+
+		{ CONNMGR_VAR_COUNT, NULL, NULL, EV_NO, DATATYPE_UNKNOWN, NULL, NULL }
+	};
+
+	if (connmgr_service_.variable_container == NULL) {
+		connmgr_service_.variable_container
+			= VariableContainer_new(CONNMGR_VAR_COUNT,
+						connmgr_var_meta);
+		// no changes expected; no collector.
+	}
+	return &connmgr_service_;
+}

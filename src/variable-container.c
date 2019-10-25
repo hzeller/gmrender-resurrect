@@ -33,6 +33,7 @@
 #include <stdint.h>
 
 #include "upnp_device.h"
+#include "upnp_service.h"
 #include "xmlescape.h"
 #include "xmldoc.h"
 
@@ -45,25 +46,47 @@ struct cb_list {
 
 struct variable_container {
 	int variable_num;
-	const char **variable_names;
+	const struct var_meta *vars;
 	char **values;
 	struct cb_list *callbacks;
 };
 
+static int cmp_meta_id(const void *a, const void *b) {
+	return ((struct var_meta*)a)->id - ((struct var_meta*)b)->id;
+}
+
+static const struct var_meta *create_sorted_meta(int num,
+						 const struct var_meta *vars) {
+	struct var_meta *result
+		= (struct var_meta*)malloc(num * sizeof(struct var_meta));
+	memcpy(result, vars, num * sizeof(struct var_meta));
+	qsort(result, num, sizeof(struct var_meta), cmp_meta_id);
+	return result;
+}
+
 variable_container_t *VariableContainer_new(int variable_num,
-					    const char **variable_names,
-					    const char **variable_init_values) {
+					const struct var_meta *unordered_vars) {
 	assert(variable_num > 0);
 	variable_container_t *result
 		= (variable_container_t*)malloc(sizeof(variable_container_t));
 	result->variable_num = variable_num;
-	result->variable_names = variable_names;
+	// Right now, the model is to have a variable id, described as enum, that
+	// can be used as an index in meta-data, variable names etc.
+	// Previously, the order was maintained by using designated initializers
+	// in a scattered set of array initialization, now everything is in a
+	// meta array.
+	// Since we want to get away from designated initializer arrays (to be
+	// compatible with C++), we allow the meta-data to be in any order but
+	// take care of it here. However accesses the meta-data does it through
+	// VariableContainer
+	result->vars = create_sorted_meta(variable_num, unordered_vars);
 	result->values = (char **) malloc(variable_num * sizeof(char*));
 	result->callbacks = NULL;
 	for (int i = 0; i < variable_num; ++i) {
-		result->values[i] = strdup(variable_init_values[i]
-					   ? variable_init_values[i]
-					   : "");
+		assert(result->vars[i].name != NULL);
+		assert(result->vars[i].id == i);
+		assert(result->vars[i].default_value != NULL);
+		result->values[i] = strdup(result->vars[i].default_value);
 	}
 	return result;
 }
@@ -79,10 +102,16 @@ void VariableContainer_delete(variable_container_t *object) {
 		free(list);
 		list = next;
 	}
+	free((void*)object->vars);
 	free(object);
 }
 
-// Get number of variables.
+const struct var_meta *VariableContainer_get_meta(variable_container_t *object,
+						  int *count) {
+	if (count) *count = object->variable_num;
+	return object->vars;
+}
+
 int VariableContainer_get_num_vars(variable_container_t *object) {
 	return object->variable_num;
 }
@@ -91,7 +120,7 @@ const char *VariableContainer_get(variable_container_t *object,
 				  int var, const char **name) {
 	if (var < 0 || var >= object->variable_num)
 		return NULL;
-	const char *varname = object->variable_names[var];
+	const char *varname = object->vars[var].name;
 	if (name) *name = varname;
 	// Names of not used variables are set to NULL.
 	return varname ? object->values[var] : NULL;
@@ -109,7 +138,7 @@ int VariableContainer_change(variable_container_t *object,
 	object->values[var_num] = new_value;
 	for (struct cb_list *it = object->callbacks; it; it = it->next) {
 		it->callback(it->userdata,
-			     var_num, object->variable_names[var_num],
+			     var_num, object->vars[var_num].name,
 			     old_value, new_value);
 	}
 	free(old_value);
