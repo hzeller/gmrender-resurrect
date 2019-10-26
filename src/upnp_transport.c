@@ -64,17 +64,20 @@ enum {
 	TRANSPORT_CMD_GETPOSITIONINFO,
 	TRANSPORT_CMD_GETTRANSPORTINFO,
 	TRANSPORT_CMD_GETTRANSPORTSETTINGS,
-	//TRANSPORT_CMD_NEXT,
 	TRANSPORT_CMD_PAUSE,
 	TRANSPORT_CMD_PLAY,
-	//TRANSPORT_CMD_PREVIOUS,
 	TRANSPORT_CMD_SEEK,
 	TRANSPORT_CMD_SETAVTRANSPORTURI,
-	//TRANSPORT_CMD_SETPLAYMODE,
 	TRANSPORT_CMD_STOP,
 	TRANSPORT_CMD_SETNEXTAVTRANSPORTURI,
+
+	// Not implemented
+	//TRANSPORT_CMD_NEXT,
+	//TRANSPORT_CMD_PREVIOUS,
+	//TRANSPORT_CMD_SETPLAYMODE,
 	//TRANSPORT_CMD_RECORD,
 	//TRANSPORT_CMD_SETRECORDQUALITYMODE,
+
 	TRANSPORT_CMD_COUNT
 };
 
@@ -374,23 +377,25 @@ static struct argument arguments_getcurrenttransportactions[] = {
 
 
 static struct argument *argument_list[] = {
-	[TRANSPORT_CMD_SETAVTRANSPORTURI] =         arguments_setavtransporturi,
+	[TRANSPORT_CMD_GETCURRENTTRANSPORTACTIONS] = arguments_getcurrenttransportactions,
 	[TRANSPORT_CMD_GETDEVICECAPABILITIES] =     arguments_getdevicecapabilities,
 	[TRANSPORT_CMD_GETMEDIAINFO] =              arguments_getmediainfo,
-	[TRANSPORT_CMD_SETNEXTAVTRANSPORTURI] =     arguments_setnextavtransporturi,
-	[TRANSPORT_CMD_GETTRANSPORTINFO] =          arguments_gettransportinfo,
 	[TRANSPORT_CMD_GETPOSITIONINFO] =           arguments_getpositioninfo,
+	[TRANSPORT_CMD_GETTRANSPORTINFO] =          arguments_gettransportinfo,
 	[TRANSPORT_CMD_GETTRANSPORTSETTINGS] =      arguments_gettransportsettings,
-	[TRANSPORT_CMD_STOP] =                      arguments_stop,
-	[TRANSPORT_CMD_PLAY] =                      arguments_play,
 	[TRANSPORT_CMD_PAUSE] =                     arguments_pause,
-	//[TRANSPORT_CMD_RECORD] =                    arguments_record,
+	[TRANSPORT_CMD_PLAY] =                      arguments_play,
 	[TRANSPORT_CMD_SEEK] =                      arguments_seek,
+	[TRANSPORT_CMD_SETAVTRANSPORTURI] =         arguments_setavtransporturi,
+	[TRANSPORT_CMD_STOP] =                      arguments_stop,
+
+	[TRANSPORT_CMD_SETNEXTAVTRANSPORTURI] =     arguments_setnextavtransporturi,
+
+	//[TRANSPORT_CMD_RECORD] =                    arguments_record,
 	//[TRANSPORT_CMD_NEXT] =                      arguments_next,
 	//[TRANSPORT_CMD_PREVIOUS] =                  arguments_previous,
 	//[TRANSPORT_CMD_SETPLAYMODE] =               arguments_setplaymode,
 	//[TRANSPORT_CMD_SETRECORDQUALITYMODE] =      arguments_setrecordqualitymode,
-	[TRANSPORT_CMD_GETCURRENTTRANSPORTACTIONS] = arguments_getcurrenttransportactions,
 	[TRANSPORT_CMD_COUNT] =	NULL
 };
 
@@ -890,20 +895,22 @@ static struct action transport_actions[] = {
 	[TRANSPORT_CMD_GETCURRENTTRANSPORTACTIONS] = {"GetCurrentTransportActions", get_current_transportactions},
 	[TRANSPORT_CMD_GETDEVICECAPABILITIES] =     {"GetDeviceCapabilities", get_device_caps},
 	[TRANSPORT_CMD_GETMEDIAINFO] =              {"GetMediaInfo", get_media_info},
-	[TRANSPORT_CMD_SETAVTRANSPORTURI] =         {"SetAVTransportURI", set_avtransport_uri},	/* RC9800i */
-	[TRANSPORT_CMD_SETNEXTAVTRANSPORTURI] =     {"SetNextAVTransportURI", set_next_avtransport_uri},
-	[TRANSPORT_CMD_GETTRANSPORTINFO] =          {"GetTransportInfo", get_transport_info},
 	[TRANSPORT_CMD_GETPOSITIONINFO] =           {"GetPositionInfo", get_position_info},
+	[TRANSPORT_CMD_GETTRANSPORTINFO] =          {"GetTransportInfo", get_transport_info},
 	[TRANSPORT_CMD_GETTRANSPORTSETTINGS] =      {"GetTransportSettings", get_transport_settings},
-	[TRANSPORT_CMD_STOP] =                      {"Stop", stop},
-	[TRANSPORT_CMD_PLAY] =                      {"Play", play},
 	[TRANSPORT_CMD_PAUSE] =                     {"Pause", pause_stream},
-	//[TRANSPORT_CMD_RECORD] =                    {"Record", NULL},	/* optional */
+	[TRANSPORT_CMD_PLAY] =                      {"Play", play},
 	[TRANSPORT_CMD_SEEK] =                      {"Seek", seek},
+	[TRANSPORT_CMD_SETAVTRANSPORTURI] =         {"SetAVTransportURI", set_avtransport_uri},	/* RC9800i */
+	[TRANSPORT_CMD_STOP] =                      {"Stop", stop},
+	[TRANSPORT_CMD_SETNEXTAVTRANSPORTURI] =     {"SetNextAVTransportURI", set_next_avtransport_uri},
+
+	//[TRANSPORT_CMD_RECORD] =                    {"Record", NULL},	/* optional */
 	//[TRANSPORT_CMD_NEXT] =                      {"Next", next},
 	//[TRANSPORT_CMD_PREVIOUS] =                  {"Previous", previous},
 	//[TRANSPORT_CMD_SETPLAYMODE] =               {"SetPlayMode", NULL},	/* optional */
 	//[TRANSPORT_CMD_SETRECORDQUALITYMODE] =      {"SetRecordQualityMode", NULL},	/* optional */
+
 	[TRANSPORT_CMD_COUNT] =                  {NULL, NULL}
 };
 

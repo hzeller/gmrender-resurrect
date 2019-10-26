@@ -114,9 +114,10 @@ static struct argument arguments_prepareforconnection[] = {
 //};
 
 static struct argument *argument_list[] = {
-	[CONNMGR_CMD_GETPROTOCOLINFO] =	 arguments_getprotocolinfo,
 	[CONNMGR_CMD_GETCURRENTCONNECTIONIDS] =	arguments_getcurrentconnectionids,
 	[CONNMGR_CMD_SETCURRENTCONNECTIONINFO] = arguments_setcurrentconnectioninfo,
+	[CONNMGR_CMD_GETPROTOCOLINFO] =	 arguments_getprotocolinfo,
+
 	[CONNMGR_CMD_PREPAREFORCONNECTION] = arguments_prepareforconnection,
 	//[CONNMGR_CMD_CONNECTIONCOMPLETE] = arguments_connectioncomplete,
 	[CONNMGR_CMD_COUNT]	=	NULL
@@ -323,9 +324,9 @@ static int get_current_conn_info(struct action_event *event)
 }
 
 static struct action connmgr_actions[] = {
-	[CONNMGR_CMD_GETPROTOCOLINFO] =		{"GetProtocolInfo", get_protocol_info},
 	[CONNMGR_CMD_GETCURRENTCONNECTIONIDS] =	{"GetCurrentConnectionIDs", get_current_conn_ids},
 	[CONNMGR_CMD_SETCURRENTCONNECTIONINFO] ={"GetCurrentConnectionInfo", get_current_conn_info},
+	[CONNMGR_CMD_GETPROTOCOLINFO] =		{"GetProtocolInfo", get_protocol_info},
 	[CONNMGR_CMD_PREPAREFORCONNECTION] =	{"PrepareForConnection", prepare_for_connection}, /* optional */
 	//[CONNMGR_CMD_CONNECTIONCOMPLETE] =	{"ConnectionComplete", NULL},	/* optional */
 	[CONNMGR_CMD_COUNT] =			{NULL, NULL}
