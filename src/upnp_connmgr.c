@@ -340,6 +340,7 @@ struct service *upnp_connmgr_get_service(void) {
 		.scpd_url =		CONNMGR_SCPD_URL,
 		.control_url =		CONNMGR_CONTROL_URL,
 		.event_url =		CONNMGR_EVENT_URL,
+		.event_xml_ns =         NULL,  // we never send change events.
 		.actions =		connmgr_actions,
 		.action_arguments =     argument_list,
 		.variable_container =   NULL, // initialized below

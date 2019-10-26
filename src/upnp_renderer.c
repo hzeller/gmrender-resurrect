@@ -90,7 +90,9 @@ static struct upnp_device_descriptor render_device = {
         .udn                    = "uuid:GMediaRender-1_0-000-000-002",
         .upc                    = "",
         .presentation_url       = "",  // TODO(hzeller) show something useful.
+	.mime_filter            = NULL,
         .icons                  = renderer_icon,
+	.services               = NULL,  /* set later */
 };
 
 void upnp_renderer_dump_connmgr_scpd(void)
