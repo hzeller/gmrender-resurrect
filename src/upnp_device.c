@@ -162,7 +162,7 @@ const char *upnp_get_string(struct action_event *event, const char *key)
 }
 
 static int handle_subscription_request(struct upnp_device *priv,
-				       UpnpSubscriptionRequest *sr_event)
+				       const UpnpSubscriptionRequest *sr_event)
 {
 	struct service *srv;
 	int rc;
@@ -403,7 +403,7 @@ static UPNP_CALLBACK(event_handler, EventType, event, userdata)
 		break;
 
 	case UPNP_EVENT_SUBSCRIPTION_REQUEST:
-		handle_subscription_request(priv, (void*) event);
+		handle_subscription_request(priv, (const void*) event);
 		break;
 
 	default:
