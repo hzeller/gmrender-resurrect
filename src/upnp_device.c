@@ -395,15 +395,16 @@ static UPNP_CALLBACK(event_handler, EventType, event, userdata)
 	struct upnp_device *priv = (struct upnp_device *) userdata;
 	switch (EventType) {
 	case UPNP_CONTROL_ACTION_REQUEST:
-		handle_action_request(priv, (void*) event);
+		handle_action_request(priv, (UpnpActionRequest*)event);
 		break;
 
 	case UPNP_CONTROL_GET_VAR_REQUEST:
-		handle_var_request(priv, (void*) event);
+		handle_var_request(priv, (UpnpStateVarRequest*)event);
 		break;
 
 	case UPNP_EVENT_SUBSCRIPTION_REQUEST:
-		handle_subscription_request(priv, (const void*) event);
+		handle_subscription_request(priv,
+				     (const UpnpSubscriptionRequest*)event);
 		break;
 
 	default:
