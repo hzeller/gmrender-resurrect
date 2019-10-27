@@ -190,13 +190,6 @@ static ithread_mutex_t connmgr_mutex;
 
 static GSList* supported_types_list;
 
-static struct
-{
-	GSList* allowed_roots;
-	GSList* removed_types;
-	GSList* added_types;
-} mime_filter;
-
 static bool add_mime_type(const char* mime_type) 
 {
 	// Check for duplicate MIME type
@@ -243,24 +236,16 @@ static gint g_compare_mime_root(gconstpointer a, gconstpointer b)
 
 static void g_add_mime_type(gpointer data, gpointer user_data)
 {
-	if (add_mime_type((const char*) data))
-		Log_info("connmgr", "Manually registering support for '%s'", (const char*) data);
+	add_mime_type((const char*) data);
 }
 
 static void g_remove_mime_type(gpointer data, gpointer user_data)
 {
-	if (remove_mime_type((const char*) data))
-		Log_info("connmgr", "Deregistering support for '%s'", (const char*) data);
+	remove_mime_type((const char*) data);
 }
 
 static void register_mime_type_internal(const char *mime_type) {
-
-	// Filter MIME type on allowed roots
-	if (mime_filter.allowed_roots != NULL && g_slist_find_custom(mime_filter.allowed_roots, mime_type, g_compare_mime_root) == NULL)
-		return;
-
-	if (add_mime_type(mime_type))
-		Log_info("connmgr", "Registering support for '%s'", mime_type);
+	add_mime_type(mime_type);
 }
 
 void register_mime_type(const char *mime_type) {
@@ -306,15 +291,20 @@ void register_mime_type(const char *mime_type) {
 	}
 }
 
-void connmgr_set_mime_filter(const char* filter)
+static mime_type_filters_t connmgr_parse_mime_filter_string(const char* filter_string)
 {
-	if (filter == NULL)
-		return;
+	mime_type_filters_t mime_filter;
 
-	char* filters = strdup(filter);
+	mime_filter.allowed_roots = NULL;
+	mime_filter.added_types = NULL;
+	mime_filter.removed_types = NULL;
+
+	if (filter_string == NULL)
+		return mime_filter;
+
+	char* filters = strdup(filter_string);
 
 	char* saveptr = NULL; // State pointer for strtok_r
-
 	char* token = strtok_r(filters, ",", &saveptr);
 	while(token != NULL)
 	{
@@ -338,62 +328,63 @@ void connmgr_set_mime_filter(const char* filter)
 	}
 	
 	free(filters);
+
+	return mime_filter;
 }
 
-// Append string, does not nul-terminate.
-// Return pointer to new end of buffer.
-static char* str_append_no_termination(char *dest, const char *str) {
-	const size_t len = strlen(str);
-	memcpy(dest, str, len);
-	return dest + len;
+static void connmgr_filter_mime_type_root(const mime_type_filters_t* mime_filter)
+{
+	if (mime_filter == NULL || mime_filter->allowed_roots == NULL)
+		return;
+
+	// Iterate through the supported types and filter by root
+	GSList* entry = supported_types_list;
+	while (entry != NULL)
+	{
+		GSList* next = entry->next;
+
+		if (g_slist_find_custom(mime_filter->allowed_roots, entry->data, g_compare_mime_root) == NULL)
+		{
+			// Free matching MIME type and remove the entry
+			free(entry->data);
+			supported_types_list = g_slist_delete_link(supported_types_list, entry);
+		}
+		entry = next;
+	}
 }
 
-int connmgr_init(void) {
-	char *buf = NULL;
-	int offset;
-	int bufsize = 0;
+int connmgr_init(const char* mime_filter_string) {
 
 	struct service *srv = upnp_connmgr_get_service();
 
-	buf = (char*)malloc(bufsize);
-	assert(buf);  // We assume an implementation that does 0-mallocs.
-	if (buf == NULL) {
-		fprintf(stderr, "%s: initial malloc failed\n",
-			__FUNCTION__);
-		return -1;
-	}
+	// Parse MIME filter into separate fields
+	mime_type_filters_t mime_filter = connmgr_parse_mime_filter_string(mime_filter_string);
+
+	// Filter MIME types by root
+	connmgr_filter_mime_type_root(&mime_filter);
 
 	// Manually add additional MIME types
 	g_slist_foreach(mime_filter.added_types, g_add_mime_type, NULL);
 	
-	// Remove disallowed MIME types
+	// Manually remove specific MIME types
 	g_slist_foreach(mime_filter.removed_types, g_remove_mime_type, NULL);
-	
-	char *p = buf;
+
+	GString* protoInfo = g_string_new(NULL);
 	for (GSList* entry = supported_types_list; entry != NULL; entry = g_slist_next(entry))
 	{
-		bufsize += 11 + strlen(entry->data) + 3;
-		offset = p - buf;
-		buf = (char*)realloc(buf, bufsize);
-		if (buf == NULL) {
-			fprintf(stderr, "%s: realloc failed\n",
-				__FUNCTION__);
-			return -1;
-		}
-		p = buf;
-		p += offset;
-		p = str_append_no_termination(p, "http-get:*:");
-		p = str_append_no_termination(p, entry->data);
-		p = str_append_no_termination(p, ":*,");
+		Log_info("connmgr", "Registering support for '%s'", (const char*) entry->data);
+		g_string_append_printf(protoInfo, "http-get:*:%s:*,", (const char*) entry->data);
 	}
 
-	if (bufsize > 0) {
-		p--;        // Don't include last comma
-		*p = '\0';
+	if (protoInfo->len > 0) {
+		// Truncate final comma
+		protoInfo = g_string_truncate(protoInfo, protoInfo->len - 1);
 		VariableContainer_change(srv->variable_container,
-					 CONNMGR_VAR_SINK_PROTO_INFO, buf);
+					 CONNMGR_VAR_SINK_PROTO_INFO, protoInfo->str);
 	}
-	free(buf);
+	
+	// Free string and its data
+	g_string_free(protoInfo, TRUE);
 
 	// Free all lists that were generated
 	g_slist_free_full(supported_types_list, free);
@@ -439,9 +430,9 @@ static int get_current_conn_info(struct action_event *event)
 	upnp_append_variable(event, CONNMGR_VAR_AAT_RCS_ID, "RcsID");
 	upnp_append_variable(event, CONNMGR_VAR_AAT_AVT_ID, "AVTransportID");
 	upnp_append_variable(event, CONNMGR_VAR_AAT_PROTO_INFO,
-			     "ProtocolInfo");
+						"ProtocolInfo");
 	upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_MGR,
-			     "PeerConnectionManager");
+						"PeerConnectionManager");
 	upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_ID, "PeerConnectionID");
 	upnp_append_variable(event, CONNMGR_VAR_AAT_DIR, "Direction");
 	upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_STATUS, "Status");
@@ -453,8 +444,8 @@ struct service *upnp_connmgr_get_service(void) {
 	if (connmgr_service_.variable_container == NULL) {
 		connmgr_service_.variable_container =
 			VariableContainer_new(CONNMGR_VAR_COUNT,
-					      connmgr_variable_names,
-					      connmgr_default_values);
+								connmgr_variable_names,
+								connmgr_default_values);
 		// no changes expected; no collector.
 	}
 	return &connmgr_service_;
@@ -470,18 +461,18 @@ static struct action connmgr_actions[] = {
 };
 
 struct service connmgr_service_ = {
-	.service_mutex =        &connmgr_mutex,
-        .service_id =		CONNMGR_SERVICE_ID,
-        .service_type =		CONNMGR_TYPE,
-	.scpd_url =		CONNMGR_SCPD_URL,
-	.control_url =		CONNMGR_CONTROL_URL,
-	.event_url =		CONNMGR_EVENT_URL,
-        .actions =		connmgr_actions,
-        .action_arguments =     argument_list,
-        .variable_names =       connmgr_variable_names,
-	.variable_container =   NULL, // set later.
-	.last_change =          NULL,
-        .variable_meta =        connmgr_var_meta,
-        .variable_count =       CONNMGR_VAR_UNKNOWN,
-        .command_count =        CONNMGR_CMD_UNKNOWN,
+	.service_mutex =				&connmgr_mutex,
+	.service_id =						CONNMGR_SERVICE_ID,
+	.service_type =					CONNMGR_TYPE,
+	.scpd_url =							CONNMGR_SCPD_URL,
+	.control_url =					CONNMGR_CONTROL_URL,
+	.event_url =						CONNMGR_EVENT_URL,
+	.actions =							connmgr_actions,
+	.action_arguments =			argument_list,
+	.variable_names =				connmgr_variable_names,
+	.variable_container =		NULL, // set later.
+	.last_change =					NULL,
+	.variable_meta =				connmgr_var_meta,
+	.variable_count =				CONNMGR_VAR_UNKNOWN,
+	.command_count =				CONNMGR_CMD_UNKNOWN,
 };

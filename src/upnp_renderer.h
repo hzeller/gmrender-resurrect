@@ -30,6 +30,7 @@ void upnp_renderer_dump_transport_scpd(void);
 
 // Returned pointer not owned.
 struct upnp_device_descriptor *upnp_renderer_descriptor(const char *name,
-							const char *uuid);
+							const char *uuid,
+							const char* mime_filter);
 
 #endif /* _UPNP_RENDERER_H */

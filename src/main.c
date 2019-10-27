@@ -274,12 +274,10 @@ int main(int argc, char **argv)
 		fclose(pid_file_stream);
 	}
 
-	upnp_renderer = upnp_renderer_descriptor(friendly_name, uuid);
+	upnp_renderer = upnp_renderer_descriptor(friendly_name, uuid, mime_filter);
 	if (upnp_renderer == NULL) {
 		return EXIT_FAILURE;
 	}
-
-	connmgr_set_mime_filter(mime_filter);
 
 	rc = output_init(output);
 	if (rc != 0) {
