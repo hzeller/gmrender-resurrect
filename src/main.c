@@ -111,7 +111,8 @@ static GOptionEntry option_entries[] = {
 	{ "daemon", 'd', 0, G_OPTION_ARG_NONE, &daemon_mode,
 	  "Run as daemon.", NULL },
 	{ "mime-filter", 0, 0, G_OPTION_ARG_STRING, &mime_filter,
-	  "Top-level MIME type to advertise support for. e.g. audio,video,image", NULL },
+	  "Filter the supported media types. "
+		"e.g. Audio only: '--mime-filter audio'. Disable FLAC: '--mime-filter -audio/x-flac'.", NULL },
 	{ "logfile", 0, 0, G_OPTION_ARG_STRING, &log_file,
 	  "Debug log filename. Use 'stdout' or 'stderr' to log to console.", NULL },
 	{ "list-outputs", 0, 0, G_OPTION_ARG_NONE, &show_outputs,
