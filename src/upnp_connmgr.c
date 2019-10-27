@@ -430,9 +430,9 @@ static int get_current_conn_info(struct action_event *event)
 	upnp_append_variable(event, CONNMGR_VAR_AAT_RCS_ID, "RcsID");
 	upnp_append_variable(event, CONNMGR_VAR_AAT_AVT_ID, "AVTransportID");
 	upnp_append_variable(event, CONNMGR_VAR_AAT_PROTO_INFO,
-						"ProtocolInfo");
+			     "ProtocolInfo");
 	upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_MGR,
-						"PeerConnectionManager");
+			     "PeerConnectionManager");
 	upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_ID, "PeerConnectionID");
 	upnp_append_variable(event, CONNMGR_VAR_AAT_DIR, "Direction");
 	upnp_append_variable(event, CONNMGR_VAR_AAT_CONN_STATUS, "Status");
@@ -444,8 +444,8 @@ struct service *upnp_connmgr_get_service(void) {
 	if (connmgr_service_.variable_container == NULL) {
 		connmgr_service_.variable_container =
 			VariableContainer_new(CONNMGR_VAR_COUNT,
-								connmgr_variable_names,
-								connmgr_default_values);
+					      connmgr_variable_names,
+					      connmgr_default_values);
 		// no changes expected; no collector.
 	}
 	return &connmgr_service_;
@@ -461,18 +461,18 @@ static struct action connmgr_actions[] = {
 };
 
 struct service connmgr_service_ = {
-	.service_mutex =				&connmgr_mutex,
-	.service_id =						CONNMGR_SERVICE_ID,
-	.service_type =					CONNMGR_TYPE,
-	.scpd_url =							CONNMGR_SCPD_URL,
-	.control_url =					CONNMGR_CONTROL_URL,
-	.event_url =						CONNMGR_EVENT_URL,
-	.actions =							connmgr_actions,
-	.action_arguments =			argument_list,
-	.variable_names =				connmgr_variable_names,
-	.variable_container =		NULL, // set later.
-	.last_change =					NULL,
-	.variable_meta =				connmgr_var_meta,
-	.variable_count =				CONNMGR_VAR_UNKNOWN,
-	.command_count =				CONNMGR_CMD_UNKNOWN,
+	.service_mutex =        &connmgr_mutex,
+	.service_id =           CONNMGR_SERVICE_ID,
+	.service_type =         CONNMGR_TYPE,
+	.scpd_url =             CONNMGR_SCPD_URL,
+	.control_url =          CONNMGR_CONTROL_URL,
+	.event_url =            CONNMGR_EVENT_URL,
+	.actions =              connmgr_actions,
+	.action_arguments =     argument_list,
+	.variable_names =       connmgr_variable_names,
+	.variable_container =   NULL, // set later.
+	.last_change =          NULL,
+	.variable_meta =        connmgr_var_meta,
+	.variable_count =       CONNMGR_VAR_UNKNOWN,
+	.command_count =        CONNMGR_CMD_UNKNOWN,
 };
