@@ -34,6 +34,10 @@
 #include <upnp.h>
 #include <ithread.h>
 
+// Can't include above upnp.h breaks stdbool?
+#include <stdbool.h>
+#include <glib.h>
+
 #include "upnp_connmgr.h"
 
 #include "logging.h"
@@ -139,26 +143,64 @@ static const char *direction_values[] = {
 
 static ithread_mutex_t connmgr_mutex;
 
-struct mime_type;
-static struct mime_type {
-	const char *mime_type;
-	struct mime_type *next;
-} *supported_types = NULL;
+static GSList* supported_types_list;
+
+static bool add_mime_type(const char* mime_type) 
+{
+	// Check for duplicate MIME type
+	if (g_slist_find_custom(supported_types_list, mime_type, (GCompareFunc) strcmp) != NULL)
+		return false;
+	
+	// Sorted insert into list
+	supported_types_list = g_slist_insert_sorted(supported_types_list, strdup(mime_type), (GCompareFunc) strcmp);
+
+	return true;
+}
+
+static bool remove_mime_type(const char* mime_type)
+{
+	// Check that the list exists
+	if (supported_types_list == NULL)
+		return false;
+
+	// Search for the MIME type
+	GSList* entry = g_slist_find_custom(supported_types_list, mime_type, (GCompareFunc) strcmp);
+	if (entry != NULL)
+	{
+		// Free the string pointer
+		free(entry->data);
+
+		// Free the list entry
+		supported_types_list = g_slist_delete_link(supported_types_list, entry);
+		return true;
+	}
+	
+	return false;
+}
+
+static gint g_compare_mime_root(gconstpointer a, gconstpointer b)
+{
+	size_t aLen = strlen(a);
+	size_t bLen = strlen(b);
+	
+	// Only compare up to the small string
+	int min = (aLen < bLen) ? aLen : bLen;
+
+	return strncmp((const char*) a, (const char*) b, min);
+}
+
+static void g_add_mime_type(gpointer data, gpointer user_data)
+{
+	add_mime_type((const char*) data);
+}
+
+static void g_remove_mime_type(gpointer data, gpointer user_data)
+{
+	remove_mime_type((const char*) data);
+}
 
 static void register_mime_type_internal(const char *mime_type) {
-	struct mime_type *entry;
-
-	for (entry = supported_types; entry; entry = entry->next) {
-		if (strcmp(entry->mime_type, mime_type) == 0) {
-			return;
-		}
-	}
-	Log_info("connmgr", "Registering support for '%s'", mime_type);
-
-	entry = (struct mime_type*) malloc(sizeof(struct mime_type));
-	entry->mime_type = strdup(mime_type);
-	entry->next = supported_types;
-	supported_types = entry;
+	add_mime_type(mime_type);
 }
 
 void register_mime_type(const char *mime_type) {
@@ -204,77 +246,106 @@ void register_mime_type(const char *mime_type) {
 	}
 }
 
-static int filter_mime_type(const char* filterList, const char* mime_type) {
-	// Make a modifiable copy of the mime type
-	char* type = (char*)malloc(strlen(mime_type) + 1);
-	if (type == NULL)
-		return 0;
+static mime_type_filters_t connmgr_parse_mime_filter_string(const char* filter_string)
+{
+	mime_type_filters_t mime_filter;
 
-	strcpy(type, mime_type);
+	mime_filter.allowed_roots = NULL;
+	mime_filter.added_types = NULL;
+	mime_filter.removed_types = NULL;
 
-	// Fetch the base type
-	char* base = strtok(type, "/");
+	if (filter_string == NULL)
+		return mime_filter;
 
-	// Check for base type in filter
-	int result = (strstr(filterList, base) == NULL);
+	char* filters = strdup(filter_string);
 
-	free(type);
-	return result;
+	char* saveptr = NULL; // State pointer for strtok_r
+	char* token = strtok_r(filters, ",", &saveptr);
+	while(token != NULL)
+	{
+		if (token[0] == '+')
+		{
+			mime_filter.added_types = g_slist_prepend(mime_filter.added_types, 
+				strdup(&token[1]));
+		}
+		else if (token[0] == '-')
+		{
+			mime_filter.removed_types = g_slist_prepend(mime_filter.removed_types, 
+				strdup(&token[1]));
+		}
+		else
+		{
+			mime_filter.allowed_roots = g_slist_prepend(mime_filter.allowed_roots, 
+				strdup(token));
+		}
+
+		token = strtok_r(NULL, ",", &saveptr);
+	}
+	
+	free(filters);
+
+	return mime_filter;
 }
 
-// Append string, does not nul-terminate.
-// Return pointer to new end of buffer.
-static char* str_append_no_termination(char *dest, const char *str) {
-	const size_t len = strlen(str);
-	memcpy(dest, str, len);
-	return dest + len;
+static void connmgr_filter_mime_type_root(const mime_type_filters_t* mime_filter)
+{
+	if (mime_filter == NULL || mime_filter->allowed_roots == NULL)
+		return;
+
+	// Iterate through the supported types and filter by root
+	GSList* entry = supported_types_list;
+	while (entry != NULL)
+	{
+		GSList* next = entry->next;
+
+		if (g_slist_find_custom(mime_filter->allowed_roots, entry->data, g_compare_mime_root) == NULL)
+		{
+			// Free matching MIME type and remove the entry
+			free(entry->data);
+			supported_types_list = g_slist_delete_link(supported_types_list, entry);
+		}
+		entry = next;
+	}
 }
 
-int connmgr_init(const char* filter) {
-	struct mime_type *entry;
-	char *buf = NULL;
-	int offset;
-	int bufsize = 0;
+int connmgr_init(const char* mime_filter_string) {
 
 	struct service *srv = upnp_connmgr_get_service();
 
-	buf = (char*)malloc(bufsize);
-	assert(buf);  // We assume an implementation that does 0-mallocs.
-	if (buf == NULL) {
-		fprintf(stderr, "%s: initial malloc failed\n",
-			__FUNCTION__);
-		return -1;
+	// Parse MIME filter into separate fields
+	mime_type_filters_t mime_filter = connmgr_parse_mime_filter_string(mime_filter_string);
+
+	// Filter MIME types by root
+	connmgr_filter_mime_type_root(&mime_filter);
+
+	// Manually add additional MIME types
+	g_slist_foreach(mime_filter.added_types, g_add_mime_type, NULL);
+	
+	// Manually remove specific MIME types
+	g_slist_foreach(mime_filter.removed_types, g_remove_mime_type, NULL);
+
+	GString* protoInfo = g_string_new(NULL);
+	for (GSList* entry = supported_types_list; entry != NULL; entry = g_slist_next(entry))
+	{
+		Log_info("connmgr", "Registering support for '%s'", (const char*) entry->data);
+		g_string_append_printf(protoInfo, "http-get:*:%s:*,", (const char*) entry->data);
 	}
 
-	char *p = buf;
-	for (entry = supported_types; entry; entry = entry->next) {
-
-		// Filter mime types
-		if (filter != NULL && filter_mime_type(filter, entry->mime_type))
-			continue;
-
-		bufsize += 11 + strlen(entry->mime_type) + 3;
-		offset = p - buf;
-		buf = (char*)realloc(buf, bufsize);
-		if (buf == NULL) {
-			fprintf(stderr, "%s: realloc failed\n",
-				__FUNCTION__);
-			return -1;
-		}
-		p = buf;
-		p += offset;
-		p = str_append_no_termination(p, "http-get:*:");
-		p = str_append_no_termination(p, entry->mime_type);
-		p = str_append_no_termination(p, ":*,");
-	}
-
-	if (bufsize > 0) {
-		p--;        // Don't include last comma
-		*p = '\0';
+	if (protoInfo->len > 0) {
+		// Truncate final comma
+		protoInfo = g_string_truncate(protoInfo, protoInfo->len - 1);
 		VariableContainer_change(srv->variable_container,
-					 CONNMGR_VAR_SINK_PROTO_INFO, buf);
+					 CONNMGR_VAR_SINK_PROTO_INFO, protoInfo->str);
 	}
-	free(buf);
+	
+	// Free string and its data
+	g_string_free(protoInfo, TRUE);
+
+	// Free all lists that were generated
+	g_slist_free_full(supported_types_list, free);
+	g_slist_free_full(mime_filter.allowed_roots, free);
+	g_slist_free_full(mime_filter.added_types, free);
+	g_slist_free_full(mime_filter.removed_types, free);
 
 	return 0;
 }

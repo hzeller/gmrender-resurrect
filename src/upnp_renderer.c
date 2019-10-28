@@ -90,7 +90,7 @@ static struct upnp_device_descriptor render_device = {
         .udn                    = "uuid:GMediaRender-1_0-000-000-002",
         .upc                    = "",
         .presentation_url       = "",  // TODO(hzeller) show something useful.
-	.mime_filter            = NULL,
+        .mime_filter            = NULL,
         .icons                  = renderer_icon,
 	.services               = NULL,  /* set later */
 };
@@ -125,23 +125,20 @@ static int upnp_renderer_init(void)
 	upnp_services[2] = upnp_control_get_service();
 	upnp_services[3] = NULL;
 	render_device.services = upnp_services;
-        return connmgr_init(render_device.mime_filter);
+	return connmgr_init(render_device.mime_filter);
 }
 
 struct upnp_device_descriptor *
 upnp_renderer_descriptor(const char *friendly_name,
-			 const char *uuid)
+			 const char *uuid,
+			 const char* mime_filter)
 {
 	render_device.friendly_name = friendly_name;
+	render_device.mime_filter = mime_filter;
 
 	char *udn = NULL;
 	if (asprintf(&udn, "uuid:%s", uuid) > 0) {
 		render_device.udn = udn;
 	}
 	return &render_device;
-}
-
-void upnp_renderer_set_mime_filter(const char* filter)
-{
-	render_device.mime_filter = filter;
 }

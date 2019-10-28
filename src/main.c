@@ -59,6 +59,7 @@
 #include "upnp_device.h"
 #include "upnp_renderer.h"
 #include "upnp_transport.h"
+#include "upnp_connmgr.h"
 
 static gboolean show_version = FALSE;
 static gboolean show_devicedesc = FALSE;
@@ -110,7 +111,8 @@ static GOptionEntry option_entries[] = {
 	{ "daemon", 'd', 0, G_OPTION_ARG_NONE, &daemon_mode,
 	  "Run as daemon.", NULL },
 	{ "mime-filter", 0, 0, G_OPTION_ARG_STRING, &mime_filter,
-	  "Top-level MIME type to advertise support for. e.g. audio,video,image", NULL },
+	  "Filter the supported media types. "
+		"e.g. Audio only: '--mime-filter audio'. Disable FLAC: '--mime-filter -audio/x-flac'.", NULL },
 	{ "logfile", 0, 0, G_OPTION_ARG_STRING, &log_file,
 	  "Debug log filename. Use 'stdout' or 'stderr' to log to console.", NULL },
 	{ "list-outputs", 0, 0, G_OPTION_ARG_NONE, &show_outputs,
@@ -273,12 +275,10 @@ int main(int argc, char **argv)
 		fclose(pid_file_stream);
 	}
 
-	upnp_renderer = upnp_renderer_descriptor(friendly_name, uuid);
+	upnp_renderer = upnp_renderer_descriptor(friendly_name, uuid, mime_filter);
 	if (upnp_renderer == NULL) {
 		return EXIT_FAILURE;
 	}
-
-	upnp_renderer_set_mime_filter(mime_filter);
 
 	rc = output_init(output);
 	if (rc != 0) {
