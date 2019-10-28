@@ -77,6 +77,23 @@ share the same static ID.
 With this option, each renderer can be given its own id.
 One way to generate a UUID is to create a UUID once by running the 
 \fBuuidgen\fP tool.
+.TP
+.B \-\-mime-filter \fI\<filter>\fP
+Filters the advertised MIME types supported by the renderer. 
+
+Normally, \fBgmediarender\fP advertises all MIME types (media formats) supported by the 
+output. Use this option to limit the advertised media support or add/remove
+support for a specific type.
+
+Filters take 3 forms. Multiple filters are separated by a comma.
+ 
+\(bu Prefix filters will only advertise MIME types that match the supplied prefix. e.g. audio, video, image.
+
+\(bu Inclusion filters will add the supplied type to the supported list. e.g. +audio/x-flac
+
+\(bu Removal filters will remove the supplied type from the supported list. e.g. -audio/x-flac
+
+e.g. To allow only audio, without FLAC but include FLV. --mime-filter audio,-audio/x-flac,+video/x-flv
 .SS "Audio options:"
 .TP
 \fB\-\-gstout\-audiosink\fP \fI\<sink\>\fP
