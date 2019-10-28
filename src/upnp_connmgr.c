@@ -145,12 +145,12 @@ static ithread_mutex_t connmgr_mutex;
 
 static GSList* supported_types_list;
 
-static bool add_mime_type(const char* mime_type) 
+static bool add_mime_type(const char* mime_type)
 {
 	// Check for duplicate MIME type
 	if (g_slist_find_custom(supported_types_list, mime_type, (GCompareFunc) strcmp) != NULL)
 		return false;
-	
+
 	// Sorted insert into list
 	supported_types_list = g_slist_insert_sorted(supported_types_list, strdup(mime_type), (GCompareFunc) strcmp);
 
@@ -174,15 +174,15 @@ static bool remove_mime_type(const char* mime_type)
 		supported_types_list = g_slist_delete_link(supported_types_list, entry);
 		return true;
 	}
-	
+
 	return false;
 }
 
 static gint g_compare_mime_root(gconstpointer a, gconstpointer b)
 {
-	size_t aLen = strlen(a);
-	size_t bLen = strlen(b);
-	
+	size_t aLen = strlen((const char*)a);
+	size_t bLen = strlen((const char*)b);
+
 	// Only compare up to the small string
 	int min = (aLen < bLen) ? aLen : bLen;
 
@@ -265,23 +265,23 @@ static mime_type_filters_t connmgr_parse_mime_filter_string(const char* filter_s
 	{
 		if (token[0] == '+')
 		{
-			mime_filter.added_types = g_slist_prepend(mime_filter.added_types, 
+			mime_filter.added_types = g_slist_prepend(mime_filter.added_types,
 				strdup(&token[1]));
 		}
 		else if (token[0] == '-')
 		{
-			mime_filter.removed_types = g_slist_prepend(mime_filter.removed_types, 
+			mime_filter.removed_types = g_slist_prepend(mime_filter.removed_types,
 				strdup(&token[1]));
 		}
 		else
 		{
-			mime_filter.allowed_roots = g_slist_prepend(mime_filter.allowed_roots, 
+			mime_filter.allowed_roots = g_slist_prepend(mime_filter.allowed_roots,
 				strdup(token));
 		}
 
 		token = strtok_r(NULL, ",", &saveptr);
 	}
-	
+
 	free(filters);
 
 	return mime_filter;
@@ -320,7 +320,7 @@ int connmgr_init(const char* mime_filter_string) {
 
 	// Manually add additional MIME types
 	g_slist_foreach(mime_filter.added_types, g_add_mime_type, NULL);
-	
+
 	// Manually remove specific MIME types
 	g_slist_foreach(mime_filter.removed_types, g_remove_mime_type, NULL);
 
@@ -337,7 +337,7 @@ int connmgr_init(const char* mime_filter_string) {
 		VariableContainer_change(srv->variable_container,
 					 CONNMGR_VAR_SINK_PROTO_INFO, protoInfo->str);
 	}
-	
+
 	// Free string and its data
 	g_string_free(protoInfo, TRUE);
 
