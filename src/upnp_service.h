@@ -25,6 +25,7 @@
 #define _UPNP_SERVICE_H
 
 #include <upnp.h>
+#include <ithread.h>
 #include "upnp_compat.h"
 
 struct action;
@@ -56,13 +57,12 @@ typedef enum {
         DATATYPE_I4,
         DATATYPE_UI2,
         DATATYPE_UI4,
-        DATATYPE_UNKNOWN,
-        DATATYPE_COUNT
+        DATATYPE_UNKNOWN
 } param_datatype;
 
 typedef enum {
-        SENDEVENT_NO,
-        SENDEVENT_YES
+        EV_NO,
+        EV_YES
 } param_event;
 
 struct param_range {
@@ -72,11 +72,13 @@ struct param_range {
 };
 
 struct var_meta {
+	int id;
+	const char *name;
+	const char *default_value;
         param_event     sendevents;
         param_datatype  datatype;
         const char      **allowed_values;
         struct param_range      *allowed_range;
-	const char      *default_value;
 };
 
 
@@ -98,14 +100,9 @@ struct service {
 	const char *event_xml_ns;
 	struct action *actions;
 	struct argument **action_arguments;
-	const char **variable_names;
 	struct variable_container *variable_container;
 	struct upnp_last_change_collector *last_change;
-	struct var_meta *variable_meta;
-	int variable_count;
 	int command_count;
-	const char **eventvar_names;
-	const char **eventvar_values;
 };
 
 struct action_event {

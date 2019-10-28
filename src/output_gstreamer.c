@@ -608,6 +608,7 @@ struct output_module gstreamer_output = {
         .shortname = "gst",
 	.description = "GStreamer multimedia framework",
 	.add_options = output_gstreamer_add_options,
+
 	.init        = output_gstreamer_init,
 	.set_uri     = output_gstreamer_set_uri,
 	.set_next_uri= output_gstreamer_set_next_uri,
@@ -615,6 +616,7 @@ struct output_module gstreamer_output = {
 	.stop        = output_gstreamer_stop,
 	.pause       = output_gstreamer_pause,
 	.seek        = output_gstreamer_seek,
+
 	.get_position = output_gstreamer_get_position,
 	.get_volume  = output_gstreamer_get_volume,
 	.set_volume  = output_gstreamer_set_volume,

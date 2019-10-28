@@ -15,11 +15,11 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
- */ 
+ */
 
 #ifndef _OUTPUT_MODULE_H
 #define _OUTPUT_MODULE_H
@@ -38,7 +38,6 @@ struct output_module {
 	int (*play)(output_transition_cb_t transition_callback);
 	int (*stop)(void);
 	int (*pause)(void);
-	int (*loop)(void);
 	int (*seek)(gint64 position_nanos);
 
 	// parameters
@@ -50,4 +49,3 @@ struct output_module {
 };
 
 #endif
-
