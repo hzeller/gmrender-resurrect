@@ -129,7 +129,7 @@ static struct xmlelement *gen_scpd_statevar(struct xmldoc *doc,
   top = xmlelement_new(doc, "stateVariable");
 
   xmlelement_set_attribute(doc, top, "sendEvents",
-                           (meta->sendevents == EV_YES) ? "yes" : "no");
+                           (meta->sendevents == Eventing::kYes) ? "yes" : "no");
   add_value_element(doc, top, "name", meta->name);
   add_value_element(doc, top, "dataType", ParamDatatypeName(meta->datatype));
 

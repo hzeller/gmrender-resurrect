@@ -62,7 +62,10 @@ enum class DataType {
   kUnknown,
 };
 
-typedef enum { EV_NO, EV_YES } param_event;
+enum class Eventing {
+  kNo,
+  kYes
+};
 
 struct param_range {
   long long min;
@@ -74,7 +77,7 @@ struct var_meta {
   int id;
   const char *name;
   const char *default_value;
-  param_event sendevents;
+  Eventing sendevents;
   DataType datatype;
   const char **allowed_values;
   struct param_range *allowed_range;
