@@ -397,28 +397,28 @@ struct service* upnp_connmgr_get_service(void) {
 
   static struct var_meta connmgr_var_meta[] = {
       {CONNMGR_VAR_SRC_PROTO_INFO, "SourceProtocolInfo", "", EV_YES,
-       DATATYPE_STRING, NULL, NULL},
+       DataType::kString, NULL, NULL},
       {CONNMGR_VAR_SINK_PROTO_INFO, "SinkProtocolInfo",
-       "http-get:*:audio/mpeg:*", EV_YES, DATATYPE_STRING, NULL, NULL},
+       "http-get:*:audio/mpeg:*", EV_YES, DataType::kString, NULL, NULL},
       {CONNMGR_VAR_CUR_CONN_IDS, "CurrentConnectionIDs", "0", EV_YES,
-       DATATYPE_STRING, NULL, NULL},
+       DataType::kString, NULL, NULL},
 
       {CONNMGR_VAR_AAT_CONN_STATUS, "A_ARG_TYPE_ConnectionStatus", "Unknown",
-       EV_NO, DATATYPE_STRING, connstatus_values, NULL},
+       EV_NO, DataType::kString, connstatus_values, NULL},
       {CONNMGR_VAR_AAT_CONN_MGR, "A_ARG_TYPE_ConnectionManager", "/", EV_NO,
-       DATATYPE_STRING, NULL, NULL},
+       DataType::kString, NULL, NULL},
       {CONNMGR_VAR_AAT_DIR, "A_ARG_TYPE_Direction", "Input", EV_NO,
-       DATATYPE_STRING, direction_values, NULL},
+       DataType::kString, direction_values, NULL},
       {CONNMGR_VAR_AAT_PROTO_INFO, "A_ARG_TYPE_ProtocolInfo", ":::", EV_NO,
-       DATATYPE_STRING, NULL, NULL},
+       DataType::kString, NULL, NULL},
       {CONNMGR_VAR_AAT_CONN_ID, "A_ARG_TYPE_ConnectionID", "-1", EV_NO,
-       DATATYPE_I4, NULL, NULL},
+       DataType::kInt4, NULL, NULL},
       {CONNMGR_VAR_AAT_AVT_ID, "A_ARG_TYPE_AVTransportID", "0", EV_NO,
-       DATATYPE_I4, NULL, NULL},
-      {CONNMGR_VAR_AAT_RCS_ID, "A_ARG_TYPE_RcsID", "0", EV_NO, DATATYPE_I4,
+       DataType::kInt4, NULL, NULL},
+      {CONNMGR_VAR_AAT_RCS_ID, "A_ARG_TYPE_RcsID", "0", EV_NO, DataType::kInt4,
        NULL, NULL},
 
-      {CONNMGR_VAR_COUNT, NULL, NULL, EV_NO, DATATYPE_UNKNOWN, NULL, NULL}};
+      {CONNMGR_VAR_COUNT, NULL, NULL, EV_NO, DataType::kUnknown, NULL, NULL}};
 
   if (connmgr_service_.variable_container == NULL) {
     connmgr_service_.variable_container =

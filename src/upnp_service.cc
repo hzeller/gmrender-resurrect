@@ -40,11 +40,19 @@
 #include "variable-container.h"
 #include "xmldoc.h"
 
-static const char *param_datatype_names[] = {
-    [DATATYPE_STRING] = "string", [DATATYPE_BOOLEAN] = "boolean",
-    [DATATYPE_I2] = "i2",         [DATATYPE_I4] = "i4",
-    [DATATYPE_UI2] = "ui2",       [DATATYPE_UI4] = "ui4",
-    [DATATYPE_UNKNOWN] = NULL};
+static const char *ParamDatatypeName(DataType t) {
+  switch (t) {
+  case DataType::kString: return "string";
+  case DataType::kBoolean: return "boolean";
+  case DataType::kInt2: return "i2";
+  case DataType::kInt4: return "i4";
+  case DataType::kUint2: return "ui2";
+  case DataType::kUint4: return "ui4";
+  case DataType::kUnknown: return nullptr;
+    /* no default to let compiler warn about new types */
+  }
+  return nullptr;  // not reached.
+}
 
 static struct xmlelement *gen_specversion(struct xmldoc *doc, int major,
                                           int minor) {
@@ -123,7 +131,7 @@ static struct xmlelement *gen_scpd_statevar(struct xmldoc *doc,
   xmlelement_set_attribute(doc, top, "sendEvents",
                            (meta->sendevents == EV_YES) ? "yes" : "no");
   add_value_element(doc, top, "name", meta->name);
-  add_value_element(doc, top, "dataType", param_datatype_names[meta->datatype]);
+  add_value_element(doc, top, "dataType", ParamDatatypeName(meta->datatype));
 
   if (valuelist) {
     const char *allowed_value;

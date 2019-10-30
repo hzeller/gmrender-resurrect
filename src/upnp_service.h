@@ -52,15 +52,15 @@ struct argument {
   int statevar;
 };
 
-typedef enum {
-  DATATYPE_STRING,
-  DATATYPE_BOOLEAN,
-  DATATYPE_I2,
-  DATATYPE_I4,
-  DATATYPE_UI2,
-  DATATYPE_UI4,
-  DATATYPE_UNKNOWN
-} param_datatype;
+enum class DataType {
+  kString,
+  kBoolean,
+  kInt2,
+  kInt4,
+  kUint2,
+  kUint4,
+  kUnknown,
+};
 
 typedef enum { EV_NO, EV_YES } param_event;
 
@@ -75,7 +75,7 @@ struct var_meta {
   const char *name;
   const char *default_value;
   param_event sendevents;
-  param_datatype datatype;
+  DataType datatype;
   const char **allowed_values;
   struct param_range *allowed_range;
 };
