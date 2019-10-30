@@ -1,27 +1,27 @@
 AC_PREREQ(2.59)
 AC_INIT(gmediarender, 0.0.8, https://github.com/hzeller/gmrender-resurrect)
 AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_SRCDIR(src/main.c)
+AC_CONFIG_SRCDIR(src/main.cc)
 AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE([1.8 dist-bzip2 no-dist-gzip check-news])
 
 AC_SYS_LARGEFILE
 
 # Checks for programs
-AC_PROG_CC
+AC_PROG_CXX
 AC_PROG_CC_STDC
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
-EXTRA_GCC_DEBUG_CFLAGS="" 
+EXTRA_GCC_DEBUG_CFLAGS=""
 EXTRA_GCC_DEBUG_CXXFLAGS=""
-  
+
 if test -n "$GCC"; then
    EXTRA_GCC_DEBUG_CFLAGS="$CFLAGS"
    EXTRA_GCC_DEBUG_CXXFLAGS="$CXXFLAGS"
    CFLAGS+=" -Wall -Wpointer-arith -Wmissing-prototypes -Wmissing-declarations -Wwrite-strings"
    CXXFLAGS+=" -Wall -Wpointer-arith"
-fi  
+fi
 
 AC_CHECK_FUNCS([asprintf])
 AC_CHECK_LIB([m],[exp])
@@ -120,4 +120,3 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile
 		 data/Makefile])
 AC_OUTPUT
-
