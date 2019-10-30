@@ -92,44 +92,27 @@ void VariableContainer::RegisterCallback(const ChangeListener &callback) {
 }
 
 // -- UPnPLastChangeBuilder
-struct upnp_last_change_builder {
-  const char *xml_namespace;
-  struct xmldoc *change_event_doc;
-  struct xmlelement *instance_element;
-};
-
-upnp_last_change_builder_t *UPnPLastChangeBuilder_new(
-    const char *xml_namespace) {
-  upnp_last_change_builder_t *result =
-      (upnp_last_change_builder_t *)malloc(sizeof(upnp_last_change_builder_t));
-  result->xml_namespace = xml_namespace;
-  result->change_event_doc = NULL;
-  result->instance_element = NULL;
-  return result;
-}
-
-void UPnPLastChangeBuilder_delete(upnp_last_change_builder_t *builder) {
-  if (builder->change_event_doc != NULL) {
-    xmldoc_free(builder->change_event_doc);
+UPnPLastChangeBuilder::UPnPLastChangeBuilder(const char *xml_namespace)
+  : xml_namespace_(xml_namespace) {}
+UPnPLastChangeBuilder::~UPnPLastChangeBuilder() {
+  if (change_event_doc_) {
+    xmldoc_free(change_event_doc_);
   }
-  free(builder);
 }
 
-void UPnPLastChangeBuilder_add(upnp_last_change_builder_t *builder,
-                               const char *name, const char *value) {
-  assert(name != NULL);
-  assert(value != NULL);
-  if (builder->change_event_doc == NULL) {
-    builder->change_event_doc = xmldoc_new();
+// Add a name/value pair to event on. We just append it
+void UPnPLastChangeBuilder::Add(const std::string &name,
+                                const std::string &value) {
+  if (change_event_doc_ == NULL) {
+    change_event_doc_ = xmldoc_new();
     struct xmlelement *toplevel = xmldoc_new_topelement(
-        builder->change_event_doc, "Event", builder->xml_namespace);
+      change_event_doc_, "Event", xml_namespace_);
     // Right now, we only have exactly one instance.
-    builder->instance_element = add_attributevalue_element(
-        builder->change_event_doc, toplevel, "InstanceID", "val", "0");
+    instance_element_ = add_attributevalue_element(
+      change_event_doc_, toplevel, "InstanceID", "val", "0");
   }
-  struct xmlelement *xml_value;
-  xml_value = add_attributevalue_element(
-      builder->change_event_doc, builder->instance_element, name, "val", value);
+  xmlelement *const xml_value = add_attributevalue_element(
+    change_event_doc_, instance_element_, name.c_str(), "val", value.c_str());
   // HACK!
   // The volume related events need another qualifying
   // attribute that represents the channel. Since all other elements just
@@ -137,21 +120,26 @@ void UPnPLastChangeBuilder_add(upnp_last_change_builder_t *builder,
   // is oblivious about this notion of a qualifier.
   // So this is a bit ugly: if we see the variables in question,
   // we add the attribute manually.
-  if (strcmp(name, "Volume") == 0 || strcmp(name, "VolumeDB") == 0 ||
-      strcmp(name, "Mute") == 0 || strcmp(name, "Loudness") == 0) {
-    xmlelement_set_attribute(builder->change_event_doc, xml_value, "channel",
+  if (name == "Volume" || name == "VolumeDB" ||
+      name == "Mute" || name == "Loudness") {
+    xmlelement_set_attribute(change_event_doc_, xml_value, "channel",
                              "Master");
   }
 }
 
-char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder) {
-  if (builder->change_event_doc == NULL) return NULL;
+// Return the collected change as XML document.
+std::string UPnPLastChangeBuilder::toXML() {
+  if (!change_event_doc_) return "";
 
-  char *xml_doc_string = xmldoc_tostring(builder->change_event_doc);
-  xmldoc_free(builder->change_event_doc);
-  builder->change_event_doc = NULL;
-  builder->instance_element = NULL;
-  return xml_doc_string;
+  char *xml_doc_string = xmldoc_tostring(change_event_doc_);
+  std::string result = xml_doc_string;
+  free(xml_doc_string);  // TODO: avoid double allocation and one free()
+
+  xmldoc_free(change_event_doc_);
+  change_event_doc_ = nullptr;
+  instance_element_ = nullptr;
+
+  return result;
 }
 
 // -- UPnPLastChangeCollector
@@ -161,7 +149,7 @@ UPnPLastChangeCollector::UPnPLastChangeCollector(
   upnp_device *upnp_device, const char *service_id)
   : variable_container_(variable_container), upnp_device_(upnp_device),
     service_id_(service_id),
-    builder_(UPnPLastChangeBuilder_new(event_xml_namespace)) {
+    builder_(new UPnPLastChangeBuilder(event_xml_namespace)) {
   // Create initial LastChange that contains all variables in their
   // current state. This might help devices that silently re-connect
   // without proper registration.
@@ -176,7 +164,7 @@ UPnPLastChangeCollector::UPnPLastChangeCollector(
       continue;
     }
     // Send over all variables except "LastChange" itself.
-    UPnPLastChangeBuilder_add(builder_, name.c_str(), value.c_str());
+    builder_->Add(name, value);
   }
   assert(last_change_variable_num_ >= 0);  // we expect to have one.
   // The state change variable itself is not eventable.
@@ -210,8 +198,8 @@ void UPnPLastChangeCollector::Finish() {
 void UPnPLastChangeCollector::Notify() {
   if (open_transactions_ != 0) return;
 
-  char *xml_doc_string = UPnPLastChangeBuilder_to_xml(builder_);
-  if (xml_doc_string == NULL) return;
+  const std::string &xml_doc_string = builder_->toXML();
+  if (xml_doc_string.empty()) return;
 
   // Only if there is actually a change, send it over.
   if (variable_container_->Set(last_change_variable_num_, xml_doc_string)) {
@@ -220,11 +208,10 @@ void UPnPLastChangeCollector::Notify() {
     // Yes, now, the whole XML document is encapsulated in
     // XML so needs to be XML quoted. The time around 2000 was
     // pretty sick - people did everything in XML.
-    varvalues[0] = xmlescape(xml_doc_string, 0);
+    varvalues[0] = xmlescape(xml_doc_string.c_str(), 0);
     upnp_device_notify(upnp_device_, service_id_, varnames, varvalues,  1);
     free((char *)varvalues[0]);
   }
-  free(xml_doc_string);
 }
 
 void UPnPLastChangeCollector::ReceiveChange(int var_num,
@@ -233,6 +220,6 @@ void UPnPLastChangeCollector::ReceiveChange(int var_num,
                                             const std::string &new_value) {
   if (not_eventable_variables_.find(var_num) != not_eventable_variables_.end())
     return;  // ignore changes on non-eventable variables.
-  UPnPLastChangeBuilder_add(builder_, var_name.c_str(), new_value.c_str());
+  builder_->Add(var_name, new_value);
   Notify();
 }

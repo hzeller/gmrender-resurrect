@@ -53,6 +53,8 @@
 
 struct var_meta;
 struct upnp_device;
+struct xmldoc;
+struct xmlelement;
 
 class VariableContainer {
 public:
@@ -99,20 +101,22 @@ private:
 
 // -- UPnP LastChange Builder - builds a LastChange XML document from
 // added name/value pairs.
-struct upnp_last_change_builder;
-typedef struct upnp_last_change_builder upnp_last_change_builder_t;
+class UPnPLastChangeBuilder {
+public:
+  UPnPLastChangeBuilder(const char *xml_namespace);
+  ~UPnPLastChangeBuilder();
 
-// Create a new last change builder. The pointer to the xml_namespace string
-// must exist for the livetime of this object.
-upnp_last_change_builder_t *UPnPLastChangeBuilder_new(
-    const char *xml_namespace);
-void UPnPLastChangeBuilder_delete(upnp_last_change_builder_t *builder);
+  // Add a name/value pair to event on.
+  void Add(const std::string &name, const std::string &value);
 
-void UPnPLastChangeBuilder_add(upnp_last_change_builder_t *builder,
-                               const char *name, const char *value);
-// Returns a newly allocated XML string that needs to be free()'d by the caller.
-// Resets the document. If no changes have been added, NULL is returned.
-char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder);
+  // Return the collected change as XML document.
+  std::string toXML();
+
+private:
+  const char *const xml_namespace_;
+  xmldoc *change_event_doc_ = nullptr;
+  xmlelement *instance_element_ = nullptr;
+};
 
 class UPnPLastChangeCollector {
 public:
@@ -144,7 +148,7 @@ private:
   VariableContainer *const variable_container_;
   struct upnp_device *const upnp_device_;
   const char *const service_id_;
-  upnp_last_change_builder_t *const builder_;
+  UPnPLastChangeBuilder *const builder_;
 
   int last_change_variable_num_;      // the LastChange variable we manipulate.
   std::set<int> not_eventable_variables_;  // Variables to ignore eventing on.

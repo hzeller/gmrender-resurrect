@@ -23,7 +23,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#  include "config.h"
 #endif
 
 #include <assert.h>
@@ -184,8 +184,7 @@ static int handle_subscription_request(
   ithread_mutex_lock(srv->service_mutex);
   const int var_count = srv->variable_container->variable_count();
   // TODO(hzeller): maybe use srv->last_change directly ?
-  upnp_last_change_builder_t *builder =
-      UPnPLastChangeBuilder_new(srv->event_xml_ns);
+  UPnPLastChangeBuilder builder(srv->event_xml_ns);
   for (int i = 0; i < var_count; ++i) {
     std::string name;
     const std::string &value = srv->variable_container->Get(i, &name);
@@ -193,15 +192,13 @@ static int handle_subscription_request(
     // A_ARG_TYPE variables are not evented.
     if (name != "LastChange" &&
         strncmp("A_ARG_TYPE_", name.c_str(), strlen("A_ARG_TYPE_")) != 0) {
-      UPnPLastChangeBuilder_add(builder, name.c_str(), value.c_str());
+      builder.Add(name, value);
     }
   }
   ithread_mutex_unlock(srv->service_mutex);
-  char *xml_value = UPnPLastChangeBuilder_to_xml(builder);
-  Log_info("upnp", "Initial variable sync: %s", xml_value);
-  eventvar_values[0] = xmlescape(xml_value, 0);
-  free(xml_value);
-  UPnPLastChangeBuilder_delete(builder);
+  const std::string &xml_value = builder.toXML();
+  Log_info("upnp", "Initial variable sync: %s", xml_value.c_str());
+  eventvar_values[0] = xmlescape(xml_value.c_str(), 0);
 
   const char *sid = UpnpSubscriptionRequest_get_SID_cstr(sr_event);
   rc = UpnpAcceptSubscription(priv->device_handle, udn, serviceId,
