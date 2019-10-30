@@ -16,8 +16,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -26,67 +26,63 @@
 #include "config.h"
 #endif
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "xmlescape.h"
 
-
 static void xmlescape_real(const char *str, char *target, int *length,
-                           int attribute)
-{
-	if (target != NULL) {
-		int len = 0;
+                           int attribute) {
+  if (target != NULL) {
+    int len = 0;
 
-		for (/**/; *str; str++) {
-			if (*str == '<') {
-				memcpy(target + len, "&lt;", 4);
-				len += 4;
-			} else if (attribute && (*str == '"')) {
-				memcpy(target + len, "%22", 3);
-				len += 3;
-			} else if (*str == '>') {
-				memcpy(target + len, "&gt;", 4);
-				len += 4;
-			} else if (*str == '&') {
-				memcpy(target + len, "&amp;", 5);
-				len += 5;
-			} else {
-				target[len++] = *str;
-			}
-		}
-		target[len] = '\0';
+    for (/**/; *str; str++) {
+      if (*str == '<') {
+        memcpy(target + len, "&lt;", 4);
+        len += 4;
+      } else if (attribute && (*str == '"')) {
+        memcpy(target + len, "%22", 3);
+        len += 3;
+      } else if (*str == '>') {
+        memcpy(target + len, "&gt;", 4);
+        len += 4;
+      } else if (*str == '&') {
+        memcpy(target + len, "&amp;", 5);
+        len += 5;
+      } else {
+        target[len++] = *str;
+      }
+    }
+    target[len] = '\0';
 
-		if (length != NULL)
-			*length = len;
-	} else if (length != NULL) {
-		int len = 0;
+    if (length != NULL) *length = len;
+  } else if (length != NULL) {
+    int len = 0;
 
-		for (/**/; *str; str++) {
-			if (*str == '<') {
-				len += 4;
-			} else if (attribute && (*str == '"')) {
-				len += 3;
-			} else if (*str == '>') {
-				len += 4;
-			} else if (*str == '&') {
-				len += 5;
-			} else {
-				len++;
-			}
-		}
+    for (/**/; *str; str++) {
+      if (*str == '<') {
+        len += 4;
+      } else if (attribute && (*str == '"')) {
+        len += 3;
+      } else if (*str == '>') {
+        len += 4;
+      } else if (*str == '&') {
+        len += 5;
+      } else {
+        len++;
+      }
+    }
 
-		*length = len;
-	}
+    *length = len;
+  }
 }
 
-char *xmlescape(const char *str, int attribute)
-{
-	int len;
-	char *out;
+char *xmlescape(const char *str, int attribute) {
+  int len;
+  char *out;
 
-	xmlescape_real(str, NULL, &len, attribute);
-	out = (char*)malloc(len + 1);
-	xmlescape_real(str, out, NULL, attribute);
-	return out;
+  xmlescape_real(str, NULL, &len, attribute);
+  out = (char *)malloc(len + 1);
+  xmlescape_real(str, out, NULL, attribute);
+  return out;
 }

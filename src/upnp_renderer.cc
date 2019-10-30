@@ -23,123 +23,108 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#  include "config.h"
+#include "config.h"
 #endif
 
 #ifndef _GNU_SOURCE
-#  define _GNU_SOURCE
+#define _GNU_SOURCE
 #endif
 
+#include <assert.h>
+#include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <errno.h>
-#include <stdarg.h>
-#include <assert.h>
 
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
-#include <upnp.h>
 #include <ithread.h>
+#include <upnp.h>
 
-#include "webserver.h"
-#include "upnp_service.h"
-#include "upnp_device.h"
 #include "upnp_connmgr.h"
 #include "upnp_control.h"
+#include "upnp_device.h"
+#include "upnp_service.h"
 #include "upnp_transport.h"
+#include "webserver.h"
 
-#include "upnp_renderer.h"
 #include "git-version.h"
+#include "upnp_renderer.h"
 
-static struct icon icon1 = {
-        .width =        64,
-        .height =       64,
-        .depth =        24,
-        .url =          "/upnp/grender-64x64.png",
-        .mimetype =     "image/png"
-};
-static struct icon icon2 = {
-        .width =        128,
-        .height =       128,
-        .depth =        24,
-        .url =          "/upnp/grender-128x128.png",
-        .mimetype =     "image/png"
-};
+static struct icon icon1 = {.width = 64,
+                            .height = 64,
+                            .depth = 24,
+                            .url = "/upnp/grender-64x64.png",
+                            .mimetype = "image/png"};
+static struct icon icon2 = {.width = 128,
+                            .height = 128,
+                            .depth = 24,
+                            .url = "/upnp/grender-128x128.png",
+                            .mimetype = "image/png"};
 
-static struct icon *renderer_icon[] = {
-        &icon1,
-        &icon2,
-        NULL
-};
+static struct icon *renderer_icon[] = {&icon1, &icon2, NULL};
 
 static int upnp_renderer_init(void);
 
 static struct upnp_device_descriptor render_device = {
-	.init_function          = upnp_renderer_init,
-        .device_type            = "urn:schemas-upnp-org:device:MediaRenderer:1",
-        .friendly_name          = "GMediaRender",
-        .manufacturer           = "Ivo Clarysse, Henner Zeller",
-        .manufacturer_url       = "http://github.com/hzeller/gmrender-resurrect",
-        .model_description      = PACKAGE_STRING,
-        .model_name             = PACKAGE_NAME,
-        .model_number           = GM_COMPILE_VERSION,
-        .model_url              = "http://github.com/hzeller/gmrender-resurrect",
-        .serial_number          = "1",
-        .udn                    = "uuid:GMediaRender-1_0-000-000-002",
-        .upc                    = "",
-        .presentation_url       = "",  // TODO(hzeller) show something useful.
-        .mime_filter            = NULL,
-        .icons                  = renderer_icon,
-	.services               = NULL,  /* set later */
+    .init_function = upnp_renderer_init,
+    .device_type = "urn:schemas-upnp-org:device:MediaRenderer:1",
+    .friendly_name = "GMediaRender",
+    .manufacturer = "Ivo Clarysse, Henner Zeller",
+    .manufacturer_url = "http://github.com/hzeller/gmrender-resurrect",
+    .model_description = PACKAGE_STRING,
+    .model_name = PACKAGE_NAME,
+    .model_number = GM_COMPILE_VERSION,
+    .model_url = "http://github.com/hzeller/gmrender-resurrect",
+    .serial_number = "1",
+    .udn = "uuid:GMediaRender-1_0-000-000-002",
+    .upc = "",
+    .presentation_url = "",  // TODO(hzeller) show something useful.
+    .mime_filter = NULL,
+    .icons = renderer_icon,
+    .services = NULL, /* set later */
 };
 
-void upnp_renderer_dump_connmgr_scpd(void)
-{
-	char *buf;
-	buf = upnp_get_scpd(upnp_connmgr_get_service());
-	assert(buf != NULL);
-	fputs(buf, stdout);
+void upnp_renderer_dump_connmgr_scpd(void) {
+  char *buf;
+  buf = upnp_get_scpd(upnp_connmgr_get_service());
+  assert(buf != NULL);
+  fputs(buf, stdout);
 }
-void upnp_renderer_dump_control_scpd(void)
-{
-	char *buf;
-	buf = upnp_get_scpd(upnp_control_get_service());
-	assert(buf != NULL);
-	fputs(buf, stdout);
+void upnp_renderer_dump_control_scpd(void) {
+  char *buf;
+  buf = upnp_get_scpd(upnp_control_get_service());
+  assert(buf != NULL);
+  fputs(buf, stdout);
 }
-void upnp_renderer_dump_transport_scpd(void)
-{
-	char *buf;
-	buf = upnp_get_scpd(upnp_transport_get_service());
-	assert(buf != NULL);
-	fputs(buf, stdout);
+void upnp_renderer_dump_transport_scpd(void) {
+  char *buf;
+  buf = upnp_get_scpd(upnp_transport_get_service());
+  assert(buf != NULL);
+  fputs(buf, stdout);
 }
 
-static int upnp_renderer_init(void)
-{
-	static struct service *upnp_services[4];
-	upnp_services[0] = upnp_transport_get_service();
-	upnp_services[1] = upnp_connmgr_get_service();
-	upnp_services[2] = upnp_control_get_service();
-	upnp_services[3] = NULL;
-	render_device.services = upnp_services;
-	return connmgr_init(render_device.mime_filter);
+static int upnp_renderer_init(void) {
+  static struct service *upnp_services[4];
+  upnp_services[0] = upnp_transport_get_service();
+  upnp_services[1] = upnp_connmgr_get_service();
+  upnp_services[2] = upnp_control_get_service();
+  upnp_services[3] = NULL;
+  render_device.services = upnp_services;
+  return connmgr_init(render_device.mime_filter);
 }
 
-struct upnp_device_descriptor *
-upnp_renderer_descriptor(const char *friendly_name,
-			 const char *uuid,
-			 const char* mime_filter)
-{
-	render_device.friendly_name = friendly_name;
-	render_device.mime_filter = mime_filter;
+struct upnp_device_descriptor *upnp_renderer_descriptor(
+    const char *friendly_name, const char *uuid, const char *mime_filter) {
+  render_device.friendly_name = friendly_name;
+  render_device.mime_filter = mime_filter;
 
-	char *udn = NULL;
-	if (asprintf(&udn, "uuid:%s", uuid) > 0) {
-		render_device.udn = udn;
-	}
-	return &render_device;
+  char *udn = NULL;
+  if (asprintf(&udn, "uuid:%s", uuid) > 0) {
+    render_device.udn = udn;
+  }
+  return &render_device;
 }

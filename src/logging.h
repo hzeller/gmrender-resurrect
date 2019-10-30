@@ -16,8 +16,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -27,7 +27,7 @@
 
 // Define this with empty, if you're not using gcc.
 #define PRINTF_FMT_CHECK(fmt_pos, args_pos) \
-    __attribute__ ((format (printf, fmt_pos, args_pos)))
+  __attribute__((format(printf, fmt_pos, args_pos)))
 
 // With filename given, logs info and error to that file. If filename is NULL,
 // nothing is logged (TODO: log error to syslog).
@@ -37,8 +37,8 @@ int Log_info_enabled(void);
 int Log_error_enabled(void);
 
 void Log_info(const char *category, const char *format, ...)
-	PRINTF_FMT_CHECK(2, 3);
+    PRINTF_FMT_CHECK(2, 3);
 void Log_error(const char *category, const char *format, ...)
-	PRINTF_FMT_CHECK(2, 3);
+    PRINTF_FMT_CHECK(2, 3);
 
 #endif /* _LOGGING_H */

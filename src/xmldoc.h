@@ -16,8 +16,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -40,44 +40,34 @@ struct xmlelement *xmldoc_new_topelement(struct xmldoc *doc,
 
 struct xmlelement *xmlelement_new(struct xmldoc *doc, const char *elementName);
 
-void xmlelement_add_element(struct xmldoc *doc,
-			    struct xmlelement *parent,
-			    struct xmlelement *child);
-void xmlelement_add_text(struct xmldoc *doc,
-			 struct xmlelement *parent,
-			 const char *text);
-void xmlelement_set_attribute(struct xmldoc *doc,
-			      struct xmlelement *element,
-			      const char *name,
-			      const char *value);
+void xmlelement_add_element(struct xmldoc *doc, struct xmlelement *parent,
+                            struct xmlelement *child);
+void xmlelement_add_text(struct xmldoc *doc, struct xmlelement *parent,
+                         const char *text);
+void xmlelement_set_attribute(struct xmldoc *doc, struct xmlelement *element,
+                              const char *name, const char *value);
 
-void add_value_element(struct xmldoc *doc,
-                       struct xmlelement *parent,
+void add_value_element(struct xmldoc *doc, struct xmlelement *parent,
                        const char *tagname, const char *value);
 
 // Find element in document. This returns a newly allocated struct.
-struct xmlelement *find_element_in_doc(struct xmldoc *doc,
-				       const char *key);
+struct xmlelement *find_element_in_doc(struct xmldoc *doc, const char *key);
 // Find element in document. This returns a newly allocated struct.
 struct xmlelement *find_element_in_element(struct xmlelement *element,
-					   const char *key);
+                                           const char *key);
 
 // Returns a newly allocated string representing the element value.
 char *get_node_value(struct xmlelement *element);
 
 struct xmlelement *add_attributevalue_element(struct xmldoc *doc,
-					      struct xmlelement *parent,
-					      const char *tagname,
-					      const char *attribute_name,
-					      const char *value);
+                                              struct xmlelement *parent,
+                                              const char *tagname,
+                                              const char *attribute_name,
+                                              const char *value);
 
-void add_value_element_int(struct xmldoc *doc,
-                           struct xmlelement *parent,
+void add_value_element_int(struct xmldoc *doc, struct xmlelement *parent,
                            const char *tagname, int value);
-void add_value_element_long(struct xmldoc *doc,
-                            struct xmlelement *parent,
+void add_value_element_long(struct xmldoc *doc, struct xmlelement *parent,
                             const char *tagname, long long value);
-
-
 
 #endif /* _XMLDOC_H */

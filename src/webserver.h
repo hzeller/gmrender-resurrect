@@ -16,8 +16,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -32,7 +32,6 @@ gboolean webserver_register_callbacks(void);
 
 int webserver_register_buf(const char *path, const char *contents,
                            const char *content_type);
-int webserver_register_file(const char *path,
-                            const char *content_type);
+int webserver_register_file(const char *path, const char *content_type);
 
 #endif /* _WEBSERVER_H */

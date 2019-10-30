@@ -55,7 +55,7 @@ struct var_meta;
 // Create a new variable container. The variable names mentioned
 // in the meta-data need to be valid for the lifetime of this object.
 variable_container_t *VariableContainer_new(int variable_num,
-					    const struct var_meta *var_array);
+                                            const struct var_meta *var_array);
 void VariableContainer_delete(variable_container_t *object);
 
 // Get number of variables.
@@ -65,7 +65,7 @@ int VariableContainer_get_num_vars(variable_container_t *object);
 // TODO(hzeller): this breaks abstraction, but this is to make sure to
 // simplify the transition.
 const struct var_meta *VariableContainer_get_meta(variable_container_t *object,
-						  int *count);
+                                                  int *count);
 
 // Get variable name/value. if OUT parameter 'name' is not NULL, returns
 // name of variable for given number.
@@ -73,24 +73,24 @@ const struct var_meta *VariableContainer_get_meta(variable_container_t *object,
 // Returned value owned by variable container; on variable change, this value
 // will be invalid.
 const char *VariableContainer_get(variable_container_t *object, int var,
-				  const char **name);
+                                  const char **name);
 
 // Change content of variable with given number to NUL terminated content.
 // Returns '1' if value actually changed and all callbacks were called,
 // '0' if no change was detected.
-int VariableContainer_change(variable_container_t *object,
-			     int variable_num, const char *value);
+int VariableContainer_change(variable_container_t *object, int variable_num,
+                             const char *value);
 
 // Callback handling. Whenever a variable changes, the callback is called.
 // Be careful when changing variables in the original container as this will
 // trigger recursive calls to the container.
-typedef void (*variable_change_listener_t)(void *userdata,
-					   int var_num, const char *var_name,
-					   const char *old_value,
-					   const char *new_value);
+typedef void (*variable_change_listener_t)(void *userdata, int var_num,
+                                           const char *var_name,
+                                           const char *old_value,
+                                           const char *new_value);
 void VariableContainer_register_callback(variable_container_t *object,
-					 variable_change_listener_t callback,
-					 void *userdata);
+                                         variable_change_listener_t callback,
+                                         void *userdata);
 
 // -- UPnP LastChange Builder - builds a LastChange XML document from
 // added name/value pairs.
@@ -99,11 +99,12 @@ typedef struct upnp_last_change_builder upnp_last_change_builder_t;
 
 // Create a new last change builder. The pointer to the xml_namespace string
 // must exist for the livetime of this object.
-upnp_last_change_builder_t *UPnPLastChangeBuilder_new(const char *xml_namespace);
+upnp_last_change_builder_t *UPnPLastChangeBuilder_new(
+    const char *xml_namespace);
 void UPnPLastChangeBuilder_delete(upnp_last_change_builder_t *builder);
 
 void UPnPLastChangeBuilder_add(upnp_last_change_builder_t *builder,
-			       const char *name, const char *value);
+                               const char *name, const char *value);
 // Returns a newly allocated XML string that needs to be free()'d by the caller.
 // Resets the document. If no changes have been added, NULL is returned.
 char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder);
@@ -118,15 +119,13 @@ typedef struct upnp_last_change_collector upnp_last_change_collector_t;
 // event and sends it to the given "upnp_device".
 // The variable_container is expected to contain one variable with name
 // "LastChange", otherwise this collector is not applicable and fails.
-upnp_last_change_collector_t *
-UPnPLastChangeCollector_new(variable_container_t *variable_container,
-			    const char *event_xml_namespac,
-			    struct upnp_device *upnp_device,
-			    const char *service_id);
+upnp_last_change_collector_t *UPnPLastChangeCollector_new(
+    variable_container_t *variable_container, const char *event_xml_namespac,
+    struct upnp_device *upnp_device, const char *service_id);
 
 // Set variable number that should be ignored in eventing.
 void UPnPLastChangeCollector_add_ignore(upnp_last_change_collector_t *object,
-					int variable_num);
+                                        int variable_num);
 
 // If we know that there are a couple of changes upcoming, we can
 // 'start' a transaction and tell the collector to keep collecting until we
@@ -135,4 +134,4 @@ void UPnPLastChangeCollector_start(upnp_last_change_collector_t *object);
 void UPnPLastChangeCollector_finish(upnp_last_change_collector_t *object);
 
 // no delete yet. We leak that.
-#endif  /* VARIABLE_CONTAINER_H */
+#endif /* VARIABLE_CONTAINER_H */

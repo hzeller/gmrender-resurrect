@@ -16,11 +16,11 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
- */ 
+ */
 
 #ifndef _OUTPUT_H
 #define _OUTPUT_H
@@ -31,8 +31,8 @@
 // Feedback for the controlling part what is happening with the
 // output.
 enum PlayFeedback {
-	PLAY_STOPPED,
-	PLAY_STARTED_NEXT_STREAM,
+  PLAY_STOPPED,
+  PLAY_STARTED_NEXT_STREAM,
 };
 typedef void (*output_transition_cb_t)(enum PlayFeedback);
 

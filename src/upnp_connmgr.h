@@ -16,8 +16,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -27,16 +27,15 @@
 
 #include <glib.h>
 
-typedef struct mime_type_filters_t
-{
-	GSList* allowed_roots;
-	GSList* removed_types;
-	GSList* added_types;
+typedef struct mime_type_filters_t {
+  GSList* allowed_roots;
+  GSList* removed_types;
+  GSList* added_types;
 } mime_type_filters_t;
 
-struct service *upnp_connmgr_get_service(void);
+struct service* upnp_connmgr_get_service(void);
 int connmgr_init(const char* mime_filter);
 
-void register_mime_type(const char *mime_type);
+void register_mime_type(const char* mime_type);
 
 #endif /* _UPNP_CONNMGR_H */

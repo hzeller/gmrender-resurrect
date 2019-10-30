@@ -16,22 +16,22 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
- */ 
+ */
 
 #ifndef _SONG_META_DATA_H
 #define _SONG_META_DATA_H
 
 // An 'object' dealing with the meta data of a song.
 struct SongMetaData {
-	const char *title;
-	const char *artist;
-	const char *album;
-	const char *genre;
-	const char *composer;
+  const char *title;
+  const char *artist;
+  const char *album;
+  const char *genre;
+  const char *composer;
 };
 
 // Construct song meta data object.
@@ -44,7 +44,7 @@ void SongMetaData_clear(struct SongMetaData *object);
 // DIDL-Lite. If we get a non-empty original xml document, returns an
 // edited version of that document.
 char *SongMetaData_to_DIDL(const struct SongMetaData *object,
-			   const char *original_xml);
+                           const char *original_xml);
 
 // Parse DIDL-Lite and fill SongMetaData struct. Returns 1 when successful.
 int SongMetaData_parse_DIDL(struct SongMetaData *object, const char *xml);

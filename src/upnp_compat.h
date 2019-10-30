@@ -25,30 +25,45 @@
 #ifndef _UPNP_COMPAT_H
 #define _UPNP_COMPAT_H
 
-#include <upnp.h>
 #include <UpnpString.h>
+#include <upnp.h>
 
 #if UPNP_VERSION >= 10803
 #define UpnpAddVirtualDir(x) UpnpAddVirtualDir(x, NULL, NULL)
-#define VD_GET_INFO_CALLBACK(NAME, FILENAME, INFO, COOKIE) int NAME(const char* FILENAME, UpnpFileInfo* INFO, const void* COOKIE)
-#define VD_OPEN_CALLBACK(NAME, FILENAME, MODE, COOKIE) UpnpWebFileHandle NAME(const char* FILENAME, enum UpnpOpenFileMode MODE, const void* COOKIE)
-#define VD_READ_CALLBACK(NAME, HANDLE, BUFFER, LENGTH, COOKIE) int NAME(UpnpWebFileHandle HANDLE, char* BUFFER, size_t LENGTH, const void* COOKIE)
+#define VD_GET_INFO_CALLBACK(NAME, FILENAME, INFO, COOKIE) \
+  int NAME(const char* FILENAME, UpnpFileInfo* INFO, const void* COOKIE)
+#define VD_OPEN_CALLBACK(NAME, FILENAME, MODE, COOKIE)                     \
+  UpnpWebFileHandle NAME(const char* FILENAME, enum UpnpOpenFileMode MODE, \
+                         const void* COOKIE)
+#define VD_READ_CALLBACK(NAME, HANDLE, BUFFER, LENGTH, COOKIE)    \
+  int NAME(UpnpWebFileHandle HANDLE, char* BUFFER, size_t LENGTH, \
+           const void* COOKIE)
 #define VD_WRITE_CALLBACK(...) VD_READ_CALLBACK(__VA_ARGS__)
-#define VD_SEEK_CALLBACK(NAME, HANDLE, OFFSET, ORIGIN, COOKIE) int NAME(UpnpWebFileHandle HANDLE, off_t OFFSET, int ORIGIN, const void* COOKIE)
-#define VD_CLOSE_CALLBACK(NAME, HANDLE, COOKIE) int NAME(UpnpWebFileHandle HANDLE, const void* COOKIE)
+#define VD_SEEK_CALLBACK(NAME, HANDLE, OFFSET, ORIGIN, COOKIE) \
+  int NAME(UpnpWebFileHandle HANDLE, off_t OFFSET, int ORIGIN, \
+           const void* COOKIE)
+#define VD_CLOSE_CALLBACK(NAME, HANDLE, COOKIE) \
+  int NAME(UpnpWebFileHandle HANDLE, const void* COOKIE)
 #else
-#define VD_GET_INFO_CALLBACK(NAME, FILENAME, INFO, COOKIE) int NAME(const char* FILENAME, UpnpFileInfo* INFO)
-#define VD_OPEN_CALLBACK(NAME, FILENAME, MODE, COOKIE) UpnpWebFileHandle NAME(const char* FILENAME, enum UpnpOpenFileMode MODE)
-#define VD_READ_CALLBACK(NAME, HANDLE, BUFFER, LENGTH, COOKIE) int NAME(UpnpWebFileHandle HANDLE, char* BUFFER, size_t LENGTH)
+#define VD_GET_INFO_CALLBACK(NAME, FILENAME, INFO, COOKIE) \
+  int NAME(const char* FILENAME, UpnpFileInfo* INFO)
+#define VD_OPEN_CALLBACK(NAME, FILENAME, MODE, COOKIE) \
+  UpnpWebFileHandle NAME(const char* FILENAME, enum UpnpOpenFileMode MODE)
+#define VD_READ_CALLBACK(NAME, HANDLE, BUFFER, LENGTH, COOKIE) \
+  int NAME(UpnpWebFileHandle HANDLE, char* BUFFER, size_t LENGTH)
 #define VD_WRITE_CALLBACK(...) VD_READ_CALLBACK(__VA_ARGS__)
-#define VD_SEEK_CALLBACK(NAME, HANDLE, OFFSET, ORIGIN, COOKIE) int NAME(UpnpWebFileHandle HANDLE, off_t OFFSET, int ORIGIN)
-#define VD_CLOSE_CALLBACK(NAME, HANDLE, COOKIE) int NAME(UpnpWebFileHandle HANDLE)
+#define VD_SEEK_CALLBACK(NAME, HANDLE, OFFSET, ORIGIN, COOKIE) \
+  int NAME(UpnpWebFileHandle HANDLE, off_t OFFSET, int ORIGIN)
+#define VD_CLOSE_CALLBACK(NAME, HANDLE, COOKIE) \
+  int NAME(UpnpWebFileHandle HANDLE)
 #endif
 
 #if UPNP_VERSION >= 10800
-#define UPNP_CALLBACK(NAME, TYPE, EVENT, COOKIE) int NAME(Upnp_EventType TYPE, const void* EVENT, void* COOKIE)
+#define UPNP_CALLBACK(NAME, TYPE, EVENT, COOKIE) \
+  int NAME(Upnp_EventType TYPE, const void* EVENT, void* COOKIE)
 #else
-#define UPNP_CALLBACK(NAME, TYPE, EVENT, COOKIE) int NAME(Upnp_EventType TYPE, void* EVENT, void* COOKIE)
+#define UPNP_CALLBACK(NAME, TYPE, EVENT, COOKIE) \
+  int NAME(Upnp_EventType TYPE, void* EVENT, void* COOKIE)
 #endif
 
 #if UPNP_VERSION < 10626
@@ -61,7 +76,8 @@ typedef struct Upnp_Action_Request UpnpActionRequest;
 #define UpnpActionRequest_set_ErrCode(x, v) ((x)->ErrCode = (v))
 #define UpnpActionRequest_get_Socket(x) ((x)->Socket)
 #define UpnpActionRequest_get_ErrStr_cstr(x) ((x)->ErrStr)
-#define UpnpActionRequest_set_ErrStr(x, v) (strncpy((x)->ErrStr, UpnpString_get_String((v)), LINE_SIZE))
+#define UpnpActionRequest_set_ErrStr(x, v) \
+  (strncpy((x)->ErrStr, UpnpString_get_String((v)), LINE_SIZE))
 #define UpnpActionRequest_get_ActionName_cstr(x) ((x)->ActionName)
 #define UpnpActionRequest_get_DevUDN_cstr(x) ((x)->DevUDN)
 #define UpnpActionRequest_get_ServiceID_cstr(x) ((x)->ServiceID)

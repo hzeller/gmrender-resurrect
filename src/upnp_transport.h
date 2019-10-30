@@ -16,8 +16,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -36,6 +36,6 @@ void upnp_transport_init(struct upnp_device *);
 // Register a callback to get informed when variables change. This should
 // return quickly.
 void upnp_transport_register_variable_listener(variable_change_listener_t cb,
-						       void *userdata);
+                                               void *userdata);
 
 #endif /* _UPNP_TRANSPORT_H */

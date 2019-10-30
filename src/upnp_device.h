@@ -25,24 +25,23 @@
 #ifndef _UPNP_DEVICE_H
 #define _UPNP_DEVICE_H
 
-
 struct upnp_device_descriptor {
-	int (*init_function) (void);
-        const char *device_type;
-        const char *friendly_name;
-        const char *manufacturer;
-        const char *manufacturer_url;
-        const char *model_description;
-        const char *model_name;
-        const char *model_number;
-        const char *model_url;
-        const char *serial_number;
-        const char *udn;
-        const char *upc;
-        const char *presentation_url;
-	const char *mime_filter;
-	struct icon **icons;
-	struct service **services;
+  int (*init_function)(void);
+  const char *device_type;
+  const char *friendly_name;
+  const char *manufacturer;
+  const char *manufacturer_url;
+  const char *model_description;
+  const char *model_name;
+  const char *model_number;
+  const char *model_url;
+  const char *serial_number;
+  const char *udn;
+  const char *upc;
+  const char *presentation_url;
+  const char *mime_filter;
+  struct icon **icons;
+  struct service **services;
 };
 
 // ..  and this 'device'. This is an opaque type containing internals.
@@ -50,13 +49,13 @@ struct upnp_device;
 struct action_event;
 
 struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
-				     const char *ip_address,
-				     unsigned short port);
+                                     const char *ip_address,
+                                     unsigned short port);
 
 void upnp_device_shutdown(struct upnp_device *device);
 
-int upnp_add_response(struct action_event *event,
-		      const char *key, const char *value);
+int upnp_add_response(struct action_event *event, const char *key,
+                      const char *value);
 void upnp_set_error(struct action_event *event, int error_code,
                     const char *format, ...);
 
@@ -67,14 +66,12 @@ const char *upnp_get_string(struct action_event *event, const char *key);
 // Append variable, identified by the variable number, to the event,
 // store the value under the given parameter name. The caller needs to provide
 // a valid variable number (assert()-ed).
-void upnp_append_variable(struct action_event *event,
-                          int varnum, const char *paramname);
+void upnp_append_variable(struct action_event *event, int varnum,
+                          const char *paramname);
 
-int upnp_device_notify(struct upnp_device *device,
-		       const char *serviceID,
-		       const char **varnames,
-		       const char **varvalues,
-		       int varcount);
+int upnp_device_notify(struct upnp_device *device, const char *serviceID,
+                       const char **varnames, const char **varvalues,
+                       int varcount);
 
 struct service *find_service(struct upnp_device_descriptor *device_def,
                              const char *service_name);

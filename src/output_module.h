@@ -28,25 +28,25 @@
 #include "output.h"
 
 struct output_module {
-        const char *shortname;
-        const char *description;
-	int (*add_options)(GOptionContext *ctx);
+  const char *shortname;
+  const char *description;
+  int (*add_options)(GOptionContext *ctx);
 
-	// Commands.
-	int (*init)(void);
-	void (*set_uri)(const char *uri, output_update_meta_cb_t meta_info);
-	void (*set_next_uri)(const char *uri);
-	int (*play)(output_transition_cb_t transition_callback);
-	int (*stop)(void);
-	int (*pause)(void);
-	int (*seek)(gint64 position_nanos);
+  // Commands.
+  int (*init)(void);
+  void (*set_uri)(const char *uri, output_update_meta_cb_t meta_info);
+  void (*set_next_uri)(const char *uri);
+  int (*play)(output_transition_cb_t transition_callback);
+  int (*stop)(void);
+  int (*pause)(void);
+  int (*seek)(gint64 position_nanos);
 
-	// parameters
-	int (*get_position)(gint64 *track_duration, gint64 *track_pos);
-	int (*get_volume)(float *);
-	int (*set_volume)(float);
-	int (*get_mute)(int *);
-	int (*set_mute)(int);
+  // parameters
+  int (*get_position)(gint64 *track_duration, gint64 *track_pos);
+  int (*get_volume)(float *);
+  int (*set_volume)(float);
+  int (*get_mute)(int *);
+  int (*set_mute)(int);
 };
 
 #endif

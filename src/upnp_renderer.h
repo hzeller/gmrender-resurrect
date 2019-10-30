@@ -16,8 +16,8 @@
  * GNU Library General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GMediaRender; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * along with GMediaRender; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  *
  */
@@ -30,8 +30,7 @@ void upnp_renderer_dump_control_scpd(void);
 void upnp_renderer_dump_transport_scpd(void);
 
 // Returned pointer not owned.
-struct upnp_device_descriptor *upnp_renderer_descriptor(const char *name,
-							const char *uuid,
-							const char* mime_filter);
+struct upnp_device_descriptor *upnp_renderer_descriptor(
+    const char *name, const char *uuid, const char *mime_filter);
 
 #endif /* _UPNP_RENDERER_H */
