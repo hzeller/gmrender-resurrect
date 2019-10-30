@@ -183,167 +183,167 @@ static void service_unlock(void) {
 }
 
 static struct argument arguments_list_presets[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"CurrentPresetNameList", ParamDir::Out, CONTROL_VAR_PRESET_NAME_LIST},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"CurrentPresetNameList", ParamDir::kOut, CONTROL_VAR_PRESET_NAME_LIST},
     {NULL}};
 // static struct argument arguments_select_preset[] = {
-// 	{ "InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	{ "PresetName", ParamDir::In, CONTROL_VAR_AAT_PRESET_NAME },
+// 	{ "InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "PresetName", ParamDir::kIn, CONTROL_VAR_AAT_PRESET_NAME },
 // 	{ NULL }
 // };
 static struct argument arguments_get_brightness[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"CurrentBrightness", ParamDir::Out, CONTROL_VAR_BRIGHTNESS},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"CurrentBrightness", ParamDir::kOut, CONTROL_VAR_BRIGHTNESS},
     {NULL}};
 // static struct argument arguments_set_brightness[] = {
-// 	{ "InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	{ "DesiredBrightness", ParamDir::In, CONTROL_VAR_BRIGHTNESS },
+// 	{ "InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredBrightness", ParamDir::kIn, CONTROL_VAR_BRIGHTNESS },
 // 	{ NULL }
 // };
 static struct argument arguments_get_contrast[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"CurrentContrast", ParamDir::Out, CONTROL_VAR_CONTRAST},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"CurrentContrast", ParamDir::kOut, CONTROL_VAR_CONTRAST},
     {NULL}};
 // static struct argument arguments_set_contrast[] = {
-// 	{ "InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	{ "DesiredContrast", ParamDir::In, CONTROL_VAR_CONTRAST },
+// 	{ "InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredContrast", ParamDir::kIn, CONTROL_VAR_CONTRAST },
 // 	{ NULL }
 // };
 static struct argument arguments_get_sharpness[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"CurrentSharpness", ParamDir::Out, CONTROL_VAR_SHARPNESS},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"CurrentSharpness", ParamDir::kOut, CONTROL_VAR_SHARPNESS},
     {NULL}};
 // static struct argument arguments_set_sharpness[] = {
-// 	{ "InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	{ "DesiredSharpness", ParamDir::In, CONTROL_VAR_SHARPNESS },
+// 	{ "InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredSharpness", ParamDir::kIn, CONTROL_VAR_SHARPNESS },
 // 	{ NULL }
 // };
 static struct argument arguments_get_red_gain[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"CurrentRedVideoGain", ParamDir::Out, CONTROL_VAR_R_GAIN},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"CurrentRedVideoGain", ParamDir::kOut, CONTROL_VAR_R_GAIN},
     {NULL}};
 // static struct argument arguments_set_red_gain[] = {
-// 	{ "InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	{ "DesiredRedVideoGain", ParamDir::In, CONTROL_VAR_R_GAIN },
+// 	{ "InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredRedVideoGain", ParamDir::kIn, CONTROL_VAR_R_GAIN },
 //      { NULL }
 // };
 static struct argument arguments_get_green_gain[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"CurrentGreenVideoGain", ParamDir::Out, CONTROL_VAR_G_GAIN},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"CurrentGreenVideoGain", ParamDir::kOut, CONTROL_VAR_G_GAIN},
     {NULL}};
 // static struct argument arguments_set_green_gain[] = {
-// 	{ "InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	{ "DesiredGreenVideoGain", ParamDir::In, CONTROL_VAR_G_GAIN },
+// 	{ "InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredGreenVideoGain", ParamDir::kIn, CONTROL_VAR_G_GAIN },
 // 	{ NULL }
 // };
 static struct argument arguments_get_blue_gain[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"CurrentBlueVideoGain", ParamDir::Out, CONTROL_VAR_B_GAIN},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"CurrentBlueVideoGain", ParamDir::kOut, CONTROL_VAR_B_GAIN},
     {NULL}};
 // static struct argument arguments_set_blue_gain[] = {
-// 	{ "InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	{ "DesiredBlueVideoGain", ParamDir::In, CONTROL_VAR_B_GAIN },
+// 	{ "InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredBlueVideoGain", ParamDir::kIn, CONTROL_VAR_B_GAIN },
 // 	{ NULL }
 // };
 static struct argument arguments_get_red_black[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"CurrentRedVideoBlackLevel", ParamDir::Out, CONTROL_VAR_R_BLACK},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"CurrentRedVideoBlackLevel", ParamDir::kOut, CONTROL_VAR_R_BLACK},
     {NULL}};
 // static struct argument arguments_set_red_black[] = {
-// 	{ "InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	{ "DesiredRedVideoBlackLevel", ParamDir::In, CONTROL_VAR_R_BLACK },
+// 	{ "InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredRedVideoBlackLevel", ParamDir::kIn, CONTROL_VAR_R_BLACK },
 // 	{ NULL }
 // };
 static struct argument arguments_get_green_black[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"CurrentGreenVideoBlackLevel", ParamDir::Out, CONTROL_VAR_G_BLACK},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"CurrentGreenVideoBlackLevel", ParamDir::kOut, CONTROL_VAR_G_BLACK},
     {NULL}};
 // static struct argument arguments_set_green_black[] = {
-// 	{ "InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	{ "DesiredGreenVideoBlackLevel", ParamDir::In, CONTROL_VAR_G_BLACK },
+// 	{ "InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredGreenVideoBlackLevel", ParamDir::kIn, CONTROL_VAR_G_BLACK },
 // 	{ NULL }
 // };
 static struct argument arguments_get_blue_black[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"CurrentBlueVideoBlackLevel", ParamDir::Out, CONTROL_VAR_B_BLACK},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"CurrentBlueVideoBlackLevel", ParamDir::kOut, CONTROL_VAR_B_BLACK},
     {NULL}};
 // static struct argument arguments_set_blue_black[] = {
-// 	{ "InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	{ "DesiredBlueVideoBlackLevel", ParamDir::In, CONTROL_VAR_B_BLACK },
+// 	{ "InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredBlueVideoBlackLevel", ParamDir::kIn, CONTROL_VAR_B_BLACK },
 // 	{ NULL }
 // };
 static struct argument arguments_get_color_temp[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"CurrentColorTemperature", ParamDir::Out, CONTROL_VAR_COLOR_TEMP},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"CurrentColorTemperature", ParamDir::kOut, CONTROL_VAR_COLOR_TEMP},
     {NULL}};
 // static struct argument arguments_set_color_temp[] = {
-// 	{ "InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	{ "DesiredColorTemperature", ParamDir::In, CONTROL_VAR_COLOR_TEMP },
+// 	{ "InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredColorTemperature", ParamDir::kIn, CONTROL_VAR_COLOR_TEMP },
 // 	{ NULL }
 // };
 static struct argument arguments_get_hor_keystone[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"CurrentHorizontalKeystone", ParamDir::Out, CONTROL_VAR_HOR_KEYSTONE},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"CurrentHorizontalKeystone", ParamDir::kOut, CONTROL_VAR_HOR_KEYSTONE},
     {NULL}};
 // static struct argument arguments_set_hor_keystone[] = {
-// 	{ "InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	{ "DesiredHorizontalKeystone", ParamDir::In, CONTROL_VAR_HOR_KEYSTONE },
+// 	{ "InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredHorizontalKeystone", ParamDir::kIn, CONTROL_VAR_HOR_KEYSTONE },
 // 	{ NULL }
 // };
 static struct argument arguments_get_vert_keystone[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"CurrentVerticalKeystone", ParamDir::Out, CONTROL_VAR_VER_KEYSTONE},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"CurrentVerticalKeystone", ParamDir::kOut, CONTROL_VAR_VER_KEYSTONE},
     {NULL}};
 // static struct argument arguments_set_vert_keystone[] = {
-// 	{ "InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	{ "DesiredVerticalKeystone", ParamDir::In, CONTROL_VAR_VER_KEYSTONE },
+// 	{ "InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "DesiredVerticalKeystone", ParamDir::kIn, CONTROL_VAR_VER_KEYSTONE },
 // 	{ NULL }
 // };
 static struct argument arguments_get_mute[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"Channel", ParamDir::In, CONTROL_VAR_AAT_CHANNEL},
-    {"CurrentMute", ParamDir::Out, CONTROL_VAR_MUTE},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"Channel", ParamDir::kIn, CONTROL_VAR_AAT_CHANNEL},
+    {"CurrentMute", ParamDir::kOut, CONTROL_VAR_MUTE},
     {NULL}};
 static struct argument arguments_set_mute[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"Channel", ParamDir::In, CONTROL_VAR_AAT_CHANNEL},
-    {"DesiredMute", ParamDir::In, CONTROL_VAR_MUTE},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"Channel", ParamDir::kIn, CONTROL_VAR_AAT_CHANNEL},
+    {"DesiredMute", ParamDir::kIn, CONTROL_VAR_MUTE},
     {NULL}};
 static struct argument arguments_get_vol[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"Channel", ParamDir::In, CONTROL_VAR_AAT_CHANNEL},
-    {"CurrentVolume", ParamDir::Out, CONTROL_VAR_VOLUME},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"Channel", ParamDir::kIn, CONTROL_VAR_AAT_CHANNEL},
+    {"CurrentVolume", ParamDir::kOut, CONTROL_VAR_VOLUME},
     {NULL}};
 static struct argument arguments_set_vol[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"Channel", ParamDir::In, CONTROL_VAR_AAT_CHANNEL},
-    {"DesiredVolume", ParamDir::In, CONTROL_VAR_VOLUME},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"Channel", ParamDir::kIn, CONTROL_VAR_AAT_CHANNEL},
+    {"DesiredVolume", ParamDir::kIn, CONTROL_VAR_VOLUME},
     {NULL}};
 static struct argument arguments_get_vol_db[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"Channel", ParamDir::In, CONTROL_VAR_AAT_CHANNEL},
-    {"CurrentVolume", ParamDir::Out, CONTROL_VAR_VOLUME_DB},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"Channel", ParamDir::kIn, CONTROL_VAR_AAT_CHANNEL},
+    {"CurrentVolume", ParamDir::kOut, CONTROL_VAR_VOLUME_DB},
     {NULL}};
 static struct argument arguments_set_vol_db[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"Channel", ParamDir::In, CONTROL_VAR_AAT_CHANNEL},
-    {"DesiredVolume", ParamDir::In, CONTROL_VAR_VOLUME_DB},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"Channel", ParamDir::kIn, CONTROL_VAR_AAT_CHANNEL},
+    {"DesiredVolume", ParamDir::kIn, CONTROL_VAR_VOLUME_DB},
     {NULL}};
 static struct argument arguments_get_vol_dbrange[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"Channel", ParamDir::In, CONTROL_VAR_AAT_CHANNEL},
-    {"MinValue", ParamDir::Out, CONTROL_VAR_VOLUME_DB},
-    {"MaxValue", ParamDir::Out, CONTROL_VAR_VOLUME_DB},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"Channel", ParamDir::kIn, CONTROL_VAR_AAT_CHANNEL},
+    {"MinValue", ParamDir::kOut, CONTROL_VAR_VOLUME_DB},
+    {"MaxValue", ParamDir::kOut, CONTROL_VAR_VOLUME_DB},
     {NULL}};
 static struct argument arguments_get_loudness[] = {
-    {"InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID},
-    {"Channel", ParamDir::In, CONTROL_VAR_AAT_CHANNEL},
-    {"CurrentLoudness", ParamDir::Out, CONTROL_VAR_LOUDNESS},
+    {"InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID},
+    {"Channel", ParamDir::kIn, CONTROL_VAR_AAT_CHANNEL},
+    {"CurrentLoudness", ParamDir::kOut, CONTROL_VAR_LOUDNESS},
     {NULL}};
 // static struct argument arguments_set_loudness[] = {
-// 	{ "InstanceID", ParamDir::In, CONTROL_VAR_AAT_INSTANCE_ID },
-// 	{ "Channel", ParamDir::In, CONTROL_VAR_AAT_CHANNEL },
-// 	{ "DesiredLoudness", ParamDir::In, CONTROL_VAR_LOUDNESS },
+// 	{ "InstanceID", ParamDir::kIn, CONTROL_VAR_AAT_INSTANCE_ID },
+// 	{ "Channel", ParamDir::kIn, CONTROL_VAR_AAT_CHANNEL },
+// 	{ "DesiredLoudness", ParamDir::kIn, CONTROL_VAR_LOUDNESS },
 // 	{ NULL }
 // };
 

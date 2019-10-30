@@ -87,7 +87,7 @@ static struct xmlelement *gen_scpd_action(
       child = xmlelement_new(doc, "argument");
       add_value_element(doc, child, "name", arg->name);
       add_value_element(doc, child, "direction",
-                        (arg->direction == ParamDir::In) ? "in" : "out");
+                        (arg->direction == ParamDir::kIn) ? "in" : "out");
       add_value_element(doc, child, "relatedStateVariable",
                         meta[arg->statevar]->name);
       xmlelement_add_element(doc, parent, child);

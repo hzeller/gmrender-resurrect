@@ -222,102 +222,102 @@ typedef enum {
 } transport_variable_t;
 
 static struct argument arguments_setavtransporturi[] = {
-    {"InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID},
-    {"CurrentURI", ParamDir::In, TRANSPORT_VAR_AV_URI},
-    {"CurrentURIMetaData", ParamDir::In, TRANSPORT_VAR_AV_URI_META},
+    {"InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID},
+    {"CurrentURI", ParamDir::kIn, TRANSPORT_VAR_AV_URI},
+    {"CurrentURIMetaData", ParamDir::kIn, TRANSPORT_VAR_AV_URI_META},
     {NULL}};
 
 static struct argument arguments_setnextavtransporturi[] = {
-    {"InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID},
-    {"NextURI", ParamDir::In, TRANSPORT_VAR_NEXT_AV_URI},
-    {"NextURIMetaData", ParamDir::In, TRANSPORT_VAR_NEXT_AV_URI_META},
+    {"InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID},
+    {"NextURI", ParamDir::kIn, TRANSPORT_VAR_NEXT_AV_URI},
+    {"NextURIMetaData", ParamDir::kIn, TRANSPORT_VAR_NEXT_AV_URI_META},
     {NULL}};
 
 static struct argument arguments_getmediainfo[] = {
-    {"InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID},
-    {"NrTracks", ParamDir::Out, TRANSPORT_VAR_NR_TRACKS},
-    {"MediaDuration", ParamDir::Out, TRANSPORT_VAR_CUR_MEDIA_DUR},
-    {"CurrentURI", ParamDir::Out, TRANSPORT_VAR_AV_URI},
-    {"CurrentURIMetaData", ParamDir::Out, TRANSPORT_VAR_AV_URI_META},
-    {"NextURI", ParamDir::Out, TRANSPORT_VAR_NEXT_AV_URI},
-    {"NextURIMetaData", ParamDir::Out, TRANSPORT_VAR_NEXT_AV_URI_META},
-    {"PlayMedium", ParamDir::Out, TRANSPORT_VAR_PLAY_MEDIUM},
-    {"RecordMedium", ParamDir::Out, TRANSPORT_VAR_REC_MEDIUM},
-    {"WriteStatus", ParamDir::Out, TRANSPORT_VAR_REC_MEDIUM_WR_STATUS},
+    {"InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID},
+    {"NrTracks", ParamDir::kOut, TRANSPORT_VAR_NR_TRACKS},
+    {"MediaDuration", ParamDir::kOut, TRANSPORT_VAR_CUR_MEDIA_DUR},
+    {"CurrentURI", ParamDir::kOut, TRANSPORT_VAR_AV_URI},
+    {"CurrentURIMetaData", ParamDir::kOut, TRANSPORT_VAR_AV_URI_META},
+    {"NextURI", ParamDir::kOut, TRANSPORT_VAR_NEXT_AV_URI},
+    {"NextURIMetaData", ParamDir::kOut, TRANSPORT_VAR_NEXT_AV_URI_META},
+    {"PlayMedium", ParamDir::kOut, TRANSPORT_VAR_PLAY_MEDIUM},
+    {"RecordMedium", ParamDir::kOut, TRANSPORT_VAR_REC_MEDIUM},
+    {"WriteStatus", ParamDir::kOut, TRANSPORT_VAR_REC_MEDIUM_WR_STATUS},
     {NULL}};
 
 static struct argument arguments_gettransportinfo[] = {
-    {"InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID},
-    {"CurrentTransportState", ParamDir::Out, TRANSPORT_VAR_TRANSPORT_STATE},
-    {"CurrentTransportStatus", ParamDir::Out, TRANSPORT_VAR_TRANSPORT_STATUS},
-    {"CurrentSpeed", ParamDir::Out, TRANSPORT_VAR_TRANSPORT_PLAY_SPEED},
+    {"InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID},
+    {"CurrentTransportState", ParamDir::kOut, TRANSPORT_VAR_TRANSPORT_STATE},
+    {"CurrentTransportStatus", ParamDir::kOut, TRANSPORT_VAR_TRANSPORT_STATUS},
+    {"CurrentSpeed", ParamDir::kOut, TRANSPORT_VAR_TRANSPORT_PLAY_SPEED},
     {NULL}};
 
 static struct argument arguments_getpositioninfo[] = {
-    {"InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID},
-    {"Track", ParamDir::Out, TRANSPORT_VAR_CUR_TRACK},
-    {"TrackDuration", ParamDir::Out, TRANSPORT_VAR_CUR_TRACK_DUR},
-    {"TrackMetaData", ParamDir::Out, TRANSPORT_VAR_CUR_TRACK_META},
-    {"TrackURI", ParamDir::Out, TRANSPORT_VAR_CUR_TRACK_URI},
-    {"RelTime", ParamDir::Out, TRANSPORT_VAR_REL_TIME_POS},
-    {"AbsTime", ParamDir::Out, TRANSPORT_VAR_ABS_TIME_POS},
-    {"RelCount", ParamDir::Out, TRANSPORT_VAR_REL_CTR_POS},
-    {"AbsCount", ParamDir::Out, TRANSPORT_VAR_ABS_CTR_POS},
+    {"InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID},
+    {"Track", ParamDir::kOut, TRANSPORT_VAR_CUR_TRACK},
+    {"TrackDuration", ParamDir::kOut, TRANSPORT_VAR_CUR_TRACK_DUR},
+    {"TrackMetaData", ParamDir::kOut, TRANSPORT_VAR_CUR_TRACK_META},
+    {"TrackURI", ParamDir::kOut, TRANSPORT_VAR_CUR_TRACK_URI},
+    {"RelTime", ParamDir::kOut, TRANSPORT_VAR_REL_TIME_POS},
+    {"AbsTime", ParamDir::kOut, TRANSPORT_VAR_ABS_TIME_POS},
+    {"RelCount", ParamDir::kOut, TRANSPORT_VAR_REL_CTR_POS},
+    {"AbsCount", ParamDir::kOut, TRANSPORT_VAR_ABS_CTR_POS},
     {NULL}};
 
 static struct argument arguments_getdevicecapabilities[] = {
-    {"InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID},
-    {"PlayMedia", ParamDir::Out, TRANSPORT_VAR_PLAY_MEDIA},
-    {"RecMedia", ParamDir::Out, TRANSPORT_VAR_REC_MEDIA},
-    {"RecQualityModes", ParamDir::Out, TRANSPORT_VAR_POS_REC_QUAL_MODE},
+    {"InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID},
+    {"PlayMedia", ParamDir::kOut, TRANSPORT_VAR_PLAY_MEDIA},
+    {"RecMedia", ParamDir::kOut, TRANSPORT_VAR_REC_MEDIA},
+    {"RecQualityModes", ParamDir::kOut, TRANSPORT_VAR_POS_REC_QUAL_MODE},
     {NULL}};
 
 static struct argument arguments_gettransportsettings[] = {
-    {"InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID},
-    {"PlayMode", ParamDir::Out, TRANSPORT_VAR_CUR_PLAY_MODE},
-    {"RecQualityMode", ParamDir::Out, TRANSPORT_VAR_CUR_REC_QUAL_MODE},
+    {"InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID},
+    {"PlayMode", ParamDir::kOut, TRANSPORT_VAR_CUR_PLAY_MODE},
+    {"RecQualityMode", ParamDir::kOut, TRANSPORT_VAR_CUR_REC_QUAL_MODE},
     {NULL}};
 
 static struct argument arguments_stop[] = {
-    {"InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID}, {NULL}};
+    {"InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID}, {NULL}};
 static struct argument arguments_play[] = {
-    {"InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID},
-    {"Speed", ParamDir::In, TRANSPORT_VAR_TRANSPORT_PLAY_SPEED},
+    {"InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID},
+    {"Speed", ParamDir::kIn, TRANSPORT_VAR_TRANSPORT_PLAY_SPEED},
     {NULL}};
 static struct argument arguments_pause[] = {
-    {"InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID}, {NULL}};
+    {"InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID}, {NULL}};
 // static struct argument arguments_record[] = {
-//        { "InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID },
+//        { "InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID },
 //	{ NULL }
 //};
 
 static struct argument arguments_seek[] = {
-    {"InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID},
-    {"Unit", ParamDir::In, TRANSPORT_VAR_AAT_SEEK_MODE},
-    {"Target", ParamDir::In, TRANSPORT_VAR_AAT_SEEK_TARGET},
+    {"InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID},
+    {"Unit", ParamDir::kIn, TRANSPORT_VAR_AAT_SEEK_MODE},
+    {"Target", ParamDir::kIn, TRANSPORT_VAR_AAT_SEEK_TARGET},
     {NULL}};
 // static struct argument arguments_next[] = {
-//        { "InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID },
+//        { "InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID },
 //	{ NULL }
 //};
 // static struct argument arguments_previous[] = {
-//        { "InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID },
+//        { "InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID },
 //	{ NULL }
 //};
 // static struct argument arguments_setplaymode[] = {
-//        { "InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID },
-//        { "NewPlayMode", ParamDir::In, TRANSPORT_VAR_CUR_PLAY_MODE },
+//        { "InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID },
+//        { "NewPlayMode", ParamDir::kIn, TRANSPORT_VAR_CUR_PLAY_MODE },
 //	{ NULL }
 //};
 // static struct argument arguments_setrecordqualitymode[] = {
-//        { "InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID },
-//        { "NewRecordQualityMode", ParamDir::In,
+//        { "InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID },
+//        { "NewRecordQualityMode", ParamDir::kIn,
 //        TRANSPORT_VAR_CUR_REC_QUAL_MODE },
 //	{ NULL }
 //};
 static struct argument arguments_getcurrenttransportactions[] = {
-    {"InstanceID", ParamDir::In, TRANSPORT_VAR_AAT_INSTANCE_ID},
-    {"Actions", ParamDir::Out, TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS},
+    {"InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID},
+    {"Actions", ParamDir::kOut, TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS},
     {NULL}};
 
 static struct argument *argument_list[] = {

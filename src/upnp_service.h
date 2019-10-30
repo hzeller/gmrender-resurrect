@@ -42,8 +42,8 @@ struct action {
 };
 
 enum class ParamDir {
-  In,
-  Out,
+  kIn,
+  kOut,
 };
 
 struct argument {
