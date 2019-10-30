@@ -93,7 +93,6 @@ int upnp_add_response(struct action_event *event, const char *key,
 
 void upnp_append_variable(struct action_event *event, int varnum,
                           const char *paramname) {
-  const char *value;
   struct service *service = event->service;
 
   assert(event != NULL);
@@ -101,9 +100,8 @@ void upnp_append_variable(struct action_event *event, int varnum,
 
   ithread_mutex_lock(service->service_mutex);
 
-  value = VariableContainer_get(service->variable_container, varnum, NULL);
-  assert(value != NULL);  // triggers on invalid variable.
-  upnp_add_response(event, paramname, value);
+  auto value = service->variable_container->Get(varnum);
+  upnp_add_response(event, paramname, value.c_str());
 
   ithread_mutex_unlock(service->service_mutex);
 }
@@ -184,19 +182,18 @@ static int handle_subscription_request(
   // Build the current state of the variables as one gigantic initial
   // LastChange update.
   ithread_mutex_lock(srv->service_mutex);
-  const int var_count = VariableContainer_get_num_vars(srv->variable_container);
+  const int var_count = srv->variable_container->variable_count();
   // TODO(hzeller): maybe use srv->last_change directly ?
   upnp_last_change_builder_t *builder =
       UPnPLastChangeBuilder_new(srv->event_xml_ns);
   for (int i = 0; i < var_count; ++i) {
-    const char *name;
-    const char *value =
-        VariableContainer_get(srv->variable_container, i, &name);
+    std::string name;
+    const std::string &value = srv->variable_container->Get(i, &name);
     // Send over all variables except "LastChange" itself. Also all
     // A_ARG_TYPE variables are not evented.
-    if (value && strcmp("LastChange", name) != 0 &&
-        strncmp("A_ARG_TYPE_", name, strlen("A_ARG_TYPE_")) != 0) {
-      UPnPLastChangeBuilder_add(builder, name, value);
+    if (name != "LastChange" &&
+        strncmp("A_ARG_TYPE_", name.c_str(), strlen("A_ARG_TYPE_")) != 0) {
+      UPnPLastChangeBuilder_add(builder, name.c_str(), value.c_str());
     }
   }
   ithread_mutex_unlock(srv->service_mutex);
@@ -245,14 +242,13 @@ static int handle_var_request(struct upnp_device *priv,
   ithread_mutex_lock(srv->service_mutex);
 
   char *result = NULL;
-  const int var_count = VariableContainer_get_num_vars(srv->variable_container);
+  const int var_count = srv->variable_container->variable_count();
   for (int i = 0; i < var_count; ++i) {
-    const char *name = NULL;
-    const char *value =
-        VariableContainer_get(srv->variable_container, i, &name);
+    std::string name;
+    const std::string &value = srv->variable_container->Get(i, &name);
     const char *stateVarName = UpnpStateVarRequest_get_StateVarName_cstr(event);
-    if (value && strcmp(stateVarName, name) == 0) {
-      result = strdup(value);
+    if (name == stateVarName) {
+      result = strdup(value.c_str());
       break;
     }
   }
@@ -299,7 +295,7 @@ static int handle_action_request(struct upnp_device *priv,
   // the action event is finished.
   if (event_service->last_change) {
     ithread_mutex_lock(event_service->service_mutex);
-    UPnPLastChangeCollector_start(event_service->last_change);
+    event_service->last_change->Start();
     ithread_mutex_unlock(event_service->service_mutex);
   }
 
@@ -369,7 +365,7 @@ static int handle_action_request(struct upnp_device *priv,
 
   if (event_service->last_change) {  // See comment above.
     ithread_mutex_lock(event_service->service_mutex);
-    UPnPLastChangeCollector_finish(event_service->last_change);
+    event_service->last_change->Finish();
     ithread_mutex_unlock(event_service->service_mutex);
   }
   return 0;

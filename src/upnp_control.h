@@ -30,7 +30,7 @@ struct upnp_device;
 
 void upnp_control_init(struct upnp_device *device);
 struct service *upnp_control_get_service(void);
-void upnp_control_register_variable_listener(variable_change_listener_t cb,
-                                             void *userdata);
+void upnp_control_register_variable_listener(
+  const VariableContainer::ChangeListener &listener);
 
 #endif /* _UPNP_CONTROL_H */

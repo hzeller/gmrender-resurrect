@@ -38,125 +38,57 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <algorithm>
+
 #include "upnp_device.h"
 #include "upnp_service.h"
 #include "xmldoc.h"
 #include "xmlescape.h"
 
-// -- VariableContainer
-struct cb_list {
-  variable_change_listener_t callback;
-  void *userdata;
-  struct cb_list *next;
-};
-
-struct variable_container {
-  int variable_num;
-  const struct var_meta *vars;
-  char **values;
-  struct cb_list *callbacks;
-};
-
-static int cmp_meta_id(const void *a, const void *b) {
-  return ((struct var_meta *)a)->id - ((struct var_meta *)b)->id;
-}
-
-static const struct var_meta *create_sorted_meta(int num,
-                                                 const struct var_meta *vars) {
-  struct var_meta *result =
-      (struct var_meta *)malloc(num * sizeof(struct var_meta));
-  memcpy(result, vars, num * sizeof(struct var_meta));
-  qsort(result, num, sizeof(struct var_meta), cmp_meta_id);
-  return result;
-}
-
-variable_container_t *VariableContainer_new(
-    int variable_num, const struct var_meta *unordered_vars) {
+VariableContainer::VariableContainer(int variable_num,
+                                     const var_meta *var_array)
+  : variable_count_(variable_num) {
   assert(variable_num > 0);
-  variable_container_t *result =
-      (variable_container_t *)malloc(sizeof(variable_container_t));
-  result->variable_num = variable_num;
-  // Right now, the model is to have a variable id, described as enum, that
-  // can be used as an index in meta-data, variable names etc.
-  // Previously, the order was maintained by using designated initializers
-  // in a scattered set of array initialization, now everything is in a
-  // meta array.
-  // Since we want to get away from designated initializer arrays (to be
-  // compatible with C++), we allow the meta-data to be in any order but
-  // take care of it here. However accesses the meta-data does it through
-  // VariableContainer
-  result->vars = create_sorted_meta(variable_num, unordered_vars);
-  result->values = (char **)malloc(variable_num * sizeof(char *));
-  result->callbacks = NULL;
+  for (int i = 0; i < variable_num; ++i)
+    meta_.push_back(&var_array[i]);
+  std::sort(meta_.begin(), meta_.end(),
+            [](const var_meta *a, const var_meta *b) {
+              return a->id < b->id;
+            });
+  variable_values_.resize(variable_num);
   for (int i = 0; i < variable_num; ++i) {
-    assert(result->vars[i].name != NULL);
-    assert(result->vars[i].id == i);
-    assert(result->vars[i].default_value != NULL);
-    result->values[i] = strdup(result->vars[i].default_value);
+    assert(meta_[i]->name != NULL);
+    assert(meta_[i]->id == i);
+    assert(meta_[i]->default_value != NULL);
+    variable_values_[i] = meta_[i]->default_value;
   }
-  return result;
 }
 
-void VariableContainer_delete(variable_container_t *object) {
-  for (int i = 0; i < object->variable_num; ++i) {
-    free(object->values[i]);
-  }
-  free(object->values);
-
-  for (struct cb_list *list = object->callbacks; list; /**/) {
-    struct cb_list *next = list->next;
-    free(list);
-    list = next;
-  }
-  free((void *)object->vars);
-  free(object);
-}
-
-const struct var_meta *VariableContainer_get_meta(variable_container_t *object,
-                                                  int *count) {
-  if (count) *count = object->variable_num;
-  return object->vars;
-}
-
-int VariableContainer_get_num_vars(variable_container_t *object) {
-  return object->variable_num;
-}
-
-const char *VariableContainer_get(variable_container_t *object, int var,
-                                  const char **name) {
-  if (var < 0 || var >= object->variable_num) return NULL;
-  const char *varname = object->vars[var].name;
-  if (name) *name = varname;
-  // Names of not used variables are set to NULL.
-  return varname ? object->values[var] : NULL;
+const std::string &VariableContainer::Get(int var_num, std::string *name)
+  const {
+  assert(var_num >= 0 && var_num < variable_count_);
+  if (name) *name = meta_[var_num]->name;
+  return variable_values_[var_num];
 }
 
 // Change content of variable with given number to NUL terminated content.
-int VariableContainer_change(variable_container_t *object, int var_num,
-                             const char *value) {
-  assert(var_num >= 0 && var_num < object->variable_num);
-  if (value == NULL) value = "";
-  if (strcmp(value, object->values[var_num]) == 0) return 0;  // no change.
-  char *old_value = object->values[var_num];
-  char *new_value = strdup(value);
-  object->values[var_num] = new_value;
-  for (struct cb_list *it = object->callbacks; it; it = it->next) {
-    it->callback(it->userdata, var_num, object->vars[var_num].name, old_value,
-                 new_value);
+// Returns true if value actually changed and all callbacks were called,
+// false if no change was detected.
+bool VariableContainer::Set(int variable_num, const std::string &new_value) {
+  assert(variable_num >= 0 && variable_num < variable_count_);
+  if (variable_values_[variable_num] == new_value)
+    return false;
+  const std::string var_name = meta_[variable_num]->name;
+  std::string old_value = new_value;
+  std::swap(variable_values_[variable_num], old_value);
+  for (auto cb : callbacks_) {
+    cb(variable_num, var_name, old_value, new_value);
   }
-  free(old_value);
-  return 1;
+  return true;
 }
 
-void VariableContainer_register_callback(variable_container_t *object,
-                                         variable_change_listener_t callback,
-                                         void *userdata) {
-  // Order is not guaranteed, so we just register it at the front.
-  struct cb_list *item = (struct cb_list *)malloc(sizeof(struct cb_list));
-  item->next = object->callbacks;
-  item->userdata = userdata;
-  item->callback = callback;
-  object->callbacks = item;
+void VariableContainer::RegisterCallback(const ChangeListener &callback) {
+  callbacks_.push_back(callback);
 }
 
 // -- UPnPLastChangeBuilder
@@ -223,118 +155,84 @@ char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder) {
 }
 
 // -- UPnPLastChangeCollector
-struct upnp_last_change_collector {
-  variable_container_t *variable_container;
-  int last_change_variable_num;      // the variable we manipulate.
-  uint32_t not_eventable_variables;  // variables not to event on.
-  struct upnp_device *upnp_device;
-  const char *service_id;
-  int open_transactions;
-  upnp_last_change_builder_t *builder;
-};
-
-static void UPnPLastChangeCollector_notify(upnp_last_change_collector_t *obj);
-static void UPnPLastChangeCollector_callback(void *userdata, int var_num,
-                                             const char *var_name,
-                                             const char *old_value,
-                                             const char *new_value);
-
-upnp_last_change_collector_t *UPnPLastChangeCollector_new(
-    variable_container_t *variable_container, const char *event_xml_namespace,
-    struct upnp_device *upnp_device, const char *service_id) {
-  upnp_last_change_collector_t *result = (upnp_last_change_collector_t *)malloc(
-      sizeof(upnp_last_change_collector_t));
-  result->variable_container = variable_container;
-  result->last_change_variable_num = -1;
-  result->not_eventable_variables = 0;
-  result->upnp_device = upnp_device;
-  result->service_id = service_id;
-  result->open_transactions = 0;
-  result->builder = UPnPLastChangeBuilder_new(event_xml_namespace);
-
+UPnPLastChangeCollector::UPnPLastChangeCollector(
+  VariableContainer *variable_container,
+  const char *event_xml_namespace,
+  upnp_device *upnp_device, const char *service_id)
+  : variable_container_(variable_container), upnp_device_(upnp_device),
+    service_id_(service_id),
+    builder_(UPnPLastChangeBuilder_new(event_xml_namespace)) {
   // Create initial LastChange that contains all variables in their
   // current state. This might help devices that silently re-connect
   // without proper registration.
   // Also determine, which variable is actually the "LastChange" one.
-  const int var_count = VariableContainer_get_num_vars(variable_container);
-  assert(var_count < 32);  // otherwise widen not_eventable_variables
+  last_change_variable_num_ = -1;
+  const int var_count = variable_container->variable_count();
   for (int i = 0; i < var_count; ++i) {
-    const char *name;
-    const char *value = VariableContainer_get(variable_container, i, &name);
-    if (!value) {
-      continue;
-    }
-    if (strcmp("LastChange", name) == 0) {
-      result->last_change_variable_num = i;
+    std::string name;
+    const std::string &value = variable_container->Get(i, &name);
+    if (name == "LastChange") {
+      last_change_variable_num_ = i;
       continue;
     }
     // Send over all variables except "LastChange" itself.
-    UPnPLastChangeBuilder_add(result->builder, name, value);
+    UPnPLastChangeBuilder_add(builder_, name.c_str(), value.c_str());
   }
-  assert(result->last_change_variable_num >= 0);  // we expect to have one.
+  assert(last_change_variable_num_ >= 0);  // we expect to have one.
   // The state change variable itself is not eventable.
-  UPnPLastChangeCollector_add_ignore(result, result->last_change_variable_num);
-  UPnPLastChangeCollector_notify(result);
+  AddIgnore(last_change_variable_num_);
+  Notify();
 
-  VariableContainer_register_callback(variable_container,
-                                      UPnPLastChangeCollector_callback, result);
-  return result;
+  variable_container->RegisterCallback(
+    [this](int variable_num, const std::string &var_name,
+           const std::string &old_value,
+           const std::string &new_value) {
+      ReceiveChange(variable_num, var_name, old_value, new_value);
+    });
+ }
+
+void UPnPLastChangeCollector::AddIgnore(int variable_num) {
+  not_eventable_variables_.insert(variable_num);
 }
 
-void UPnPLastChangeCollector_add_ignore(upnp_last_change_collector_t *object,
-                                        int variable_num) {
-  object->not_eventable_variables |= (1 << variable_num);
+void UPnPLastChangeCollector::Start() {
+  open_transactions_ += 1;
 }
 
-void UPnPLastChangeCollector_start(upnp_last_change_collector_t *object) {
-  object->open_transactions += 1;
-}
-
-void UPnPLastChangeCollector_finish(upnp_last_change_collector_t *object) {
-  assert(object->open_transactions >= 1);
-  object->open_transactions -= 1;
-  UPnPLastChangeCollector_notify(object);
+void UPnPLastChangeCollector::Finish() {
+  assert(open_transactions_ >= 1);
+  open_transactions_ -= 1;
+  Notify();
 }
 
 // TODO(hzeller): add rate limiting. The standard talks about some limited
 // amount of events per time-unit.
-static void UPnPLastChangeCollector_notify(upnp_last_change_collector_t *obj) {
-  if (obj->open_transactions != 0) return;
+void UPnPLastChangeCollector::Notify() {
+  if (open_transactions_ != 0) return;
 
-  char *xml_doc_string = UPnPLastChangeBuilder_to_xml(obj->builder);
+  char *xml_doc_string = UPnPLastChangeBuilder_to_xml(builder_);
   if (xml_doc_string == NULL) return;
 
   // Only if there is actually a change, send it over.
-  if (VariableContainer_change(obj->variable_container,
-                               obj->last_change_variable_num, xml_doc_string)) {
+  if (variable_container_->Set(last_change_variable_num_, xml_doc_string)) {
     const char *varnames[] = {"LastChange", NULL};
     const char *varvalues[] = {NULL, NULL};
     // Yes, now, the whole XML document is encapsulated in
     // XML so needs to be XML quoted. The time around 2000 was
     // pretty sick - people did everything in XML.
     varvalues[0] = xmlescape(xml_doc_string, 0);
-    upnp_device_notify(obj->upnp_device, obj->service_id, varnames, varvalues,
-                       1);
+    upnp_device_notify(upnp_device_, service_id_, varnames, varvalues,  1);
     free((char *)varvalues[0]);
   }
-
   free(xml_doc_string);
 }
 
-// The actual callback collecting changes by building an <Event/> XML document.
-// This is not very robust if in the same transaction, we get the same variable
-// changed twice -- it emits two changes.
-static void UPnPLastChangeCollector_callback(void *userdata, int var_num,
-                                             const char *var_name,
-                                             const char *old_value,
-                                             const char *new_value) {
-  (void)old_value;
-  upnp_last_change_collector_t *object =
-      (upnp_last_change_collector_t *)userdata;
-
-  if (object->not_eventable_variables & (1 << var_num)) {
+void UPnPLastChangeCollector::ReceiveChange(int var_num,
+                                            const std::string &var_name,
+                                            const std::string &old_value,
+                                            const std::string &new_value) {
+  if (not_eventable_variables_.find(var_num) != not_eventable_variables_.end())
     return;  // ignore changes on non-eventable variables.
-  }
-  UPnPLastChangeBuilder_add(object->builder, var_name, new_value);
-  UPnPLastChangeCollector_notify(object);
+  UPnPLastChangeBuilder_add(builder_, var_name.c_str(), new_value.c_str());
+  Notify();
 }

@@ -46,51 +46,56 @@
 #ifndef VARIABLE_CONTAINER_H
 #define VARIABLE_CONTAINER_H
 
-// -- VariableContainer
-struct variable_container;
-typedef struct variable_container variable_container_t;
+#include <string>
+#include <functional>
+#include <vector>
+#include <set>
 
 struct var_meta;
+struct upnp_device;
 
-// Create a new variable container. The variable names mentioned
-// in the meta-data need to be valid for the lifetime of this object.
-variable_container_t *VariableContainer_new(int variable_num,
-                                            const struct var_meta *var_array);
-void VariableContainer_delete(variable_container_t *object);
+class VariableContainer {
+public:
+  using MetaContainer = std::vector<const var_meta *>;
 
-// Get number of variables.
-int VariableContainer_get_num_vars(variable_container_t *object);
+  // TODO: read from initializer list.
+  VariableContainer(int variable_num,
+                    const struct var_meta *var_array);
+  ~VariableContainer();
 
-// Get meta-data; returns count in return *count.
-// TODO(hzeller): this breaks abstraction, but this is to make sure to
-// simplify the transition.
-const struct var_meta *VariableContainer_get_meta(variable_container_t *object,
-                                                  int *count);
+  // Get number of variables.
+  int variable_count() const { return variable_count_; }
 
-// Get variable name/value. if OUT parameter 'name' is not NULL, returns
-// name of variable for given number.
-// Returns current value of variable or NULL if it does not exist.
-// Returned value owned by variable container; on variable change, this value
-// will be invalid.
-const char *VariableContainer_get(variable_container_t *object, int var,
-                                  const char **name);
+  // Get meta-data.
+  // TODO(hzeller): this breaks abstraction, but this is to make sure to
+  // simplify the transition.
+  const MetaContainer &meta() const { return meta_; }
 
-// Change content of variable with given number to NUL terminated content.
-// Returns '1' if value actually changed and all callbacks were called,
-// '0' if no change was detected.
-int VariableContainer_change(variable_container_t *object, int variable_num,
-                             const char *value);
+  // Get variable name/value. if OUT parameter 'name' is not NULL, returns
+  // name of variable for given number.
+  // Returns current value of variable.
+  const std::string &Get(int var_num, std::string *name = nullptr) const;
 
-// Callback handling. Whenever a variable changes, the callback is called.
-// Be careful when changing variables in the original container as this will
-// trigger recursive calls to the container.
-typedef void (*variable_change_listener_t)(void *userdata, int var_num,
-                                           const char *var_name,
-                                           const char *old_value,
-                                           const char *new_value);
-void VariableContainer_register_callback(variable_container_t *object,
-                                         variable_change_listener_t callback,
-                                         void *userdata);
+  // Change content of variable with given number to NUL terminated content.
+  // Returns true if value actually changed and all callbacks were called,
+  // false if no change was detected.
+  bool Set(int variable_num, const std::string &new_value);
+
+  // Callback handling. Whenever a variable changes, the callback is called.
+  // Be careful when changing variables in the original container as this will
+  // trigger recursive calls to the container.
+  using ChangeListener =
+    std::function<void(int var_num, const std::string &var_name,
+                       const std::string &old_value,
+                       const std::string &new_value)>;
+  void RegisterCallback(const ChangeListener &callback);
+
+private:
+  const int variable_count_;
+  MetaContainer meta_;           // TODO: make this a map of sorts.
+  std::vector<std::string> variable_values_;
+  std::vector<ChangeListener> callbacks_;
+};
 
 // -- UPnP LastChange Builder - builds a LastChange XML document from
 // added name/value pairs.
@@ -109,29 +114,41 @@ void UPnPLastChangeBuilder_add(upnp_last_change_builder_t *builder,
 // Resets the document. If no changes have been added, NULL is returned.
 char *UPnPLastChangeBuilder_to_xml(upnp_last_change_builder_t *builder);
 
-// -- UPnP LastChange collector
-struct upnp_device;  // forward declare.
-struct upnp_last_change_collector;
-typedef struct upnp_last_change_collector upnp_last_change_collector_t;
+class UPnPLastChangeCollector {
+public:
+  // Create a new last change collector that registers at the
+  // "variable_container" for changes in variables. It assembles a LastChange
+  // event and sends it to the given "upnp_device".
+  // The variable_container is expected to contain one variable with name
+  // "LastChange", otherwise this collector is not applicable and fails.
+  UPnPLastChangeCollector(VariableContainer *variable_container,
+                          const char *event_xml_namespace,
+                          upnp_device *upnp_device, const char *service_id);
 
-// Create a new last change collector that registers at the
-// "variable_container" for changes in variables. It assembles a LastChange
-// event and sends it to the given "upnp_device".
-// The variable_container is expected to contain one variable with name
-// "LastChange", otherwise this collector is not applicable and fails.
-upnp_last_change_collector_t *UPnPLastChangeCollector_new(
-    variable_container_t *variable_container, const char *event_xml_namespac,
-    struct upnp_device *upnp_device, const char *service_id);
+  // Set variable number that should be ignored in eventing.
+  // TODO(hzeller): get this from the meta-data.
+  void AddIgnore(int variable_num);
 
-// Set variable number that should be ignored in eventing.
-void UPnPLastChangeCollector_add_ignore(upnp_last_change_collector_t *object,
-                                        int variable_num);
+  // If we know that there are a couple of changes upcoming, we can
+  // 'start' a transaction and tell the collector to keep collecting until we
+  // 'finish'. This can be nested.
+  void Start();
+  void Finish();
 
-// If we know that there are a couple of changes upcoming, we can
-// 'start' a transaction and tell the collector to keep collecting until we
-// 'finish'. This can be nested.
-void UPnPLastChangeCollector_start(upnp_last_change_collector_t *object);
-void UPnPLastChangeCollector_finish(upnp_last_change_collector_t *object);
+private:
+  void Notify();
+  void ReceiveChange(int var_num, const std::string &var_name,
+                     const std::string &old_value,
+                     const std::string &new_value);
 
-// no delete yet. We leak that.
+  VariableContainer *const variable_container_;
+  struct upnp_device *const upnp_device_;
+  const char *const service_id_;
+  upnp_last_change_builder_t *const builder_;
+
+  int last_change_variable_num_;      // the LastChange variable we manipulate.
+  std::set<int> not_eventable_variables_;  // Variables to ignore eventing on.
+  int open_transactions_ = 0;
+};
+
 #endif /* VARIABLE_CONTAINER_H */

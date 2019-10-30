@@ -166,25 +166,19 @@ typedef enum {
   CONTROL_VAR_COUNT
 } control_variable_t;
 
-static variable_container_t *state_variables_ = NULL;
+static VariableContainer *state_variables_ = NULL;
 
 static ithread_mutex_t control_mutex;
 
 static void service_lock(void) {
   ithread_mutex_lock(&control_mutex);
-  struct upnp_last_change_collector *collector =
-      upnp_control_get_service()->last_change;
-  if (collector) {
-    UPnPLastChangeCollector_start(collector);
-  }
+  auto collector = upnp_control_get_service()->last_change;
+  if (collector) collector->Start();
 }
 
 static void service_unlock(void) {
-  struct upnp_last_change_collector *collector =
-      upnp_control_get_service()->last_change;
-  if (collector) {
-    UPnPLastChangeCollector_finish(collector);
-  }
+  auto collector = upnp_control_get_service()->last_change;
+  if (collector) collector->Finish();
   ithread_mutex_unlock(&control_mutex);
 }
 
@@ -394,7 +388,7 @@ static struct argument *argument_list[] = {
 
 // Replace given variable without sending an state-change event.
 static void replace_var(control_variable_t varnum, const char *new_value) {
-  VariableContainer_change(state_variables_, varnum, new_value);
+  state_variables_->Set(varnum, new_value);
 }
 
 static void change_volume(const char *volume, const char *db_volume) {
@@ -716,8 +710,8 @@ struct service *upnp_control_get_service(void) {
       {CONTROL_VAR_COUNT, NULL, NULL, EV_NO, DATATYPE_UNKNOWN, NULL, NULL}};
 
   if (control_service_.variable_container == NULL) {
-    state_variables_ =
-        VariableContainer_new(CONTROL_VAR_COUNT, control_var_meta);
+    state_variables_ = new VariableContainer(CONTROL_VAR_COUNT,
+                                             control_var_meta);
     control_service_.variable_container = state_variables_;
   }
 
@@ -738,20 +732,17 @@ void upnp_control_init(struct upnp_device *device) {
   }
 
   assert(service->last_change == NULL);
-  service->last_change = UPnPLastChangeCollector_new(
-      service->variable_container, CONTROL_EVENT_XML_NS, device,
-      CONTROL_SERVICE_ID);
+  service->last_change = new UPnPLastChangeCollector(
+    service->variable_container, CONTROL_EVENT_XML_NS, device,
+    CONTROL_SERVICE_ID);
   // According to UPnP-av-RenderingControl-v3-Service-20101231.pdf, 2.3.1
   // page 51, the A_ARG_TYPE* variables are not evented.
-  UPnPLastChangeCollector_add_ignore(service->last_change,
-                                     CONTROL_VAR_AAT_CHANNEL);
-  UPnPLastChangeCollector_add_ignore(service->last_change,
-                                     CONTROL_VAR_AAT_INSTANCE_ID);
-  UPnPLastChangeCollector_add_ignore(service->last_change,
-                                     CONTROL_VAR_AAT_PRESET_NAME);
+  service->last_change->AddIgnore(CONTROL_VAR_AAT_CHANNEL);
+  service->last_change->AddIgnore(CONTROL_VAR_AAT_INSTANCE_ID);
+  service->last_change->AddIgnore(CONTROL_VAR_AAT_PRESET_NAME);
 }
 
-void upnp_control_register_variable_listener(variable_change_listener_t cb,
-                                             void *userdata) {
-  VariableContainer_register_callback(state_variables_, cb, userdata);
+void upnp_control_register_variable_listener(
+  const VariableContainer::ChangeListener &listener) {
+  state_variables_->RegisterCallback(listener);
 }

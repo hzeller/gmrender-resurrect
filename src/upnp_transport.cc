@@ -345,7 +345,7 @@ static struct argument *argument_list[] = {
 
 // Our 'instance' variables.
 static enum transport_state transport_state_ = TRANSPORT_STOPPED;
-static variable_container_t *state_variables_ = NULL;
+static VariableContainer *state_variables_ = NULL;
 
 /* protects transport_values, and service-specific state */
 
@@ -354,19 +354,13 @@ static ithread_mutex_t transport_mutex;
 static void service_lock(void) {
   ithread_mutex_lock(&transport_mutex);
 
-  struct upnp_last_change_collector *collector =
-      upnp_transport_get_service()->last_change;
-  if (collector) {
-    UPnPLastChangeCollector_start(collector);
-  }
+  auto collector = upnp_transport_get_service()->last_change;
+  if (collector) collector->Start();
 }
 
 static void service_unlock(void) {
-  struct upnp_last_change_collector *collector =
-      upnp_transport_get_service()->last_change;
-  if (collector) {
-    UPnPLastChangeCollector_finish(collector);
-  }
+  auto collector = upnp_transport_get_service()->last_change;
+  if (collector) collector->Finish();
   ithread_mutex_unlock(&transport_mutex);
 }
 
@@ -397,27 +391,18 @@ static int get_media_info(struct action_event *event) {
   return 0;
 }
 
-// Replace given variable without sending an state-change event.
-static int replace_var(transport_variable_t varnum, const char *new_value) {
-  return VariableContainer_change(state_variables_, varnum, new_value);
-}
-
-static const char *get_var(transport_variable_t varnum) {
-  return VariableContainer_get(state_variables_, varnum, NULL);
-}
-
 // Transport uri always comes in uri/meta pairs. Set these and also the related
 // track uri/meta variables.
 // Returns 1, if this meta-data likely needs to be updated while the stream
 // is playing (e.g. radio broadcast).
 static int replace_transport_uri_and_meta(const char *uri, const char *meta) {
-  replace_var(TRANSPORT_VAR_AV_URI, uri);
-  replace_var(TRANSPORT_VAR_AV_URI_META, meta);
+  state_variables_->Set(TRANSPORT_VAR_AV_URI, uri);
+  state_variables_->Set(TRANSPORT_VAR_AV_URI_META, meta);
 
   // This influences as well the tracks. If there is a non-empty URI,
   // we have exactly one track.
   const char *tracks = (uri != NULL && strlen(uri) > 0) ? "1" : "0";
-  replace_var(TRANSPORT_VAR_NR_TRACKS, tracks);
+  state_variables_->Set(TRANSPORT_VAR_NR_TRACKS, tracks);
 
   // We only really want to send back meta data if we didn't get anything
   // useful or if this is an audio item.
@@ -429,23 +414,23 @@ static int replace_transport_uri_and_meta(const char *uri, const char *meta) {
 // Similar to replace_transport_uri_and_meta() above, but current values.
 static void replace_current_uri_and_meta(const char *uri, const char *meta) {
   const char *tracks = (uri != NULL && strlen(uri) > 0) ? "1" : "0";
-  replace_var(TRANSPORT_VAR_CUR_TRACK, tracks);
-  replace_var(TRANSPORT_VAR_CUR_TRACK_URI, uri);
-  replace_var(TRANSPORT_VAR_CUR_TRACK_META, meta);
+  state_variables_->Set(TRANSPORT_VAR_CUR_TRACK, tracks);
+  state_variables_->Set(TRANSPORT_VAR_CUR_TRACK_URI, uri);
+  state_variables_->Set(TRANSPORT_VAR_CUR_TRACK_META, meta);
 }
 
 static void change_transport_state(enum transport_state new_state) {
   transport_state_ = new_state;
   assert(new_state >= TRANSPORT_STOPPED &&
          new_state < TRANSPORT_NO_MEDIA_PRESENT);
-  if (!replace_var(TRANSPORT_VAR_TRANSPORT_STATE,
+  if (!state_variables_->Set(TRANSPORT_VAR_TRANSPORT_STATE,
                    transport_states[new_state])) {
     return;  // no change.
   }
   const char *available_actions = NULL;
   switch (new_state) {
     case TRANSPORT_STOPPED:
-      if (strlen(get_var(TRANSPORT_VAR_AV_URI)) == 0) {
+      if (state_variables_->Get(TRANSPORT_VAR_AV_URI).empty()) {
         available_actions = "PLAY";
       } else {
         available_actions = "PLAY,SEEK";
@@ -465,7 +450,7 @@ static void change_transport_state(enum transport_state new_state) {
       break;
   }
   if (available_actions) {
-    replace_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS, available_actions);
+    state_variables_->Set(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS, available_actions);
   }
 }
 
@@ -474,11 +459,11 @@ static void update_meta_from_stream(const struct SongMetaData *meta) {
   if (meta->title == NULL || strlen(meta->title) == 0) {
     return;
   }
-  const char *original_xml = get_var(TRANSPORT_VAR_AV_URI_META);
-  char *didl = SongMetaData_to_DIDL(meta, original_xml);
+  auto original_xml = state_variables_->Get(TRANSPORT_VAR_AV_URI_META);
+  char *didl = SongMetaData_to_DIDL(meta, original_xml.c_str());
   service_lock();
-  replace_var(TRANSPORT_VAR_AV_URI_META, didl);
-  replace_var(TRANSPORT_VAR_CUR_TRACK_META, didl);
+  state_variables_->Set(TRANSPORT_VAR_AV_URI_META, didl);
+  state_variables_->Set(TRANSPORT_VAR_CUR_TRACK_META, didl);
   service_unlock();
   free(didl);
 }
@@ -528,13 +513,13 @@ static int set_next_avtransport_uri(struct action_event *event) {
   service_lock();
 
   output_set_next_uri(next_uri);
-  replace_var(TRANSPORT_VAR_NEXT_AV_URI, next_uri);
+  state_variables_->Set(TRANSPORT_VAR_NEXT_AV_URI, next_uri);
 
   const char *next_uri_meta = upnp_get_string(event, "NextURIMetaData");
   if (next_uri_meta == NULL) {
     rc = -1;
   } else {
-    replace_var(TRANSPORT_VAR_NEXT_AV_URI_META, next_uri_meta);
+    state_variables_->Set(TRANSPORT_VAR_NEXT_AV_URI_META, next_uri_meta);
   }
 
   service_unlock();
@@ -611,12 +596,12 @@ static void *thread_update_track_time(void *userdata) {
     if (pos_result == 0) {
       if (duration != last_duration) {
         print_upnp_time(tbuf, sizeof(tbuf), duration);
-        replace_var(TRANSPORT_VAR_CUR_TRACK_DUR, tbuf);
+        state_variables_->Set(TRANSPORT_VAR_CUR_TRACK_DUR, tbuf);
         last_duration = duration;
       }
       if (position / one_sec_unit != last_position) {
         print_upnp_time(tbuf, sizeof(tbuf), position);
-        replace_var(TRANSPORT_VAR_REL_TIME_POS, tbuf);
+        state_variables_->Set(TRANSPORT_VAR_REL_TIME_POS, tbuf);
         last_position = position / one_sec_unit;
       }
     }
@@ -673,7 +658,8 @@ static int stop(struct action_event *event) {
       /* action not allowed in these states - error 701 */
       upnp_set_error(event, UPNP_TRANSPORT_E_TRANSITION_NA,
                      "Transition to STOP not allowed; allowed=%s",
-                     get_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS));
+                     state_variables_
+                     ->Get(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS).c_str());
 
       break;
   }
@@ -692,12 +678,12 @@ static void inform_play_transition_from_output(enum PlayFeedback fb) {
       break;
 
     case PLAY_STARTED_NEXT_STREAM: {
-      const char *av_uri = get_var(TRANSPORT_VAR_NEXT_AV_URI);
-      const char *av_meta = get_var(TRANSPORT_VAR_NEXT_AV_URI_META);
-      replace_transport_uri_and_meta(av_uri, av_meta);
-      replace_current_uri_and_meta(av_uri, av_meta);
-      replace_var(TRANSPORT_VAR_NEXT_AV_URI, "");
-      replace_var(TRANSPORT_VAR_NEXT_AV_URI_META, "");
+      auto av_uri = state_variables_->Get(TRANSPORT_VAR_NEXT_AV_URI);
+      auto av_meta = state_variables_->Get(TRANSPORT_VAR_NEXT_AV_URI_META);
+      replace_transport_uri_and_meta(av_uri.c_str(), av_meta.c_str());
+      replace_current_uri_and_meta(av_uri.c_str(), av_meta.c_str());
+      state_variables_->Set(TRANSPORT_VAR_NEXT_AV_URI, "");
+      state_variables_->Set(TRANSPORT_VAR_NEXT_AV_URI_META, "");
       break;
     }
   }
@@ -721,7 +707,7 @@ static int play(struct action_event *event) {
       // set the time to zero now; otherwise we will see the old
       // value of the previous song until it updates some fractions
       // of a second later.
-      replace_var(TRANSPORT_VAR_REL_TIME_POS, kZeroTime);
+      state_variables_->Set(TRANSPORT_VAR_REL_TIME_POS, kZeroTime);
 
       /* >>> fall through */
 
@@ -731,9 +717,9 @@ static int play(struct action_event *event) {
         rc = -1;
       } else {
         change_transport_state(TRANSPORT_PLAYING);
-        const char *av_uri = get_var(TRANSPORT_VAR_AV_URI);
-        const char *av_meta = get_var(TRANSPORT_VAR_AV_URI_META);
-        replace_current_uri_and_meta(av_uri, av_meta);
+        auto av_uri = state_variables_->Get(TRANSPORT_VAR_AV_URI);
+        auto av_meta = state_variables_->Get(TRANSPORT_VAR_AV_URI_META);
+        replace_current_uri_and_meta(av_uri.c_str(), av_meta.c_str());
       }
       break;
 
@@ -744,7 +730,8 @@ static int play(struct action_event *event) {
       /* action not allowed in these states - error 701 */
       upnp_set_error(event, UPNP_TRANSPORT_E_TRANSITION_NA,
                      "Transition to PLAY not allowed; allowed=%s",
-                     get_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS));
+                     state_variables_
+                     ->Get(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS).c_str());
       rc = -1;
       break;
   }
@@ -778,7 +765,8 @@ static int pause_stream(struct action_event *event) {
       /* action not allowed in these states - error 701 */
       upnp_set_error(event, UPNP_TRANSPORT_E_TRANSITION_NA,
                      "Transition to PAUSE not allowed; allowed=%s",
-                     get_var(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS));
+                     state_variables_
+                     ->Get(TRANSPORT_VAR_CUR_TRANSPORT_ACTIONS).c_str());
       rc = -1;
   }
   service_unlock();
@@ -802,7 +790,7 @@ static int seek(struct action_event *event) {
       // pretend to already be there. Should we go into
       // TRANSITION mode ?
       // (gstreamer will go into PAUSE, then PLAYING)
-      replace_var(TRANSPORT_VAR_REL_TIME_POS, target);
+      state_variables_->Set(TRANSPORT_VAR_REL_TIME_POS, target);
     }
     service_unlock();
   }
@@ -921,7 +909,7 @@ struct service *upnp_transport_get_service(void) {
 
   if (transport_service_.variable_container == NULL) {
     state_variables_ =
-        VariableContainer_new(TRANSPORT_VAR_COUNT, transport_var_meta);
+      new VariableContainer(TRANSPORT_VAR_COUNT, transport_var_meta);
     transport_service_.variable_container = state_variables_;
   }
   return &transport_service_;
@@ -930,25 +918,20 @@ struct service *upnp_transport_get_service(void) {
 void upnp_transport_init(struct upnp_device *device) {
   struct service *service = upnp_transport_get_service();
   assert(service->last_change == NULL);
-  service->last_change = UPnPLastChangeCollector_new(
+  service->last_change = new UPnPLastChangeCollector(
       service->variable_container, TRANSPORT_EVENT_XML_NS, device,
       TRANSPORT_SERVICE_ID);
   // Times and counters should not be evented. We only change REL_TIME
   // right now anyway (AVTransport-v1 document, 2.3.1 Event Model)
-  UPnPLastChangeCollector_add_ignore(service->last_change,
-                                     TRANSPORT_VAR_REL_TIME_POS);
-  UPnPLastChangeCollector_add_ignore(service->last_change,
-                                     TRANSPORT_VAR_ABS_TIME_POS);
-  UPnPLastChangeCollector_add_ignore(service->last_change,
-                                     TRANSPORT_VAR_REL_CTR_POS);
-  UPnPLastChangeCollector_add_ignore(service->last_change,
-                                     TRANSPORT_VAR_ABS_CTR_POS);
-
+  service->last_change->AddIgnore(TRANSPORT_VAR_REL_TIME_POS);
+  service->last_change->AddIgnore(TRANSPORT_VAR_ABS_TIME_POS);
+  service->last_change->AddIgnore(TRANSPORT_VAR_REL_CTR_POS);
+  service->last_change->AddIgnore(TRANSPORT_VAR_ABS_CTR_POS);
   pthread_t thread;
   pthread_create(&thread, NULL, thread_update_track_time, NULL);
 }
 
-void upnp_transport_register_variable_listener(variable_change_listener_t cb,
-                                               void *userdata) {
-  VariableContainer_register_callback(state_variables_, cb, userdata);
+void upnp_transport_register_variable_listener(
+  const VariableContainer::ChangeListener &listener) {
+  state_variables_->RegisterCallback(listener);
 }

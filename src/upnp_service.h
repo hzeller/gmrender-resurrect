@@ -28,6 +28,7 @@
 #include <ithread.h>
 #include <upnp.h>
 #include "upnp_compat.h"
+#include "variable-container.h"
 
 struct action;
 struct service;
@@ -97,8 +98,8 @@ struct service {
   const char *event_xml_ns;
   struct action *actions;
   struct argument **action_arguments;
-  struct variable_container *variable_container;
-  struct upnp_last_change_collector *last_change;
+  VariableContainer *variable_container;
+  UPnPLastChangeCollector *last_change;
   int command_count;
 };
 

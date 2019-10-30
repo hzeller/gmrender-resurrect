@@ -313,8 +313,7 @@ int connmgr_init(const char* mime_filter_string) {
   if (protoInfo->len > 0) {
     // Truncate final comma
     protoInfo = g_string_truncate(protoInfo, protoInfo->len - 1);
-    VariableContainer_change(srv->variable_container,
-                             CONNMGR_VAR_SINK_PROTO_INFO, protoInfo->str);
+    srv->variable_container->Set(CONNMGR_VAR_SINK_PROTO_INFO, protoInfo->str);
   }
 
   // Free string and its data
@@ -423,7 +422,7 @@ struct service* upnp_connmgr_get_service(void) {
 
   if (connmgr_service_.variable_container == NULL) {
     connmgr_service_.variable_container =
-        VariableContainer_new(CONNMGR_VAR_COUNT, connmgr_var_meta);
+        new VariableContainer(CONNMGR_VAR_COUNT, connmgr_var_meta);
     // no changes expected; no collector.
   }
   return &connmgr_service_;

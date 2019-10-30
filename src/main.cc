@@ -186,20 +186,15 @@ static gboolean process_cmdline(int argc, char **argv) {
   return TRUE;
 }
 
-static void log_variable_change(void *userdata, int var_num,
-                                const char *variable_name,
-                                const char *old_value,
-                                const char *variable_value) {
-  (void)var_num;
-  (void)old_value;
-
-  const char *category = (const char *)userdata;
-  int needs_newline = variable_value[strlen(variable_value) - 1] != '\n';
+static void log_variable_change(const char *category,
+                                const std::string &variable_name,
+                                const std::string &variable_value) {
+  int needs_newline = variable_value.back() != '\n';
   // Silly terminal codes. Set to empty strings if not needed.
   const char *var_start = Log_color_allowed() ? "\033[1m\033[34m" : "";
   const char *var_end = Log_color_allowed() ? "\033[0m" : "";
-  Log_info(category, "%s%s%s: %s%s", var_start, variable_name, var_end,
-           variable_value, needs_newline ? "\n" : "");
+  Log_info(category, "%s%s%s: %s%s", var_start, variable_name.c_str(), var_end,
+           variable_value.c_str(), needs_newline ? "\n" : "");
 }
 
 static void init_logging(const char *log_file) {
@@ -318,10 +313,16 @@ int main(int argc, char **argv) {
   }
 
   if (Log_info_enabled()) {
-    upnp_transport_register_variable_listener(log_variable_change,
-                                              (void *)"transport");
-    upnp_control_register_variable_listener(log_variable_change,
-                                            (void *)"control");
+    upnp_transport_register_variable_listener(
+      [](int, const std::string &var_name, const std::string&,
+         const std::string &new_value) {
+        log_variable_change("transport", var_name, new_value);
+      });
+    upnp_control_register_variable_listener(
+      [](int, const std::string &var_name, const std::string&,
+         const std::string &new_value) {
+        log_variable_change("control", var_name, new_value);
+      });
   }
 
   // Write both to the log (which might be disabled) and console.

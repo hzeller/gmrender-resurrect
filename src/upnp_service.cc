@@ -58,10 +58,11 @@ static struct xmlelement *gen_specversion(struct xmldoc *doc, int major,
   return top;
 }
 
-static struct xmlelement *gen_scpd_action(struct xmldoc *doc,
-                                          struct action *act,
-                                          struct argument *arglist,
-                                          const struct var_meta *meta_array) {
+static struct xmlelement *gen_scpd_action(
+  struct xmldoc *doc,
+  struct action *act,
+  struct argument *arglist,
+  const VariableContainer::MetaContainer &meta) {
   struct xmlelement *top;
   struct xmlelement *parent, *child;
 
@@ -80,7 +81,7 @@ static struct xmlelement *gen_scpd_action(struct xmldoc *doc,
       add_value_element(doc, child, "direction",
                         (arg->direction == PARAM_DIR_IN) ? "in" : "out");
       add_value_element(doc, child, "relatedStateVariable",
-                        meta_array[arg->statevar].name);
+                        meta[arg->statevar]->name);
       xmlelement_add_element(doc, parent, child);
     }
   }
@@ -93,8 +94,6 @@ static struct xmlelement *gen_scpd_actionlist(struct xmldoc *doc,
   struct xmlelement *child;
   int i;
 
-  const struct var_meta *meta_array =
-      VariableContainer_get_meta(srv->variable_container, NULL);
   top = xmlelement_new(doc, "actionList");
   for (i = 0; i < srv->command_count; i++) {
     struct action *act;
@@ -102,7 +101,8 @@ static struct xmlelement *gen_scpd_actionlist(struct xmldoc *doc,
     act = &(srv->actions[i]);
     arglist = srv->action_arguments[i];
     if (act) {
-      child = gen_scpd_action(doc, act, arglist, meta_array);
+      child = gen_scpd_action(doc, act, arglist,
+                              srv->variable_container->meta());
       xmlelement_add_element(doc, top, child);
     }
   }
@@ -173,14 +173,9 @@ static struct xmlelement *gen_scpd_servicestatetable(struct xmldoc *doc,
                                                      struct service *srv) {
   struct xmlelement *top;
   struct xmlelement *child;
-  int i;
 
   top = xmlelement_new(doc, "serviceStateTable");
-  int var_count;
-  const struct var_meta *meta_array =
-      VariableContainer_get_meta(srv->variable_container, &var_count);
-  for (i = 0; i < var_count; i++) {
-    const struct var_meta *meta = &(meta_array[i]);
+  for (auto meta : srv->variable_container->meta()) {
     child = gen_scpd_statevar(doc, meta);
     xmlelement_add_element(doc, top, child);
   }
