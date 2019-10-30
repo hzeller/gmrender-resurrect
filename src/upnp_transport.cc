@@ -105,19 +105,31 @@ enum UPNPTransportError {
 
 static const char kZeroTime[] = "0:00:00";
 
-enum transport_state {
-  TRANSPORT_STOPPED,
-  TRANSPORT_PLAYING,
-  TRANSPORT_TRANSITIONING,    /* optional */
-  TRANSPORT_PAUSED_PLAYBACK,  /* optional */
-  TRANSPORT_PAUSED_RECORDING, /* optional */
-  TRANSPORT_RECORDING,        /* optional */
-  TRANSPORT_NO_MEDIA_PRESENT  /* optional */
+enum class TransportState {
+  STOPPED,
+  PLAYING,
+  TRANSITIONING,    /* optional */
+  PAUSED_PLAYBACK,  /* optional */
+  PAUSED_RECORDING, /* optional */
+  RECORDING,        /* optional */
+  NO_MEDIA_PRESENT  /* optional */
 };
 
-static const char *transport_states[] = {
-    "STOPPED",          "PLAYING",   "TRANSITIONING",    "PAUSED_PLAYBACK",
-    "PAUSED_RECORDING", "RECORDING", "NO_MEDIA_PRESENT", NULL};
+static const char *transport_state_xml_name[] = {
+  "STOPPED",
+  "PLAYING",
+  "TRANSITIONING",
+  "PAUSED_PLAYBACK",
+  "PAUSED_RECORDING",
+  "RECORDING",
+  "NO_MEDIA_PRESENT",
+  NULL
+};
+
+static const char *TransportStateName(TransportState s) {
+  return transport_state_xml_name[static_cast<int>(s)];
+}
+
 static const char *transport_stati[] = {"OK", "ERROR_OCCURRED",
                                         " vendor-defined ", NULL};
 static const char *media[] = {"UNKNOWN",
@@ -344,7 +356,7 @@ static struct argument *argument_list[] = {
     [TRANSPORT_CMD_COUNT] = NULL};
 
 // Our 'instance' variables.
-static enum transport_state transport_state_ = TRANSPORT_STOPPED;
+static TransportState transport_state_ = TransportState::STOPPED;
 static VariableContainer *state_variables_ = NULL;
 
 /* protects transport_values, and service-specific state */
@@ -419,33 +431,31 @@ static void replace_current_uri_and_meta(const char *uri, const char *meta) {
   state_variables_->Set(TRANSPORT_VAR_CUR_TRACK_META, meta);
 }
 
-static void change_transport_state(enum transport_state new_state) {
+static void change_transport_state(TransportState new_state) {
   transport_state_ = new_state;
-  assert(new_state >= TRANSPORT_STOPPED &&
-         new_state < TRANSPORT_NO_MEDIA_PRESENT);
   if (!state_variables_->Set(TRANSPORT_VAR_TRANSPORT_STATE,
-                   transport_states[new_state])) {
+                             TransportStateName(new_state))) {
     return;  // no change.
   }
   const char *available_actions = NULL;
   switch (new_state) {
-    case TRANSPORT_STOPPED:
+    case TransportState::STOPPED:
       if (state_variables_->Get(TRANSPORT_VAR_AV_URI).empty()) {
         available_actions = "PLAY";
       } else {
         available_actions = "PLAY,SEEK";
       }
       break;
-    case TRANSPORT_PLAYING:
+    case TransportState::PLAYING:
       available_actions = "PAUSE,STOP,SEEK";
       break;
-    case TRANSPORT_PAUSED_PLAYBACK:
+    case TransportState::PAUSED_PLAYBACK:
       available_actions = "PLAY,STOP,SEEK";
       break;
-    case TRANSPORT_TRANSITIONING:
-    case TRANSPORT_PAUSED_RECORDING:
-    case TRANSPORT_RECORDING:
-    case TRANSPORT_NO_MEDIA_PRESENT:
+    case TransportState::TRANSITIONING:
+    case TransportState::PAUSED_RECORDING:
+    case TransportState::RECORDING:
+    case TransportState::NO_MEDIA_PRESENT:
       // We should not switch to this state.
       break;
   }
@@ -484,7 +494,7 @@ static int set_avtransport_uri(struct action_event *event) {
   // Transport URI/Meta set now, current URI/Meta when it starts playing.
   int requires_meta_update = replace_transport_uri_and_meta(uri, meta);
 
-  if (transport_state_ == TRANSPORT_PLAYING) {
+  if (transport_state_ == TransportState::PLAYING) {
     // Uh, wrong state.
     // Usually, this should not be called while we are PLAYING, only
     // STOPPED or PAUSED. But if actually some controller sets this
@@ -642,19 +652,19 @@ static int stop(struct action_event *event) {
 
   service_lock();
   switch (transport_state_) {
-    case TRANSPORT_STOPPED:
+    case TransportState::STOPPED:
       // nothing to change.
       break;
-    case TRANSPORT_PLAYING:
-    case TRANSPORT_TRANSITIONING:
-    case TRANSPORT_PAUSED_RECORDING:
-    case TRANSPORT_RECORDING:
-    case TRANSPORT_PAUSED_PLAYBACK:
+    case TransportState::PLAYING:
+    case TransportState::TRANSITIONING:
+    case TransportState::PAUSED_RECORDING:
+    case TransportState::RECORDING:
+    case TransportState::PAUSED_PLAYBACK:
       output_stop();
-      change_transport_state(TRANSPORT_STOPPED);
+      change_transport_state(TransportState::STOPPED);
       break;
 
-    case TRANSPORT_NO_MEDIA_PRESENT:
+    case TransportState::NO_MEDIA_PRESENT:
       /* action not allowed in these states - error 701 */
       upnp_set_error(event, UPNP_TRANSPORT_E_TRANSITION_NA,
                      "Transition to STOP not allowed; allowed=%s",
@@ -674,7 +684,7 @@ static void inform_play_transition_from_output(enum PlayFeedback fb) {
     case PLAY_STOPPED:
       replace_transport_uri_and_meta("", "");
       replace_current_uri_and_meta("", "");
-      change_transport_state(TRANSPORT_STOPPED);
+      change_transport_state(TransportState::STOPPED);
       break;
 
     case PLAY_STARTED_NEXT_STREAM: {
@@ -698,11 +708,11 @@ static int play(struct action_event *event) {
   int rc = 0;
   service_lock();
   switch (transport_state_) {
-    case TRANSPORT_PLAYING:
+    case TransportState::PLAYING:
       // Nothing to change.
       break;
 
-    case TRANSPORT_STOPPED:
+    case TransportState::STOPPED:
       // If we were stopped before, we start a new song now. So just
       // set the time to zero now; otherwise we will see the old
       // value of the previous song until it updates some fractions
@@ -711,22 +721,22 @@ static int play(struct action_event *event) {
 
       /* >>> fall through */
 
-    case TRANSPORT_PAUSED_PLAYBACK:
+    case TransportState::PAUSED_PLAYBACK:
       if (output_play(&inform_play_transition_from_output)) {
         upnp_set_error(event, 704, "Playing failed");
         rc = -1;
       } else {
-        change_transport_state(TRANSPORT_PLAYING);
+        change_transport_state(TransportState::PLAYING);
         auto av_uri = state_variables_->Get(TRANSPORT_VAR_AV_URI);
         auto av_meta = state_variables_->Get(TRANSPORT_VAR_AV_URI_META);
         replace_current_uri_and_meta(av_uri.c_str(), av_meta.c_str());
       }
       break;
 
-    case TRANSPORT_NO_MEDIA_PRESENT:
-    case TRANSPORT_TRANSITIONING:
-    case TRANSPORT_PAUSED_RECORDING:
-    case TRANSPORT_RECORDING:
+    case TransportState::NO_MEDIA_PRESENT:
+    case TransportState::TRANSITIONING:
+    case TransportState::PAUSED_RECORDING:
+    case TransportState::RECORDING:
       /* action not allowed in these states - error 701 */
       upnp_set_error(event, UPNP_TRANSPORT_E_TRANSITION_NA,
                      "Transition to PLAY not allowed; allowed=%s",
@@ -748,16 +758,16 @@ static int pause_stream(struct action_event *event) {
   int rc = 0;
   service_lock();
   switch (transport_state_) {
-    case TRANSPORT_PAUSED_PLAYBACK:
+    case TransportState::PAUSED_PLAYBACK:
       // Nothing to change.
       break;
 
-    case TRANSPORT_PLAYING:
+    case TransportState::PLAYING:
       if (output_pause()) {
         upnp_set_error(event, 704, "Pause failed");
         rc = -1;
       } else {
-        change_transport_state(TRANSPORT_PAUSED_PLAYBACK);
+        change_transport_state(TransportState::PAUSED_PLAYBACK);
       }
       break;
 
@@ -844,7 +854,7 @@ struct service *upnp_transport_get_service(void) {
 
   static struct var_meta transport_var_meta[] = {
       {TRANSPORT_VAR_TRANSPORT_STATE, "TransportState", "STOPPED", Eventing::kNo,
-       DataType::kString, transport_states, NULL},
+       DataType::kString, transport_state_xml_name, NULL},
       {TRANSPORT_VAR_TRANSPORT_STATUS, "TransportStatus", "OK", Eventing::kNo,
        DataType::kString, transport_stati, NULL},
       {TRANSPORT_VAR_PLAY_MEDIUM, "PlaybackStorageMedium", "UNKNOWN", Eventing::kNo,
