@@ -82,35 +82,35 @@ typedef enum {
 } connmgr_cmd;
 
 static struct argument arguments_getprotocolinfo[] = {
-    {"Source", PARAM_DIR_OUT, CONNMGR_VAR_SRC_PROTO_INFO},
-    {"Sink", PARAM_DIR_OUT, CONNMGR_VAR_SINK_PROTO_INFO},
+    {"Source", ParamDir::Out, CONNMGR_VAR_SRC_PROTO_INFO},
+    {"Sink", ParamDir::Out, CONNMGR_VAR_SINK_PROTO_INFO},
     {NULL},
 };
 
 static struct argument arguments_getcurrentconnectionids[] = {
-    {"ConnectionIDs", PARAM_DIR_OUT, CONNMGR_VAR_CUR_CONN_IDS}, {NULL}};
+    {"ConnectionIDs", ParamDir::Out, CONNMGR_VAR_CUR_CONN_IDS}, {NULL}};
 
 static struct argument arguments_setcurrentconnectioninfo[] = {
-    {"ConnectionID", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_ID},
-    {"RcsID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_RCS_ID},
-    {"AVTransportID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_AVT_ID},
-    {"ProtocolInfo", PARAM_DIR_OUT, CONNMGR_VAR_AAT_PROTO_INFO},
-    {"PeerConnectionManager", PARAM_DIR_OUT, CONNMGR_VAR_AAT_CONN_MGR},
-    {"PeerConnectionID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_CONN_ID},
-    {"Direction", PARAM_DIR_OUT, CONNMGR_VAR_AAT_DIR},
-    {"Status", PARAM_DIR_OUT, CONNMGR_VAR_AAT_CONN_STATUS},
+    {"ConnectionID", ParamDir::In, CONNMGR_VAR_AAT_CONN_ID},
+    {"RcsID", ParamDir::Out, CONNMGR_VAR_AAT_RCS_ID},
+    {"AVTransportID", ParamDir::Out, CONNMGR_VAR_AAT_AVT_ID},
+    {"ProtocolInfo", ParamDir::Out, CONNMGR_VAR_AAT_PROTO_INFO},
+    {"PeerConnectionManager", ParamDir::Out, CONNMGR_VAR_AAT_CONN_MGR},
+    {"PeerConnectionID", ParamDir::Out, CONNMGR_VAR_AAT_CONN_ID},
+    {"Direction", ParamDir::Out, CONNMGR_VAR_AAT_DIR},
+    {"Status", ParamDir::Out, CONNMGR_VAR_AAT_CONN_STATUS},
     {NULL}};
 static struct argument arguments_prepareforconnection[] = {
-    {"RemoteProtocolInfo", PARAM_DIR_IN, CONNMGR_VAR_AAT_PROTO_INFO},
-    {"PeerConnectionManager", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_MGR},
-    {"PeerConnectionID", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_ID},
-    {"Direction", PARAM_DIR_IN, CONNMGR_VAR_AAT_DIR},
-    {"ConnectionID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_CONN_ID},
-    {"AVTransportID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_AVT_ID},
-    {"RcsID", PARAM_DIR_OUT, CONNMGR_VAR_AAT_RCS_ID},
+    {"RemoteProtocolInfo", ParamDir::In, CONNMGR_VAR_AAT_PROTO_INFO},
+    {"PeerConnectionManager", ParamDir::In, CONNMGR_VAR_AAT_CONN_MGR},
+    {"PeerConnectionID", ParamDir::In, CONNMGR_VAR_AAT_CONN_ID},
+    {"Direction", ParamDir::In, CONNMGR_VAR_AAT_DIR},
+    {"ConnectionID", ParamDir::Out, CONNMGR_VAR_AAT_CONN_ID},
+    {"AVTransportID", ParamDir::Out, CONNMGR_VAR_AAT_AVT_ID},
+    {"RcsID", ParamDir::Out, CONNMGR_VAR_AAT_RCS_ID},
     {NULL}};
 // static struct argument *arguments_connectioncomplete[] = {
-//	{ "ConnectionID", PARAM_DIR_IN, CONNMGR_VAR_AAT_CONN_ID },
+//	{ "ConnectionID", ParamDir::In, CONNMGR_VAR_AAT_CONN_ID },
 //        NULL
 //};
 

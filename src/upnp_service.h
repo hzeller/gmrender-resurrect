@@ -41,14 +41,14 @@ struct action {
   int (*callback)(struct action_event *);
 };
 
-typedef enum {
-  PARAM_DIR_IN,
-  PARAM_DIR_OUT,
-} param_dir;
+enum class ParamDir {
+  In,
+  Out,
+};
 
 struct argument {
   const char *name;
-  param_dir direction;
+  ParamDir direction;
   int statevar;
 };
 
