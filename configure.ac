@@ -20,7 +20,7 @@ if test -n "$GCC"; then
    EXTRA_GCC_DEBUG_CFLAGS="$CFLAGS"
    EXTRA_GCC_DEBUG_CXXFLAGS="$CXXFLAGS"
    CFLAGS+=" -Wall -Wpointer-arith -Wmissing-prototypes -Wmissing-declarations -Wwrite-strings"
-   CXXFLAGS+=" -Wall -Wpointer-arith"
+   CXXFLAGS+=" -std=c++11 -Wall -Wpointer-arith -fno-exceptions"
 fi
 
 AC_CHECK_FUNCS([asprintf])
