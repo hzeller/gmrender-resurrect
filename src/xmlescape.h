@@ -1,3 +1,4 @@
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* xmlescape.h - helper routines for escaping XML strings
  *
  * Copyright (C) 2007   Ivo Clarysse

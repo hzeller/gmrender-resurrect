@@ -1,3 +1,4 @@
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* upnp_compat.h - libupnp v1.8.x/v1.6.x compatibilty layer
  *
  * Copyright (C) 2019 Tucker Kern

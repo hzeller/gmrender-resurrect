@@ -1,3 +1,4 @@
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* logging.h - Logging facility
  *
  * Copyright (C) 2013 Henner Zeller

@@ -1,3 +1,4 @@
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* upnp.c - Generic UPnP routines
  *
  * Copyright (C) 2005-2007   Ivo Clarysse

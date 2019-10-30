@@ -1,3 +1,4 @@
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* output_module.h - Output module interface definition
  *
  * Copyright (C) 2007   Ivo Clarysse

@@ -1,3 +1,4 @@
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* upnp_connmgr.h - UPnP Connection Manager definitions
  *
  * Copyright (C) 2005   Ivo Clarysse

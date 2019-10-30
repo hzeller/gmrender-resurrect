@@ -1,3 +1,4 @@
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* output.h - Output module frontend
  *
  * Copyright (C) 2007 Ivo Clarysse,  (C) 2012 Henner Zeller

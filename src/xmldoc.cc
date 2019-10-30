@@ -1,3 +1,4 @@
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* xmldoc.h - XML builder abstraction
  *
  * Copyright (C) 2007   Ivo Clarysse

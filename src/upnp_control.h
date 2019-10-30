@@ -1,3 +1,4 @@
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* upnp_control.h - UPnP RenderingControl definitions
  *
  * Copyright (C) 2005   Ivo Clarysse
