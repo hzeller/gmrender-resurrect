@@ -2,6 +2,7 @@
 /* upnp_connmgr.c - UPnP Connection Manager routines
  *
  * Copyright (C) 2005-2007   Ivo Clarysse
+ * Copyright (C) 2019        Tucker Kern
  *
  * This file is part of GMediaRender.
  *
@@ -31,13 +32,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
+#include <set>
+#include <string>
+#include <algorithm>
 
 #include <ithread.h>
 #include <upnp.h>
-
-// Can't include above upnp.h breaks stdbool?
-#include <glib.h>
-#include <stdbool.h>
 
 #include "upnp_connmgr.h"
 
@@ -45,6 +46,8 @@
 #include "upnp_device.h"
 #include "upnp_service.h"
 #include "variable-container.h"
+#include "output.h"
+#include "mime_type_filter.h"
 
 #define CONNMGR_TYPE "urn:schemas-upnp-org:service:ConnectionManager:1"
 
@@ -133,73 +136,18 @@ static const char* direction_values[] = {"Input", "Output", NULL};
 
 static ithread_mutex_t connmgr_mutex;
 
-static GSList* supported_types_list;
+/**
+    @brief  Augement the supported MIME types set with additional
+            types for improved compatibilty
 
-static bool add_mime_type(const char* mime_type) {
-  // Check for duplicate MIME type
-  if (g_slist_find_custom(supported_types_list, mime_type,
-                          (GCompareFunc)strcmp) != NULL)
-    return false;
-
-  // Sorted insert into list
-  supported_types_list = g_slist_insert_sorted(
-      supported_types_list, strdup(mime_type), (GCompareFunc)strcmp);
-
-  return true;
-}
-
-static bool remove_mime_type(const char* mime_type) {
-  // Check that the list exists
-  if (supported_types_list == NULL) return false;
-
-  // Search for the MIME type
-  GSList* entry = g_slist_find_custom(supported_types_list, mime_type,
-                                      (GCompareFunc)strcmp);
-  if (entry != NULL) {
-    // Free the string pointer
-    free(entry->data);
-
-    // Free the list entry
-    supported_types_list = g_slist_delete_link(supported_types_list, entry);
-    return true;
-  }
-
-  return false;
-}
-
-static gint g_compare_mime_root(gconstpointer a, gconstpointer b) {
-  size_t aLen = strlen((const char*)a);
-  size_t bLen = strlen((const char*)b);
-
-  // Only compare up to the small string
-  int min = (aLen < bLen) ? aLen : bLen;
-
-  return strncmp((const char*)a, (const char*)b, min);
-}
-
-static void g_add_mime_type(gpointer data, gpointer user_data) {
-  add_mime_type((const char*)data);
-}
-
-static void g_remove_mime_type(gpointer data, gpointer user_data) {
-  remove_mime_type((const char*)data);
-}
-
-static void register_mime_type_internal(const char* mime_type) {
-  add_mime_type(mime_type);
-}
-
-void register_mime_type(const char* mime_type) {
-  register_mime_type_internal(mime_type);
-  if (strcmp("audio/mpeg", mime_type) == 0) {
-    register_mime_type_internal("audio/x-mpeg");
-
-    // BubbleUPnP does not seem to match generic "audio/*" types,
-    // but only matches mime-types _exactly_, so we add some here.
-    // TODO(hzeller): we already add the "audio/*" mime-type
-    // output_gstream.c:scan_caps() which should just work once
-    // BubbleUPnP allows for  matching "audio/*". Remove the code
-    // here.
+    @param  types mime_type_set_t containing supported MIME types
+    @retval none
+*/
+void connmgr_augment_supported_types(Output::mime_type_set_t& types)
+{
+  if (types.count("audio/mpeg"))
+  {
+    types.emplace("audio/x-mpeg");
 
     // BubbleUPnP uses audio/x-scpl as an indicator to know if the
     // renderer can handle it (otherwise it will proxy).
@@ -207,11 +155,11 @@ void register_mime_type(const char* mime_type) {
     // shoutcast.
     // (For more accurate answer: we'd to check if all of
     // mpeg, aac, aacp, ogg are supported).
-    register_mime_type_internal("audio/x-scpls");
+    types.emplace("audio/x-scpls");
 
     // This is apparently something sent by the spotifyd
     // https://gitorious.org/spotifyd
-    register_mime_type("audio/L16;rate=44100;channels=2");
+    types.emplace("audio/L16;rate=44100;channels=2");
   }
 
   // Some workaround: some controllers seem to match the version without
@@ -220,110 +168,45 @@ void register_mime_type(const char* mime_type) {
   // If this works, we should probably collect all of these
   // in a set emit always both, foo/bar and foo/x-bar, as it is a similar
   // work-around as seen above with mpeg -> x-mpeg.
-  if (strcmp("audio/x-alac", mime_type) == 0) {
-    register_mime_type_internal("audio/alac");
-  }
-  if (strcmp("audio/x-aiff", mime_type) == 0) {
-    register_mime_type_internal("audio/aiff");
-  }
-  if (strcmp("audio/x-m4a", mime_type) == 0) {
-    register_mime_type_internal("audio/m4a");
-    register_mime_type_internal("audio/mp4");
-  }
-}
+  if (types.count("audio/x-alac"))
+    types.emplace("audio/alac");
 
-static mime_type_filters_t connmgr_parse_mime_filter_string(
-    const char* filter_string) {
-  mime_type_filters_t mime_filter;
-
-  mime_filter.allowed_roots = NULL;
-  mime_filter.added_types = NULL;
-  mime_filter.removed_types = NULL;
-
-  if (filter_string == NULL) return mime_filter;
-
-  char* filters = strdup(filter_string);
-
-  char* saveptr = NULL;  // State pointer for strtok_r
-  char* token = strtok_r(filters, ",", &saveptr);
-  while (token != NULL) {
-    if (token[0] == '+') {
-      mime_filter.added_types =
-          g_slist_prepend(mime_filter.added_types, strdup(&token[1]));
-    } else if (token[0] == '-') {
-      mime_filter.removed_types =
-          g_slist_prepend(mime_filter.removed_types, strdup(&token[1]));
-    } else {
-      mime_filter.allowed_roots =
-          g_slist_prepend(mime_filter.allowed_roots, strdup(token));
-    }
-
-    token = strtok_r(NULL, ",", &saveptr);
-  }
-
-  free(filters);
-
-  return mime_filter;
-}
-
-static void connmgr_filter_mime_type_root(
-    const mime_type_filters_t* mime_filter) {
-  if (mime_filter == NULL || mime_filter->allowed_roots == NULL) return;
-
-  // Iterate through the supported types and filter by root
-  GSList* entry = supported_types_list;
-  while (entry != NULL) {
-    GSList* next = entry->next;
-
-    if (g_slist_find_custom(mime_filter->allowed_roots, entry->data,
-                            g_compare_mime_root) == NULL) {
-      // Free matching MIME type and remove the entry
-      free(entry->data);
-      supported_types_list = g_slist_delete_link(supported_types_list, entry);
-    }
-    entry = next;
+  if (types.count("audio/x-aiff"))
+    types.emplace("audio/aiff");
+  
+  if (types.count("audio/x-m4a"))
+  {
+    types.emplace("audio/m4a");
+    types.emplace("audio/mp4");
   }
 }
 
 int connmgr_init(const char* mime_filter_string) {
   struct service* srv = upnp_connmgr_get_service();
 
-  // Parse MIME filter into separate fields
-  mime_type_filters_t mime_filter =
-      connmgr_parse_mime_filter_string(mime_filter_string);
+  // Get supported MIME types from the output module
+  Output::mime_type_set_t supported_types = Output::get_supported_media();
 
-  // Filter MIME types by root
-  connmgr_filter_mime_type_root(&mime_filter);
+  // Augment the set for better compatibility
+  connmgr_augment_supported_types(supported_types);
 
-  // Manually add additional MIME types
-  g_slist_foreach(mime_filter.added_types, g_add_mime_type, NULL);
+  // Construct and apply the MIME type filter
+  MimeTypeFilter filter(mime_filter_string);
+  filter.apply(supported_types);
 
-  // Manually remove specific MIME types
-  g_slist_foreach(mime_filter.removed_types, g_remove_mime_type, NULL);
-
-  GString* protoInfo = g_string_new(NULL);
-  for (GSList* entry = supported_types_list; entry != NULL;
-       entry = g_slist_next(entry)) {
-    Log_info("connmgr", "Registering support for '%s'",
-             (const char*)entry->data);
-    g_string_append_printf(protoInfo, "http-get:*:%s:*,",
-                           (const char*)entry->data);
+  std::string protoInfo;
+  for (auto& mime_type : supported_types)
+  {
+    Log_info("connmgr", "Registering support for '%s'", mime_type.c_str());
+    protoInfo += ("http-get:*:" + mime_type + ":*,");
   }
 
-  if (protoInfo->len > 0) {
+  if (protoInfo.empty() == false)
+  {
     // Truncate final comma
-    protoInfo = g_string_truncate(protoInfo, protoInfo->len - 1);
-    srv->variable_container->Set(CONNMGR_VAR_SINK_PROTO_INFO, protoInfo->str);
+    protoInfo.resize(protoInfo.length() - 1);
+    srv->variable_container->Set(CONNMGR_VAR_SINK_PROTO_INFO, protoInfo);
   }
-
-  // Free string and its data
-  g_string_free(protoInfo, TRUE);
-
-  // Free all lists that were generated
-  g_slist_free_full(supported_types_list, free);
-  g_slist_free_full(mime_filter.allowed_roots, free);
-  g_slist_free_full(mime_filter.added_types, free);
-  g_slist_free_full(mime_filter.removed_types, free);
 
   return 0;
 }

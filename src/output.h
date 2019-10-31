@@ -1,7 +1,7 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* output.h - Output module frontend
  *
- * Copyright (C) 2007 Ivo Clarysse,  (C) 2012 Henner Zeller
+ * Copyright (C) 2007 Ivo Clarysse,  (C) 2012 Henner Zeller, (C) 2019 Tucker Kern
  *
  * This file is part of GMediaRender.
  *
@@ -25,39 +25,47 @@
 #ifndef _OUTPUT_H
 #define _OUTPUT_H
 
+#include <set>
+#include <string>
+
 #include <glib.h>
 #include "song-meta-data.h"
 
-// Feedback for the controlling part what is happening with the
-// output.
-enum PlayFeedback {
-  PLAY_STOPPED,
-  PLAY_STARTED_NEXT_STREAM,
+namespace Output
+{
+  typedef enum output_state_t 
+  {
+    PlaybackStopped,
+    StartedNextStream
+  } output_state_t;
+
+  // Callbacks types from output to higher levels
+  typedef void (*playback_callback_t)(output_state_t);
+  typedef void (*metadata_callback_t)(const track_metadata_t&);
+
+  typedef std::set<std::string> mime_type_set_t;
+
+  int add_options(GOptionContext* ctx);
+  void dump_modules(void);
+  int loop(void);
+
+  int init(const char* shortname, playback_callback_t play_callback, metadata_callback_t metadata_callback);
+
+  mime_type_set_t get_supported_media(void);
+
+  void set_uri(const char* uri);
+  void set_next_uri(const char* uri);
+
+  int play(void);
+  int pause(void);
+  int stop(void);
+  int seek(int64_t position_nanos);
+
+  int get_position(int64_t& duration, int64_t& position);
+  int get_volume(float& value);
+  int set_volume(float value);
+  int get_mute(bool& value);
+  int set_mute(bool value);
 };
-typedef void (*output_transition_cb_t)(enum PlayFeedback);
-
-// In case the stream gets to know details about the song, this is a
-// callback with changes we send back to the controlling layer.
-typedef void (*output_update_meta_cb_t)(const struct SongMetaData *);
-
-int output_init(const char *shortname);
-int output_add_options(GOptionContext *ctx);
-void output_dump_modules(void);
-
-int output_loop(void);
-
-void output_set_uri(const char *uri, output_update_meta_cb_t meta_info);
-void output_set_next_uri(const char *uri);
-
-int output_play(output_transition_cb_t done_callback);
-int output_stop(void);
-int output_pause(void);
-int output_get_position(gint64 *track_dur_nanos, gint64 *track_pos_nanos);
-int output_seek(gint64 position_nanos);
-
-int output_get_volume(float *v);
-int output_set_volume(float v);
-int output_get_mute(int *m);
-int output_set_mute(int m);
 
 #endif /* _OUTPUT_H */

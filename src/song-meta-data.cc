@@ -42,18 +42,16 @@
 #include "xmldoc.h"
 #include "xmlescape.h"
 
-void SongMetaData_init(struct SongMetaData *value) {
-  memset(value, 0, sizeof(struct SongMetaData));
+void SongMetaData_init(track_metadata_t *value) {
+  memset(value, 0, sizeof(track_metadata_t));
 }
-void SongMetaData_clear(struct SongMetaData *value) {
-  free((char *)value->title);
-  value->title = NULL;
-  free((char *)value->artist);
-  value->artist = NULL;
-  free((char *)value->album);
-  value->album = NULL;
-  free((char *)value->genre);
-  value->genre = NULL;
+
+void SongMetaData_clear(track_metadata_t *value) {
+  value->title.clear();
+  value->artist.clear();
+  value->album.clear();
+  value->genre.clear();
+  value->composer.clear();
 }
 
 static const char kDidlHeader[] =
@@ -122,7 +120,7 @@ static char *replace_range(char *const input, const char *tag_start,
   return result;
 }
 
-int SongMetaData_parse_DIDL(struct SongMetaData *object, const char *xml) {
+int SongMetaData_parse_DIDL(track_metadata_t *object, const char *xml) {
   struct xmldoc *doc = xmldoc_parsexml(xml);
   if (doc == NULL) return 0;
 
@@ -152,7 +150,7 @@ int SongMetaData_parse_DIDL(struct SongMetaData *object, const char *xml) {
 
 // TODO: actually use some XML library for this, but spending too much time
 // with XML is not good for the brain :) Worst thing that came out of the 90ies.
-char *SongMetaData_to_DIDL(const struct SongMetaData *object,
+char *SongMetaData_to_DIDL(const track_metadata_t *object,
                            const char *original_xml) {
   // Generating a unique ID in case the players cache the content by
   // the item-ID. Right now this is experimental and not known to make
@@ -164,11 +162,12 @@ char *SongMetaData_to_DIDL(const struct SongMetaData *object,
 
   char *result;
   char *title, *artist, *album, *genre, *composer;
-  title = object->title ? xmlescape(object->title, 0) : NULL;
-  artist = object->artist ? xmlescape(object->artist, 0) : NULL;
-  album = object->album ? xmlescape(object->album, 0) : NULL;
-  genre = object->genre ? xmlescape(object->genre, 0) : NULL;
-  composer = object->composer ? xmlescape(object->composer, 0) : NULL;
+  title = object->title.length() ? xmlescape(object->title.c_str(), 0) : NULL;
+  artist = object->artist.length() ? xmlescape(object->artist.c_str(), 0) : NULL;
+  album = object->album.length() ? xmlescape(object->album.c_str(), 0) : NULL;
+  genre = object->genre.length() ? xmlescape(object->genre.c_str(), 0) : NULL;
+  composer = object->composer.length() ? xmlescape(object->composer.c_str(), 0) : NULL;
+  
   if (original_xml == NULL || strlen(original_xml) == 0) {
     result = generate_DIDL(unique_id, title, artist, album, genre, composer);
   } else {

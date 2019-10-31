@@ -1,7 +1,7 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* output_gstreamer.h - Definitions for GStreamer output module
  *
- * Copyright (C) 2005-2007   Ivo Clarysse
+ * Copyright (C) 2019   Tucker Kern
  *
  * This file is part of GMediaRender.
  *
@@ -25,6 +25,74 @@
 #ifndef _OUTPUT_GSTREAMER_H
 #define _OUTPUT_GSTREAMER_H
 
-extern struct output_module gstreamer_output;
+#include <gst/gst.h>
 
-#endif /*  _OUTPUT_GSTREAMER_H */
+#include "output_module.h"
+
+class GstreamerOutput : public OutputModule, public OutputModuleFactory<GstreamerOutput>
+{
+  public:
+    struct Options : public OutputModule::Options
+    {
+      // Let GstreamerOutput access protected constructor
+      friend class GstreamerOutput;
+
+      char* audio_sink = nullptr;
+      char* audio_device = nullptr;
+      char* audio_pipe = nullptr;
+      char* video_sink = nullptr;
+      double initial_db = 0.0;
+      double buffer_duration = 0.0; // Buffer disbled by default, see #182
+
+      std::vector<GOptionGroup*> get_option_groups(void);
+
+      static Options& get()
+      {
+        static Options options;
+        return options;
+      }
+
+      protected:
+        Options() {} // Hide away the constructor
+        Options(const Options&) = delete; // Delete copy constructor
+    };
+
+    GstreamerOutput(Output::playback_callback_t play = nullptr, Output::metadata_callback_t meta = nullptr) : OutputModule(play, meta) {}
+    
+    result_t initalize(GstreamerOutput::Options& options);
+
+    result_t initalize(OutputModule::Options& options)
+    {
+      return this->initalize((GstreamerOutput::Options&) options);
+    }
+
+    Output::mime_type_set_t get_supported_media(void);
+
+    void set_uri(const std::string &uri);
+    void set_next_uri(const std::string &uri);
+
+    result_t play(void);
+    result_t stop(void);
+    result_t pause(void);
+    result_t seek(int64_t position_ns);
+
+    result_t get_position(track_state_t& position);
+    result_t get_volume(float& volume);
+    result_t set_volume(float volume);
+    result_t get_mute(bool& mute);
+    result_t set_mute(bool mute);
+
+  private:
+    GstElement* player = nullptr;
+
+    std::string uri;
+    std::string next_uri;
+
+    GstreamerOutput::Options options;
+
+    GstState get_player_state(void);
+    void next_stream(void);
+    bool bus_callback(GstMessage* message);
+};
+
+#endif

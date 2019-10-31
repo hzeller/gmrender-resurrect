@@ -38,6 +38,8 @@ int Log_error_enabled(void);
 
 void Log_info(const char *category, const char *format, ...)
     PRINTF_FMT_CHECK(2, 3);
+void Log_warn(const char *category, const char *format, ...)
+    PRINTF_FMT_CHECK(2, 3);
 void Log_error(const char *category, const char *format, ...)
     PRINTF_FMT_CHECK(2, 3);
 

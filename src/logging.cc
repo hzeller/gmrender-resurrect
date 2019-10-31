@@ -45,11 +45,13 @@
 static int log_fd = -1;
 static int enable_color = 0;
 
-static const char *const kInfoHighlight = "\033[1mINFO  ";
-static const char *const kErrorHighlight = "\033[1m\033[31mERROR ";
+static const char *const kInfoHighlight   = "\033[1mINFO  ";
+static const char *const kWarnHighlight   = "\033[1m\033[33mWARN  ";
+static const char *const kErrorHighlight  = "\033[1m\033[31mERROR ";
 static const char *const kTermReset = "\033[0m";
 
-static const char *info_markup_start_ = "INFO  ";
+static const char *info_markup_start_  = "INFO  ";
+static const char *warn_markup_start_  = "WARN  ";
 static const char *error_markup_start_ = "ERROR ";
 static const char *markup_end_ = "";
 
@@ -71,6 +73,7 @@ void Log_init(const char *filename) {
   enable_color = isatty(log_fd);
   if (enable_color) {
     info_markup_start_ = kInfoHighlight;
+    warn_markup_start_ = kWarnHighlight;
     error_markup_start_ = kErrorHighlight;
     markup_end_ = kTermReset;
   }
@@ -111,6 +114,14 @@ void Log_info(const char *category, const char *format, ...) {
   va_list ap;
   va_start(ap, format);
   Log_internal(log_fd, info_markup_start_, category, format, ap);
+  va_end(ap);
+}
+
+void Log_warn(const char *category, const char *format, ...) {
+  va_list ap;
+  va_start(ap, format);
+  Log_internal(log_fd < 0 ? STDERR_FILENO : log_fd, warn_markup_start_,
+               category, format, ap);
   va_end(ap);
 }
 

@@ -1,7 +1,7 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* output.c - Output module frontend
  *
- * Copyright (C) 2007 Ivo Clarysse,  (C) 2012 Henner Zeller
+ * Copyright (C) 2007 Ivo Clarysse,  (C) 2012 Henner Zeller, (C) 2019 Tucker Kern
  *
  * This file is part of GMediaRender.
  *
@@ -26,13 +26,10 @@
 #include "config.h"
 #endif
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#include <signal.h>
-#include <stdio.h>
+#include <assert.h>
 #include <stdlib.h>
-#include <string.h>
+#include <vector>
+#include <algorithm>
 
 #include <glib.h>
 
@@ -43,171 +40,204 @@
 #endif
 #include "output.h"
 
-static struct output_module *modules[] = {
+#define TAG "output"
+
+typedef struct output_entry_t
+{
+  std::string shortname;
+  std::string description;
+  OutputModule* (*create)(Output::playback_callback_t, Output::metadata_callback_t);
+  OutputModule::Options& options;
+} output_entry_t;
+
+static std::vector<output_entry_t> modules = 
+{
 #ifdef HAVE_GST
-    &gstreamer_output,
+  {"gst", "GStreamer multimedia framework", GstreamerOutput::create, GstreamerOutput::Options::get()}
 #else
-// this will be a runtime error, but there is not much point
-// in waiting till then.
+// this will be a runtime error, but there is not much point in waiting till then.
 #error "No output configured. You need to ./configure --with-gstreamer"
 #endif
 };
 
-static struct output_module *output_module = NULL;
+static OutputModule* output_module = NULL;
 
-void output_dump_modules(void) {
-  int count;
-
-  count = sizeof(modules) / sizeof(struct output_module *);
-  if (count == 0) {
-    puts("  NONE!");
-  } else {
-    int i;
-    for (i = 0; i < count; i++) {
-      printf("Available output: %s\t%s%s\n", modules[i]->shortname,
-             modules[i]->description, (i == 0) ? " (default)" : "");
-    }
+int Output::add_options(GOptionContext* ctx)
+{
+  for (const auto& module : modules)
+  {
+    for (auto option : module.options.get_option_groups())
+      g_option_context_add_group(ctx, option);
   }
-}
-
-int output_init(const char *shortname) {
-  int count;
-
-  count = sizeof(modules) / sizeof(struct output_module *);
-  if (count == 0) {
-    Log_error("output", "No output module available");
-    return -1;
-  }
-  if (shortname == NULL) {
-    output_module = modules[0];
-  } else {
-    int i;
-    for (i = 0; i < count; i++) {
-      if (strcmp(modules[i]->shortname, shortname) == 0) {
-        output_module = modules[i];
-        break;
-      }
-    }
-  }
-
-  if (output_module == NULL) {
-    Log_error("error", "ERROR: No such output module: '%s'", shortname);
-    return -1;
-  }
-
-  Log_info("output", "Using output module: %s (%s)", output_module->shortname,
-           output_module->description);
-
-  if (output_module->init) {
-    return output_module->init();
-  }
-
+  
   return 0;
 }
 
-static GMainLoop *main_loop_ = NULL;
-static void exit_loop_sighandler(int sig) {
-  if (main_loop_) {
+void Output::dump_modules(void) {
+  
+  if (modules.size() == 0)
+  {
+    printf("No outputs available.\n");
+    return;
+  }
+
+  printf("Available outputs:\n"); 
+  for (auto& module : modules)
+    printf("\t%s - %s%s\n", module.shortname.c_str(), module.description.c_str(), (&module == &modules.front()) ? " (default)" : "");
+}
+
+int Output::loop() 
+{
+  static GMainLoop* main_loop = NULL;
+
+  // Define a signal handler to shutdown the loop
+  auto signal_handler = [](int sig) -> void
+  {
+    if (main_loop) {
     // TODO(hzeller): revisit - this is not safe to do.
-    g_main_loop_quit(main_loop_);
-  }
-}
-
-int output_loop() {
-  /* Create a main loop that runs the default GLib main context */
-  main_loop_ = g_main_loop_new(NULL, FALSE);
-
-  signal(SIGINT, &exit_loop_sighandler);
-  signal(SIGTERM, &exit_loop_sighandler);
-
-  g_main_loop_run(main_loop_);
-
-  return 0;
-}
-
-int output_add_options(GOptionContext *ctx) {
-  int count, i;
-
-  count = sizeof(modules) / sizeof(struct output_module *);
-  for (i = 0; i < count; ++i) {
-    if (modules[i]->add_options) {
-      int result = modules[i]->add_options(ctx);
-      if (result != 0) {
-        return result;
-      }
+    g_main_loop_quit(main_loop);
     }
-  }
+  };
+
+  // Create a main loop that runs the default GLib main context
+  main_loop = g_main_loop_new(NULL, FALSE);
+
+  signal(SIGINT, signal_handler);
+  signal(SIGTERM, signal_handler);
+
+  g_main_loop_run(main_loop);
 
   return 0;
 }
 
-void output_set_uri(const char *uri, output_update_meta_cb_t meta_cb) {
-  if (output_module && output_module->set_uri) {
-    output_module->set_uri(uri, meta_cb);
+int Output::init(const char* shortname, Output::playback_callback_t play_callback, Output::metadata_callback_t metadata_callback)
+{
+  if (modules.size() == 0)
+  {
+    Log_error(TAG, "No outputs available.");
+    return -1;
   }
-}
-void output_set_next_uri(const char *uri) {
-  if (output_module && output_module->set_next_uri) {
-    output_module->set_next_uri(uri);
+
+  // Default to first entry if no name provided
+  std::string name(shortname ? shortname : modules.front().shortname);
+
+  // Locate module by shortname
+  auto it = std::find_if(modules.begin(), modules.end(), [name](output_entry_t& entry)
+  {
+    return entry.shortname == name;
+  });
+
+  if (it == modules.end())
+  {
+    Log_error(TAG, "No such output: '%s'", name.c_str());
+    return -1;
   }
+
+  const output_entry_t& entry = *it;
+
+  Log_info(TAG, "Using output: %s (%s)", entry.shortname.c_str(), entry.description.c_str());
+
+  output_module = entry.create(play_callback, metadata_callback);
+
+  assert(output_module != NULL);
+  
+  output_module->initalize(entry.options);
+
+  // Free the modules list
+  modules.clear();
+
+  return 0;
 }
 
-int output_play(output_transition_cb_t transition_callback) {
-  if (output_module && output_module->play) {
-    return output_module->play(transition_callback);
+Output::mime_type_set_t Output::get_supported_media(void)
+{
+  assert(output_module);
+
+  return output_module->get_supported_media();
+}
+
+void Output::set_uri(const char *uri)
+{
+  assert(output_module);
+
+  output_module->set_uri(uri);
+}
+
+void Output::set_next_uri(const char *uri) 
+{
+  assert(output_module);
+
+  output_module->set_next_uri(uri);
+}
+
+int Output::play() 
+{
+  assert(output_module);
+
+  return output_module->play();
+}
+
+int Output::pause(void) 
+{
+  assert(output_module);
+
+  return output_module->pause();
+}
+
+int Output::stop(void) 
+{
+  assert(output_module);
+
+  return output_module->stop();
+}
+
+int Output::seek(int64_t position_nanos) 
+{
+  assert(output_module);
+
+  return output_module->seek(position_nanos);
+}
+
+int Output::get_position(int64_t& duration_ns, int64_t& position_ns)
+{
+  assert(output_module);
+
+  OutputModule::track_state_t state;
+  if (output_module->get_position(state) == OutputModule::Success)
+  {
+    duration_ns = state.duration_ns;
+    position_ns = state.position_ns;
+
+    return 0;
   }
+
   return -1;
 }
 
-int output_pause(void) {
-  if (output_module && output_module->pause) {
-    return output_module->pause();
-  }
-  return -1;
+int Output::get_volume(float& value) 
+{
+  assert(output_module);
+
+  return output_module->get_volume(value);
 }
 
-int output_stop(void) {
-  if (output_module && output_module->stop) {
-    return output_module->stop();
-  }
-  return -1;
+int Output::set_volume(float value) 
+{
+  assert(output_module);
+
+  return output_module->set_volume(value);
 }
 
-int output_seek(gint64 position_nanos) {
-  if (output_module && output_module->seek) {
-    return output_module->seek(position_nanos);
-  }
-  return -1;
+int Output::get_mute(bool& value) 
+{
+  assert(output_module);
+
+  return output_module->get_mute(value);
 }
 
-int output_get_position(gint64 *track_dur, gint64 *track_pos) {
-  if (output_module && output_module->get_position) {
-    return output_module->get_position(track_dur, track_pos);
-  }
-  return -1;
-}
+int Output::set_mute(bool value) 
+{
+  assert(output_module);
 
-int output_get_volume(float *value) {
-  if (output_module && output_module->get_volume) {
-    return output_module->get_volume(value);
-  }
-  return -1;
-}
-int output_set_volume(float value) {
-  if (output_module && output_module->set_volume) {
-    return output_module->set_volume(value);
-  }
-  return -1;
-}
-int output_get_mute(int *value) {
-  if (output_module && output_module->get_mute) {
-    return output_module->get_mute(value);
-  }
-  return -1;
-}
-int output_set_mute(int value) {
-  if (output_module && output_module->set_mute) {
-    return output_module->set_mute(value);
-  }
-  return -1;
+  return output_module->set_mute(value);
 }
