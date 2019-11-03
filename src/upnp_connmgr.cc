@@ -140,10 +140,10 @@ static ithread_mutex_t connmgr_mutex;
     @brief  Augement the supported MIME types set with additional
             types for improved compatibilty
 
-    @param  types mime_type_set_t containing supported MIME types
+    @param  types MimeTypeSet containing supported MIME types
     @retval none
 */
-void connmgr_augment_supported_types(Output::mime_type_set_t& types)
+void connmgr_augment_supported_types(Output::MimeTypeSet& types)
 {
   if (types.count("audio/mpeg"))
   {
@@ -185,7 +185,7 @@ int connmgr_init(const char* mime_filter_string) {
   struct service* srv = upnp_connmgr_get_service();
 
   // Get supported MIME types from the output module
-  Output::mime_type_set_t supported_types = Output::get_supported_media();
+  Output::MimeTypeSet supported_types = Output::GetSupportedMedia();
 
   // Augment the set for better compatibility
   connmgr_augment_supported_types(supported_types);

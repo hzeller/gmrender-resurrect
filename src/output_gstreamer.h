@@ -57,7 +57,7 @@ class GstreamerOutput : public OutputModule, public OutputModuleFactory<Gstreame
         Options(const Options&) = delete; // Delete copy constructor
     };
 
-    GstreamerOutput(Output::playback_callback_t play = nullptr, Output::metadata_callback_t meta = nullptr) : OutputModule(play, meta) {}
+    GstreamerOutput(Output::PlaybackCallback play = nullptr, Output::MetadataCallback meta = nullptr) : OutputModule(play, meta) {}
     
     Result Initalize(GstreamerOutput::Options& options);
 
@@ -66,7 +66,7 @@ class GstreamerOutput : public OutputModule, public OutputModuleFactory<Gstreame
       return this->Initalize((GstreamerOutput::Options&) options);
     }
 
-    Output::mime_type_set_t GetSupportedMedia(void);
+    Output::MimeTypeSet GetSupportedMedia(void);
 
     void SetUri(const std::string &uri);
     void SetNextUri(const std::string &uri);

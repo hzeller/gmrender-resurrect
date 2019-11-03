@@ -503,7 +503,7 @@ static int set_avtransport_uri(struct action_event *event) {
     replace_current_uri_and_meta(uri, meta);
   }
 
-  Output::set_uri(uri);
+  Output::SetUri(uri);
   service_unlock();
 
   return 0;
@@ -522,7 +522,7 @@ static int set_next_avtransport_uri(struct action_event *event) {
   int rc = 0;
   service_lock();
 
-  Output::set_next_uri(next_uri);
+  Output::SetNextUri(next_uri);
   state_variables_->Set(TRANSPORT_VAR_NEXT_AV_URI, next_uri);
 
   const char *next_uri_meta = upnp_get_string(event, "NextURIMetaData");
@@ -602,7 +602,7 @@ static void *thread_update_track_time(void *userdata) {
     usleep(500000);  // 500ms
     service_lock();
     gint64 duration, position;
-    const int pos_result = Output::get_position(duration, position);
+    const int pos_result = Output::GetPosition(duration, position);
     if (pos_result == 0) {
       if (duration != last_duration) {
         print_upnp_time(tbuf, sizeof(tbuf), duration);
@@ -660,7 +660,7 @@ static int stop(struct action_event *event) {
     case TransportState::PAUSED_RECORDING:
     case TransportState::RECORDING:
     case TransportState::PAUSED_PLAYBACK:
-      Output::stop();
+      Output::Stop();
       change_transport_state(TransportState::STOPPED);
       break;
 
@@ -678,16 +678,16 @@ static int stop(struct action_event *event) {
   return 0;
 }
 
-static void inform_play_transition_from_output(Output::output_state_t state) {
+static void inform_play_transition_from_output(Output::OutputState state) {
   service_lock();
   switch (state) {
-    case Output::output_state_t::PlaybackStopped:
+    case Output::OutputState::kPlaybackStopped:
       replace_transport_uri_and_meta("", "");
       replace_current_uri_and_meta("", "");
       change_transport_state(TransportState::STOPPED);
       break;
 
-    case Output::output_state_t::StartedNextStream: {
+    case Output::OutputState::kStartedNextStream: {
       auto av_uri = state_variables_->Get(TRANSPORT_VAR_NEXT_AV_URI);
       auto av_meta = state_variables_->Get(TRANSPORT_VAR_NEXT_AV_URI_META);
       replace_transport_uri_and_meta(av_uri.c_str(), av_meta.c_str());
@@ -700,12 +700,12 @@ static void inform_play_transition_from_output(Output::output_state_t state) {
   service_unlock();
 }
 
-Output::playback_callback_t upnp_transport_get_transition_callback(void)
+Output::PlaybackCallback upnp_transport_get_transition_callback(void)
 {
   return &inform_play_transition_from_output;
 }
 
-Output::metadata_callback_t upnp_transport_get_metadata_callback(void)
+Output::MetadataCallback upnp_transport_get_metadata_callback(void)
 {
   return &update_meta_from_stream;
 }
@@ -732,7 +732,7 @@ static int play(struct action_event *event) {
       /* >>> fall through */
 
     case TransportState::PAUSED_PLAYBACK:
-      if (Output::play()) {
+      if (Output::Play()) {
         upnp_set_error(event, 704, "Playing failed");
         rc = -1;
       } else {
@@ -773,7 +773,7 @@ static int pause_stream(struct action_event *event) {
       break;
 
     case TransportState::PLAYING:
-      if (Output::pause()) {
+      if (Output::Pause()) {
         upnp_set_error(event, 704, "Pause failed");
         rc = -1;
       } else {
@@ -805,7 +805,7 @@ static int seek(struct action_event *event) {
     const char *target = upnp_get_string(event, "Target");
     gint64 nanos = parse_upnp_time(target);
     service_lock();
-    if (Output::seek(nanos) == 0) {
+    if (Output::Seek(nanos) == 0) {
       // TODO(hzeller): Seeking might take some time,
       // pretend to already be there. Should we go into
       // TRANSITION mode ?

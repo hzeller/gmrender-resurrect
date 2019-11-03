@@ -47,7 +47,7 @@ class OutputModule
       kError = -1
     } Result;
   
-    OutputModule(Output::playback_callback_t play = nullptr, Output::metadata_callback_t meta = nullptr)
+    OutputModule(Output::PlaybackCallback play = nullptr, Output::MetadataCallback meta = nullptr)
     {
       this->playback_callback = play;
       this->metadata_callback = meta;
@@ -55,7 +55,7 @@ class OutputModule
 
     virtual Result Initalize(Options& options) = 0;
 
-    virtual Output::mime_type_set_t GetSupportedMedia(void) = 0;
+    virtual Output::MimeTypeSet GetSupportedMedia(void) = 0;
 
     virtual void SetUri(const std::string &uri) = 0;
     virtual void SetNextUri(const std::string &uri) = 0;
@@ -74,10 +74,10 @@ class OutputModule
   protected:
     track_metadata_t metadata;
 
-    Output::playback_callback_t playback_callback = nullptr;
-    Output::metadata_callback_t metadata_callback = nullptr;
+    Output::PlaybackCallback playback_callback = nullptr;
+    Output::MetadataCallback metadata_callback = nullptr;
 
-    virtual void NotifyPlaybackUpdate(Output::output_state_t state)
+    virtual void NotifyPlaybackUpdate(Output::OutputState state)
     {
       if (this->playback_callback)
         this->playback_callback(state);
@@ -94,7 +94,7 @@ template <class Class>
 class OutputModuleFactory 
 {
   public:
-    static OutputModule* Create(Output::playback_callback_t play = nullptr, Output::metadata_callback_t meta = nullptr)
+    static OutputModule* Create(Output::PlaybackCallback play = nullptr, Output::MetadataCallback meta = nullptr)
     { 
       return new Class(play, meta);
     }

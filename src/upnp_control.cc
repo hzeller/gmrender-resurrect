@@ -478,7 +478,7 @@ static int get_mute(struct action_event *event) {
 
 static void set_mute_toggle(int do_mute) {
   replace_var(CONTROL_VAR_MUTE, do_mute ? "1" : "0");
-  Output::set_mute(do_mute);
+  Output::SetMute(do_mute);
 }
 
 static int set_mute(struct action_event *event) {
@@ -546,7 +546,7 @@ static int set_volume_db(struct action_event *event) {
   float raw_decibel_in = atof(str_decibel_in);
   float decibel = change_volume_decibel(raw_decibel_in);
 
-  Output::set_volume(exp(decibel / 20 * log(10)));
+  Output::SetVolume(exp(decibel / 20 * log(10)));
   service_unlock();
 
   return 0;
@@ -566,7 +566,7 @@ static int set_volume(struct action_event *event) {
   const double fraction = exp(decibel / 20 * log(10));
 
   change_volume(volume, db_volume);
-  Output::set_volume(fraction);
+  Output::SetVolume(fraction);
   set_mute_toggle(volume_level == 0);
   service_unlock();
 
@@ -723,7 +723,7 @@ void upnp_control_init(struct upnp_device *device) {
 
   // Set initial volume.
   float volume_fraction = 0;
-  if (Output::get_volume(volume_fraction) == 0) {
+  if (Output::GetVolume(volume_fraction) == 0) {
     Log_info("control",
              "Output initial volume is %f; setting "
              "control variables accordingly.",

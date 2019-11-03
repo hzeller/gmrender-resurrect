@@ -42,15 +42,15 @@
 
 #define TAG "output"
 
-typedef struct output_entry_t
+typedef struct OutputEntry
 {
   std::string shortname;
   std::string description;
-  OutputModule* (*create)(Output::playback_callback_t, Output::metadata_callback_t);
+  OutputModule* (*create)(Output::PlaybackCallback, Output::MetadataCallback);
   OutputModule::Options& options;
-} output_entry_t;
+} OutputEntry;
 
-static std::vector<output_entry_t> modules = 
+static std::vector<OutputEntry> modules = 
 {
 #ifdef HAVE_GST
   {"gst", "GStreamer multimedia framework", GstreamerOutput::Create, GstreamerOutput::Options::Get()}
@@ -62,7 +62,7 @@ static std::vector<output_entry_t> modules =
 
 static OutputModule* output_module = NULL;
 
-int Output::add_options(GOptionContext* ctx)
+int Output::AddOptions(GOptionContext* ctx)
 {
   for (const auto& module : modules)
   {
@@ -73,7 +73,7 @@ int Output::add_options(GOptionContext* ctx)
   return 0;
 }
 
-void Output::dump_modules(void) {
+void Output::DumpModules(void) {
   
   if (modules.size() == 0)
   {
@@ -86,7 +86,7 @@ void Output::dump_modules(void) {
     printf("\t%s - %s%s\n", module.shortname.c_str(), module.description.c_str(), (&module == &modules.front()) ? " (default)" : "");
 }
 
-int Output::loop() 
+int Output::Loop() 
 {
   static GMainLoop* main_loop = NULL;
 
@@ -110,7 +110,7 @@ int Output::loop()
   return 0;
 }
 
-int Output::init(const char* shortname, Output::playback_callback_t play_callback, Output::metadata_callback_t metadata_callback)
+int Output::Init(const char* shortname, Output::PlaybackCallback play_callback, Output::MetadataCallback metadata_callback)
 {
   if (modules.size() == 0)
   {
@@ -122,7 +122,7 @@ int Output::init(const char* shortname, Output::playback_callback_t play_callbac
   std::string name(shortname ? shortname : modules.front().shortname);
 
   // Locate module by shortname
-  auto it = std::find_if(modules.begin(), modules.end(), [name](output_entry_t& entry)
+  auto it = std::find_if(modules.begin(), modules.end(), [name](OutputEntry& entry)
   {
     return entry.shortname == name;
   });
@@ -133,7 +133,7 @@ int Output::init(const char* shortname, Output::playback_callback_t play_callbac
     return -1;
   }
 
-  const output_entry_t& entry = *it;
+  const OutputEntry& entry = *it;
 
   Log_info(TAG, "Using output: %s (%s)", entry.shortname.c_str(), entry.description.c_str());
 
@@ -149,56 +149,56 @@ int Output::init(const char* shortname, Output::playback_callback_t play_callbac
   return 0;
 }
 
-Output::mime_type_set_t Output::get_supported_media(void)
+Output::MimeTypeSet Output::GetSupportedMedia(void)
 {
   assert(output_module);
 
   return output_module->GetSupportedMedia();
 }
 
-void Output::set_uri(const char *uri)
+void Output::SetUri(const char *uri)
 {
   assert(output_module);
 
   output_module->SetUri(uri);
 }
 
-void Output::set_next_uri(const char *uri) 
+void Output::SetNextUri(const char *uri) 
 {
   assert(output_module);
 
   output_module->SetNextUri(uri);
 }
 
-int Output::play() 
+int Output::Play() 
 {
   assert(output_module);
 
   return output_module->Play();
 }
 
-int Output::pause(void) 
+int Output::Pause(void) 
 {
   assert(output_module);
 
   return output_module->Pause();
 }
 
-int Output::stop(void) 
+int Output::Stop(void) 
 {
   assert(output_module);
 
   return output_module->Stop();
 }
 
-int Output::seek(int64_t position_nanos) 
+int Output::Seek(int64_t position_nanos) 
 {
   assert(output_module);
 
   return output_module->Seek(position_nanos);
 }
 
-int Output::get_position(int64_t& duration_ns, int64_t& position_ns)
+int Output::GetPosition(int64_t& duration_ns, int64_t& position_ns)
 {
   assert(output_module);
 
@@ -214,28 +214,28 @@ int Output::get_position(int64_t& duration_ns, int64_t& position_ns)
   return -1;
 }
 
-int Output::get_volume(float& value) 
+int Output::GetVolume(float& value) 
 {
   assert(output_module);
 
   return output_module->GetVolume(value);
 }
 
-int Output::set_volume(float value) 
+int Output::SetVolume(float value) 
 {
   assert(output_module);
 
   return output_module->SetVolume(value);
 }
 
-int Output::get_mute(bool& value) 
+int Output::GetMute(bool& value) 
 {
   assert(output_module);
 
   return output_module->GetMute(value);
 }
 
-int Output::set_mute(bool value) 
+int Output::SetMute(bool value) 
 {
   assert(output_module);
 

@@ -33,39 +33,39 @@
 
 namespace Output
 {
-  typedef enum output_state_t 
+  typedef enum OutputState 
   {
-    PlaybackStopped,
-    StartedNextStream
-  } output_state_t;
+    kPlaybackStopped,
+    kStartedNextStream
+  } OutputState;
 
   // Callbacks types from output to higher levels
-  typedef void (*playback_callback_t)(output_state_t);
-  typedef void (*metadata_callback_t)(const track_metadata_t&);
+  typedef void (*PlaybackCallback)(OutputState);
+  typedef void (*MetadataCallback)(const track_metadata_t&);
 
-  typedef std::set<std::string> mime_type_set_t;
+  typedef std::set<std::string> MimeTypeSet;
 
-  int add_options(GOptionContext* ctx);
-  void dump_modules(void);
-  int loop(void);
+  int AddOptions(GOptionContext* ctx);
+  void DumpModules(void);
+  int Loop(void);
 
-  int init(const char* shortname, playback_callback_t play_callback, metadata_callback_t metadata_callback);
+  int Init(const char* shortname, PlaybackCallback play_callback, MetadataCallback metadata_callback);
 
-  mime_type_set_t get_supported_media(void);
+  MimeTypeSet GetSupportedMedia(void);
 
-  void set_uri(const char* uri);
-  void set_next_uri(const char* uri);
+  void SetUri(const char* uri);
+  void SetNextUri(const char* uri);
 
-  int play(void);
-  int pause(void);
-  int stop(void);
-  int seek(int64_t position_nanos);
+  int Play(void);
+  int Pause(void);
+  int Stop(void);
+  int Seek(int64_t position_nanos);
 
-  int get_position(int64_t& duration, int64_t& position);
-  int get_volume(float& value);
-  int set_volume(float value);
-  int get_mute(bool& value);
-  int set_mute(bool value);
+  int GetPosition(int64_t& duration, int64_t& position);
+  int GetVolume(float& value);
+  int SetVolume(float value);
+  int GetMute(bool& value);
+  int SetMute(bool value);
 };
 
 #endif /* _OUTPUT_H */

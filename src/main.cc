@@ -171,7 +171,7 @@ static gboolean process_cmdline(int argc, char **argv) {
   ctx = g_option_context_new("- GMediaRender");
   g_option_context_add_main_entries(ctx, option_entries, NULL);
 
-  rc = Output::add_options(ctx);
+  rc = Output::AddOptions(ctx);
   if (rc != 0) {
     fprintf(stderr, "Failed to add output options\n");
     return FALSE;
@@ -244,7 +244,7 @@ int main(int argc, char **argv) {
   }
 
   if (show_outputs) {
-    Output::dump_modules();
+    Output::DumpModules();
     exit(EXIT_SUCCESS);
   }
 
@@ -276,7 +276,7 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  rc = Output::init(output, upnp_transport_get_transition_callback(), upnp_transport_get_metadata_callback());
+  rc = Output::Init(output, upnp_transport_get_transition_callback(), upnp_transport_get_metadata_callback());
   if (rc != 0) {
     Log_error("main", "ERROR: Failed to initialize Output subsystem");
     return EXIT_FAILURE;
@@ -329,7 +329,7 @@ int main(int argc, char **argv) {
   Log_info("main", "Ready for rendering.");
   fprintf(stderr, "Ready for rendering.\n");
 
-  Output::loop();
+  Output::Loop();
 
   // We're here, because the loop exited. Probably due to catching
   // a signal.

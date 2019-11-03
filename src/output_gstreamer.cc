@@ -218,9 +218,9 @@ OutputModule::Result GstreamerOutput::Initalize(GstreamerOutput::Options& opts)
   @brief  Get all the media types supported by this output
 
   @param  none
-  @retval Output::mime_type_set_t
+  @retval Output::MimeTypeSet
 */
-Output::mime_type_set_t GstreamerOutput::GetSupportedMedia(void)
+Output::MimeTypeSet GstreamerOutput::GetSupportedMedia(void)
 {
   GstRegistry* registry = NULL;
 
@@ -230,7 +230,7 @@ Output::mime_type_set_t GstreamerOutput::GetSupportedMedia(void)
   registry = gst_registry_get();
 #endif
 
-  Output::mime_type_set_t mime_types;
+  Output::MimeTypeSet mime_types;
 
   // Fetch a list of all element factories
   const GList* features = gst_registry_get_feature_list(registry, GST_TYPE_ELEMENT_FACTORY);
@@ -524,7 +524,7 @@ void GstreamerOutput::NextStream(void)
 
     // TODO(hzeller): can we figure out when we _actually_ start playing this? 
     // There are probably a couple of seconds between now and actual start.
-    this->NotifyPlaybackUpdate(Output::output_state_t::StartedNextStream);
+    this->NotifyPlaybackUpdate(Output::OutputState::kStartedNextStream);
   }
 }
 
@@ -558,10 +558,10 @@ bool GstreamerOutput::BusCallback(GstMessage* message)
 
         gst_element_set_state(this->player, GST_STATE_PLAYING);
         
-        this->NotifyPlaybackUpdate(Output::output_state_t::StartedNextStream);
+        this->NotifyPlaybackUpdate(Output::OutputState::kStartedNextStream);
       }
       else
-        this->NotifyPlaybackUpdate(Output::output_state_t::PlaybackStopped);
+        this->NotifyPlaybackUpdate(Output::OutputState::kPlaybackStopped);
 
       break;
     }
