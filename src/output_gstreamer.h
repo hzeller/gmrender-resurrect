@@ -29,70 +29,69 @@
 
 #include "output_module.h"
 
-class GstreamerOutput : public OutputModule, public OutputModuleFactory<GstreamerOutput>
-{
-  public:
-    struct Options : public OutputModule::Options
-    {
-      // Let GstreamerOutput access protected constructor
-      friend class GstreamerOutput;
+class GstreamerOutput : public OutputModule,
+                        public OutputModuleFactory<GstreamerOutput> {
+ public:
+  struct Options : public OutputModule::Options {
+    // Let GstreamerOutput access protected constructor
+    friend class GstreamerOutput;
 
-      char* audio_sink = nullptr;
-      char* audio_device = nullptr;
-      char* audio_pipe = nullptr;
-      char* video_sink = nullptr;
-      double initial_db = 0.0;
-      double buffer_duration = 0.0; // Buffer disbled by default, see #182
+    char* audio_sink = nullptr;
+    char* audio_device = nullptr;
+    char* audio_pipe = nullptr;
+    char* video_sink = nullptr;
+    double initial_db = 0.0;
+    double buffer_duration = 0.0;  // Buffer disbled by default, see #182
 
-      std::vector<GOptionGroup*> GetOptionGroups(void);
+    std::vector<GOptionGroup*> GetOptionGroups(void);
 
-      static Options& Get()
-      {
-        static Options options;
-        return options;
-      }
-
-      protected:
-        Options() {} // Hide away the constructor
-        Options(const Options&) = delete; // Delete copy constructor
-    };
-
-    GstreamerOutput(Output::PlaybackCallback play = nullptr, Output::MetadataCallback meta = nullptr) : OutputModule(play, meta) {}
-    
-    Result Initalize(GstreamerOutput::Options& options);
-
-    Result Initalize(OutputModule::Options& options)
-    {
-      return this->Initalize((GstreamerOutput::Options&) options);
+    static Options& Get() {
+      static Options options;
+      return options;
     }
 
-    Output::MimeTypeSet GetSupportedMedia(void);
+   protected:
+    Options() {}                       // Hide away the constructor
+    Options(const Options&) = delete;  // Delete copy constructor
+  };
 
-    void SetUri(const std::string &uri);
-    void SetNextUri(const std::string &uri);
+  GstreamerOutput(Output::PlaybackCallback play = nullptr,
+                  Output::MetadataCallback meta = nullptr)
+      : OutputModule(play, meta) {}
 
-    Result Play(void);
-    Result Stop(void);
-    Result Pause(void);
-    Result Seek(int64_t position_ns);
+  Result Initalize(GstreamerOutput::Options& options);
 
-    Result GetPosition(TrackState& track);
-    Result GetVolume(float& volume);
-    Result SetVolume(float volume);
-    Result GetMute(bool& mute);
-    Result SetMute(bool mute);
+  Result Initalize(OutputModule::Options& options) {
+    return this->Initalize((GstreamerOutput::Options&)options);
+  }
 
-  private:
-    GstElement* player = nullptr;
+  Output::MimeTypeSet GetSupportedMedia(void);
 
-    std::string uri;
-    std::string next_uri;
+  void SetUri(const std::string& uri);
+  void SetNextUri(const std::string& uri);
 
-    GstreamerOutput::Options options;
+  Result Play(void);
+  Result Stop(void);
+  Result Pause(void);
+  Result Seek(int64_t position_ns);
 
-    GstState GetPlayerState(void);
-    void NextStream(void);
-    bool BusCallback(GstMessage* message);
+  Result GetPosition(TrackState& track);
+  Result GetVolume(float& volume);
+  Result SetVolume(float volume);
+  Result GetMute(bool& mute);
+  Result SetMute(bool mute);
+
+ private:
+  GstElement* player = nullptr;
+
+  std::string uri;
+  std::string next_uri;
+
+  GstreamerOutput::Options options;
+
+  GstState GetPlayerState(void);
+  void NextStream(void);
+  bool BusCallback(GstMessage* message);
 };
 
 #endif

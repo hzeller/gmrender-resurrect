@@ -28,14 +28,14 @@
 #endif
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdbool.h>
+#include <algorithm>
 #include <set>
 #include <string>
-#include <algorithm>
 
 #include <ithread.h>
 #include <upnp.h>
@@ -43,11 +43,11 @@
 #include "upnp_connmgr.h"
 
 #include "logging.h"
+#include "mime_type_filter.h"
+#include "output.h"
 #include "upnp_device.h"
 #include "upnp_service.h"
 #include "variable-container.h"
-#include "output.h"
-#include "mime_type_filter.h"
 
 #define CONNMGR_TYPE "urn:schemas-upnp-org:service:ConnectionManager:1"
 
@@ -143,10 +143,8 @@ static ithread_mutex_t connmgr_mutex;
     @param  types MimeTypeSet containing supported MIME types
     @retval none
 */
-void connmgr_augment_supported_types(Output::MimeTypeSet& types)
-{
-  if (types.count("audio/mpeg"))
-  {
+void connmgr_augment_supported_types(Output::MimeTypeSet& types) {
+  if (types.count("audio/mpeg")) {
     types.emplace("audio/x-mpeg");
 
     // BubbleUPnP uses audio/x-scpl as an indicator to know if the
@@ -168,14 +166,11 @@ void connmgr_augment_supported_types(Output::MimeTypeSet& types)
   // If this works, we should probably collect all of these
   // in a set emit always both, foo/bar and foo/x-bar, as it is a similar
   // work-around as seen above with mpeg -> x-mpeg.
-  if (types.count("audio/x-alac"))
-    types.emplace("audio/alac");
+  if (types.count("audio/x-alac")) types.emplace("audio/alac");
 
-  if (types.count("audio/x-aiff"))
-    types.emplace("audio/aiff");
-  
-  if (types.count("audio/x-m4a"))
-  {
+  if (types.count("audio/x-aiff")) types.emplace("audio/aiff");
+
+  if (types.count("audio/x-m4a")) {
     types.emplace("audio/m4a");
     types.emplace("audio/mp4");
   }
@@ -195,14 +190,12 @@ int connmgr_init(const char* mime_filter_string) {
   filter.apply(supported_types);
 
   std::string protoInfo;
-  for (auto& mime_type : supported_types)
-  {
+  for (auto& mime_type : supported_types) {
     Log_info("connmgr", "Registering support for '%s'", mime_type.c_str());
     protoInfo += ("http-get:*:" + mime_type + ":*,");
   }
 
-  if (protoInfo.empty() == false)
-  {
+  if (protoInfo.empty() == false) {
     // Truncate final comma
     protoInfo.resize(protoInfo.length() - 1);
     srv->variable_container->Set(CONNMGR_VAR_SINK_PROTO_INFO, protoInfo);
@@ -258,8 +251,8 @@ static struct action connmgr_actions[] = {
     [CONNMGR_CMD_GETPROTOCOLINFO] = {"GetProtocolInfo", get_protocol_info},
     [CONNMGR_CMD_PREPAREFORCONNECTION] =
         {"PrepareForConnection", prepare_for_connection}, /* optional */
-    //[CONNMGR_CMD_CONNECTIONCOMPLETE] =	{"ConnectionComplete", NULL},	/*
-    //optional */
+    //[CONNMGR_CMD_CONNECTIONCOMPLETE] =	{"ConnectionComplete", NULL},
+    ///* optional */
     [CONNMGR_CMD_COUNT] = {NULL, NULL}};
 
 struct service* upnp_connmgr_get_service(void) {
@@ -282,26 +275,28 @@ struct service* upnp_connmgr_get_service(void) {
       {CONNMGR_VAR_SRC_PROTO_INFO, "SourceProtocolInfo", "", Eventing::kYes,
        DataType::kString, NULL, NULL},
       {CONNMGR_VAR_SINK_PROTO_INFO, "SinkProtocolInfo",
-       "http-get:*:audio/mpeg:*", Eventing::kYes, DataType::kString, NULL, NULL},
+       "http-get:*:audio/mpeg:*", Eventing::kYes, DataType::kString, NULL,
+       NULL},
       {CONNMGR_VAR_CUR_CONN_IDS, "CurrentConnectionIDs", "0", Eventing::kYes,
        DataType::kString, NULL, NULL},
 
       {CONNMGR_VAR_AAT_CONN_STATUS, "A_ARG_TYPE_ConnectionStatus", "Unknown",
        Eventing::kNo, DataType::kString, connstatus_values, NULL},
-      {CONNMGR_VAR_AAT_CONN_MGR, "A_ARG_TYPE_ConnectionManager", "/", Eventing::kNo,
-       DataType::kString, NULL, NULL},
+      {CONNMGR_VAR_AAT_CONN_MGR, "A_ARG_TYPE_ConnectionManager", "/",
+       Eventing::kNo, DataType::kString, NULL, NULL},
       {CONNMGR_VAR_AAT_DIR, "A_ARG_TYPE_Direction", "Input", Eventing::kNo,
        DataType::kString, direction_values, NULL},
-      {CONNMGR_VAR_AAT_PROTO_INFO, "A_ARG_TYPE_ProtocolInfo", ":::", Eventing::kNo,
-       DataType::kString, NULL, NULL},
+      {CONNMGR_VAR_AAT_PROTO_INFO, "A_ARG_TYPE_ProtocolInfo",
+       ":::", Eventing::kNo, DataType::kString, NULL, NULL},
       {CONNMGR_VAR_AAT_CONN_ID, "A_ARG_TYPE_ConnectionID", "-1", Eventing::kNo,
        DataType::kInt4, NULL, NULL},
       {CONNMGR_VAR_AAT_AVT_ID, "A_ARG_TYPE_AVTransportID", "0", Eventing::kNo,
        DataType::kInt4, NULL, NULL},
-      {CONNMGR_VAR_AAT_RCS_ID, "A_ARG_TYPE_RcsID", "0", Eventing::kNo, DataType::kInt4,
-       NULL, NULL},
+      {CONNMGR_VAR_AAT_RCS_ID, "A_ARG_TYPE_RcsID", "0", Eventing::kNo,
+       DataType::kInt4, NULL, NULL},
 
-      {CONNMGR_VAR_COUNT, NULL, NULL, Eventing::kNo, DataType::kUnknown, NULL, NULL}};
+      {CONNMGR_VAR_COUNT, NULL, NULL, Eventing::kNo, DataType::kUnknown, NULL,
+       NULL}};
 
   if (connmgr_service_.variable_container == NULL) {
     connmgr_service_.variable_container =

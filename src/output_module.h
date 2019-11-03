@@ -25,79 +25,71 @@
 #ifndef _OUTPUT_MODULE_H
 #define _OUTPUT_MODULE_H
 
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
 
 #include "output.h"
 
-class OutputModule
-{
-  public:
-    struct Options 
-    {
-      virtual std::vector<GOptionGroup*> GetOptionGroups(void) = 0;
-    };
+class OutputModule {
+ public:
+  struct Options {
+    virtual std::vector<GOptionGroup*> GetOptionGroups(void) = 0;
+  };
 
-    typedef struct TrackState {int64_t duration_ns; int64_t position_ns;} TrackState;
+  typedef struct TrackState {
+    int64_t duration_ns;
+    int64_t position_ns;
+  } TrackState;
 
-    typedef enum Result
-    {
-      kSuccess = 0,
-      kError = -1
-    } Result;
-  
-    OutputModule(Output::PlaybackCallback play = nullptr, Output::MetadataCallback meta = nullptr)
-    {
-      this->playback_callback = play;
-      this->metadata_callback = meta;
-    }
+  typedef enum Result { kSuccess = 0, kError = -1 } Result;
 
-    virtual Result Initalize(Options& options) = 0;
+  OutputModule(Output::PlaybackCallback play = nullptr,
+               Output::MetadataCallback meta = nullptr) {
+    this->playback_callback = play;
+    this->metadata_callback = meta;
+  }
 
-    virtual Output::MimeTypeSet GetSupportedMedia(void) = 0;
+  virtual Result Initalize(Options& options) = 0;
 
-    virtual void SetUri(const std::string &uri) = 0;
-    virtual void SetNextUri(const std::string &uri) = 0;
+  virtual Output::MimeTypeSet GetSupportedMedia(void) = 0;
 
-    virtual Result Play(void) = 0;
-    virtual Result Stop(void) = 0;
-    virtual Result Pause(void) = 0;
-    virtual Result Seek(int64_t position_ns) = 0;
+  virtual void SetUri(const std::string& uri) = 0;
+  virtual void SetNextUri(const std::string& uri) = 0;
 
-    virtual Result GetPosition(TrackState& track) = 0;
-    virtual Result GetVolume(float& volume) = 0;
-    virtual Result SetVolume(float volume) = 0;
-    virtual Result GetMute(bool& mute) = 0;
-    virtual Result SetMute(bool mute) = 0;
+  virtual Result Play(void) = 0;
+  virtual Result Stop(void) = 0;
+  virtual Result Pause(void) = 0;
+  virtual Result Seek(int64_t position_ns) = 0;
 
-  protected:
-    track_metadata_t metadata;
+  virtual Result GetPosition(TrackState& track) = 0;
+  virtual Result GetVolume(float& volume) = 0;
+  virtual Result SetVolume(float volume) = 0;
+  virtual Result GetMute(bool& mute) = 0;
+  virtual Result SetMute(bool mute) = 0;
 
-    Output::PlaybackCallback playback_callback = nullptr;
-    Output::MetadataCallback metadata_callback = nullptr;
+ protected:
+  track_metadata_t metadata;
 
-    virtual void NotifyPlaybackUpdate(Output::OutputState state)
-    {
-      if (this->playback_callback)
-        this->playback_callback(state);
-    }
+  Output::PlaybackCallback playback_callback = nullptr;
+  Output::MetadataCallback metadata_callback = nullptr;
 
-    virtual void NotifyMetadataChange(const track_metadata_t& metadata)
-    {
-      if (this->metadata_callback)
-        this->metadata_callback(metadata);
-    }
+  virtual void NotifyPlaybackUpdate(Output::OutputState state) {
+    if (this->playback_callback) this->playback_callback(state);
+  }
+
+  virtual void NotifyMetadataChange(const track_metadata_t& metadata) {
+    if (this->metadata_callback) this->metadata_callback(metadata);
+  }
 };
 
 template <class Class>
-class OutputModuleFactory 
-{
-  public:
-    static OutputModule* Create(Output::PlaybackCallback play = nullptr, Output::MetadataCallback meta = nullptr)
-    { 
-      return new Class(play, meta);
-    }
+class OutputModuleFactory {
+ public:
+  static OutputModule* Create(Output::PlaybackCallback play = nullptr,
+                              Output::MetadataCallback meta = nullptr) {
+    return new Class(play, meta);
+  }
 };
 
 #endif

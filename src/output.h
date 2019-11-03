@@ -1,7 +1,8 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* output.h - Output module frontend
  *
- * Copyright (C) 2007 Ivo Clarysse,  (C) 2012 Henner Zeller, (C) 2019 Tucker Kern
+ * Copyright (C) 2007 Ivo Clarysse,  (C) 2012 Henner Zeller, (C) 2019 Tucker
+ * Kern
  *
  * This file is part of GMediaRender.
  *
@@ -31,41 +32,37 @@
 #include <glib.h>
 #include "song-meta-data.h"
 
-namespace Output
-{
-  typedef enum OutputState 
-  {
-    kPlaybackStopped,
-    kStartedNextStream
-  } OutputState;
+namespace Output {
+typedef enum OutputState { kPlaybackStopped, kStartedNextStream } OutputState;
 
-  // Callbacks types from output to higher levels
-  typedef void (*PlaybackCallback)(OutputState);
-  typedef void (*MetadataCallback)(const track_metadata_t&);
+// Callbacks types from output to higher levels
+typedef void (*PlaybackCallback)(OutputState);
+typedef void (*MetadataCallback)(const track_metadata_t&);
 
-  typedef std::set<std::string> MimeTypeSet;
+typedef std::set<std::string> MimeTypeSet;
 
-  int AddOptions(GOptionContext* ctx);
-  void DumpModules(void);
-  int Loop(void);
+int AddOptions(GOptionContext* ctx);
+void DumpModules(void);
+int Loop(void);
 
-  int Init(const char* shortname, PlaybackCallback play_callback, MetadataCallback metadata_callback);
+int Init(const char* shortname, PlaybackCallback play_callback,
+         MetadataCallback metadata_callback);
 
-  MimeTypeSet GetSupportedMedia(void);
+MimeTypeSet GetSupportedMedia(void);
 
-  void SetUri(const char* uri);
-  void SetNextUri(const char* uri);
+void SetUri(const char* uri);
+void SetNextUri(const char* uri);
 
-  int Play(void);
-  int Pause(void);
-  int Stop(void);
-  int Seek(int64_t position_nanos);
+int Play(void);
+int Pause(void);
+int Stop(void);
+int Seek(int64_t position_nanos);
 
-  int GetPosition(int64_t& duration, int64_t& position);
-  int GetVolume(float& value);
-  int SetVolume(float value);
-  int GetMute(bool& value);
-  int SetMute(bool value);
-};
+int GetPosition(int64_t& duration, int64_t& position);
+int GetVolume(float& value);
+int SetVolume(float value);
+int GetMute(bool& value);
+int SetMute(bool value);
+};  // namespace Output
 
 #endif /* _OUTPUT_H */

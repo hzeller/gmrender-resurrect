@@ -465,9 +465,8 @@ static void change_transport_state(TransportState new_state) {
 }
 
 // Callback from our output if the song meta data changed.
-static void update_meta_from_stream(const track_metadata_t& meta) {
-  if (meta.title.empty())
-    return;
+static void update_meta_from_stream(const track_metadata_t &meta) {
+  if (meta.title.empty()) return;
 
   auto original_xml = state_variables_->Get(TRANSPORT_VAR_AV_URI_META);
   char *didl = SongMetaData_to_DIDL(&meta, original_xml.c_str());
@@ -700,13 +699,11 @@ static void inform_play_transition_from_output(Output::OutputState state) {
   service_unlock();
 }
 
-Output::PlaybackCallback upnp_transport_get_transition_callback(void)
-{
+Output::PlaybackCallback upnp_transport_get_transition_callback(void) {
   return &inform_play_transition_from_output;
 }
 
-Output::MetadataCallback upnp_transport_get_metadata_callback(void)
-{
+Output::MetadataCallback upnp_transport_get_metadata_callback(void) {
   return &update_meta_from_stream;
 }
 

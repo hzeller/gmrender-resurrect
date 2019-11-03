@@ -276,7 +276,8 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  rc = Output::Init(output, upnp_transport_get_transition_callback(), upnp_transport_get_metadata_callback());
+  rc = Output::Init(output, upnp_transport_get_transition_callback(),
+                    upnp_transport_get_metadata_callback());
   if (rc != 0) {
     Log_error("main", "ERROR: Failed to initialize Output subsystem");
     return EXIT_FAILURE;
@@ -314,15 +315,15 @@ int main(int argc, char **argv) {
 
   if (Log_info_enabled()) {
     upnp_transport_register_variable_listener(
-      [](int, const std::string &var_name, const std::string&,
-         const std::string &new_value) {
-        log_variable_change("transport", var_name, new_value);
-      });
-    upnp_control_register_variable_listener(
-      [](int, const std::string &var_name, const std::string&,
-         const std::string &new_value) {
-        log_variable_change("control", var_name, new_value);
-      });
+        [](int, const std::string &var_name, const std::string &,
+           const std::string &new_value) {
+          log_variable_change("transport", var_name, new_value);
+        });
+    upnp_control_register_variable_listener([](int, const std::string &var_name,
+                                               const std::string &,
+                                               const std::string &new_value) {
+      log_variable_change("control", var_name, new_value);
+    });
   }
 
   // Write both to the log (which might be disabled) and console.
