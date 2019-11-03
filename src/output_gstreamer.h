@@ -44,9 +44,9 @@ class GstreamerOutput : public OutputModule, public OutputModuleFactory<Gstreame
       double initial_db = 0.0;
       double buffer_duration = 0.0; // Buffer disbled by default, see #182
 
-      std::vector<GOptionGroup*> get_option_groups(void);
+      std::vector<GOptionGroup*> GetOptionGroups(void);
 
-      static Options& get()
+      static Options& Get()
       {
         static Options options;
         return options;
@@ -59,28 +59,28 @@ class GstreamerOutput : public OutputModule, public OutputModuleFactory<Gstreame
 
     GstreamerOutput(Output::playback_callback_t play = nullptr, Output::metadata_callback_t meta = nullptr) : OutputModule(play, meta) {}
     
-    result_t initalize(GstreamerOutput::Options& options);
+    Result Initalize(GstreamerOutput::Options& options);
 
-    result_t initalize(OutputModule::Options& options)
+    Result Initalize(OutputModule::Options& options)
     {
-      return this->initalize((GstreamerOutput::Options&) options);
+      return this->Initalize((GstreamerOutput::Options&) options);
     }
 
-    Output::mime_type_set_t get_supported_media(void);
+    Output::mime_type_set_t GetSupportedMedia(void);
 
-    void set_uri(const std::string &uri);
-    void set_next_uri(const std::string &uri);
+    void SetUri(const std::string &uri);
+    void SetNextUri(const std::string &uri);
 
-    result_t play(void);
-    result_t stop(void);
-    result_t pause(void);
-    result_t seek(int64_t position_ns);
+    Result Play(void);
+    Result Stop(void);
+    Result Pause(void);
+    Result Seek(int64_t position_ns);
 
-    result_t get_position(track_state_t& position);
-    result_t get_volume(float& volume);
-    result_t set_volume(float volume);
-    result_t get_mute(bool& mute);
-    result_t set_mute(bool mute);
+    Result GetPosition(TrackState& track);
+    Result GetVolume(float& volume);
+    Result SetVolume(float volume);
+    Result GetMute(bool& mute);
+    Result SetMute(bool mute);
 
   private:
     GstElement* player = nullptr;
@@ -90,9 +90,9 @@ class GstreamerOutput : public OutputModule, public OutputModuleFactory<Gstreame
 
     GstreamerOutput::Options options;
 
-    GstState get_player_state(void);
-    void next_stream(void);
-    bool bus_callback(GstMessage* message);
+    GstState GetPlayerState(void);
+    void NextStream(void);
+    bool BusCallback(GstMessage* message);
 };
 
 #endif

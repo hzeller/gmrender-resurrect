@@ -53,7 +53,7 @@ typedef struct output_entry_t
 static std::vector<output_entry_t> modules = 
 {
 #ifdef HAVE_GST
-  {"gst", "GStreamer multimedia framework", GstreamerOutput::create, GstreamerOutput::Options::get()}
+  {"gst", "GStreamer multimedia framework", GstreamerOutput::Create, GstreamerOutput::Options::Get()}
 #else
 // this will be a runtime error, but there is not much point in waiting till then.
 #error "No output configured. You need to ./configure --with-gstreamer"
@@ -66,7 +66,7 @@ int Output::add_options(GOptionContext* ctx)
 {
   for (const auto& module : modules)
   {
-    for (auto option : module.options.get_option_groups())
+    for (auto option : module.options.GetOptionGroups())
       g_option_context_add_group(ctx, option);
   }
   
@@ -141,7 +141,7 @@ int Output::init(const char* shortname, Output::playback_callback_t play_callbac
 
   assert(output_module != NULL);
   
-  output_module->initalize(entry.options);
+  output_module->Initalize(entry.options);
 
   // Free the modules list
   modules.clear();
@@ -153,57 +153,57 @@ Output::mime_type_set_t Output::get_supported_media(void)
 {
   assert(output_module);
 
-  return output_module->get_supported_media();
+  return output_module->GetSupportedMedia();
 }
 
 void Output::set_uri(const char *uri)
 {
   assert(output_module);
 
-  output_module->set_uri(uri);
+  output_module->SetUri(uri);
 }
 
 void Output::set_next_uri(const char *uri) 
 {
   assert(output_module);
 
-  output_module->set_next_uri(uri);
+  output_module->SetNextUri(uri);
 }
 
 int Output::play() 
 {
   assert(output_module);
 
-  return output_module->play();
+  return output_module->Play();
 }
 
 int Output::pause(void) 
 {
   assert(output_module);
 
-  return output_module->pause();
+  return output_module->Pause();
 }
 
 int Output::stop(void) 
 {
   assert(output_module);
 
-  return output_module->stop();
+  return output_module->Stop();
 }
 
 int Output::seek(int64_t position_nanos) 
 {
   assert(output_module);
 
-  return output_module->seek(position_nanos);
+  return output_module->Seek(position_nanos);
 }
 
 int Output::get_position(int64_t& duration_ns, int64_t& position_ns)
 {
   assert(output_module);
 
-  OutputModule::track_state_t state;
-  if (output_module->get_position(state) == OutputModule::Success)
+  OutputModule::TrackState state;
+  if (output_module->GetPosition(state) == OutputModule::kSuccess)
   {
     duration_ns = state.duration_ns;
     position_ns = state.position_ns;
@@ -218,26 +218,26 @@ int Output::get_volume(float& value)
 {
   assert(output_module);
 
-  return output_module->get_volume(value);
+  return output_module->GetVolume(value);
 }
 
 int Output::set_volume(float value) 
 {
   assert(output_module);
 
-  return output_module->set_volume(value);
+  return output_module->SetVolume(value);
 }
 
 int Output::get_mute(bool& value) 
 {
   assert(output_module);
 
-  return output_module->get_mute(value);
+  return output_module->GetMute(value);
 }
 
 int Output::set_mute(bool value) 
 {
   assert(output_module);
 
-  return output_module->set_mute(value);
+  return output_module->SetMute(value);
 }
