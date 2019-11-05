@@ -174,6 +174,12 @@ void connmgr_augment_supported_types(Output::MimeTypeSet& types) {
     types.emplace("audio/m4a");
     types.emplace("audio/mp4");
   }
+
+  // There seem to be all kinds of mime types out there that start with
+	// "audio/" but are not explicitly supported by gstreamer. Let's just
+	// tell the controller that we can handle everything "audio/*" and hope
+	// for the best.
+  types.emplace("audio/*");
 }
 
 int connmgr_init(const char* mime_filter_string) {
