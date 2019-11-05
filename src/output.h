@@ -37,7 +37,7 @@ typedef enum OutputState { kPlaybackStopped, kStartedNextStream } OutputState;
 
 // Callbacks types from output to higher levels
 typedef void (*PlaybackCallback)(OutputState);
-typedef void (*MetadataCallback)(const track_metadata_t&);
+typedef void (*MetadataCallback)(const TrackMetadata&);
 
 typedef std::set<std::string> MimeTypeSet;
 

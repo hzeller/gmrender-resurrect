@@ -465,7 +465,7 @@ static void change_transport_state(TransportState new_state) {
 }
 
 // Callback from our output if the song meta data changed.
-static void update_meta_from_stream(const track_metadata_t &meta) {
+static void update_meta_from_stream(const TrackMetadata &meta) {
   if (meta.title.empty()) return;
 
   auto original_xml = state_variables_->Get(TRANSPORT_VAR_AV_URI_META);

@@ -29,27 +29,27 @@
 
 // An 'object' dealing with the meta data of a song.
 // TODO Tucker Great opertunity for a class here
-typedef struct track_metadata_t {
+typedef struct TrackMetadata {
   std::string title;
   std::string artist;
   std::string album;
   std::string genre;
   std::string composer;
-} track_metadata_t;
+} TrackMetadata;
 
 // Construct song meta data object.
-void SongMetaData_init(track_metadata_t *object);
+void SongMetaData_init(TrackMetadata *object);
 
 // Clear meta data strings and deallocate them.
-void SongMetaData_clear(track_metadata_t *object);
+void SongMetaData_clear(TrackMetadata *object);
 
 // Returns a newly allocated xml string with the song meta data encoded as
 // DIDL-Lite. If we get a non-empty original xml document, returns an
 // edited version of that document.
-char *SongMetaData_to_DIDL(const track_metadata_t *object,
+char *SongMetaData_to_DIDL(const TrackMetadata* object,
                            const char *original_xml);
 
 // Parse DIDL-Lite and fill SongMetaData struct. Returns 1 when successful.
-int SongMetaData_parse_DIDL(track_metadata_t *object, const char *xml);
+int SongMetaData_parse_DIDL(TrackMetadata *object, const char *xml);
 
 #endif  // _SONG_META_DATA_H

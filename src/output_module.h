@@ -69,7 +69,7 @@ class OutputModule {
   virtual Result SetMute(bool mute) = 0;
 
  protected:
-  track_metadata_t metadata;
+  TrackMetadata metadata;
 
   Output::PlaybackCallback playback_callback = nullptr;
   Output::MetadataCallback metadata_callback = nullptr;
@@ -78,7 +78,7 @@ class OutputModule {
     if (this->playback_callback) this->playback_callback(state);
   }
 
-  virtual void NotifyMetadataChange(const track_metadata_t& metadata) {
+  virtual void NotifyMetadataChange(const TrackMetadata& metadata) {
     if (this->metadata_callback) this->metadata_callback(metadata);
   }
 };

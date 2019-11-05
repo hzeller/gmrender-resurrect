@@ -42,11 +42,11 @@
 #include "xmldoc.h"
 #include "xmlescape.h"
 
-void SongMetaData_init(track_metadata_t *value) {
-  memset(value, 0, sizeof(track_metadata_t));
+void SongMetaData_init(TrackMetadata *value) {
+  memset(value, 0, sizeof(TrackMetadata));
 }
 
-void SongMetaData_clear(track_metadata_t *value) {
+void SongMetaData_clear(TrackMetadata *value) {
   value->title.clear();
   value->artist.clear();
   value->album.clear();
@@ -120,7 +120,7 @@ static char *replace_range(char *const input, const char *tag_start,
   return result;
 }
 
-int SongMetaData_parse_DIDL(track_metadata_t *object, const char *xml) {
+int SongMetaData_parse_DIDL(TrackMetadata *object, const char *xml) {
   struct xmldoc *doc = xmldoc_parsexml(xml);
   if (doc == NULL) return 0;
 
@@ -150,7 +150,7 @@ int SongMetaData_parse_DIDL(track_metadata_t *object, const char *xml) {
 
 // TODO: actually use some XML library for this, but spending too much time
 // with XML is not good for the brain :) Worst thing that came out of the 90ies.
-char *SongMetaData_to_DIDL(const track_metadata_t *object,
+char *SongMetaData_to_DIDL(const TrackMetadata *object,
                            const char *original_xml) {
   // Generating a unique ID in case the players cache the content by
   // the item-ID. Right now this is experimental and not known to make
