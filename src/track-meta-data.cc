@@ -2,6 +2,7 @@
 /* track-meta-data - Object holding meta data for a song.
  *
  * Copyright (C) 2012 Henner Zeller
+ * Copyright (C) 2020 Tucker Kern
  *
  * This file is part of GMediaRender.
  *
@@ -33,95 +34,96 @@
 
 #include "xmldoc.h"
 
-const std::string& TrackMetadata::get_field(const char *name) const {
-  static std::string kDefault;
-  auto found = fields_.find(name);
-  return found != fields_.end() ? found->second : kDefault;
+/**
+  @brief  Create and append root element and requried attributes for metadata
+  XML
+
+  @param  xml_document pugi::xml_document to add root item to
+  @retval none
+*/
+void TrackMetadata::CreateXmlRoot(XMLDoc& xml_document) const {
+  XMLElement root = xml_document.AddElement("DIDL-Lite");
+
+  root.SetAttribute("xmlns", "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/");
+  root.SetAttribute("xmlns:dc", "http://purl.org/dc/elements/1.1/");
+  root.SetAttribute("xmlns:upnp", "urn:schemas-upnp-org:metadata-1-0/upnp/");
+
+  // An "item" element must have
+  // dc:title element first
+  // upnp:class element
+  // id attribute
+  // parentId attribute
+  // restricted attribute
+  XMLElement item = root.AddElement("item");
+  item.SetAttribute("id", "");
+  item.SetAttribute("parentID", "0");
+  item.SetAttribute("restricted", "false");
 }
 
-bool TrackMetadata::UpdateFromTags(const GstTagList *tag_list) {
-  struct Context { MetaMap *fields; bool modified; } ctx = { &fields_, false };
-  gst_tag_list_foreach(
-    tag_list,
-    [](const GstTagList *tag_list, const gchar *tag_name, gpointer ctx) {
-      static std::unordered_map<std::string, std::string> kGstToXML
-        = {{ GST_TAG_TITLE, "dc:title"}, { GST_TAG_ARTIST, "upnp:artist"},
-           { GST_TAG_ALBUM, "upnp:album"}, { GST_TAG_GENRE, "upnp:genre"},
-           { GST_TAG_COMPOSER, "upnp:creator"}};
-      auto found = kGstToXML.find(tag_name);
-      if (found == kGstToXML.end()) return; // unsupported tag.
-      auto xml_name = found->second;
+/**
+  @brief  Format metadata to XML (DIDL-Lite) format. Modifies existing XML
+          if passed as argument
 
-      gchar* value = nullptr;
-      if (!gst_tag_list_get_string(tag_list, tag_name, &value)) return;
+  @param  xml Original XML string to modify
+  @retval std::string Metadata as XML (DIDL-Lite)
+*/
+std::string TrackMetadata::ToXml(const std::string& xml) const {
+  // Parse existing document
+  auto xml_document = XMLDoc::Parse(xml);
 
-      Context* context = (Context*) ctx;
-      std::string &to_update = (*context->fields)[xml_name];
-      if (to_update != value) {
-        context->modified = true;
-        to_update = value;
-      }
-      g_free(value);
-    }, &ctx);
+  XMLElement root;
+  XMLElement item;
 
-  return ctx.modified;
-}
-
-bool TrackMetadata::ParseXML(const std::string &xml) {
-  const auto doc = XMLDoc::Parse(xml);
-  if (!doc) return false;
-
-  const auto items = doc->findElement("DIDL-Lite").findElement("item");
-  for (XMLElement elem : items.children()) {
-    fields_[elem.name()] = elem.value();
-  }
-  return items.exists();
-}
-
-/*static*/ std::string TrackMetadata::DefaultCreateNewId() {
-  // Generating a unique ID in case the players cache the content by
-  // the item-ID. Right now this is experimental and not known to make
-  // any difference - it seems that players just don't display changes
-  // in the input stream. Grmbl.
-  static unsigned int xml_id = 42;
-  char unique_id[4 + 8 + 1];
-  snprintf(unique_id, sizeof(unique_id), "gmr-%08x", xml_id++);
-  return unique_id;
-}
-
-std::string TrackMetadata::generateDIDL(const std::string &id) const {
-  XMLDoc doc;
-  auto item = doc.AddElement("DIDL-Lite",
-                             "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/")
-    .SetAttribute("xmlns:dc", "http://purl.org/dc/elements/1.1/")
-    .SetAttribute("xmlns:upnp", "urn:schemas-upnp-org:metadata-1-0/upnp/")
-    .AddElement("item").SetAttribute("id", id);
-  for (auto pair : fields_) {
-    item.AddElement(pair.first).SetValue(pair.second);
-  }
-  return doc.ToXMLString();
-}
-
-std::string TrackMetadata::ToXML(const std::string &original_xml,
-                                 std::function<std::string()> idgen) const {
-  auto doc = XMLDoc::Parse(original_xml);
-  XMLElement items;
-  if (!doc || !(items = doc->findElement("DIDL-Lite").findElement("item"))) {
-    return generateDIDL(idgen ? idgen() : DefaultCreateNewId());
+  // Attempt to find root and item element from original XML
+  if (xml_document != nullptr)
+  {
+    root = xml_document->findElement("DIDL-Lite");
+    item = root.findElement("item");
   }
 
-  bool any_change = false;
-  for (auto pair : fields_) {
-    auto tag = items.findElement(pair.first);
-    if (tag.value() == pair.second) continue;
-    if (!tag.exists()) tag = items.AddElement(pair.first);
-    tag.SetValue(pair.second);
-    any_change = true;
+  // Existing format sucks, just make our own
+  if (!root.exists() || !item.exists()) {
+    xml_document = std::unique_ptr<XMLDoc>(new XMLDoc()); // This is awkward
+
+    CreateXmlRoot(*xml_document);
+
+    // Update locals with new document objects
+    root = xml_document->findElement("DIDL-Lite");
+    item = root.findElement("item");
   }
-  if (any_change) {
-    // Only if we changed the content, we generate a new unique id.
-    const std::string new_id = idgen ? idgen() : DefaultCreateNewId();
-    doc->findElement("DIDL-Lite").SetAttribute("id", new_id);
+
+  bool modified = false;
+  for (const auto& kv : tags_) {
+    const std::string& tag = kv.second.key_;
+    const std::string& value = kv.second.value_;
+
+    // Skip if no value
+    if (value.empty()) continue;
+
+    XMLElement element = item.findElement(tag.c_str());
+    if (element) {
+      // Check if already equal to avoid ID update
+      if (value.compare(element.value()) == 0) continue;
+
+      // Update existing XML element
+      element.SetValue(value.c_str());
+
+      modified = true;
+    } else {
+      // Insert new XML element
+      element = item.AddElement(tag.c_str());
+      element.SetValue(value.c_str());
+
+      modified = true;
+    }
   }
-  return doc->ToXMLString();
+
+  if (modified) {
+    char idString[20] = {0};
+    snprintf(idString, sizeof(idString), "gmr-%08x", id_);
+
+    item.SetAttribute("id", idString);
+  }
+
+  return xml_document->ToXMLString();
 }

@@ -457,13 +457,19 @@ static void change_transport_state(TransportState new_state) {
 
 // Callback from our output if the song meta data changed.
 static void update_meta_from_stream(const TrackMetadata &meta) {
-  if (meta.title().empty()) return;
+  if (meta[TrackMetadata::Tag::kTitle].empty()) // Title is required
+    return;
 
   auto original_xml = state_variables_->Get(TRANSPORT_VAR_AV_URI_META);
-  const std::string didl = meta.ToXML(original_xml);
+  std::string xml = meta.ToXml(original_xml);
+  
   service_lock();
-  state_variables_->Set(TRANSPORT_VAR_AV_URI_META, didl);
-  state_variables_->Set(TRANSPORT_VAR_CUR_TRACK_META, didl);
+  // Technically AVTransportURIMetaData and CurrentTrackMetaData may be different
+  // Particularly if we were playing a playlist, however playbin doesn't support that anyway
+  // Additionally it appears that some control points use AVTransportURIMetaData
+  // exclusively for Metadata reporting and ignore CurrentTrackMetaData
+  state_variables_->Set(TRANSPORT_VAR_AV_URI_META, xml);
+  state_variables_->Set(TRANSPORT_VAR_CUR_TRACK_META, xml);
   service_unlock();
 }
 

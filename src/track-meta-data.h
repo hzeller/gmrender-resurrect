@@ -2,6 +2,7 @@
 /* track-meta-data - Object holding meta data for a song.
  *
  * Copyright (C) 2012 Henner Zeller
+ * Copyright (C) 2020 Tucker Kern
  *
  * This file is part of GMediaRender.
  *
@@ -21,52 +22,187 @@
  * MA 02110-1301, USA.
  *
  */
+
 #ifndef _TRACK_META_DATA_H
 #define _TRACK_META_DATA_H
 
-#include <gst/gsttaglist.h>
+#include <assert.h>
 
+#include <map>
 #include <string>
-#include <functional>
 #include <unordered_map>
 
-// Metadata for a song that can be filled by GStreamer tags and import/export
-// as DIDL-Lite XML, used in the UPnP world to describe track metadata.
+#include <logging.h>
+#include <xmldoc.h>
+
+/**
+  @brief  Class to contain and maintain a map of supported track metadata tags
+*/
 class TrackMetadata {
-public:
-  const std::string& title() const { return get_field("dc:title"); }
+ public:
+  /**
+    @brief  Public interface for a metadata entry
+  */
+  class IEntry {
+   public:
+    virtual IEntry& operator=(const std::string& other) = 0;
+    virtual operator const std::string&() const = 0;
+  };
 
-  //-- there are more fields that can be added when needed.
+  enum Tag {
+    kTitle = 0,  // Title must be first
+    kArtist,
+    kAlbum,
+    kGenre,
+    kCreator,
+    kDate,
+    kTrackNumber,
+    // kClass, // TODO Required but not sure how to detect from stream
+    // Not yet implemented
+    // kBitrate,
+  };
 
-  void Clear() { fields_.clear(); }
+  TrackMetadata(void) {
+    // Create all known tags_ in the map
+    tags_.emplace(kTitle, Entry("dc:title", this));
+    tags_.emplace(kArtist, Entry("upnp:artist", this));
+    tags_.emplace(kAlbum, Entry("upnp:album", this));
+    tags_.emplace(kGenre, Entry("upnp:genre", this));
+    tags_.emplace(kCreator, Entry("dc:creator", this));
+    tags_.emplace(kDate, Entry("dc:date", this));
+    tags_.emplace(kTrackNumber, Entry("upnp:originalTrackNumber", this));
+    // tags_.emplace(kClass,   "upnp:class");
+  }
 
-  // Update from GstTags. Return if there was any change.
-  bool UpdateFromTags(const GstTagList *tag_list);
+  const std::string& operator[](Tag tag) const {
+    assert(tags_.count(tag));
 
-  // Returns xml string with the song meta data encoded as
-  // DIDL-Lite. If we get a non-empty original xml document, returns an
-  // edited version of that document.
-  // "idgen" is a generator for the toplevel identifier attribute of the
-  // document; if null, a default generator is used.
-  std::string ToXML(const std::string &original_xml,
-                    std::function<std::string()> idgen = nullptr) const;
+    return tags_.at(tag);
+  }
 
-  // Parse DIDL-Lite and fill TrackMetaData. Returns true when successful.
-  bool ParseXML(const std::string &xml);
+  IEntry& operator[](Tag tag) {
+    assert(tags_.count(tag));
 
-protected:
-  typedef std::unordered_map<std::string, std::string> MetaMap;
-  const std::string& get_field(const char *name) const;
+    return tags_.at(tag);
+  }
 
-  // We store the fields keyed by their XML name, as this is the primary
-  // interaction with the outside world.
-  MetaMap fields_;
+  /**
+    @brief  Allows metadata entry to be accessed by a name instead of the Tag
+    enum.
 
-private:
-  static std::string DefaultCreateNewId();
+    @param  name C string of tag name.
+    @retval IEntry&
+  */
+  IEntry& operator[](const char* name) {
+    static Entry invalid_entry("null", this);
 
-  // Generate a new DIDL XML.
-  std::string generateDIDL(const std::string &id) const;
+    if (name_tag_map_.count(name)) return (*this)[name_tag_map_.at(name)];
+
+    Log_warn("Metadata", "Unsupported tag name '%s'", name);
+    return invalid_entry;
+  }
+
+  /**
+    @brief  Checks if the metadata has been modified since the last call.
+
+    @param  none
+    @retval bool - True if Metadata ID changed since the last call.
+  */
+  bool Modified() const {
+    static uint32_t lastId = 0;
+
+    bool modified = (id_ != lastId);
+
+    lastId = id_;
+
+    return modified;
+  }
+
+  /**
+    @brief  Tests if the tag name is supported by the class
+
+    @param  name C string of tag name.
+    @retval bool - True if tag name is known
+  */
+  bool TagSupported(const char* name) const {
+    return name_tag_map_.count(name) > 0;
+  }
+
+  /**
+    @brief  Clear all tag values
+
+    @param  none
+    @retval none
+  */
+  void Clear() {
+    for (auto& kv : tags_) kv.second.value_.clear();
+  }
+
+  std::string ToXml(const std::string& xml = "") const;
+
+ private:
+  /**
+    @brief  Private implementation of a metadata entry implementing the
+    interface. Notifies parent when metadata value is modified.
+  */
+  class Entry : public IEntry {
+   public:
+    Entry(const std::string& k, TrackMetadata* const p)
+        : parent_(*p), key_(k) {}
+
+    /**
+      @brief  Assignment operator for tag value. Notifies parent if a change
+      occurs.
+
+      @param  other std::string of new tag value
+      @retval Entry&
+    */
+    Entry& operator=(const std::string& other) {
+      if (value_.compare(other) == 0) return *this;  // Identical tags_
+
+      value_.assign(other);
+
+      // Notify parent value has changed
+      parent_.Notify();
+
+      return *this;
+    }
+
+    /**
+      @brief  Converstion operator for Entry to std::string
+
+      @param  none
+      @retval const std::string - Tag value
+    */
+    operator const std::string&() const { return value_; }
+
+    TrackMetadata& parent_;
+    const std::string key_;  // DIDL-Lite key
+    std::string value_;      // DIDL-Lite value
+  };
+
+  void Notify() { id_++; }
+  void CreateXmlRoot(XMLDoc& xml_document) const;
+
+  uint32_t id_ = 0;
+  std::map<Tag, Entry> tags_;
+
+  /**
+    @brief  Map of common tag names to Tag enum values
+  */
+  std::unordered_map<std::string, Tag> name_tag_map_ = {
+      {"artist", kArtist},
+      {"title", kTitle},
+      {"album", kAlbum},
+      {"composer", kCreator},
+      {"genre", kGenre},
+      {"date", kDate},
+      {"datetime", kDate},
+      {"tracknumber", kTrackNumber},
+      {"track-number", kTrackNumber},
+      // Not yet implemented
+      //{"bitrate",     kBitrate},
+  };
 };
 
-#endif  // _TRACK_META_DATA_H
+#endif  // _SONG_META_DATA_H
