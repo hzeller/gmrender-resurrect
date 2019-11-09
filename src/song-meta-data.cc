@@ -2,6 +2,7 @@
 /* song-meta-data - Object holding meta data for a song.
  *
  * Copyright (C) 2012 Henner Zeller
+ * Copyright (C) 2020 Tucker Kern
  *
  * This file is part of GMediaRender.
  *
@@ -27,165 +28,96 @@
 
 #include "song-meta-data.h"
 
-#ifndef _GNU_SOURCE
-#  define _GNU_SOURCE   // for asprintf()
-#endif
+/**
+  @brief  Create and append root element and requried attributes for metadata
+  XML
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+  @param  xml_document pugi::xml_document to add root item to
+  @retval none
+*/
+void TrackMetadata::CreateXmlRoot(pugi::xml_document& xml_document) const {
+  pugi::xml_node root = xml_document.append_child("DIDL-Lite");
+  root.append_attribute("xmlns").set_value(
+      "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/");
+  root.append_attribute("xmlns:dc")
+      .set_value("http://purl.org/dc/elements/1.1/");
+  root.append_attribute("xmlns:upnp")
+      .set_value("urn:schemas-upnp-org:metadata-1-0/upnp/");
 
-#include "xmldoc.h"
-#include "xmlescape.h"
-
-void SongMetaData_clear(TrackMetadata *value) {
-  value->title.clear();
-  value->artist.clear();
-  value->album.clear();
-  value->genre.clear();
-  value->composer.clear();
+  // An "item" element must have
+  // dc:title element first
+  // upnp:class element
+  // id attribute
+  // parentId attribute
+  // restricted attribute
+  pugi::xml_node item = root.append_child("item");
+  item.append_attribute("id").set_value("");
+  item.append_attribute("parentID").set_value("0");
+  item.append_attribute("restricted").set_value("false");
 }
 
-static const char kDidlHeader[] =
-    "<DIDL-Lite "
-    "xmlns=\"urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/\" "
-    "xmlns:dc=\"http://purl.org/dc/elements/1.1/\" "
-    "xmlns:upnp=\"urn:schemas-upnp-org:metadata-1-0/upnp/\">";
-static const char kDidlFooter[] = "</DIDL-Lite>";
+/**
+  @brief  Format metadata to XML (DIDL-Lite) format. Modifies existing XML
+          if passed as argument
 
-// Allocates a new DIDL formatted XML and fill it with given data.
-// The input fields are expected to be already xml escaped.
-static char *generate_DIDL(const char *id, const char *title,
-                           const char *artist, const char *album,
-                           const char *genre, const char *composer) {
-  char *result = NULL;
-  int ret = asprintf(&result,
-                     "%s\n<item id=\"%s\">\n"
-                     "\t<dc:title>%s</dc:title>\n"
-                     "\t<upnp:artist>%s</upnp:artist>\n"
-                     "\t<upnp:album>%s</upnp:album>\n"
-                     "\t<upnp:genre>%s</upnp:genre>\n"
-                     "\t<upnp:creator>%s</upnp:creator>\n"
-                     "</item>\n%s",
-                     kDidlHeader, id, title ? title : "", artist ? artist : "",
-                     album ? album : "", genre ? genre : "",
-                     composer ? composer : "", kDidlFooter);
-  return ret >= 0 ? result : NULL;
-}
+  @param  xml Original XML string to modify
+  @retval std::string Metadata as XML (DIDL-Lite)
+*/
+std::string TrackMetadata::ToXml(const std::string& xml) const {
+  pugi::xml_document xml_document;
 
-// Takes input, if it finds the given tag, then replaces the content between
-// these with 'content'. It might re-allocate the original string; only the
-// returned string is valid.
-// updates "edit_count" if there was a change.
-// Very crude way to edit XML.
-static char *replace_range(char *const input, const char *tag_start,
-                           const char *tag_end, const char *content,
-                           int *edit_count) {
-  if (content == NULL)  // unknown content; document unchanged.
-    return input;
-  const int total_len = strlen(input);
-  const char *start_pos = strstr(input, tag_start);
-  if (start_pos == NULL) return input;
-  start_pos += strlen(tag_start);
-  const int offset = start_pos - input;
-  const char *end_pos = strstr(start_pos, tag_end);
-  if (end_pos == NULL) return input;
-  const int old_content_len = end_pos - start_pos;
-  const int new_content_len = strlen(content);
-  char *result = NULL;
-  if (old_content_len != new_content_len) {
-    result = (char *)malloc(total_len + new_content_len - old_content_len + 1);
-    memcpy(result, input, start_pos - input);
-    memcpy(result + offset, content, new_content_len);
-    strcpy(result + offset + new_content_len, end_pos);  // remaining
-    free(input);
-    ++*edit_count;
-  } else {
-    // Typically, we replace the same content with itself - same
-    // length. No realloc in this case.
-    if (strncmp(start_pos, content, new_content_len) != 0) {
-      memcpy(input + offset, content, new_content_len);
-      ++*edit_count;
-    }
-    result = input;
+  // Parse existing document
+  xml_document.load_string(xml.c_str());
+
+  pugi::xml_node root = xml_document.child("DIDL-Lite");
+  pugi::xml_node item = root.child("item");
+
+  // Existing format sucks, just make our own
+  if (root == NULL || item == NULL) {
+    xml_document.reset();
+    CreateXmlRoot(xml_document);
+
+    // Update locals with new document objects
+    root = xml_document.child("DIDL-Lite");
+    item = root.child("item");
   }
-  return result;
-}
 
-int SongMetaData_parse_DIDL(TrackMetadata *object, const char *xml) {
-  struct xmldoc *doc = xmldoc_parsexml(xml);
-  if (doc == NULL) return 0;
+  bool modified = false;
+  for (const auto& kv : tags_) {
+    const std::string& tag = kv.second.key_;
+    const std::string& value = kv.second.value_;
 
-  // ... did I mention that I hate navigating XML documents ?
-  struct xmlelement *didl_node = find_element_in_doc(doc, "DIDL-Lite");
-  if (didl_node == NULL) return 0;
+    // Skip if no value
+    if (value.empty()) continue;
 
-  struct xmlelement *item_node = find_element_in_element(didl_node, "item");
-  if (item_node == NULL) return 0;
+    pugi::xml_node xml = item.child(tag.c_str());
+    if (xml) {
+      // Check if already equal to avoid ID update
+      if (value.compare(xml.first_child().value()) == 0) continue;
 
-  struct xmlelement *value_node = NULL;
-  value_node = find_element_in_element(item_node, "dc:title");
-  if (value_node) object->title = get_node_value(value_node);
+      // Update existing XML element
+      xml.first_child().set_value(value.c_str());
 
-  value_node = find_element_in_element(item_node, "upnp:artist");
-  if (value_node) object->artist = get_node_value(value_node);
+      modified = true;
+    } else {
+      // Insert new XML element
+      xml = item.append_child(tag.c_str());
+      xml.append_child(pugi::node_pcdata).set_value(value.c_str());
 
-  value_node = find_element_in_element(item_node, "upnp:album");
-  if (value_node) object->album = get_node_value(value_node);
-
-  value_node = find_element_in_element(item_node, "upnp:genre");
-  if (value_node) object->genre = get_node_value(value_node);
-
-  xmldoc_free(doc);
-  return 1;
-}
-
-// TODO: actually use some XML library for this, but spending too much time
-// with XML is not good for the brain :) Worst thing that came out of the 90ies.
-char *SongMetaData_to_DIDL(const TrackMetadata *object,
-                           const char *original_xml) {
-  // Generating a unique ID in case the players cache the content by
-  // the item-ID. Right now this is experimental and not known to make
-  // any difference - it seems that players just don't display changes
-  // in the input stream. Grmbl.
-  static unsigned int xml_id = 42;
-  char unique_id[4 + 8 + 1];
-  snprintf(unique_id, sizeof(unique_id), "gmr-%08x", xml_id++);
-
-  char *result;
-  char *title, *artist, *album, *genre, *composer;
-  title = object->title.length() ? xmlescape(object->title.c_str(), 0) : NULL;
-  artist = object->artist.length() ? xmlescape(object->artist.c_str(), 0) : NULL;
-  album = object->album.length() ? xmlescape(object->album.c_str(), 0) : NULL;
-  genre = object->genre.length() ? xmlescape(object->genre.c_str(), 0) : NULL;
-  composer = object->composer.length() ? xmlescape(object->composer.c_str(), 0) : NULL;
-
-  if (original_xml == NULL || strlen(original_xml) == 0) {
-    result = generate_DIDL(unique_id, title, artist, album, genre, composer);
-  } else {
-    int edits = 0;
-    // Otherwise, surgically edit the original document to give
-    // control points as close as possible what they sent themself.
-    result = strdup(original_xml);
-    result = replace_range(result, "<dc:title>", "</dc:title>", title, &edits);
-    result = replace_range(result, "<upnp:artist>", "</upnp:artist>", artist,
-                           &edits);
-    result =
-        replace_range(result, "<upnp:album>", "</upnp:album>", album, &edits);
-    result =
-        replace_range(result, "<upnp:genre>", "</upnp:genre>", genre, &edits);
-    result = replace_range(result, "<upnp:creator>", "</upnp:creator>",
-                           composer, &edits);
-    if (edits) {
-      // Only if we changed the content, we generate a new
-      // unique id.
-      result = replace_range(result, " id=\"", "\"", unique_id, &edits);
+      modified = true;
     }
   }
-  free(title);
-  free(artist);
-  free(album);
-  free(genre);
-  free(composer);
-  return result;
+
+  if (modified) {
+    char idString[20] = {0};
+    snprintf(idString, sizeof(idString), "gmr-%08x", id_);
+
+    item.attribute("id").set_value(idString);
+  }
+
+  std::ostringstream stream;
+  xml_document.save(stream, "\t",
+                    pugi::format_default | pugi::format_no_declaration);
+
+  return stream.str();
 }

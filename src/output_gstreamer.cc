@@ -304,6 +304,7 @@ void GstreamerOutput::SetUri(const std::string& uri) {
   Log_info(TAG, "Set uri to '%s'", uri.c_str());
 
   uri_ = uri;
+  metadata_.Clear();
 }
 
 /**
@@ -536,6 +537,71 @@ void GstreamerOutput::NextStream(void) {
 }
 
 /**
+  @brief  Update the metadata for a given tag_name from the tag_list
+
+  @param  tag_list GstTagList from the GST_MESSAGE_TAG
+  @param  tag_name Tag name to update
+  @retval void
+*/
+void GstreamerOutput::UpdateMetadata(const GstTagList* tag_list,
+                                     const gchar* tag_name) {
+  // Validate input paramters
+  assert(tag_list && tag_name);
+
+  // Do nothing is tag is not supported
+  if (metadata_.TagSupported(tag_name) == false) return;
+
+  std::string new_tag;
+  GType type = gst_tag_get_type(tag_name);  // Can't switch. Non-constexpr types
+  if (type == G_TYPE_STRING) {
+    // Attempt to fetch the tag
+    gchar* value = NULL;
+    if (gst_tag_list_get_string(tag_list, tag_name, &value) == false) return;
+
+    // Copy into a string
+    new_tag = std::string(value);
+
+    // Free the tag buffer
+    g_free(value);
+  } else if (type == GST_TYPE_DATE_TIME) {
+    // Attempt to fetch the tag
+    GstDateTime* value = NULL;
+    if (gst_tag_list_get_date_time(tag_list, tag_name, &value) == false) return;
+
+    // Need at least a year
+    if (gst_date_time_has_year(value) == false) return;
+
+    uint32_t year = gst_date_time_get_year(value);
+    // Insert bogus month and day if none present
+    uint8_t month =
+        gst_date_time_has_month(value) ? gst_date_time_get_month(value) : 1;
+    uint8_t day =
+        gst_date_time_has_day(value) ? gst_date_time_get_day(value) : 1;
+
+    // Free the buffer
+    gst_date_time_unref(value);
+
+    // Mimic basic ISO8601 format
+    char buffer[12] = {0};
+    snprintf(buffer, sizeof(buffer), "%d-%02d-%02d", year, month, day);
+
+    new_tag = std::string(buffer);
+  } else if (type == G_TYPE_UINT) {
+    guint value = 0;
+    if (gst_tag_list_get_uint(tag_list, tag_name, &value) == false) return;
+
+    new_tag = std::to_string(value);
+  } else {
+    Log_warn(TAG, "Tag: '%s' is an unknown type '%s'", tag_name,
+             g_type_name(type));
+  }
+
+  metadata_[tag_name] = new_tag;
+
+  // Log_info(TAG, "Got tag: '%s' value: '%s'", tag_name, ((std::string) tag).c_str());
+}
+
+/**
   @brief  Handle message from the Gstreamer bus
 
   @param  message GstMessage to process
@@ -604,40 +670,15 @@ bool GstreamerOutput::BusCallback(GstMessage* message) {
       GstTagList* tag_list = NULL;
       gst_message_parse_tag(message, &tag_list);
 
-      auto attemptTagUpdate = [tag_list](std::string& tag,
-                                         const char* tag_name) -> bool {
-        // Attempt to fetch the tag
-        gchar* value = NULL;
-        if (gst_tag_list_get_string(tag_list, tag_name, &value) == false)
-          return false;
-
-        if (tag.compare(value) == 0) {
-          // Identical tags
-          g_free(value);
-          return false;
-        }
-
-        tag = value;
-
-        // Free the tag buffer
-        g_free(value);
-
-        // Log_info(TAG, "Got tag: '%s' value: '%s'", tag_name, tag.c_str());
-
-        return true;
+      auto addTag = [](const GstTagList* list, const gchar* tag_name,
+                       gpointer user_data) {
+        ((GstreamerOutput*)user_data)->UpdateMetadata(list, tag_name);
       };
 
-      bool notify = false;
-
-      notify |= attemptTagUpdate(metadata.title, GST_TAG_TITLE);
-      notify |= attemptTagUpdate(metadata.artist, GST_TAG_ARTIST);
-      notify |= attemptTagUpdate(metadata.album, GST_TAG_ALBUM);
-      notify |= attemptTagUpdate(metadata.genre, GST_TAG_GENRE);
-      notify |= attemptTagUpdate(metadata.composer, GST_TAG_COMPOSER);
-
-      if (notify) NotifyMetadataChange(metadata);
-
+      gst_tag_list_foreach(tag_list, addTag, this);
       gst_tag_list_free(tag_list);
+
+      if (metadata_.Modified()) NotifyMetadataChange(metadata_);
 
       break;
     }

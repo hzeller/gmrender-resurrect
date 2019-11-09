@@ -83,6 +83,7 @@ class GstreamerOutput : public OutputModule,
  private:
   GstState GetPlayerState(void);
   void NextStream(void);
+  void UpdateMetadata(const GstTagList* list, const gchar* tag_name);
   bool BusCallback(GstMessage* message);
 
   GstElement* player_ = nullptr;

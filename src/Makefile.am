@@ -11,7 +11,8 @@ gmediarender_SOURCES = main.cc git-version.h \
 	output.cc output.h \
 	logging.h logging.cc \
 	xmldoc.cc xmldoc.h \
-	xmlescape.cc xmlescape.h
+	xmlescape.cc xmlescape.h \
+	pugixml/pugixml.cpp pugixml/pugixml.hpp
 
 if HAVE_GST
 gmediarender_SOURCES += \

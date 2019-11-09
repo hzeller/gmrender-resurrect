@@ -3,7 +3,7 @@ AC_INIT(gmediarender, 0.0.8, https://github.com/hzeller/gmrender-resurrect)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_SRCDIR(src/main.cc)
 AC_CONFIG_HEADERS(config.h)
-AM_INIT_AUTOMAKE([1.8 dist-bzip2 no-dist-gzip check-news])
+AM_INIT_AUTOMAKE([1.8 dist-bzip2 no-dist-gzip check-news subdir-objects])
 
 AC_SYS_LARGEFILE
 
