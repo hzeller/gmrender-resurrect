@@ -203,7 +203,7 @@ int connmgr_init(const char* mime_filter_string) {
 
   if (protoInfo.empty() == false) {
     // Truncate final comma
-    protoInfo.resize(protoInfo.length() - 1);
+    protoInfo.pop_back();
     srv->variable_container->Set(CONNMGR_VAR_SINK_PROTO_INFO, protoInfo);
   }
 
