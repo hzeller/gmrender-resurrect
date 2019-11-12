@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 #include "logging.h"
 #include "upnp_connmgr.h"
@@ -536,7 +537,7 @@ static int output_gstreamer_init(void)
         if (buffer_duration > 0) {
                 gint64 buffer_duration_ns = round(buffer_duration * 1.0e9);
                 Log_info("gstreamer",
-                         "Setting buffer duration to %ldms",
+                         "Setting buffer duration to %" PRId64 "ms",
                          buffer_duration_ns / 1000000);
                 g_object_set(G_OBJECT(player_),
                              "buffer-duration",
