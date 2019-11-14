@@ -45,10 +45,8 @@ class OutputModule {
   typedef enum Result { kSuccess = 0, kError = -1 } Result;
 
   OutputModule(Output::PlaybackCallback play = nullptr,
-               Output::MetadataCallback meta = nullptr) {
-    this->playback_callback = play;
-    this->metadata_callback = meta;
-  }
+               Output::MetadataCallback meta = nullptr)
+      : playback_callback_(play), metadata_callback_(meta) {}
 
   virtual Result Initalize(Options& options) = 0;
 
@@ -69,18 +67,18 @@ class OutputModule {
   virtual Result SetMute(bool mute) = 0;
 
  protected:
-  TrackMetadata metadata;
-
-  Output::PlaybackCallback playback_callback = nullptr;
-  Output::MetadataCallback metadata_callback = nullptr;
-
   virtual void NotifyPlaybackUpdate(Output::OutputState state) {
-    if (this->playback_callback) this->playback_callback(state);
+    if (this->playback_callback_) this->playback_callback_(state);
   }
 
   virtual void NotifyMetadataChange(const TrackMetadata& metadata) {
-    if (this->metadata_callback) this->metadata_callback(metadata);
+    if (this->metadata_callback_) this->metadata_callback_(metadata);
   }
+
+  TrackMetadata metadata;
+
+  Output::PlaybackCallback playback_callback_ = nullptr;
+  Output::MetadataCallback metadata_callback_ = nullptr;
 };
 
 template <class Class>
