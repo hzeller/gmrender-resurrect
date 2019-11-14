@@ -36,10 +36,10 @@ class GstreamerOutput : public OutputModule,
     // Let GstreamerOutput access protected constructor
     friend class GstreamerOutput;
 
-    char* audio_sink = nullptr;
-    char* audio_device = nullptr;
-    char* audio_pipe = nullptr;
-    char* video_sink = nullptr;
+    const char* audio_sink = nullptr;
+    const char* audio_device = nullptr;
+    const char* audio_pipe = nullptr;
+    const char* video_sink = nullptr;
     double initial_db = 0.0;
     double buffer_duration = 0.0;  // Buffer disbled by default, see #182
 
