@@ -29,6 +29,11 @@
 #include <sstream>
 #include <string>
 
+/**
+  @brief  Modifies a set of MIME types by filtering the set, and adding or
+  removing additional types manually. Filter is initalize by supplying a string
+  of CSV values.
+*/
 class MimeTypeFilter {
  public:
   MimeTypeFilter(const char* filter_string) {
@@ -54,17 +59,13 @@ class MimeTypeFilter {
     filter_by_root(types);
 
     // Manually add additional MIME types
-    for (auto& mime_type : this->added_types) types.insert(mime_type);
+    for (auto& mime_type : this->added_types_) types.insert(mime_type);
 
     // Manually remove specific MIME types
-    for (auto& mime_type : this->removed_types) types.erase(mime_type);
+    for (auto& mime_type : this->removed_types_) types.erase(mime_type);
   }
 
  private:
-  std::set<std::string> allowed_roots;
-  std::set<std::string> removed_types;
-  std::set<std::string> added_types;
-
   /**
     @brief  Parse the input string into filter terms
 
@@ -72,9 +73,9 @@ class MimeTypeFilter {
     @retval none
   */
   void parse_string(const std::string& filter_string) {
-    this->allowed_roots.clear();
-    this->added_types.clear();
-    this->removed_types.clear();
+    this->allowed_roots_.clear();
+    this->added_types_.clear();
+    this->removed_types_.clear();
 
     if (filter_string.empty()) return;
 
@@ -83,11 +84,11 @@ class MimeTypeFilter {
     std::string token;
     while (std::getline(stream, token, ',')) {
       if (token[0] == '+')
-        this->added_types.emplace(token, 1);
+        this->added_types_.emplace(token, 1);
       else if (token[0] == '-')
-        this->removed_types.emplace(token, 1);
+        this->removed_types_.emplace(token, 1);
       else
-        this->allowed_roots.emplace(token);
+        this->allowed_roots_.emplace(token);
     }
   }
 
@@ -99,7 +100,7 @@ class MimeTypeFilter {
   */
   void filter_by_root(std::set<std::string>& types) {
     // Don't filter if list is empty
-    if (this->allowed_roots.empty()) return;
+    if (this->allowed_roots_.empty()) return;
 
     // Iterate through the supported types and filter by root
     auto it = types.begin();
@@ -109,13 +110,13 @@ class MimeTypeFilter {
       // Attempt to find the type in the allowed lists by matching the shortest
       // string
       auto result =
-          std::find_if(this->allowed_roots.begin(), this->allowed_roots.end(),
+          std::find_if(this->allowed_roots_.begin(), this->allowed_roots_.end(),
                        [type](const std::string& root) {
                          size_t len = std::min(type.length(), root.length());
                          return (type.compare(0, len, root) == 0);
                        });
 
-      if (result == this->allowed_roots.end()) {
+      if (result == this->allowed_roots_.end()) {
         // Type was NOT in allowed list
         it = types.erase(it);
         continue;
@@ -124,6 +125,10 @@ class MimeTypeFilter {
       it++;
     }
   }
+
+  std::set<std::string> allowed_roots_;
+  std::set<std::string> removed_types_;
+  std::set<std::string> added_types_;
 };
 
 #endif
