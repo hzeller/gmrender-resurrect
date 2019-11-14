@@ -37,10 +37,10 @@ class OutputModule {
     virtual std::vector<GOptionGroup*> GetOptionGroups(void) = 0;
   };
 
-  typedef struct TrackState {
+  struct TrackState {
     int64_t duration_ns;
     int64_t position_ns;
-  } TrackState;
+  };
 
   typedef enum Result { kSuccess = 0, kError = -1 } Result;
 

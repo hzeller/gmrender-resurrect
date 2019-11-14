@@ -43,12 +43,12 @@
 
 #define TAG "output"
 
-typedef struct OutputEntry {
+struct OutputEntry {
   std::string shortname;
   std::string description;
   OutputModule* (*create)(Output::PlaybackCallback, Output::MetadataCallback);
   OutputModule::Options& options;
-} OutputEntry;
+};
 
 static std::vector<OutputEntry> modules = {
 #ifdef HAVE_GST
