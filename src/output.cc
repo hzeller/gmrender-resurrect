@@ -44,6 +44,8 @@
 
 #define TAG "output"
 
+static OutputModule* output_module = NULL;
+
 /**
   @brief  Describes an available output module by name, description. Provides an
   interface for construction of the output and a means to query the output for
@@ -57,21 +59,23 @@ struct OutputEntry {
   OutputModule::Options& options;
 };
 
-static std::vector<OutputEntry> modules = {
+static std::vector<OutputEntry>& GetAvailableModules() {
+  static std::vector<OutputEntry> modules = {
 #ifdef HAVE_GST
     {"gst", "GStreamer multimedia framework", GstreamerOutput::Create,
-     GstreamerOutput::Options::Get()}
+      GstreamerOutput::Options::Get()}
 #else
 // this will be a runtime error, but there is not much point in waiting till
 // then.
 #error "No output configured. You need to ./configure --with-gstreamer"
 #endif
-};
+  };
 
-static OutputModule* output_module = NULL;
+  return modules;
+}
 
 int Output::AddOptions(GOptionContext* ctx) {
-  for (const auto& module : modules) {
+  for (const auto& module : GetAvailableModules()) {
     for (auto option : module.options.GetOptionGroups())
       g_option_context_add_group(ctx, option);
   }
@@ -80,6 +84,8 @@ int Output::AddOptions(GOptionContext* ctx) {
 }
 
 void Output::DumpModules(void) {
+  std::vector<OutputEntry>& modules = GetAvailableModules();
+
   if (modules.size() == 0) {
     printf("No outputs available.\n");
     return;
@@ -116,6 +122,8 @@ int Output::Loop() {
 
 int Output::Init(const char* shortname, Output::PlaybackCallback play_callback,
                  Output::MetadataCallback metadata_callback) {
+  std::vector<OutputEntry>& modules = GetAvailableModules();
+
   if (modules.size() == 0) {
     Log_error(TAG, "No outputs available.");
     return -1;
