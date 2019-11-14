@@ -36,19 +36,19 @@ class GstreamerOutput : public OutputModule,
     // Let GstreamerOutput access protected constructor
     friend class GstreamerOutput;
 
-    const char* audio_sink = nullptr;
-    const char* audio_device = nullptr;
-    const char* audio_pipe = nullptr;
-    const char* video_sink = nullptr;
-    double initial_db = 0.0;
-    double buffer_duration = 0.0;  // Buffer disbled by default, see #182
-
     std::vector<GOptionGroup*> GetOptionGroups(void);
 
     static Options& Get() {
       static Options options;
       return options;
     }
+
+    const char* audio_sink = nullptr;
+    const char* audio_device = nullptr;
+    const char* audio_pipe = nullptr;
+    const char* video_sink = nullptr;
+    double initial_db = 0.0;
+    double buffer_duration = 0.0;  // Buffer disbled by default, see #182
 
    protected:
     Options() {}                       // Hide away the constructor
@@ -82,16 +82,16 @@ class GstreamerOutput : public OutputModule,
   Result SetMute(bool mute);
 
  private:
-  GstElement* player = nullptr;
-
-  std::string uri;
-  std::string next_uri;
-
-  GstreamerOutput::Options options;
-
   GstState GetPlayerState(void);
   void NextStream(void);
   bool BusCallback(GstMessage* message);
+
+  GstElement* player_ = nullptr;
+
+  std::string uri_;
+  std::string next_uri;
+
+  GstreamerOutput::Options options_;
 };
 
 #endif
