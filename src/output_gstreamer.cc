@@ -204,7 +204,7 @@ OutputModule::Result GstreamerOutput::Initalize(
   // Typedef a function pointer of the about-to-finish callback
   typedef void (*CallbackType)(GstElement*, gpointer);
 
-  // Attach a callback to the about-to-finish evnet via a lambda
+  // Attach a callback to the about-to-finish event via a lambda
   g_signal_connect(
       G_OBJECT(this->player_), "about-to-finish",
       G_CALLBACK((CallbackType)[](GstElement * o, gpointer d)->void {
