@@ -30,6 +30,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <algorithm>
+#include <functional>
 #include <vector>
 
 #include <glib.h>
@@ -43,10 +44,16 @@
 
 #define TAG "output"
 
+/**
+  @brief  Describes an available output module by name, description. Provides an
+  interface for construction of the output and a means to query the output for
+  associated command line options.
+*/
 struct OutputEntry {
   std::string shortname;
   std::string description;
-  OutputModule* (*create)(Output::PlaybackCallback, Output::MetadataCallback);
+  std::function<OutputModule*(Output::PlaybackCallback,
+                              Output::MetadataCallback)> create;
   OutputModule::Options& options;
 };
 
@@ -118,16 +125,16 @@ int Output::Init(const char* shortname, Output::PlaybackCallback play_callback,
   std::string name(shortname ? shortname : modules.front().shortname);
 
   // Locate module by shortname
-  auto it = std::find_if(
+  auto found = std::find_if(
       modules.begin(), modules.end(),
-      [name](OutputEntry& entry) { return entry.shortname == name; });
+      [name](const OutputEntry& entry) { return entry.shortname == name; });
 
-  if (it == modules.end()) {
+  if (found == modules.end()) {
     Log_error(TAG, "No such output: '%s'", name.c_str());
     return -1;
   }
 
-  const OutputEntry& entry = *it;
+  const OutputEntry& entry = *found;
 
   Log_info(TAG, "Using output: %s (%s)", entry.shortname.c_str(),
            entry.description.c_str());
