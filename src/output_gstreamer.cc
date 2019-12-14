@@ -43,7 +43,7 @@
 #include "output_module.h"
 #include "upnp_connmgr.h"
 
-#define TAG "gstreamer"
+static constexpr const char* TAG = "gstreamer";
 
 /**
   @brief  Return the command line options assocaited with the output module
