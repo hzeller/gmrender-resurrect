@@ -313,7 +313,7 @@ void GstreamerOutput::SetUri(const std::string& uri) {
 void GstreamerOutput::SetNextUri(const std::string& uri) {
   Log_info(TAG, "Set next uri to '%s'", uri.c_str());
 
-  this->next_uri = uri;
+  this->next_uri_ = uri;
 }
 
 /**
@@ -508,13 +508,13 @@ GstState GstreamerOutput::GetPlayerState(void) {
   @retval void
 */
 void GstreamerOutput::NextStream(void) {
-  Log_info(TAG, "about-to-finish cb: set uri to '%s'", this->next_uri.c_str());
+  Log_info(TAG, "about-to-finish cb: set uri to '%s'", this->next_uri_.c_str());
 
   // Swap contents of next URI into current URI
-  this->uri_.swap(this->next_uri);
+  this->uri_.swap(this->next_uri_);
 
   // Cear next URI so we don't repeat
-  this->next_uri.clear();
+  this->next_uri_.clear();
 
   if (this->uri_.length() > 0) {
     g_object_set(G_OBJECT(this->player_), "uri", this->uri_.c_str(), NULL);
@@ -536,15 +536,15 @@ bool GstreamerOutput::BusCallback(GstMessage* message) {
     case GST_MESSAGE_EOS: {
       Log_info(TAG, "%s: End-of-stream", message->src->name);
 
-      if (this->next_uri.length() > 0) {
+      if (this->next_uri_.length() > 0) {
         // If playbin does not support gapless (old versions didn't), this will
         // trigger.
 
         // Swap contents of next URI into current URI
-        this->uri_.swap(this->next_uri);
+        this->uri_.swap(this->next_uri_);
 
         // Cear next URI so we don't repeat
-        this->next_uri.clear();
+        this->next_uri_.clear();
 
         gst_element_set_state(this->player_, GST_STATE_READY);
 

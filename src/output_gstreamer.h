@@ -89,7 +89,7 @@ class GstreamerOutput : public OutputModule,
   GstElement* player_ = nullptr;
 
   std::string uri_;
-  std::string next_uri;
+  std::string next_uri_;
 
   GstreamerOutput::Options options_;
 };
