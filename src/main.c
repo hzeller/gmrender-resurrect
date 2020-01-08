@@ -171,15 +171,18 @@ static gboolean process_cmdline(int argc, char **argv)
 	rc = output_add_options(ctx);
 	if (rc != 0) {
 		fprintf(stderr, "Failed to add output options\n");
+		g_option_context_free(ctx);
 		return FALSE;
 	}
 
 	if (!g_option_context_parse (ctx, &argc, &argv, &err)) {
 		fprintf(stderr, "Failed to initialize: %s\n", err->message);
 		g_error_free (err);
+		g_option_context_free(ctx);
 		return FALSE;
 	}
 
+	g_option_context_free(ctx);
 	return TRUE;
 }
 
