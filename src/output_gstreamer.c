@@ -55,8 +55,11 @@ static void scan_mime_list(void)
 #endif
 
   // Fetch a list of all element factories
-  const GList* features =
+  GList* features =
       gst_registry_get_feature_list(registry, GST_TYPE_ELEMENT_FACTORY);
+
+  // Save a copy of the list root so we can properly free later
+  GList* root = features;
 
   while (features != NULL) {
     GstPluginFeature* feature = GST_PLUGIN_FEATURE(features->data);
@@ -94,15 +97,23 @@ static void scan_mime_list(void)
       // Skip capabilities that they tell us nothing
       if (capabilities == NULL || gst_caps_is_any(capabilities) ||
           gst_caps_is_empty(capabilities))
-        continue;
+        {
+          gst_caps_unref(capabilities);
+          continue;
+        }
 
       for (guint i = 0; i < gst_caps_get_size(capabilities); i++) {
         GstStructure* structure = gst_caps_get_structure(capabilities, i);
 
         register_mime_type(gst_structure_get_name(structure));
       }
+
+      gst_caps_unref(capabilities);
     }
   }
+
+	// Free any allocated memory
+  gst_plugin_feature_list_free(root);
 
 	// There seem to be all kinds of mime types out there that start with
 	// "audio/" but are not explicitly supported by gstreamer. Let's just
