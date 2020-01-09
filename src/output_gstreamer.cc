@@ -240,8 +240,11 @@ Output::MimeTypeSet GstreamerOutput::GetSupportedMedia(void) {
   Output::MimeTypeSet mime_types;
 
   // Fetch a list of all element factories
-  const GList* features =
+  GList* features =
       gst_registry_get_feature_list(registry, GST_TYPE_ELEMENT_FACTORY);
+
+  // Save a copy of the list root so we can properly free later
+  GList* root = features;
 
   while (features != NULL) {
     GstPluginFeature* feature = GST_PLUGIN_FEATURE(features->data);
@@ -278,16 +281,23 @@ Output::MimeTypeSet GstreamerOutput::GetSupportedMedia(void) {
 
       // Skip capabilities that they tell us nothing
       if (capabilities == NULL || gst_caps_is_any(capabilities) ||
-          gst_caps_is_empty(capabilities))
+          gst_caps_is_empty(capabilities)) {
+        gst_caps_unref(capabilities);
         continue;
+      }
 
       for (guint i = 0; i < gst_caps_get_size(capabilities); i++) {
         GstStructure* structure = gst_caps_get_structure(capabilities, i);
 
         mime_types.emplace(gst_structure_get_name(structure));
       }
+
+      gst_caps_unref(capabilities);
     }
   }
+
+  // Free the feature list
+  gst_plugin_feature_list_free(root);
 
   return mime_types;
 }
