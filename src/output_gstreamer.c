@@ -46,74 +46,74 @@ static double buffer_duration = 0.0; /* Buffer disbled by default, see #182 */
 
 static void scan_mime_list(void)
 {
-  GstRegistry* registry = NULL;
+	GstRegistry* registry = NULL;
 
 #if (GST_VERSION_MAJOR < 1)
-  registry = gst_registry_get_default();
+	registry = gst_registry_get_default();
 #else
-  registry = gst_registry_get();
+	registry = gst_registry_get();
 #endif
 
-  // Fetch a list of all element factories
-  GList* features =
-      gst_registry_get_feature_list(registry, GST_TYPE_ELEMENT_FACTORY);
+	// Fetch a list of all element factories
+	GList* features =
+		gst_registry_get_feature_list(registry, GST_TYPE_ELEMENT_FACTORY);
 
-  // Save a copy of the list root so we can properly free later
-  GList* root = features;
+	// Save a copy of the list root so we can properly free later
+	GList* root = features;
 
-  while (features != NULL) {
-    GstPluginFeature* feature = GST_PLUGIN_FEATURE(features->data);
+	while (features != NULL) {
+		GstPluginFeature* feature = GST_PLUGIN_FEATURE(features->data);
 
-    // Advance list
-    features = g_list_next(features);
+		// Advance list
+		features = g_list_next(features);
 
-    // Better be an element factory
-    assert(GST_IS_ELEMENT_FACTORY(feature));
+		// Better be an element factory
+		assert(GST_IS_ELEMENT_FACTORY(feature));
 
-    GstElementFactory* factory = GST_ELEMENT_FACTORY(feature);
+		GstElementFactory* factory = GST_ELEMENT_FACTORY(feature);
 
-    // Ignore elements without pads
-    if (gst_element_factory_get_num_pad_templates(factory) == 0) continue;
+		// Ignore elements without pads
+		if (gst_element_factory_get_num_pad_templates(factory) == 0) continue;
 
-    // Fetch a list of all pads
-    const GList* pads = gst_element_factory_get_static_pad_templates(factory);
+		// Fetch a list of all pads
+		const GList* pads = gst_element_factory_get_static_pad_templates(factory);
 
-    while (pads) {
-      GstStaticPadTemplate* padTemplate = (GstStaticPadTemplate*)pads->data;
+		while (pads) {
+			GstStaticPadTemplate* padTemplate = (GstStaticPadTemplate*)pads->data;
 
-      // Advance list
-      pads = g_list_next(pads);
+			// Advance list
+			pads = g_list_next(pads);
 
-      // Skip pads that aren't sinks
-      if (padTemplate->direction != GST_PAD_SINK) continue;
+			// Skip pads that aren't sinks
+			if (padTemplate->direction != GST_PAD_SINK) continue;
 
-      // This is literally all known pad presences so it should be OK!
-      assert(padTemplate->presence == GST_PAD_ALWAYS ||
-             padTemplate->presence == GST_PAD_SOMETIMES ||
-             padTemplate->presence == GST_PAD_REQUEST);
+			// This is literally all known pad presences so it should be OK!
+			assert(padTemplate->presence == GST_PAD_ALWAYS ||
+				   padTemplate->presence == GST_PAD_SOMETIMES ||
+				   padTemplate->presence == GST_PAD_REQUEST);
 
-      GstCaps* capabilities = gst_static_caps_get(&padTemplate->static_caps);
+			GstCaps* capabilities = gst_static_caps_get(&padTemplate->static_caps);
 
-      // Skip capabilities that they tell us nothing
-      if (capabilities == NULL || gst_caps_is_any(capabilities) ||
-          gst_caps_is_empty(capabilities))
-        {
-          gst_caps_unref(capabilities);
-          continue;
-        }
+			// Skip capabilities that they tell us nothing
+			if (capabilities == NULL || gst_caps_is_any(capabilities) ||
+				gst_caps_is_empty(capabilities))
+			{
+				gst_caps_unref(capabilities);
+				continue;
+			}
 
-      for (guint i = 0; i < gst_caps_get_size(capabilities); i++) {
-        GstStructure* structure = gst_caps_get_structure(capabilities, i);
+			for (guint i = 0; i < gst_caps_get_size(capabilities); i++) {
+				GstStructure* structure = gst_caps_get_structure(capabilities, i);
 
-        register_mime_type(gst_structure_get_name(structure));
-      }
+				register_mime_type(gst_structure_get_name(structure));
+			}
 
-      gst_caps_unref(capabilities);
-    }
-  }
+			gst_caps_unref(capabilities);
+		}
+	}
 
 	// Free any allocated memory
-  gst_plugin_feature_list_free(root);
+	gst_plugin_feature_list_free(root);
 
 	// There seem to be all kinds of mime types out there that start with
 	// "audio/" but are not explicitly supported by gstreamer. Let's just
