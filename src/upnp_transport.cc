@@ -601,7 +601,7 @@ static void *thread_update_track_time(void *userdata) {
     usleep(500000);  // 500ms
     service_lock();
     gint64 duration, position;
-    const int pos_result = Output::GetPosition(duration, position);
+    const int pos_result = Output::GetPosition(&duration, &position);
     if (pos_result == 0) {
       if (duration != last_duration) {
         print_upnp_time(tbuf, sizeof(tbuf), duration);
@@ -677,16 +677,16 @@ static int stop(struct action_event *event) {
   return 0;
 }
 
-static void inform_play_transition_from_output(Output::OutputState state) {
+static void inform_play_transition_from_output(Output::State state) {
   service_lock();
   switch (state) {
-    case Output::OutputState::kPlaybackStopped:
+    case Output::State::kPlaybackStopped:
       replace_transport_uri_and_meta("", "");
       replace_current_uri_and_meta("", "");
       change_transport_state(TransportState::STOPPED);
       break;
 
-    case Output::OutputState::kStartedNextStream: {
+    case Output::State::kStartedNextStream: {
       auto av_uri = state_variables_->Get(TRANSPORT_VAR_NEXT_AV_URI);
       auto av_meta = state_variables_->Get(TRANSPORT_VAR_NEXT_AV_URI_META);
       replace_transport_uri_and_meta(av_uri.c_str(), av_meta.c_str());

@@ -400,16 +400,19 @@ OutputModule::Result GstreamerOutput::Seek(int64_t position_ns) {
   @param  track track_state_t to populate with duration and position information
   @retval Result
 */
-OutputModule::Result GstreamerOutput::GetPosition(TrackState& track) {
+OutputModule::Result GstreamerOutput::GetPosition(TrackState* track) {
+  // Validate output pointer
+  if (track == nullptr) return OutputModule::kError;
+
   // Can't query position yet
   if (this->GetPlayerState() <= GST_STATE_READY) return OutputModule::kError;
 
 #if (GST_VERSION_MAJOR < 1)
-  static track_state_t last_state;
+  static TrackState last_state;
 
   // playbin2 does not allow to query while paused, return last known state
-  track = last_state;
-  if (this->get_player_state() != GST_STATE_PLAYING)
+  *track = last_state;
+  if (this->GetPlayerState() != GST_STATE_PLAYING)
     return OutputModule::kSuccess;
 
   GstFormat fmt = GST_FORMAT_TIME;
@@ -420,20 +423,20 @@ OutputModule::Result GstreamerOutput::GetPosition(TrackState& track) {
 
   OutputModule::Result result = OutputModule::kSuccess;
   if (!gst_element_query_duration(this->player_, query_type,
-                                  (gint64*)&track.duration_ns)) {
+                                  (gint64*)&track->duration_ns)) {
     Log_warn(TAG, "Failed to get track duration.");
     result = OutputModule::kError;
   }
 
   if (!gst_element_query_position(this->player_, query_type,
-                                  (gint64*)&track.position_ns)) {
+                                  (gint64*)&track->position_ns)) {
     Log_warn(TAG, "Failed to get track position.");
     result = OutputModule::kError;
   }
 
 #if (GST_VERSION_MAJOR < 1)
   // Update last known state
-  last_state = track;
+  last_state = *track;
 #endif
 
   return result;
@@ -445,11 +448,14 @@ OutputModule::Result GstreamerOutput::GetPosition(TrackState& track) {
   @param  volume Current volume (0.0 - 1.0)
   @retval Result
 */
-OutputModule::Result GstreamerOutput::GetVolume(float& volume) {
+OutputModule::Result GstreamerOutput::GetVolume(float* volume) {
+  // Validate output pointer
+  if (volume == nullptr) return OutputModule::kError;
+
   double vol = 0;
   g_object_get(this->player_, "volume", &vol, NULL);
 
-  volume = (float)vol;
+  *volume = (float)vol;
 
   Log_info(TAG, "Query volume fraction: %f", vol);
 
@@ -476,11 +482,14 @@ OutputModule::Result GstreamerOutput::SetVolume(float volume) {
   @param  bool Mute state
   @retval Result
 */
-OutputModule::Result GstreamerOutput::GetMute(bool& mute) {
+OutputModule::Result GstreamerOutput::GetMute(bool* mute) {
+  // Validate output pointer
+  if (mute == nullptr) return OutputModule::kError;
+
   gboolean val = false;
   g_object_get(this->player_, "mute", &val, NULL);
 
-  mute = (bool)val;
+  *mute = (bool)val;
 
   return OutputModule::kSuccess;
 }
@@ -531,7 +540,7 @@ void GstreamerOutput::NextStream(void) {
 
     // TODO(hzeller): can we figure out when we _actually_ start playing this?
     // There are probably a couple of seconds between now and actual start.
-    this->NotifyPlaybackUpdate(Output::OutputState::kStartedNextStream);
+    this->NotifyPlaybackUpdate(Output::State::kStartedNextStream);
   }
 }
 
@@ -562,9 +571,9 @@ bool GstreamerOutput::BusCallback(GstMessage* message) {
 
         gst_element_set_state(this->player_, GST_STATE_PLAYING);
 
-        this->NotifyPlaybackUpdate(Output::OutputState::kStartedNextStream);
+        this->NotifyPlaybackUpdate(Output::State::kStartedNextStream);
       } else
-        this->NotifyPlaybackUpdate(Output::OutputState::kPlaybackStopped);
+        this->NotifyPlaybackUpdate(Output::State::kPlaybackStopped);
 
       break;
     }

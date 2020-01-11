@@ -33,10 +33,10 @@
 #include "song-meta-data.h"
 
 namespace Output {
-typedef enum OutputState { kPlaybackStopped, kStartedNextStream } OutputState;
+enum State { kPlaybackStopped, kStartedNextStream };
 
 // Callbacks types from output to higher levels
-typedef void (*PlaybackCallback)(OutputState);
+typedef void (*PlaybackCallback)(State);
 typedef void (*MetadataCallback)(const TrackMetadata&);
 
 typedef std::set<std::string> MimeTypeSet;
@@ -58,10 +58,10 @@ int Pause(void);
 int Stop(void);
 int Seek(int64_t position_nanos);
 
-int GetPosition(int64_t& duration, int64_t& position);
-int GetVolume(float& value);
+int GetPosition(int64_t* duration, int64_t* position);
+int GetVolume(float* value);
 int SetVolume(float value);
-int GetMute(bool& value);
+int GetMute(bool* value);
 int SetMute(bool value);
 };  // namespace Output
 

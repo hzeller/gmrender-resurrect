@@ -55,8 +55,8 @@ class GstreamerOutput : public OutputModule,
     Options(const Options&) = delete;  // Delete copy constructor
   };
 
-  GstreamerOutput(Output::PlaybackCallback play = nullptr,
-                  Output::MetadataCallback meta = nullptr)
+  GstreamerOutput(Output::PlaybackCallback play,
+                  Output::MetadataCallback meta)
       : OutputModule(play, meta) {}
 
   Result Initalize(GstreamerOutput::Options& options);
@@ -75,10 +75,10 @@ class GstreamerOutput : public OutputModule,
   Result Pause(void);
   Result Seek(int64_t position_ns);
 
-  Result GetPosition(TrackState& track);
-  Result GetVolume(float& volume);
+  Result GetPosition(TrackState* track);
+  Result GetVolume(float* volume);
   Result SetVolume(float volume);
-  Result GetMute(bool& mute);
+  Result GetMute(bool* mute);
   Result SetMute(bool mute);
 
  private:

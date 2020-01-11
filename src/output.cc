@@ -59,7 +59,7 @@ struct OutputEntry {
   OutputModule::Options& options;
 };
 
-static std::vector<OutputEntry>& GetAvailableModules() {
+static const std::vector<OutputEntry>& GetAvailableModules() {
   static std::vector<OutputEntry> modules = {
 #ifdef HAVE_GST
     {"gst", "GStreamer multimedia framework", GstreamerOutput::Create,
@@ -84,7 +84,7 @@ int Output::AddOptions(GOptionContext* ctx) {
 }
 
 void Output::DumpModules(void) {
-  std::vector<OutputEntry>& modules = GetAvailableModules();
+  const std::vector<OutputEntry>& modules = GetAvailableModules();
 
   if (modules.size() == 0) {
     printf("No outputs available.\n");
@@ -102,7 +102,7 @@ int Output::Loop() {
   static GMainLoop* main_loop = NULL;
 
   // Define a signal handler to shutdown the loop
-  auto signal_handler = [](int sig) -> void {
+  static auto signal_handler = [](int sig) -> void {
     if (main_loop) {
       // TODO(hzeller): revisit - this is not safe to do.
       g_main_loop_quit(main_loop);
@@ -122,7 +122,7 @@ int Output::Loop() {
 
 int Output::Init(const char* shortname, Output::PlaybackCallback play_callback,
                  Output::MetadataCallback metadata_callback) {
-  std::vector<OutputEntry>& modules = GetAvailableModules();
+  const std::vector<OutputEntry>& modules = GetAvailableModules();
 
   if (modules.size() == 0) {
     Log_error(TAG, "No outputs available.");
@@ -152,9 +152,6 @@ int Output::Init(const char* shortname, Output::PlaybackCallback play_callback,
   assert(output_module != NULL);
 
   output_module->Initalize(entry.options);
-
-  // Free the modules list
-  modules.clear();
 
   return 0;
 }
@@ -201,13 +198,14 @@ int Output::Seek(int64_t position_nanos) {
   return output_module->Seek(position_nanos);
 }
 
-int Output::GetPosition(int64_t& duration_ns, int64_t& position_ns) {
+int Output::GetPosition(int64_t* duration_ns, int64_t* position_ns) {
   assert(output_module);
+  assert(duration_ns && position_ns);
 
   OutputModule::TrackState state;
-  if (output_module->GetPosition(state) == OutputModule::kSuccess) {
-    duration_ns = state.duration_ns;
-    position_ns = state.position_ns;
+  if (output_module->GetPosition(&state) == OutputModule::kSuccess) {
+    *duration_ns = state.duration_ns;
+    *position_ns = state.position_ns;
 
     return 0;
   }
@@ -215,8 +213,9 @@ int Output::GetPosition(int64_t& duration_ns, int64_t& position_ns) {
   return -1;
 }
 
-int Output::GetVolume(float& value) {
+int Output::GetVolume(float* value) {
   assert(output_module);
+  assert(value);
 
   return output_module->GetVolume(value);
 }
@@ -227,8 +226,9 @@ int Output::SetVolume(float value) {
   return output_module->SetVolume(value);
 }
 
-int Output::GetMute(bool& value) {
+int Output::GetMute(bool* value) {
   assert(output_module);
+  assert(value);
 
   return output_module->GetMute(value);
 }

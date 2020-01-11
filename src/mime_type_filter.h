@@ -38,11 +38,7 @@ class MimeTypeFilter {
  public:
   MimeTypeFilter(const char* filter_string) {
     // Ensure input is not NULL
-    parse_string(std::string(filter_string ? filter_string : ""));
-  }
-
-  MimeTypeFilter(const std::string& filter_string) {
-    parse_string(filter_string);
+    ParseString(std::string(filter_string ? filter_string : ""));
   }
 
   /**
@@ -54,15 +50,18 @@ class MimeTypeFilter {
     @param  types Set of MIME types to filter
     @retval none
   */
-  void apply(std::set<std::string>& types) {
+  void Apply(std::set<std::string>* types) {
+    // Validate IN-OUT pointer
+    if (types == nullptr) return;
+
     // Apply base filter
-    filter_by_root(types);
+    FilterByRoot(types);
 
     // Manually add additional MIME types
-    for (auto& mime_type : this->added_types_) types.insert(mime_type);
+    for (auto& mime_type : this->added_types_) types->insert(mime_type);
 
     // Manually remove specific MIME types
-    for (auto& mime_type : this->removed_types_) types.erase(mime_type);
+    for (auto& mime_type : this->removed_types_) types->erase(mime_type);
   }
 
  private:
@@ -72,7 +71,7 @@ class MimeTypeFilter {
     @param  filter_string String representing filter function
     @retval none
   */
-  void parse_string(const std::string& filter_string) {
+  void ParseString(const std::string& filter_string) {
     this->allowed_roots_.clear();
     this->added_types_.clear();
     this->removed_types_.clear();
@@ -83,12 +82,18 @@ class MimeTypeFilter {
 
     std::string token;
     while (std::getline(stream, token, ',')) {
-      if (token[0] == '+')
+      switch (token[0])
+      {
+      case '+':
         this->added_types_.emplace(token, 1);
-      else if (token[0] == '-')
+        break;
+      case '-':
         this->removed_types_.emplace(token, 1);
-      else
+        break;
+      default:
         this->allowed_roots_.emplace(token);
+        break;
+      }
     }
   }
 
@@ -98,13 +103,16 @@ class MimeTypeFilter {
     @param  types Set of MIME types to filter
     @retval none
   */
-  void filter_by_root(std::set<std::string>& types) {
+  void FilterByRoot(std::set<std::string>* types) {
+    // Validate IN-OUT pointer
+    if (types == nullptr) return;
+
     // Don't filter if list is empty
     if (this->allowed_roots_.empty()) return;
 
     // Iterate through the supported types and filter by root
-    auto it = types.begin();
-    while (it != types.end()) {
+    auto it = types->begin();
+    while (it != types->end()) {
       const std::string& type = *it;
 
       // Attempt to find the type in the allowed lists by matching the shortest
@@ -118,7 +126,7 @@ class MimeTypeFilter {
 
       if (result == this->allowed_roots_.end()) {
         // Type was NOT in allowed list
-        it = types.erase(it);
+        it = types->erase(it);
         continue;
       }
 

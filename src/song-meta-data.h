@@ -29,13 +29,13 @@
 
 // An 'object' dealing with the meta data of a song.
 // TODO Tucker Great opertunity for a class here
-typedef struct TrackMetadata {
+struct TrackMetadata {
   std::string title;
   std::string artist;
   std::string album;
   std::string genre;
   std::string composer;
-} TrackMetadata;
+};
 
 // Construct song meta data object.
 void SongMetaData_init(TrackMetadata *object);

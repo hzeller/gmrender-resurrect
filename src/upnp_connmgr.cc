@@ -143,9 +143,12 @@ static ithread_mutex_t connmgr_mutex;
     @param  types MimeTypeSet containing supported MIME types
     @retval none
 */
-void connmgr_augment_supported_types(Output::MimeTypeSet& types) {
-  if (types.count("audio/mpeg")) {
-    types.emplace("audio/x-mpeg");
+void connmgr_augment_supported_types(Output::MimeTypeSet* types) {
+  // Validate IN-OUT pointer
+  if (types == nullptr) return;
+
+  if (types->count("audio/mpeg")) {
+    types->emplace("audio/x-mpeg");
 
     // BubbleUPnP uses audio/x-scpl as an indicator to know if the
     // renderer can handle it (otherwise it will proxy).
@@ -153,11 +156,11 @@ void connmgr_augment_supported_types(Output::MimeTypeSet& types) {
     // shoutcast.
     // (For more accurate answer: we'd to check if all of
     // mpeg, aac, aacp, ogg are supported).
-    types.emplace("audio/x-scpls");
+    types->emplace("audio/x-scpls");
 
     // This is apparently something sent by the spotifyd
     // https://gitorious.org/spotifyd
-    types.emplace("audio/L16;rate=44100;channels=2");
+    types->emplace("audio/L16;rate=44100;channels=2");
   }
 
   // Some workaround: some controllers seem to match the version without
@@ -166,20 +169,20 @@ void connmgr_augment_supported_types(Output::MimeTypeSet& types) {
   // If this works, we should probably collect all of these
   // in a set emit always both, foo/bar and foo/x-bar, as it is a similar
   // work-around as seen above with mpeg -> x-mpeg.
-  if (types.count("audio/x-alac")) types.emplace("audio/alac");
+  if (types->count("audio/x-alac")) types->emplace("audio/alac");
 
-  if (types.count("audio/x-aiff")) types.emplace("audio/aiff");
+  if (types->count("audio/x-aiff")) types->emplace("audio/aiff");
 
-  if (types.count("audio/x-m4a")) {
-    types.emplace("audio/m4a");
-    types.emplace("audio/mp4");
+  if (types->count("audio/x-m4a")) {
+    types->emplace("audio/m4a");
+    types->emplace("audio/mp4");
   }
 
   // There seem to be all kinds of mime types out there that start with
   // "audio/" but are not explicitly supported by gstreamer. Let's just
   // tell the controller that we can handle everything "audio/*" and hope
   // for the best.
-  types.emplace("audio/*");
+  types->emplace("audio/*");
 }
 
 int connmgr_init(const char* mime_filter_string) {
@@ -189,11 +192,11 @@ int connmgr_init(const char* mime_filter_string) {
   Output::MimeTypeSet supported_types = Output::GetSupportedMedia();
 
   // Augment the set for better compatibility
-  connmgr_augment_supported_types(supported_types);
+  connmgr_augment_supported_types(&supported_types);
 
   // Construct and apply the MIME type filter
   MimeTypeFilter filter(mime_filter_string);
-  filter.apply(supported_types);
+  filter.Apply(&supported_types);
 
   std::string protoInfo;
   for (auto& mime_type : supported_types) {

@@ -723,7 +723,7 @@ void upnp_control_init(struct upnp_device *device) {
 
   // Set initial volume.
   float volume_fraction = 0;
-  if (Output::GetVolume(volume_fraction) == 0) {
+  if (Output::GetVolume(&volume_fraction) == 0) {
     Log_info("control",
              "Output initial volume is %f; setting "
              "control variables accordingly.",

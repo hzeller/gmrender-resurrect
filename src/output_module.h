@@ -42,10 +42,10 @@ class OutputModule {
     int64_t position_ns;
   };
 
-  typedef enum Result { kSuccess = 0, kError = -1 } Result;
+  enum Result { kSuccess = 0, kError = -1 };
 
-  OutputModule(Output::PlaybackCallback play = nullptr,
-               Output::MetadataCallback meta = nullptr)
+  OutputModule(Output::PlaybackCallback play,
+               Output::MetadataCallback meta)
       : playback_callback_(play), metadata_callback_(meta) {}
 
   virtual Result Initalize(Options& options) = 0;
@@ -60,14 +60,14 @@ class OutputModule {
   virtual Result Pause(void) = 0;
   virtual Result Seek(int64_t position_ns) = 0;
 
-  virtual Result GetPosition(TrackState& track) = 0;
-  virtual Result GetVolume(float& volume) = 0;
+  virtual Result GetPosition(TrackState* track) = 0;
+  virtual Result GetVolume(float* volume) = 0;
   virtual Result SetVolume(float volume) = 0;
-  virtual Result GetMute(bool& mute) = 0;
+  virtual Result GetMute(bool* mute) = 0;
   virtual Result SetMute(bool mute) = 0;
 
  protected:
-  virtual void NotifyPlaybackUpdate(Output::OutputState state) {
+  virtual void NotifyPlaybackUpdate(Output::State state) {
     if (this->playback_callback_) this->playback_callback_(state);
   }
 
@@ -84,8 +84,8 @@ class OutputModule {
 template <class Class>
 class OutputModuleFactory {
  public:
-  static OutputModule* Create(Output::PlaybackCallback play = nullptr,
-                              Output::MetadataCallback meta = nullptr) {
+  static OutputModule* Create(Output::PlaybackCallback play,
+                              Output::MetadataCallback meta) {
     return new Class(play, meta);
   }
 };
