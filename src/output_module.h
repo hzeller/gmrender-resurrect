@@ -44,8 +44,7 @@ class OutputModule {
 
   enum Result { kSuccess = 0, kError = -1 };
 
-  OutputModule(Output::PlaybackCallback play,
-               Output::MetadataCallback meta)
+  OutputModule(Output::PlaybackCallback play, Output::MetadataCallback meta)
       : playback_callback_(play), metadata_callback_(meta) {}
 
   virtual Result Initalize(Options& options) = 0;
@@ -68,11 +67,11 @@ class OutputModule {
 
  protected:
   virtual void NotifyPlaybackUpdate(Output::State state) {
-    if (this->playback_callback_) this->playback_callback_(state);
+    if (playback_callback_) playback_callback_(state);
   }
 
   virtual void NotifyMetadataChange(const TrackMetadata& metadata) {
-    if (this->metadata_callback_) this->metadata_callback_(metadata);
+    if (metadata_callback_) metadata_callback_(metadata);
   }
 
   TrackMetadata metadata;

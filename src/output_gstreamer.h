@@ -36,7 +36,7 @@ class GstreamerOutput : public OutputModule,
     // Let GstreamerOutput access protected constructor
     friend class GstreamerOutput;
 
-    std::vector<GOptionGroup*> GetOptionGroups(void);
+    std::vector<GOptionGroup*> GetOptionGroups(void) override;
 
     static Options& Get() {
       static Options options;
@@ -55,31 +55,30 @@ class GstreamerOutput : public OutputModule,
     Options(const Options&) = delete;  // Delete copy constructor
   };
 
-  GstreamerOutput(Output::PlaybackCallback play,
-                  Output::MetadataCallback meta)
+  GstreamerOutput(Output::PlaybackCallback play, Output::MetadataCallback meta)
       : OutputModule(play, meta) {}
 
   Result Initalize(GstreamerOutput::Options& options);
 
-  Result Initalize(OutputModule::Options& options) {
-    return this->Initalize((GstreamerOutput::Options&)options);
+  Result Initalize(OutputModule::Options& options) override {
+    return Initalize((GstreamerOutput::Options&)options);
   }
 
-  Output::MimeTypeSet GetSupportedMedia(void);
+  Output::MimeTypeSet GetSupportedMedia(void) override;
 
-  void SetUri(const std::string& uri);
-  void SetNextUri(const std::string& uri);
+  void SetUri(const std::string& uri) override;
+  void SetNextUri(const std::string& uri) override;
 
-  Result Play(void);
-  Result Stop(void);
-  Result Pause(void);
-  Result Seek(int64_t position_ns);
+  Result Play(void) override;
+  Result Stop(void) override;
+  Result Pause(void) override;
+  Result Seek(int64_t position_ns) override;
 
-  Result GetPosition(TrackState* track);
-  Result GetVolume(float* volume);
-  Result SetVolume(float volume);
-  Result GetMute(bool* mute);
-  Result SetMute(bool mute);
+  Result GetPosition(TrackState* track) override;
+  Result GetVolume(float* volume) override;
+  Result SetVolume(float volume) override;
+  Result GetMute(bool* mute) override;
+  Result SetMute(bool mute) override;
 
  private:
   GstState GetPlayerState(void);

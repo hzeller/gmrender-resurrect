@@ -58,10 +58,10 @@ class MimeTypeFilter {
     FilterByRoot(types);
 
     // Manually add additional MIME types
-    for (auto& mime_type : this->added_types_) types->insert(mime_type);
+    for (auto& mime_type : added_types_) types->insert(mime_type);
 
     // Manually remove specific MIME types
-    for (auto& mime_type : this->removed_types_) types->erase(mime_type);
+    for (auto& mime_type : removed_types_) types->erase(mime_type);
   }
 
  private:
@@ -72,9 +72,9 @@ class MimeTypeFilter {
     @retval none
   */
   void ParseString(const std::string& filter_string) {
-    this->allowed_roots_.clear();
-    this->added_types_.clear();
-    this->removed_types_.clear();
+    allowed_roots_.clear();
+    added_types_.clear();
+    removed_types_.clear();
 
     if (filter_string.empty()) return;
 
@@ -82,17 +82,16 @@ class MimeTypeFilter {
 
     std::string token;
     while (std::getline(stream, token, ',')) {
-      switch (token[0])
-      {
-      case '+':
-        this->added_types_.emplace(token, 1);
-        break;
-      case '-':
-        this->removed_types_.emplace(token, 1);
-        break;
-      default:
-        this->allowed_roots_.emplace(token);
-        break;
+      switch (token[0]) {
+        case '+':
+          added_types_.emplace(token, 1);
+          break;
+        case '-':
+          removed_types_.emplace(token, 1);
+          break;
+        default:
+          allowed_roots_.emplace(token);
+          break;
       }
     }
   }
@@ -108,7 +107,7 @@ class MimeTypeFilter {
     if (types == nullptr) return;
 
     // Don't filter if list is empty
-    if (this->allowed_roots_.empty()) return;
+    if (allowed_roots_.empty()) return;
 
     // Iterate through the supported types and filter by root
     auto it = types->begin();
@@ -117,14 +116,14 @@ class MimeTypeFilter {
 
       // Attempt to find the type in the allowed lists by matching the shortest
       // string
-      auto result =
-          std::find_if(this->allowed_roots_.begin(), this->allowed_roots_.end(),
-                       [type](const std::string& root) {
-                         size_t len = std::min(type.length(), root.length());
-                         return (type.compare(0, len, root) == 0);
-                       });
+      auto result = std::find_if(allowed_roots_.begin(), allowed_roots_.end(),
+                                 [&type](const std::string& root) {
+                                   size_t len =
+                                       std::min(type.length(), root.length());
+                                   return (type.compare(0, len, root) == 0);
+                                 });
 
-      if (result == this->allowed_roots_.end()) {
+      if (result == allowed_roots_.end()) {
         // Type was NOT in allowed list
         it = types->erase(it);
         continue;

@@ -62,8 +62,8 @@ struct OutputEntry {
 static const std::vector<OutputEntry>& GetAvailableModules() {
   static std::vector<OutputEntry> modules = {
 #ifdef HAVE_GST
-    {"gst", "GStreamer multimedia framework", GstreamerOutput::Create,
-      GstreamerOutput::Options::Get()}
+      {"gst", "GStreamer multimedia framework", GstreamerOutput::Create,
+       GstreamerOutput::Options::Get()}
 #else
 // this will be a runtime error, but there is not much point in waiting till
 // then.
@@ -135,7 +135,7 @@ int Output::Init(const char* shortname, Output::PlaybackCallback play_callback,
   // Locate module by shortname
   auto found = std::find_if(
       modules.begin(), modules.end(),
-      [name](const OutputEntry& entry) { return entry.shortname == name; });
+      [&name](const OutputEntry& entry) { return entry.shortname == name; });
 
   if (found == modules.end()) {
     Log_error(TAG, "No such output: '%s'", name.c_str());
