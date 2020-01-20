@@ -21,23 +21,17 @@
  * MA 02110-1301, USA.
  *
  */
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "xmldoc.h"
 
 #ifndef _GNU_SOURCE
-#define _GNU_SOURCE
+#  define _GNU_SOURCE   // for asprintf()
 #endif
 
 #include <assert.h>
+#include <ixml.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <ixml.h>
-
-#include "xmldoc.h"
 
 // The structs are mere placeholders that we internally cast to the
 // objects used in the upnplib.

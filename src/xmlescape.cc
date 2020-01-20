@@ -21,15 +21,14 @@
  * MA 02110-1301, USA.
  *
  */
+#include "xmlescape.h"
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#  include "config.h"
 #endif
 
 #include <stdlib.h>
 #include <string.h>
-
-#include "xmlescape.h"
 
 static void xmlescape_real(const char *str, char *target, int *length,
                            int attribute) {

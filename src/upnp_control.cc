@@ -21,16 +21,12 @@
  * MA 02110-1301, USA.
  *
  */
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "upnp_control.h"
 
 #ifndef _GNU_SOURCE
-#define _GNU_SOURCE /* See feature_test_macros(7) */
+#  define _GNU_SOURCE /* See feature_test_macros(7) */
 #endif
+
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>

@@ -21,9 +21,10 @@
  * MA 02110-1301, USA.
  *
  */
+#include "logging.h"
 
 #ifndef _GNU_SOURCE
-#define _GNU_SOURCE
+#  define _GNU_SOURCE   // for asprintf()
 #endif
 
 #include <fcntl.h>
@@ -38,9 +39,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "config.h"
 #include "git-version.h"
-#include "logging.h"
 
 static int log_fd = -1;
 static int enable_color = 0;

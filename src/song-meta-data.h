@@ -37,9 +37,6 @@ struct TrackMetadata {
   std::string composer;
 };
 
-// Construct song meta data object.
-void SongMetaData_init(TrackMetadata *object);
-
 // Clear meta data strings and deallocate them.
 void SongMetaData_clear(TrackMetadata *object);
 

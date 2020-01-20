@@ -22,25 +22,24 @@
  * MA 02110-1301, USA.
  *
  */
+#include "upnp_connmgr.h"
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#  include "config.h"
 #endif
 
 #include <assert.h>
+#include <ithread.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <upnp.h>
+
 #include <algorithm>
 #include <set>
 #include <string>
-
-#include <ithread.h>
-#include <upnp.h>
-
-#include "upnp_connmgr.h"
 
 #include "logging.h"
 #include "mime_type_filter.h"

@@ -25,10 +25,7 @@
  * MA 02110-1301, USA.
  *
  */
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "output_gstreamer.h"
 
 #include <assert.h>
 #include <gst/gst.h>
@@ -39,7 +36,6 @@
 #include <unistd.h>
 
 #include "logging.h"
-#include "output_gstreamer.h"
 #include "output_module.h"
 #include "upnp_connmgr.h"
 

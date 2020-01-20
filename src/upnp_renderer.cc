@@ -21,38 +21,34 @@
  * MA 02110-1301, USA.
  *
  */
+#include "upnp_renderer.h"
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifndef _GNU_SOURCE
-#define _GNU_SOURCE
+#  define _GNU_SOURCE   // for asprintf()
 #endif
 
+#include <arpa/inet.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-
-#include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include <ithread.h>
 #include <upnp.h>
 
+#include "git-version.h"
 #include "upnp_connmgr.h"
 #include "upnp_control.h"
 #include "upnp_device.h"
 #include "upnp_service.h"
 #include "upnp_transport.h"
 #include "webserver.h"
-
-#include "git-version.h"
-#include "upnp_renderer.h"
 
 static struct icon icon1 = {.width = 64,
                             .height = 64,

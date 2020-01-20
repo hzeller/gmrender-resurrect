@@ -21,11 +21,13 @@
  * MA 02110-1301, USA.
  *
  */
+#include "upnp_device.h"
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
 #endif
 
+#include <arpa/inet.h>
 #include <assert.h>
 #include <errno.h>
 #include <glib.h>
@@ -33,19 +35,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-
-#include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include <ithread.h>
 #include <upnp.h>
 #include <upnptools.h>
 
 #include "logging.h"
-
-#include "upnp_device.h"
 #include "upnp_service.h"
 #include "variable-container.h"
 #include "webserver.h"

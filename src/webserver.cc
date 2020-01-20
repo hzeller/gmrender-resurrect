@@ -21,10 +21,7 @@
  * MA 02110-1301, USA.
  *
  */
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "webserver.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -42,7 +39,6 @@
 
 #include "logging.h"
 #include "upnp_compat.h"
-#include "webserver.h"
 
 typedef struct {
   off_t pos;

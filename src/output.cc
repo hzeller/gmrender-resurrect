@@ -22,25 +22,25 @@
  * MA 02110-1301, USA.
  *
  */
+#include "output.h"
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#  include "config.h"
 #endif
 
 #include <assert.h>
 #include <stdlib.h>
+#include <glib.h>
+
 #include <algorithm>
 #include <functional>
 #include <vector>
 
-#include <glib.h>
-
 #include "logging.h"
 #include "output_module.h"
 #ifdef HAVE_GST
-#include "output_gstreamer.h"
+#  include "output_gstreamer.h"
 #endif
-#include "output.h"
 
 #define TAG "output"
 

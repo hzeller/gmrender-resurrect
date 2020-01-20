@@ -28,11 +28,7 @@
 #include "song-meta-data.h"
 
 #ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#  define _GNU_SOURCE   // for asprintf()
 #endif
 
 #include <stdio.h>
@@ -41,10 +37,6 @@
 
 #include "xmldoc.h"
 #include "xmlescape.h"
-
-void SongMetaData_init(TrackMetadata *value) {
-  memset(value, 0, sizeof(TrackMetadata));
-}
 
 void SongMetaData_clear(TrackMetadata *value) {
   value->title.clear();
@@ -167,7 +159,7 @@ char *SongMetaData_to_DIDL(const TrackMetadata *object,
   album = object->album.length() ? xmlescape(object->album.c_str(), 0) : NULL;
   genre = object->genre.length() ? xmlescape(object->genre.c_str(), 0) : NULL;
   composer = object->composer.length() ? xmlescape(object->composer.c_str(), 0) : NULL;
-  
+
   if (original_xml == NULL || strlen(original_xml) == 0) {
     result = generate_DIDL(unique_id, title, artist, album, genre, composer);
   } else {

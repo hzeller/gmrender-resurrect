@@ -23,34 +23,33 @@
  */
 
 #ifndef _GNU_SOURCE
-#define _GNU_SOURCE
+#  define _GNU_SOURCE
 #endif
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#  include "config.h"
+#endif
+
+#ifndef HAVE_LIBUPNP
+#  error "To have gmrender any useful, you need to have libupnp installed."
+#endif
+
+// For version strings of upnp and gstreamer
+#include <upnpconfig.h>
+#ifdef HAVE_GST
+#  include <gst/gst.h>
 #endif
 
 #include <assert.h>
 #include <glib.h>
+#include <ithread.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
-
-#ifndef HAVE_LIBUPNP
-#error "To have gmrender any useful, you need to have libupnp installed."
-#endif
-
-#include <ithread.h>
 #include <upnp.h>
-
-// For version strings of upnp and gstreamer
-#include <upnpconfig.h>
-#ifdef HAVE_GST
-#include <gst/gst.h>
-#endif
 
 #include "git-version.h"
 #include "logging.h"
