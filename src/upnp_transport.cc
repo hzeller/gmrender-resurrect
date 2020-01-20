@@ -457,10 +457,10 @@ static void change_transport_state(TransportState new_state) {
 
 // Callback from our output if the song meta data changed.
 static void update_meta_from_stream(const TrackMetadata &meta) {
-  if (meta.title.empty()) return;
+  if (meta.title().empty()) return;
 
   auto original_xml = state_variables_->Get(TRANSPORT_VAR_AV_URI_META);
-  char *didl = SongMetaData_to_DIDL(&meta, original_xml.c_str());
+  char *didl = meta.ToDIDL(original_xml.c_str());
   service_lock();
   state_variables_->Set(TRANSPORT_VAR_AV_URI_META, didl);
   state_variables_->Set(TRANSPORT_VAR_CUR_TRACK_META, didl);

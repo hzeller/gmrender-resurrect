@@ -38,14 +38,6 @@
 #include "xmldoc.h"
 #include "xmlescape.h"
 
-void SongMetaData_clear(TrackMetadata *value) {
-  value->title.clear();
-  value->artist.clear();
-  value->album.clear();
-  value->genre.clear();
-  value->composer.clear();
-}
-
 static const char kDidlHeader[] =
     "<DIDL-Lite "
     "xmlns=\"urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/\" "
@@ -112,38 +104,71 @@ static char *replace_range(char *const input, const char *tag_start,
   return result;
 }
 
-int SongMetaData_parse_DIDL(TrackMetadata *object, const char *xml) {
+bool TrackMetadata::UpdateFromTags(const GstTagList *tag_list) {
+  auto attemptTagUpdate =
+    [tag_list](std::string& tag, const char* tag_name) -> bool {
+      // Attempt to fetch the tag
+      gchar* value = NULL;
+      if (gst_tag_list_get_string(tag_list, tag_name, &value) == false)
+        return false;
+
+      if (tag.compare(value) == 0) {
+        // Identical tags
+        g_free(value);
+        return false;
+      }
+
+      tag = value;
+
+      // Free the tag buffer
+      g_free(value);
+
+      // Log_info(TAG, "Got tag: '%s' value: '%s'", tag_name, tag.c_str());
+
+      return true;
+    };
+
+  bool any_change = false;
+  any_change |= attemptTagUpdate(title_, GST_TAG_TITLE);
+  any_change |= attemptTagUpdate(artist_, GST_TAG_ARTIST);
+  any_change |= attemptTagUpdate(album_, GST_TAG_ALBUM);
+  any_change |= attemptTagUpdate(genre_, GST_TAG_GENRE);
+  any_change |= attemptTagUpdate(composer_, GST_TAG_COMPOSER);
+
+  return any_change;
+}
+
+bool TrackMetadata::ParseDIDL(const char *xml) {
   struct xmldoc *doc = xmldoc_parsexml(xml);
-  if (doc == NULL) return 0;
+  if (doc == NULL) return false;
 
   // ... did I mention that I hate navigating XML documents ?
   struct xmlelement *didl_node = find_element_in_doc(doc, "DIDL-Lite");
-  if (didl_node == NULL) return 0;
+  if (didl_node == NULL) return false;
 
   struct xmlelement *item_node = find_element_in_element(didl_node, "item");
-  if (item_node == NULL) return 0;
+  if (item_node == NULL) return false;
 
   struct xmlelement *value_node = NULL;
   value_node = find_element_in_element(item_node, "dc:title");
-  if (value_node) object->title = get_node_value(value_node);
+  if (value_node) title_ = get_node_value(value_node);
 
   value_node = find_element_in_element(item_node, "upnp:artist");
-  if (value_node) object->artist = get_node_value(value_node);
+  if (value_node) artist_ = get_node_value(value_node);
 
   value_node = find_element_in_element(item_node, "upnp:album");
-  if (value_node) object->album = get_node_value(value_node);
+  if (value_node) album_ = get_node_value(value_node);
 
   value_node = find_element_in_element(item_node, "upnp:genre");
-  if (value_node) object->genre = get_node_value(value_node);
+  if (value_node) genre_ = get_node_value(value_node);
 
   xmldoc_free(doc);
-  return 1;
+  return true;
 }
 
 // TODO: actually use some XML library for this, but spending too much time
 // with XML is not good for the brain :) Worst thing that came out of the 90ies.
-char *SongMetaData_to_DIDL(const TrackMetadata *object,
-                           const char *original_xml) {
+char *TrackMetadata::ToDIDL(const char *original_xml) const {
   // Generating a unique ID in case the players cache the content by
   // the item-ID. Right now this is experimental and not known to make
   // any difference - it seems that players just don't display changes
@@ -154,11 +179,11 @@ char *SongMetaData_to_DIDL(const TrackMetadata *object,
 
   char *result;
   char *title, *artist, *album, *genre, *composer;
-  title = object->title.length() ? xmlescape(object->title.c_str(), 0) : NULL;
-  artist = object->artist.length() ? xmlescape(object->artist.c_str(), 0) : NULL;
-  album = object->album.length() ? xmlescape(object->album.c_str(), 0) : NULL;
-  genre = object->genre.length() ? xmlescape(object->genre.c_str(), 0) : NULL;
-  composer = object->composer.length() ? xmlescape(object->composer.c_str(), 0) : NULL;
+  title = title_.length() ? xmlescape(title_.c_str(), 0) : NULL;
+  artist = artist_.length() ? xmlescape(artist_.c_str(), 0) : NULL;
+  album = album_.length() ? xmlescape(album_.c_str(), 0) : NULL;
+  genre = genre_.length() ? xmlescape(genre_.c_str(), 0) : NULL;
+  composer = composer_.length() ? xmlescape(composer_.c_str(), 0) : NULL;
 
   if (original_xml == NULL || strlen(original_xml) == 0) {
     result = generate_DIDL(unique_id, title, artist, album, genre, composer);

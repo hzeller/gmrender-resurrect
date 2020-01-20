@@ -25,28 +25,36 @@
 #ifndef _SONG_META_DATA_H
 #define _SONG_META_DATA_H
 
+#include <gst/gst.h>
+
 #include <string>
 
-// An 'object' dealing with the meta data of a song.
-// TODO Tucker Great opertunity for a class here
-struct TrackMetadata {
-  std::string title;
-  std::string artist;
-  std::string album;
-  std::string genre;
-  std::string composer;
+// Metadata for a song (TODO: make a proper class)
+class TrackMetadata {
+public:
+  const std::string& title() const { return title_; }
+  const std::string& artist() const { return artist_; }
+  const std::string& album() const { return album_; }
+  const std::string& genre() const { return genre_; }
+  const std::string& composer() const { return composer_; }
+
+  // Update from GstTags. Return if there was any change.
+  bool UpdateFromTags(const GstTagList *tag_list);
+
+  // Returns a newly allocated xml string with the song meta data encoded as
+  // DIDL-Lite. If we get a non-empty original xml document, returns an
+  // edited version of that document.
+  char *ToDIDL(const char *original_xml) const;
+
+  // Parse DIDL-Lite and fill SongMetaData struct. Returns true when successful.
+  bool ParseDIDL(const char *xml);
+
+private:
+  std::string title_;
+  std::string artist_;
+  std::string album_;
+  std::string genre_;
+  std::string composer_;
 };
-
-// Clear meta data strings and deallocate them.
-void SongMetaData_clear(TrackMetadata *object);
-
-// Returns a newly allocated xml string with the song meta data encoded as
-// DIDL-Lite. If we get a non-empty original xml document, returns an
-// edited version of that document.
-char *SongMetaData_to_DIDL(const TrackMetadata* object,
-                           const char *original_xml);
-
-// Parse DIDL-Lite and fill SongMetaData struct. Returns 1 when successful.
-int SongMetaData_parse_DIDL(TrackMetadata *object, const char *xml);
 
 #endif  // _SONG_META_DATA_H

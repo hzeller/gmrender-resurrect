@@ -604,38 +604,9 @@ bool GstreamerOutput::BusCallback(GstMessage* message) {
       GstTagList* tag_list = NULL;
       gst_message_parse_tag(message, &tag_list);
 
-      auto attemptTagUpdate = [tag_list](std::string& tag,
-                                         const char* tag_name) -> bool {
-        // Attempt to fetch the tag
-        gchar* value = NULL;
-        if (gst_tag_list_get_string(tag_list, tag_name, &value) == false)
-          return false;
-
-        if (tag.compare(value) == 0) {
-          // Identical tags
-          g_free(value);
-          return false;
-        }
-
-        tag = value;
-
-        // Free the tag buffer
-        g_free(value);
-
-        // Log_info(TAG, "Got tag: '%s' value: '%s'", tag_name, tag.c_str());
-
-        return true;
-      };
-
-      bool notify = false;
-
-      notify |= attemptTagUpdate(metadata.title, GST_TAG_TITLE);
-      notify |= attemptTagUpdate(metadata.artist, GST_TAG_ARTIST);
-      notify |= attemptTagUpdate(metadata.album, GST_TAG_ALBUM);
-      notify |= attemptTagUpdate(metadata.genre, GST_TAG_GENRE);
-      notify |= attemptTagUpdate(metadata.composer, GST_TAG_COMPOSER);
-
-      if (notify) NotifyMetadataChange(metadata);
+      if (metadata.UpdateFromTags(tag_list)) {
+        NotifyMetadataChange(metadata);
+      }
 
       gst_tag_list_free(tag_list);
 
