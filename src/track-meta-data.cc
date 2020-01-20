@@ -1,5 +1,5 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
-/* song-meta-data - Object holding meta data for a song.
+/* track-meta-data - Object holding meta data for a song.
  *
  * Copyright (C) 2012 Henner Zeller
  *
@@ -25,7 +25,7 @@
 // TODO: we're assuming that the namespaces are abbreviated with 'dc' and 'upnp'
 // ... but if I understand that correctly, that doesn't need to be the case.
 
-#include "song-meta-data.h"
+#include "track-meta-data.h"
 
 #ifndef _GNU_SOURCE
 #  define _GNU_SOURCE   // for asprintf()
