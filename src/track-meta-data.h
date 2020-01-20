@@ -29,7 +29,7 @@
 
 #include <string>
 
-// Metadata for a song (TODO: make a proper class)
+// Metadata for a song.
 class TrackMetadata {
 public:
   const std::string& title() const { return title_; }
