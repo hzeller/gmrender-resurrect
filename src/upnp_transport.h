@@ -25,6 +25,7 @@
 #ifndef _UPNP_TRANSPORT_H
 #define _UPNP_TRANSPORT_H
 
+#include "output.h"
 #include "variable-container.h"
 
 struct service;
@@ -36,6 +37,9 @@ void upnp_transport_init(struct upnp_device *);
 // Register a callback to get informed when variables change. This should
 // return quickly.
 void upnp_transport_register_variable_listener(
-  const VariableContainer::ChangeListener &listener);
+    const VariableContainer::ChangeListener &listener);
+
+Output::PlaybackCallback upnp_transport_get_transition_callback(void);
+Output::MetadataCallback upnp_transport_get_metadata_callback(void);
 
 #endif /* _UPNP_TRANSPORT_H */

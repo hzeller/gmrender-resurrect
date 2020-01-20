@@ -1,7 +1,8 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* output.c - Output module frontend
  *
- * Copyright (C) 2007 Ivo Clarysse,  (C) 2012 Henner Zeller
+ * Copyright (C) 2007 Ivo Clarysse,  (C) 2012 Henner Zeller, (C) 2019 Tucker
+ * Kern
  *
  * This file is part of GMediaRender.
  *
@@ -26,13 +27,11 @@
 #include "config.h"
 #endif
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#include <signal.h>
-#include <stdio.h>
+#include <assert.h>
 #include <stdlib.h>
-#include <string.h>
+#include <algorithm>
+#include <functional>
+#include <vector>
 
 #include <glib.h>
 
@@ -43,171 +42,199 @@
 #endif
 #include "output.h"
 
-static struct output_module *modules[] = {
-#ifdef HAVE_GST
-    &gstreamer_output,
-#else
-// this will be a runtime error, but there is not much point
-// in waiting till then.
-#error "No output configured. You need to ./configure --with-gstreamer"
-#endif
+#define TAG "output"
+
+static OutputModule* output_module = NULL;
+
+/**
+  @brief  Describes an available output module by name, description. Provides an
+  interface for construction of the output and a means to query the output for
+  associated command line options.
+*/
+struct OutputEntry {
+  std::string shortname;
+  std::string description;
+  std::function<OutputModule*(Output::PlaybackCallback,
+                              Output::MetadataCallback)> create;
+  OutputModule::Options& options;
 };
 
-static struct output_module *output_module = NULL;
+static const std::vector<OutputEntry>& GetAvailableModules() {
+  static std::vector<OutputEntry> modules = {
+#ifdef HAVE_GST
+      {"gst", "GStreamer multimedia framework", GstreamerOutput::Create,
+       GstreamerOutput::Options::Get()}
+#else
+// this will be a runtime error, but there is not much point in waiting till
+// then.
+#error "No output configured. You need to ./configure --with-gstreamer"
+#endif
+  };
 
-void output_dump_modules(void) {
-  int count;
-
-  count = sizeof(modules) / sizeof(struct output_module *);
-  if (count == 0) {
-    puts("  NONE!");
-  } else {
-    int i;
-    for (i = 0; i < count; i++) {
-      printf("Available output: %s\t%s%s\n", modules[i]->shortname,
-             modules[i]->description, (i == 0) ? " (default)" : "");
-    }
-  }
+  return modules;
 }
 
-int output_init(const char *shortname) {
-  int count;
+int Output::AddOptions(GOptionContext* ctx) {
+  for (const auto& module : GetAvailableModules()) {
+    for (auto option : module.options.GetOptionGroups())
+      g_option_context_add_group(ctx, option);
+  }
 
-  count = sizeof(modules) / sizeof(struct output_module *);
-  if (count == 0) {
-    Log_error("output", "No output module available");
+  return 0;
+}
+
+void Output::DumpModules(void) {
+  const std::vector<OutputEntry>& modules = GetAvailableModules();
+
+  if (modules.size() == 0) {
+    printf("No outputs available.\n");
+    return;
+  }
+
+  printf("Available outputs:\n");
+  for (auto& module : modules)
+    printf("\t%s - %s%s\n", module.shortname.c_str(),
+           module.description.c_str(),
+           (&module == &modules.front()) ? " (default)" : "");
+}
+
+int Output::Loop() {
+  static GMainLoop* main_loop = NULL;
+
+  // Define a signal handler to shutdown the loop
+  static auto signal_handler = [](int sig) -> void {
+    if (main_loop) {
+      // TODO(hzeller): revisit - this is not safe to do.
+      g_main_loop_quit(main_loop);
+    }
+  };
+
+  // Create a main loop that runs the default GLib main context
+  main_loop = g_main_loop_new(NULL, FALSE);
+
+  signal(SIGINT, signal_handler);
+  signal(SIGTERM, signal_handler);
+
+  g_main_loop_run(main_loop);
+
+  return 0;
+}
+
+int Output::Init(const char* shortname, Output::PlaybackCallback play_callback,
+                 Output::MetadataCallback metadata_callback) {
+  const std::vector<OutputEntry>& modules = GetAvailableModules();
+
+  if (modules.size() == 0) {
+    Log_error(TAG, "No outputs available.");
     return -1;
   }
-  if (shortname == NULL) {
-    output_module = modules[0];
-  } else {
-    int i;
-    for (i = 0; i < count; i++) {
-      if (strcmp(modules[i]->shortname, shortname) == 0) {
-        output_module = modules[i];
-        break;
-      }
-    }
-  }
 
-  if (output_module == NULL) {
-    Log_error("error", "ERROR: No such output module: '%s'", shortname);
+  // Default to first entry if no name provided
+  std::string name(shortname ? shortname : modules.front().shortname);
+
+  // Locate module by shortname
+  auto found = std::find_if(
+      modules.begin(), modules.end(),
+      [&name](const OutputEntry& entry) { return entry.shortname == name; });
+
+  if (found == modules.end()) {
+    Log_error(TAG, "No such output: '%s'", name.c_str());
     return -1;
   }
 
-  Log_info("output", "Using output module: %s (%s)", output_module->shortname,
-           output_module->description);
+  const OutputEntry& entry = *found;
 
-  if (output_module->init) {
-    return output_module->init();
-  }
+  Log_info(TAG, "Using output: %s (%s)", entry.shortname.c_str(),
+           entry.description.c_str());
 
-  return 0;
-}
+  output_module = entry.create(play_callback, metadata_callback);
 
-static GMainLoop *main_loop_ = NULL;
-static void exit_loop_sighandler(int sig) {
-  if (main_loop_) {
-    // TODO(hzeller): revisit - this is not safe to do.
-    g_main_loop_quit(main_loop_);
-  }
-}
+  assert(output_module != NULL);
 
-int output_loop() {
-  /* Create a main loop that runs the default GLib main context */
-  main_loop_ = g_main_loop_new(NULL, FALSE);
-
-  signal(SIGINT, &exit_loop_sighandler);
-  signal(SIGTERM, &exit_loop_sighandler);
-
-  g_main_loop_run(main_loop_);
+  output_module->Initalize(entry.options);
 
   return 0;
 }
 
-int output_add_options(GOptionContext *ctx) {
-  int count, i;
+Output::MimeTypeSet Output::GetSupportedMedia(void) {
+  assert(output_module);
 
-  count = sizeof(modules) / sizeof(struct output_module *);
-  for (i = 0; i < count; ++i) {
-    if (modules[i]->add_options) {
-      int result = modules[i]->add_options(ctx);
-      if (result != 0) {
-        return result;
-      }
-    }
-  }
-
-  return 0;
+  return output_module->GetSupportedMedia();
 }
 
-void output_set_uri(const char *uri, output_update_meta_cb_t meta_cb) {
-  if (output_module && output_module->set_uri) {
-    output_module->set_uri(uri, meta_cb);
-  }
-}
-void output_set_next_uri(const char *uri) {
-  if (output_module && output_module->set_next_uri) {
-    output_module->set_next_uri(uri);
-  }
+void Output::SetUri(const char* uri) {
+  assert(output_module);
+
+  output_module->SetUri(uri);
 }
 
-int output_play(output_transition_cb_t transition_callback) {
-  if (output_module && output_module->play) {
-    return output_module->play(transition_callback);
+void Output::SetNextUri(const char* uri) {
+  assert(output_module);
+
+  output_module->SetNextUri(uri);
+}
+
+int Output::Play() {
+  assert(output_module);
+
+  return output_module->Play();
+}
+
+int Output::Pause(void) {
+  assert(output_module);
+
+  return output_module->Pause();
+}
+
+int Output::Stop(void) {
+  assert(output_module);
+
+  return output_module->Stop();
+}
+
+int Output::Seek(int64_t position_nanos) {
+  assert(output_module);
+
+  return output_module->Seek(position_nanos);
+}
+
+int Output::GetPosition(int64_t* duration_ns, int64_t* position_ns) {
+  assert(output_module);
+  assert(duration_ns && position_ns);
+
+  OutputModule::TrackState state;
+  if (output_module->GetPosition(&state) == OutputModule::kSuccess) {
+    *duration_ns = state.duration_ns;
+    *position_ns = state.position_ns;
+
+    return 0;
   }
+
   return -1;
 }
 
-int output_pause(void) {
-  if (output_module && output_module->pause) {
-    return output_module->pause();
-  }
-  return -1;
+int Output::GetVolume(float* value) {
+  assert(output_module);
+  assert(value);
+
+  return output_module->GetVolume(value);
 }
 
-int output_stop(void) {
-  if (output_module && output_module->stop) {
-    return output_module->stop();
-  }
-  return -1;
+int Output::SetVolume(float value) {
+  assert(output_module);
+
+  return output_module->SetVolume(value);
 }
 
-int output_seek(gint64 position_nanos) {
-  if (output_module && output_module->seek) {
-    return output_module->seek(position_nanos);
-  }
-  return -1;
+int Output::GetMute(bool* value) {
+  assert(output_module);
+  assert(value);
+
+  return output_module->GetMute(value);
 }
 
-int output_get_position(gint64 *track_dur, gint64 *track_pos) {
-  if (output_module && output_module->get_position) {
-    return output_module->get_position(track_dur, track_pos);
-  }
-  return -1;
-}
+int Output::SetMute(bool value) {
+  assert(output_module);
 
-int output_get_volume(float *value) {
-  if (output_module && output_module->get_volume) {
-    return output_module->get_volume(value);
-  }
-  return -1;
-}
-int output_set_volume(float value) {
-  if (output_module && output_module->set_volume) {
-    return output_module->set_volume(value);
-  }
-  return -1;
-}
-int output_get_mute(int *value) {
-  if (output_module && output_module->get_mute) {
-    return output_module->get_mute(value);
-  }
-  return -1;
-}
-int output_set_mute(int value) {
-  if (output_module && output_module->set_mute) {
-    return output_module->set_mute(value);
-  }
-  return -1;
+  return output_module->SetMute(value);
 }

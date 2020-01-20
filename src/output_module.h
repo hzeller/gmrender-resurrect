@@ -1,7 +1,7 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* output_module.h - Output module interface definition
  *
- * Copyright (C) 2007   Ivo Clarysse
+ * Copyright (C) 2019   Tucker Kern
  *
  * This file is part of GMediaRender.
  *
@@ -25,28 +25,68 @@
 #ifndef _OUTPUT_MODULE_H
 #define _OUTPUT_MODULE_H
 
+#include <set>
+#include <string>
+#include <vector>
+
 #include "output.h"
 
-struct output_module {
-  const char *shortname;
-  const char *description;
-  int (*add_options)(GOptionContext *ctx);
+class OutputModule {
+ public:
+  struct Options {
+    virtual std::vector<GOptionGroup*> GetOptionGroups(void) = 0;
+  };
 
-  // Commands.
-  int (*init)(void);
-  void (*set_uri)(const char *uri, output_update_meta_cb_t meta_info);
-  void (*set_next_uri)(const char *uri);
-  int (*play)(output_transition_cb_t transition_callback);
-  int (*stop)(void);
-  int (*pause)(void);
-  int (*seek)(gint64 position_nanos);
+  struct TrackState {
+    int64_t duration_ns;
+    int64_t position_ns;
+  };
 
-  // parameters
-  int (*get_position)(gint64 *track_duration, gint64 *track_pos);
-  int (*get_volume)(float *);
-  int (*set_volume)(float);
-  int (*get_mute)(int *);
-  int (*set_mute)(int);
+  enum Result { kSuccess = 0, kError = -1 };
+
+  OutputModule(Output::PlaybackCallback play, Output::MetadataCallback meta)
+      : playback_callback_(play), metadata_callback_(meta) {}
+
+  virtual Result Initalize(Options& options) = 0;
+
+  virtual Output::MimeTypeSet GetSupportedMedia(void) = 0;
+
+  virtual void SetUri(const std::string& uri) = 0;
+  virtual void SetNextUri(const std::string& uri) = 0;
+
+  virtual Result Play(void) = 0;
+  virtual Result Stop(void) = 0;
+  virtual Result Pause(void) = 0;
+  virtual Result Seek(int64_t position_ns) = 0;
+
+  virtual Result GetPosition(TrackState* track) = 0;
+  virtual Result GetVolume(float* volume) = 0;
+  virtual Result SetVolume(float volume) = 0;
+  virtual Result GetMute(bool* mute) = 0;
+  virtual Result SetMute(bool mute) = 0;
+
+ protected:
+  virtual void NotifyPlaybackUpdate(Output::State state) {
+    if (playback_callback_) playback_callback_(state);
+  }
+
+  virtual void NotifyMetadataChange(const TrackMetadata& metadata) {
+    if (metadata_callback_) metadata_callback_(metadata);
+  }
+
+  TrackMetadata metadata;
+
+  Output::PlaybackCallback playback_callback_ = nullptr;
+  Output::MetadataCallback metadata_callback_ = nullptr;
+};
+
+template <class Class>
+class OutputModuleFactory {
+ public:
+  static OutputModule* Create(Output::PlaybackCallback play,
+                              Output::MetadataCallback meta) {
+    return new Class(play, meta);
+  }
 };
 
 #endif

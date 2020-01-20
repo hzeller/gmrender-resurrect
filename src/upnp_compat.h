@@ -89,7 +89,9 @@ typedef struct Upnp_Action_Request UpnpActionRequest;
 /* compat code for libupnp-1.8 */
 typedef struct Upnp_Action_Complete UpnpActionComplete;
 #define UpnpActionComplete_get_ErrCode(x) ((x)->ErrCode)
+#if UPNP_VERSION < 10624
 #define UpnpActionComplete_get_CtrlUrl_cstr(x) ((x)->CtrlUrl)
+#endif
 #define UpnpActionComplete_get_ActionRequest(x) ((x)->ActionRequest)
 #define UpnpActionComplete_get_ActionResult(x) ((x)->ActionResult)
 
@@ -108,7 +110,9 @@ typedef struct Upnp_State_Var_Request UpnpStateVarRequest;
 /* compat code for libupnp-1.8 */
 typedef struct Upnp_State_Var_Complete UpnpStateVarComplete;
 #define UpnpStateVarComplete_get_ErrCode(x) ((x)->ErrCode)
+#if UPNP_VERSION < 10624
 #define UpnpStateVarComplete_get_CtrlUrl_cstr(x) ((x)->CtrlUrl)
+#endif
 #define UpnpStateVarComplete_get_StateVarName_cstr(x) ((x)->StateVarName)
 
 /* compat code for libupnp-1.8 */
@@ -134,7 +138,9 @@ typedef struct Upnp_Discovery UpnpDiscovery;
 typedef struct Upnp_Event_Subscribe UpnpEventSubscribe;
 #define UpnpEventSubscribe_get_SID_cstr(x) ((x)->Sid)
 #define UpnpEventSubscribe_get_ErrCode(x) ((x)->ErrCode)
+#if UPNP_VERSION < 10624
 #define UpnpEventSubscribe_get_PublisherUrl_cstr(x) ((x)->PublisherUrl)
+#endif
 #define UpnpEventSubscribe_get_TimeOut(x) ((x)->TimeOut)
 
 /* compat code for libupnp-1.8 */
