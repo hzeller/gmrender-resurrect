@@ -20,8 +20,9 @@
  * MA 02110-1301, USA.
  *
  */
-
 #include "variable-container.h"
+
+#include "config.h"
 
 #include <assert.h>
 #include <ctype.h>

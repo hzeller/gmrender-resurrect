@@ -27,6 +27,8 @@
  */
 #include "output_gstreamer.h"
 
+#include "config.h"
+
 #include <assert.h>
 #include <gst/gst.h>
 #include <math.h>

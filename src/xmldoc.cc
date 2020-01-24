@@ -23,6 +23,8 @@
  */
 #include "xmldoc.h"
 
+#include "config.h"
+
 #ifndef _GNU_SOURCE
 #  define _GNU_SOURCE   // for asprintf()
 #endif

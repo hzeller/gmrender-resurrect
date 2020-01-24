@@ -24,9 +24,7 @@
  */
 #include "upnp_connmgr.h"
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif
+#include "config.h"
 
 #include <assert.h>
 #include <ithread.h>
