@@ -21,9 +21,6 @@
  * MA 02110-1301, USA.
  *
  */
-
-#include "config.h"
-
 #ifndef _GNU_SOURCE
 #  define _GNU_SOURCE
 #endif

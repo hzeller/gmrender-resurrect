@@ -23,8 +23,6 @@
  */
 #include "upnp_transport.h"
 
-#include "config.h"
-
 #include <assert.h>
 #include <glib.h>
 #include <stdio.h>

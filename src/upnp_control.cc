@@ -23,8 +23,6 @@
  */
 #include "upnp_control.h"
 
-#include "config.h"
-
 #ifndef _GNU_SOURCE
 #  define _GNU_SOURCE /* See feature_test_macros(7) */
 #endif

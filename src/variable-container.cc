@@ -22,8 +22,6 @@
  */
 #include "variable-container.h"
 
-#include "config.h"
-
 #include <assert.h>
 #include <ctype.h>
 #include <stdint.h>

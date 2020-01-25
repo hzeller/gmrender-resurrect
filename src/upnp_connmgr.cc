@@ -24,8 +24,6 @@
  */
 #include "upnp_connmgr.h"
 
-#include "config.h"
-
 #include <assert.h>
 #include <ithread.h>
 #include <stdbool.h>
