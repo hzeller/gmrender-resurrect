@@ -1,7 +1,7 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* xmlescape.h - helper routines for escaping XML strings
  *
- * Copyright (C) 2007   Ivo Clarysse
+ * Copyright (C) 2019 Henner Zeller
  *
  * This file is part of GMediaRender.
  *
@@ -21,13 +21,13 @@
  * MA 02110-1301, USA.
  *
  */
-
 #ifndef _XMLESCAPE_H
 #define _XMLESCAPE_H
 
-// XML escape string "str". If "attribute" is 1, then this is considered
-// to be within an xml attribute (i.e. quotes are escaped as well).
-// Returns a malloc()ed string; caller needs to free().
-char *xmlescape(const char *str, int attribute);
+#include <string>
+
+// XML escape string "str".
+// This works for xml content that is _not_ in attributes.
+std::string xmlescape(const std::string &str);
 
 #endif /* _XMLESCAPE_H */

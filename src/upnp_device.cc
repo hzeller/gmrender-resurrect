@@ -192,7 +192,8 @@ static int handle_subscription_request(
   ithread_mutex_unlock(srv->service_mutex);
   const std::string &xml_value = builder.toXML();
   Log_info("upnp", "Initial variable sync: %s", xml_value.c_str());
-  eventvar_values[0] = xmlescape(xml_value.c_str(), 0);
+  // TODO(hzeller): use std::string in eventvar_values
+  eventvar_values[0] = strdup(xmlescape(xml_value).c_str());
 
   const char *sid = UpnpSubscriptionRequest_get_SID_cstr(sr_event);
   rc = UpnpAcceptSubscription(priv->device_handle, udn, serviceId,

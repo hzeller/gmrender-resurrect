@@ -47,9 +47,10 @@ static const char kDidlFooter[] = "</DIDL-Lite>";
 
 // Allocates a new DIDL formatted XML and fill it with given data.
 // The input fields are expected to be already xml escaped.
-static char *generate_DIDL(const char *id, const char *title,
-                           const char *artist, const char *album,
-                           const char *genre, const char *composer) {
+static char *generate_DIDL(const std::string &id, const std::string &title,
+                           const std::string &artist, const std::string &album,
+                           const std::string &genre,
+                           const std::string &composer) {
   char *result = NULL;
   int ret = asprintf(&result,
                      "%s\n<item id=\"%s\">\n"
@@ -59,9 +60,9 @@ static char *generate_DIDL(const char *id, const char *title,
                      "\t<upnp:genre>%s</upnp:genre>\n"
                      "\t<upnp:creator>%s</upnp:creator>\n"
                      "</item>\n%s",
-                     kDidlHeader, id, title ? title : "", artist ? artist : "",
-                     album ? album : "", genre ? genre : "",
-                     composer ? composer : "", kDidlFooter);
+                     kDidlHeader, id.c_str(), title.c_str(), artist.c_str(),
+                     album.c_str(), genre.c_str(), composer.c_str(),
+                     kDidlFooter);
   return ret >= 0 ? result : NULL;
 }
 
@@ -71,10 +72,10 @@ static char *generate_DIDL(const char *id, const char *title,
 // updates "edit_count" if there was a change.
 // Very crude way to edit XML.
 static char *replace_range(char *const input, const char *tag_start,
-                           const char *tag_end, const char *content,
+                           const char *tag_end, const std::string &content,
                            int *edit_count) {
-  if (content == NULL)  // unknown content; document unchanged.
-    return input;
+  if (content.empty())
+    return input;  // unknown content; document unchanged.
   const int total_len = strlen(input);
   const char *start_pos = strstr(input, tag_start);
   if (start_pos == NULL) return input;
@@ -83,20 +84,20 @@ static char *replace_range(char *const input, const char *tag_start,
   const char *end_pos = strstr(start_pos, tag_end);
   if (end_pos == NULL) return input;
   const int old_content_len = end_pos - start_pos;
-  const int new_content_len = strlen(content);
+  const int new_content_len = content.length();
   char *result = NULL;
   if (old_content_len != new_content_len) {
     result = (char *)malloc(total_len + new_content_len - old_content_len + 1);
     memcpy(result, input, start_pos - input);
-    memcpy(result + offset, content, new_content_len);
+    memcpy(result + offset, content.c_str(), new_content_len);
     strcpy(result + offset + new_content_len, end_pos);  // remaining
     free(input);
     ++*edit_count;
   } else {
     // Typically, we replace the same content with itself - same
     // length. No realloc in this case.
-    if (strncmp(start_pos, content, new_content_len) != 0) {
-      memcpy(input + offset, content, new_content_len);
+    if (strncmp(start_pos, content.c_str(), new_content_len) != 0) {
+      memcpy(input + offset, content.c_str(), new_content_len);
       ++*edit_count;
     }
     result = input;
@@ -178,12 +179,11 @@ char *TrackMetadata::ToDIDL(const char *original_xml) const {
   snprintf(unique_id, sizeof(unique_id), "gmr-%08x", xml_id++);
 
   char *result;
-  char *title, *artist, *album, *genre, *composer;
-  title = title_.length() ? xmlescape(title_.c_str(), 0) : NULL;
-  artist = artist_.length() ? xmlescape(artist_.c_str(), 0) : NULL;
-  album = album_.length() ? xmlescape(album_.c_str(), 0) : NULL;
-  genre = genre_.length() ? xmlescape(genre_.c_str(), 0) : NULL;
-  composer = composer_.length() ? xmlescape(composer_.c_str(), 0) : NULL;
+  const std::string title = xmlescape(title_);
+  const std::string artist = xmlescape(artist_);
+  const std::string album = xmlescape(album_);
+  const std::string genre = xmlescape(genre_);
+  const std::string composer = xmlescape(composer_);
 
   if (original_xml == NULL || strlen(original_xml) == 0) {
     result = generate_DIDL(unique_id, title, artist, album, genre, composer);
@@ -207,10 +207,5 @@ char *TrackMetadata::ToDIDL(const char *original_xml) const {
       result = replace_range(result, " id=\"", "\"", unique_id, &edits);
     }
   }
-  free(title);
-  free(artist);
-  free(album);
-  free(genre);
-  free(composer);
   return result;
 }

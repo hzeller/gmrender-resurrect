@@ -1,7 +1,7 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 /* xmlescape.c - helper routines for escaping XML strings
  *
- * Copyright (C) 2007   Ivo Clarysse
+ * Copyright (C) 2019 Henner Zeller
  *
  * This file is part of GMediaRender.
  *
@@ -23,61 +23,19 @@
  */
 #include "xmlescape.h"
 
-#include <stdlib.h>
-#include <string.h>
+std::string xmlescape(const std::string &str) {
+  std::string result;
+  result.reserve(str.length() + 10);
 
-static void xmlescape_real(const char *str, char *target, int *length,
-                           int attribute) {
-  if (target != NULL) {
-    int len = 0;
-
-    for (/**/; *str; str++) {
-      if (*str == '<') {
-        memcpy(target + len, "&lt;", 4);
-        len += 4;
-      } else if (attribute && (*str == '"')) {
-        memcpy(target + len, "%22", 3);
-        len += 3;
-      } else if (*str == '>') {
-        memcpy(target + len, "&gt;", 4);
-        len += 4;
-      } else if (*str == '&') {
-        memcpy(target + len, "&amp;", 5);
-        len += 5;
-      } else {
-        target[len++] = *str;
-      }
+  // TODO: If we ever deal with attributes, within attributes also %22-escape
+  // double-quotes.
+  for (char c : str) {
+    switch (c) {
+    case '<': result.append("&lt;"); break;
+    case '>': result.append("&gt;"); break;
+    case '&': result.append("&amp;"); break;
+    default: result.append(1, c); break;
     }
-    target[len] = '\0';
-
-    if (length != NULL) *length = len;
-  } else if (length != NULL) {
-    int len = 0;
-
-    for (/**/; *str; str++) {
-      if (*str == '<') {
-        len += 4;
-      } else if (attribute && (*str == '"')) {
-        len += 3;
-      } else if (*str == '>') {
-        len += 4;
-      } else if (*str == '&') {
-        len += 5;
-      } else {
-        len++;
-      }
-    }
-
-    *length = len;
   }
-}
-
-char *xmlescape(const char *str, int attribute) {
-  int len;
-  char *out;
-
-  xmlescape_real(str, NULL, &len, attribute);
-  out = (char *)malloc(len + 1);
-  xmlescape_real(str, out, NULL, attribute);
-  return out;
+  return result;
 }

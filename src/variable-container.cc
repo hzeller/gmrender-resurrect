@@ -199,7 +199,8 @@ void UPnPLastChangeCollector::Notify() {
     // Yes, now, the whole XML document is encapsulated in
     // XML so needs to be XML quoted. The time around 2000 was
     // pretty sick - people did everything in XML.
-    varvalues[0] = xmlescape(xml_doc_string.c_str(), 0);
+    // TODO: don't use C but std::string in varvalues
+    varvalues[0] = strdup(xmlescape(xml_doc_string).c_str());
     upnp_device_notify(upnp_device_, service_id_, varnames, varvalues,  1);
     free((char *)varvalues[0]);
   }
