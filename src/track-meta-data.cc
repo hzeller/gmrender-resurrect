@@ -47,7 +47,7 @@ static const char kDidlFooter[] = "</DIDL-Lite>";
 
 // Allocates a new DIDL formatted XML and fill it with given data.
 // The input fields are expected to be already xml escaped.
-static char *generate_DIDL(const std::string &id, const std::string &title,
+static char *generate_DIDL(const char *id, const std::string &title,
                            const std::string &artist, const std::string &album,
                            const std::string &genre,
                            const std::string &composer) {
@@ -60,7 +60,7 @@ static char *generate_DIDL(const std::string &id, const std::string &title,
                      "\t<upnp:genre>%s</upnp:genre>\n"
                      "\t<upnp:creator>%s</upnp:creator>\n"
                      "</item>\n%s",
-                     kDidlHeader, id.c_str(), title.c_str(), artist.c_str(),
+                     kDidlHeader, id, title.c_str(), artist.c_str(),
                      album.c_str(), genre.c_str(), composer.c_str(),
                      kDidlFooter);
   return ret >= 0 ? result : NULL;
@@ -71,6 +71,7 @@ static char *generate_DIDL(const std::string &id, const std::string &title,
 // returned string is valid.
 // updates "edit_count" if there was a change.
 // Very crude way to edit XML.
+// TODO: use std::string to simplify operations.
 static char *replace_range(char *const input, const char *tag_start,
                            const char *tag_end, const std::string &content,
                            int *edit_count) {
@@ -139,8 +140,8 @@ bool TrackMetadata::UpdateFromTags(const GstTagList *tag_list) {
   return any_change;
 }
 
-bool TrackMetadata::ParseDIDL(const char *xml) {
-  struct xmldoc *doc = xmldoc_parsexml(xml);
+bool TrackMetadata::ParseDIDL(const std::string &xml) {
+  struct xmldoc *doc = xmldoc_parsexml(xml.c_str());
   if (doc == NULL) return false;
 
   // ... did I mention that I hate navigating XML documents ?
@@ -167,9 +168,9 @@ bool TrackMetadata::ParseDIDL(const char *xml) {
   return true;
 }
 
-// TODO: actually use some XML library for this, but spending too much time
-// with XML is not good for the brain :) Worst thing that came out of the 90ies.
-char *TrackMetadata::ToDIDL(const char *original_xml) const {
+// TODO: actually maybe use some XML library for this, but spending too much
+// time with XML is not good for the brain, so this might just be good enough.
+std::string TrackMetadata::ToDIDL(const std::string &original_xml) const {
   // Generating a unique ID in case the players cache the content by
   // the item-ID. Right now this is experimental and not known to make
   // any difference - it seems that players just don't display changes
@@ -185,13 +186,13 @@ char *TrackMetadata::ToDIDL(const char *original_xml) const {
   const std::string genre = xmlescape(genre_);
   const std::string composer = xmlescape(composer_);
 
-  if (original_xml == NULL || strlen(original_xml) == 0) {
+  if (original_xml.empty()) {
     result = generate_DIDL(unique_id, title, artist, album, genre, composer);
   } else {
     int edits = 0;
     // Otherwise, surgically edit the original document to give
     // control points as close as possible what they sent themself.
-    result = strdup(original_xml);
+    result = strdup(original_xml.c_str());
     result = replace_range(result, "<dc:title>", "</dc:title>", title, &edits);
     result = replace_range(result, "<upnp:artist>", "</upnp:artist>", artist,
                            &edits);
@@ -207,5 +208,9 @@ char *TrackMetadata::ToDIDL(const char *original_xml) const {
       result = replace_range(result, " id=\"", "\"", unique_id, &edits);
     }
   }
-  return result;
+  // TODO: make all the above use std::string operations to begin with, so
+  // that we don't have to do the silly copy here.
+  const std::string to_return(result);
+  free(result);
+  return to_return;
 }

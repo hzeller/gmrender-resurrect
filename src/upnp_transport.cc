@@ -460,12 +460,11 @@ static void update_meta_from_stream(const TrackMetadata &meta) {
   if (meta.title().empty()) return;
 
   auto original_xml = state_variables_->Get(TRANSPORT_VAR_AV_URI_META);
-  char *didl = meta.ToDIDL(original_xml.c_str());
+  const std::string didl = meta.ToDIDL(original_xml);
   service_lock();
   state_variables_->Set(TRANSPORT_VAR_AV_URI_META, didl);
   state_variables_->Set(TRANSPORT_VAR_CUR_TRACK_META, didl);
   service_unlock();
-  free(didl);
 }
 
 /* UPnP action handlers */

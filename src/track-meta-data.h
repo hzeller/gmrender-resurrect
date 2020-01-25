@@ -41,13 +41,13 @@ public:
   // Update from GstTags. Return if there was any change.
   bool UpdateFromTags(const GstTagList *tag_list);
 
-  // Returns a newly allocated xml string with the song meta data encoded as
+  // Returns xml string with the song meta data encoded as
   // DIDL-Lite. If we get a non-empty original xml document, returns an
   // edited version of that document.
-  char *ToDIDL(const char *original_xml) const;
+  std::string ToDIDL(const std::string &original_xml) const;
 
   // Parse DIDL-Lite and fill SongMetaData struct. Returns true when successful.
-  bool ParseDIDL(const char *xml);
+  bool ParseDIDL(const std::string &xml);
 
 private:
   std::string title_;
