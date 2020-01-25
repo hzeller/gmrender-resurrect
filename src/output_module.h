@@ -74,8 +74,7 @@ class OutputModule {
     if (metadata_callback_) metadata_callback_(metadata);
   }
 
-  TrackMetadata metadata;
-
+  TrackMetadata metadata_;
   Output::PlaybackCallback playback_callback_ = nullptr;
   Output::MetadataCallback metadata_callback_ = nullptr;
 };

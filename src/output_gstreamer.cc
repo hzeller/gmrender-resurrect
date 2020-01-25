@@ -604,8 +604,8 @@ bool GstreamerOutput::BusCallback(GstMessage* message) {
       GstTagList* tag_list = NULL;
       gst_message_parse_tag(message, &tag_list);
 
-      if (metadata.UpdateFromTags(tag_list)) {
-        NotifyMetadataChange(metadata);
+      if (metadata_.UpdateFromTags(tag_list)) {
+        NotifyMetadataChange(metadata_);
       }
 
       gst_tag_list_free(tag_list);
