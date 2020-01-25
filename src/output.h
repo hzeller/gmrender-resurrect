@@ -30,7 +30,7 @@
 #include <string>
 
 #include <glib.h>
-#include "song-meta-data.h"
+#include "track-meta-data.h"
 
 namespace Output {
 enum State { kPlaybackStopped, kStartedNextStream };

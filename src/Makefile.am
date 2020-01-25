@@ -3,7 +3,7 @@ bin_PROGRAMS = gmediarender
 gmediarender_SOURCES = main.cc git-version.h \
 	upnp_service.cc upnp_control.cc upnp_connmgr.cc  upnp_transport.cc \
 	upnp_service.h upnp_control.h upnp_connmgr.h  upnp_transport.h \
-	song-meta-data.h song-meta-data.cc \
+	track-meta-data.h track-meta-data.cc \
 	variable-container.h variable-container.cc \
 	upnp_device.cc upnp_device.h \
 	upnp_renderer.h upnp_renderer.cc \
@@ -28,5 +28,5 @@ git-version.h: .FORCE
 
 .FORCE:
 
-AM_CPPFLAGS = $(GLIB_CFLAGS) $(GST_CFLAGS) $(LIBUPNP_CFLAGS) -DPKG_DATADIR=\"$(datadir)/gmediarender\"
+AM_CPPFLAGS = -include config.h $(GLIB_CFLAGS) $(GST_CFLAGS) $(LIBUPNP_CFLAGS) -DPKG_DATADIR=\"$(datadir)/gmediarender\"
 gmediarender_LDADD = $(GLIB_LIBS) $(GST_LIBS) $(LIBUPNP_LIBS)

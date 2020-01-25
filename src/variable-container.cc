@@ -20,7 +20,6 @@
  * MA 02110-1301, USA.
  *
  */
-
 #include "variable-container.h"
 
 #include <assert.h>

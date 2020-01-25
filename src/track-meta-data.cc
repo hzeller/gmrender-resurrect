@@ -1,5 +1,5 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
-/* song-meta-data - Object holding meta data for a song.
+/* track-meta-data - Object holding meta data for a song.
  *
  * Copyright (C) 2012 Henner Zeller
  * Copyright (C) 2020 Tucker Kern
@@ -26,7 +26,7 @@
 // TODO: we're assuming that the namespaces are abbreviated with 'dc' and 'upnp'
 // ... but if I understand that correctly, that doesn't need to be the case.
 
-#include "song-meta-data.h"
+#include "track-meta-data.h"
 
 /**
   @brief  Create and append root element and requried attributes for metadata

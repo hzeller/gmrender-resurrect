@@ -1,5 +1,5 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
-/* song-meta-data - Object holding meta data for a song.
+/* track-meta-data - Object holding meta data for a song.
  *
  * Copyright (C) 2012 Henner Zeller
  * Copyright (C) 2020 Tucker Kern
