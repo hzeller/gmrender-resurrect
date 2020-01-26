@@ -21,22 +21,31 @@
  * MA 02110-1301, USA.
  *
  */
-
 #ifndef _SONG_META_DATA_H
 #define _SONG_META_DATA_H
 
-#include <gst/gst.h>
+#include <gst/gsttaglist.h>
 
 #include <string>
+#include <functional>
 
 // Metadata for a song.
 class TrackMetadata {
 public:
   const std::string& title() const { return title_; }
+  void set_title(const std::string &v) { title_ = v; }
+
   const std::string& artist() const { return artist_; }
+  void set_artist(const std::string &v) { artist_ = v; }
+
   const std::string& album() const { return album_; }
+  void set_album(const std::string &v) { album_ = v; }
+
   const std::string& genre() const { return genre_; }
+  void set_genre(const std::string &v) { genre_ = v; }
+
   const std::string& composer() const { return composer_; }
+  void set_composer(const std::string &v) { composer_ = v; }
 
   // Update from GstTags. Return if there was any change.
   bool UpdateFromTags(const GstTagList *tag_list);
@@ -44,12 +53,19 @@ public:
   // Returns xml string with the song meta data encoded as
   // DIDL-Lite. If we get a non-empty original xml document, returns an
   // edited version of that document.
-  std::string ToDIDL(const std::string &original_xml) const;
+  // "idgen" is a generator for the toplevel identifier attribute of the
+  // document; if null, a default generator is used.
+  std::string ToDIDL(const std::string &original_xml,
+                     std::function<std::string()> idgen = nullptr) const;
 
   // Parse DIDL-Lite and fill SongMetaData struct. Returns true when successful.
   bool ParseDIDL(const std::string &xml);
 
 private:
+  static std::string DefaultCreateNewId();
+  // Generate a new DIDL XML.
+  char *generateDIDL(const std::string &id) const;
+
   std::string title_;
   std::string artist_;
   std::string album_;

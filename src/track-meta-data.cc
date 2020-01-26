@@ -47,36 +47,41 @@ static const char kDidlFooter[] = "</DIDL-Lite>";
 
 // Allocates a new DIDL formatted XML and fill it with given data.
 // The input fields are expected to be already xml escaped.
-static char *generate_DIDL(const char *id, const std::string &title,
-                           const std::string &artist, const std::string &album,
-                           const std::string &genre,
-                           const std::string &composer) {
-  char *result = NULL;
-  int ret = asprintf(&result,
-                     "%s\n<item id=\"%s\">\n"
-                     "\t<dc:title>%s</dc:title>\n"
-                     "\t<upnp:artist>%s</upnp:artist>\n"
-                     "\t<upnp:album>%s</upnp:album>\n"
-                     "\t<upnp:genre>%s</upnp:genre>\n"
-                     "\t<upnp:creator>%s</upnp:creator>\n"
-                     "</item>\n%s",
-                     kDidlHeader, id, title.c_str(), artist.c_str(),
-                     album.c_str(), genre.c_str(), composer.c_str(),
-                     kDidlFooter);
+char *TrackMetadata::generateDIDL(const std::string &id) const {
+  char *result = nullptr;
+  int ret = asprintf(
+    &result, R"(%s
+<item id="%s">
+  <dc:title>%s</dc:title>
+  <upnp:artist>%s</upnp:artist>
+  <upnp:album>%s</upnp:album>
+  <upnp:genre>%s</upnp:genre>
+  <upnp:creator>%s</upnp:creator>
+</item>
+%s)",
+    kDidlHeader, id.c_str(),
+    xmlescape(title_).c_str(), xmlescape(artist_).c_str(),
+    xmlescape(album_).c_str(), xmlescape(genre_).c_str(),
+    xmlescape(composer_).c_str(), kDidlFooter);
   return ret >= 0 ? result : NULL;
 }
 
-// Takes input, if it finds the given tag, then replaces the content between
-// these with 'content'. It might re-allocate the original string; only the
+// Takes input, if it finds the given XML-tag, then replaces the content
+// between these with 'content'.
+// Make sure to pass something without namespace to "tag_start", so that
+// we are namespace agnostic.
+// It might re-allocate the original string and free the original; only the
 // returned string is valid.
 // updates "edit_count" if there was a change.
 // Very crude way to edit XML.
 // TODO: use std::string to simplify operations.
-static char *replace_range(char *const input, const char *tag_start,
-                           const char *tag_end, const std::string &content,
-                           int *edit_count) {
-  if (content.empty())
+static char *replace_tag_content(char *const input,
+                                 const char *tag_start, const char *tag_end,
+                                 const std::string &unescaped_content,
+                                 int *edit_count) {
+  if (unescaped_content.empty())
     return input;  // unknown content; document unchanged.
+  const std::string content = xmlescape(unescaped_content);
   const int total_len = strlen(input);
   const char *start_pos = strstr(input, tag_start);
   if (start_pos == NULL) return input;
@@ -160,11 +165,7 @@ bool TrackMetadata::ParseDIDL(const std::string &xml) {
   return true;
 }
 
-// TODO: Maybe use some XMLdoc library for this; however, we are also
-// interested in minimally invasive edit incoming XML - control points might
-// only really be able to parse their own style of XML. So we don't really
-// want to re-create the whole XML.
-std::string TrackMetadata::ToDIDL(const std::string &original_xml) const {
+/*static*/ std::string TrackMetadata::DefaultCreateNewId() {
   // Generating a unique ID in case the players cache the content by
   // the item-ID. Right now this is experimental and not known to make
   // any difference - it seems that players just don't display changes
@@ -172,34 +173,34 @@ std::string TrackMetadata::ToDIDL(const std::string &original_xml) const {
   static unsigned int xml_id = 42;
   char unique_id[4 + 8 + 1];
   snprintf(unique_id, sizeof(unique_id), "gmr-%08x", xml_id++);
+  return unique_id;
+}
 
+// TODO: Maybe use some XMLdoc library for this; however, we are also
+// interested in minimally invasive edit incoming XML - control points might
+// only really be able to parse their own style of XML. So it might be
+// not compatible with the control point if we re-create the XML.
+std::string TrackMetadata::ToDIDL(const std::string &original_xml,
+                                  std::function<std::string()> idgen) const {
   char *result;
-  const std::string title = xmlescape(title_);
-  const std::string artist = xmlescape(artist_);
-  const std::string album = xmlescape(album_);
-  const std::string genre = xmlescape(genre_);
-  const std::string composer = xmlescape(composer_);
-
   if (original_xml.empty()) {
-    result = generate_DIDL(unique_id, title, artist, album, genre, composer);
+    const std::string new_id = idgen ? idgen() : DefaultCreateNewId();
+    result = generateDIDL(new_id);
   } else {
     int edits = 0;
     // Otherwise, surgically edit the original document to give
     // control points as close as possible what they sent themself.
     result = strdup(original_xml.c_str());
-    result = replace_range(result, "<dc:title>", "</dc:title>", title, &edits);
-    result = replace_range(result, "<upnp:artist>", "</upnp:artist>", artist,
-                           &edits);
-    result =
-        replace_range(result, "<upnp:album>", "</upnp:album>", album, &edits);
-    result =
-        replace_range(result, "<upnp:genre>", "</upnp:genre>", genre, &edits);
-    result = replace_range(result, "<upnp:creator>", "</upnp:creator>",
-                           composer, &edits);
+    result = replace_tag_content(result, ":title>", "</", title_, &edits);
+    result = replace_tag_content(result, ":artist>", "</", artist_, &edits);
+    result = replace_tag_content(result, ":album>", "</", album_, &edits);
+    result = replace_tag_content(result, ":genre>",  "</", genre_, &edits);
+    result = replace_tag_content(result, ":creator>", "</", composer_, &edits);
     if (edits) {
       // Only if we changed the content, we generate a new
       // unique id.
-      result = replace_range(result, " id=\"", "\"", unique_id, &edits);
+      const std::string new_id = idgen ? idgen() : DefaultCreateNewId();
+      result = replace_tag_content(result, " id=\"", "\"", new_id, &edits);
     }
   }
   // TODO: make all the above use std::string operations to begin with, so
