@@ -107,35 +107,27 @@ static char *replace_range(char *const input, const char *tag_start,
 }
 
 bool TrackMetadata::UpdateFromTags(const GstTagList *tag_list) {
+  // Update provided tag if the content in tag_list exists and is different.
   auto attemptTagUpdate =
-    [tag_list](std::string& tag, const char* tag_name) -> bool {
-      // Attempt to fetch the tag
-      gchar* value = NULL;
-      if (gst_tag_list_get_string(tag_list, tag_name, &value) == false)
+    [tag_list](const char *tag_name, std::string *tag) -> bool {
+      gchar* value = nullptr;
+      if (!gst_tag_list_get_string(tag_list, tag_name, &value))
         return false;
 
-      if (tag.compare(value) == 0) {
-        // Identical tags
-        g_free(value);
-        return false;
+      const bool needs_update = (*tag != value);
+      if (needs_update) {
+        *tag = value;
       }
-
-      tag = value;
-
-      // Free the tag buffer
       g_free(value);
-
-      // Log_info(TAG, "Got tag: '%s' value: '%s'", tag_name, tag.c_str());
-
-      return true;
+      return needs_update;
     };
 
   bool any_change = false;
-  any_change |= attemptTagUpdate(title_, GST_TAG_TITLE);
-  any_change |= attemptTagUpdate(artist_, GST_TAG_ARTIST);
-  any_change |= attemptTagUpdate(album_, GST_TAG_ALBUM);
-  any_change |= attemptTagUpdate(genre_, GST_TAG_GENRE);
-  any_change |= attemptTagUpdate(composer_, GST_TAG_COMPOSER);
+  any_change |= attemptTagUpdate(GST_TAG_TITLE, &title_);
+  any_change |= attemptTagUpdate(GST_TAG_ARTIST, &artist_);
+  any_change |= attemptTagUpdate(GST_TAG_ALBUM, &album_);
+  any_change |= attemptTagUpdate(GST_TAG_GENRE, &genre_) ;
+  any_change |= attemptTagUpdate(GST_TAG_COMPOSER, &composer_);
 
   return any_change;
 }
@@ -168,8 +160,10 @@ bool TrackMetadata::ParseDIDL(const std::string &xml) {
   return true;
 }
 
-// TODO: actually maybe use some XML library for this, but spending too much
-// time with XML is not good for the brain, so this might just be good enough.
+// TODO: Maybe use some XMLdoc library for this; however, we are also
+// interested in minimally invasive edit incoming XML - control points might
+// only really be able to parse their own style of XML. So we don't really
+// want to re-create the whole XML.
 std::string TrackMetadata::ToDIDL(const std::string &original_xml) const {
   // Generating a unique ID in case the players cache the content by
   // the item-ID. Right now this is experimental and not known to make
