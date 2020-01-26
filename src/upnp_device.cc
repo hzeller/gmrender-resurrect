@@ -169,10 +169,6 @@ static int handle_subscription_request(
   int result = -1;
   ithread_mutex_lock(&(priv->device_mutex));
 
-  // There is really only one variable evented: LastChange
-  const char *eventvar_names[] = {"LastChange", NULL};
-  const char *eventvar_values[] = {NULL, NULL};
-
   // Build the current state of the variables as one gigantic initial
   // LastChange update.
   ithread_mutex_lock(srv->service_mutex);
@@ -192,10 +188,13 @@ static int handle_subscription_request(
   ithread_mutex_unlock(srv->service_mutex);
   const std::string &xml_value = builder.toXML();
   Log_info("upnp", "Initial variable sync: %s", xml_value.c_str());
-  // TODO(hzeller): use std::string in eventvar_values
-  eventvar_values[0] = strdup(xmlescape(xml_value).c_str());
+  const std::string escaped_xml = xmlescape(xml_value);
 
   const char *sid = UpnpSubscriptionRequest_get_SID_cstr(sr_event);
+
+  // We event exactly one variable: LastChange
+  const char *eventvar_names[] = {"LastChange", nullptr};
+  const char *eventvar_values[] = {escaped_xml.c_str(), nullptr};
   rc = UpnpAcceptSubscription(priv->device_handle, udn, serviceId,
                               eventvar_names, eventvar_values, 1, sid);
   if (rc == UPNP_E_SUCCESS) {
@@ -206,8 +205,6 @@ static int handle_subscription_request(
   }
 
   ithread_mutex_unlock(&(priv->device_mutex));
-
-  free((char *)eventvar_values[0]);
 
   return result;
 }

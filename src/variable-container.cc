@@ -194,15 +194,10 @@ void UPnPLastChangeCollector::Notify() {
 
   // Only if there is actually a change, send it over.
   if (variable_container_->Set(last_change_variable_num_, xml_doc_string)) {
-    const char *varnames[] = {"LastChange", NULL};
-    const char *varvalues[] = {NULL, NULL};
-    // Yes, now, the whole XML document is encapsulated in
-    // XML so needs to be XML quoted. The time around 2000 was
-    // pretty sick - people did everything in XML.
-    // TODO: don't use C but std::string in varvalues
-    varvalues[0] = strdup(xmlescape(xml_doc_string).c_str());
+    const std::string escaped_xml = xmlescape(xml_doc_string);
+    const char *varnames[] = {"LastChange", nullptr};
+    const char *varvalues[] = {escaped_xml.c_str(), nullptr};
     upnp_device_notify(upnp_device_, service_id_, varnames, varvalues,  1);
-    free((char *)varvalues[0]);
   }
 }
 
