@@ -39,15 +39,15 @@ static constexpr char kDidlHeader[] =
     "xmlns=\"urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/\" "
     "xmlns:dc=\"http://purl.org/dc/elements/1.1/\" "
     "xmlns:upnp=\"urn:schemas-upnp-org:metadata-1-0/upnp/\">";
-static const char kDidlFooter[] = "</item></DIDL-Lite>";
+static constexpr char kDidlFooter[] = "</item></DIDL-Lite>";
 
 std::string TrackMetadata::generateDIDL(const std::string &id) const {
   std::string result(kDidlHeader);
   result.append("<item id=\"").append(id).append("\">\n");
   struct XMLAddTag { const std::string tag; const std::string &value; };
   const XMLAddTag printTags[]
-    = { { "dc:title", title_ }, { "upnp:artist", artist_ },
-        { "upnp:album", album_ }, { "upnp:genre", genre_ },
+    = { { "dc:title",     title_ }, { "upnp:artist", artist_ },
+        { "upnp:album",   album_ }, { "upnp:genre",  genre_ },
         { "upnp:creator", composer_ } };
   for (auto t : printTags) {
     if (t.value.empty()) continue;
