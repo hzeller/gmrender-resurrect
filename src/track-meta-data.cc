@@ -38,77 +38,45 @@
 #include "xmldoc.h"
 #include "xmlescape.h"
 
-static const char kDidlHeader[] =
+static constexpr char kDidlHeader[] =
     "<DIDL-Lite "
     "xmlns=\"urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/\" "
     "xmlns:dc=\"http://purl.org/dc/elements/1.1/\" "
     "xmlns:upnp=\"urn:schemas-upnp-org:metadata-1-0/upnp/\">";
-static const char kDidlFooter[] = "</DIDL-Lite>";
+static const char kDidlFooter[] = "</item></DIDL-Lite>";
 
-// Allocates a new DIDL formatted XML and fill it with given data.
-// The input fields are expected to be already xml escaped.
-char *TrackMetadata::generateDIDL(const std::string &id) const {
-  char *result = nullptr;
-  int ret = asprintf(
-    &result, R"(%s
-<item id="%s">
-  <dc:title>%s</dc:title>
-  <upnp:artist>%s</upnp:artist>
-  <upnp:album>%s</upnp:album>
-  <upnp:genre>%s</upnp:genre>
-  <upnp:creator>%s</upnp:creator>
-</item>
-%s)",
-    kDidlHeader, id.c_str(),
-    xmlescape(title_).c_str(), xmlescape(artist_).c_str(),
-    xmlescape(album_).c_str(), xmlescape(genre_).c_str(),
-    xmlescape(composer_).c_str(), kDidlFooter);
-  return ret >= 0 ? result : NULL;
+std::string TrackMetadata::generateDIDL(const std::string &id) const {
+  std::string result(kDidlHeader);
+  result.append("<item id=\"").append(id).append("\">\n");
+  struct XMLAddTag { const std::string tag; const std::string &value; };
+  const XMLAddTag printTags[]
+    = { { "dc:title", title_ }, { "upnp:artist", artist_ },
+        { "upnp:album", album_ }, { "upnp:genre", genre_ },
+        { "upnp:creator", composer_ } };
+  for (auto t : printTags) {
+    if (t.value.empty()) continue;
+    result += "  <" + t.tag + ">" + xmlescape(t.value) + "</" + t.tag + ">\n";
+  }
+  result.append(kDidlFooter);
+  return result;
 }
 
 // Takes input, if it finds the given XML-tag, then replaces the content
-// between these with 'content'.
-// Make sure to pass something without namespace to "tag_start", so that
-// we are namespace agnostic.
-// It might re-allocate the original string and free the original; only the
-// returned string is valid.
-// updates "edit_count" if there was a change.
-// Very crude way to edit XML.
-// TODO: use std::string to simplify operations.
-static char *replace_tag_content(char *const input,
-                                 const char *tag_start, const char *tag_end,
-                                 const std::string &unescaped_content,
-                                 int *edit_count) {
+// between these with 'content'. Returns true if tag was found and replace.
+static bool replace_tag(const char *tag_start, const char *tag_end,
+                        const std::string &unescaped_content,
+                        std::string *document) {
   if (unescaped_content.empty())
-    return input;  // unknown content; document unchanged.
+    return false;  // unknown content; document unchanged.
   const std::string content = xmlescape(unescaped_content);
-  const int total_len = strlen(input);
-  const char *start_pos = strstr(input, tag_start);
-  if (start_pos == NULL) return input;
-  start_pos += strlen(tag_start);
-  const int offset = start_pos - input;
-  const char *end_pos = strstr(start_pos, tag_end);
-  if (end_pos == NULL) return input;
-  const int old_content_len = end_pos - start_pos;
-  const int new_content_len = content.length();
-  char *result = NULL;
-  if (old_content_len != new_content_len) {
-    result = (char *)malloc(total_len + new_content_len - old_content_len + 1);
-    memcpy(result, input, start_pos - input);
-    memcpy(result + offset, content.c_str(), new_content_len);
-    strcpy(result + offset + new_content_len, end_pos);  // remaining
-    free(input);
-    ++*edit_count;
-  } else {
-    // Typically, we replace the same content with itself - same
-    // length. No realloc in this case.
-    if (strncmp(start_pos, content.c_str(), new_content_len) != 0) {
-      memcpy(input + offset, content.c_str(), new_content_len);
-      ++*edit_count;
-    }
-    result = input;
-  }
-  return result;
+
+  auto begin_replace = document->find(tag_start);
+  if (begin_replace == std::string::npos) return false;
+  begin_replace += strlen(tag_start);
+  auto end_replace = document->find(tag_end, begin_replace);
+  if (end_replace == std::string::npos) return false;
+  document->replace(begin_replace, end_replace - begin_replace, content);
+  return true;
 }
 
 bool TrackMetadata::UpdateFromTags(const GstTagList *tag_list) {
@@ -182,30 +150,25 @@ bool TrackMetadata::ParseDIDL(const std::string &xml) {
 // not compatible with the control point if we re-create the XML.
 std::string TrackMetadata::ToDIDL(const std::string &original_xml,
                                   std::function<std::string()> idgen) const {
-  char *result;
   if (original_xml.empty()) {
     const std::string new_id = idgen ? idgen() : DefaultCreateNewId();
-    result = generateDIDL(new_id);
-  } else {
-    int edits = 0;
-    // Otherwise, surgically edit the original document to give
-    // control points as close as possible what they sent themself.
-    result = strdup(original_xml.c_str());
-    result = replace_tag_content(result, ":title>", "</", title_, &edits);
-    result = replace_tag_content(result, ":artist>", "</", artist_, &edits);
-    result = replace_tag_content(result, ":album>", "</", album_, &edits);
-    result = replace_tag_content(result, ":genre>",  "</", genre_, &edits);
-    result = replace_tag_content(result, ":creator>", "</", composer_, &edits);
-    if (edits) {
-      // Only if we changed the content, we generate a new
-      // unique id.
-      const std::string new_id = idgen ? idgen() : DefaultCreateNewId();
-      result = replace_tag_content(result, " id=\"", "\"", new_id, &edits);
-    }
+    return generateDIDL(new_id);
   }
-  // TODO: make all the above use std::string operations to begin with, so
-  // that we don't have to do the silly copy here.
-  const std::string to_return(result);
-  free(result);
-  return to_return;
+  std::string result;
+  // Otherwise, surgically edit the original document to give
+  // control points as close as possible what they sent themself.
+  result = original_xml;
+  bool any_change = false;
+  any_change |= replace_tag(":title>", "</", title_, &result);
+  any_change |= replace_tag(":artist>", "</", artist_, &result);
+  any_change |= replace_tag(":album>", "</", album_, &result);
+  any_change |= replace_tag(":genre>",  "</", genre_, &result);
+  any_change |= replace_tag(":creator>", "</", composer_, &result);
+  if (any_change) {
+    // Only if we changed the content, we generate a new
+    // unique id.
+    const std::string new_id = idgen ? idgen() : DefaultCreateNewId();
+    replace_tag(" id=\"", "\"", new_id, &result);
+  }
+  return result;
 }

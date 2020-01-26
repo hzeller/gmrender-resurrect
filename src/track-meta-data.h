@@ -64,7 +64,7 @@ public:
 private:
   static std::string DefaultCreateNewId();
   // Generate a new DIDL XML.
-  char *generateDIDL(const std::string &id) const;
+  std::string generateDIDL(const std::string &id) const;
 
   std::string title_;
   std::string artist_;
