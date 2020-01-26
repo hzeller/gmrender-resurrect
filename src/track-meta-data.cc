@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "xmldoc.h"
+#include "xmldoc2.h"
 #include "xmlescape.h"
 
 static constexpr char kDidlHeader[] =
@@ -102,30 +102,15 @@ bool TrackMetadata::UpdateFromTags(const GstTagList *tag_list) {
 }
 
 bool TrackMetadata::ParseDIDL(const std::string &xml) {
-  struct xmldoc *doc = xmldoc_parsexml(xml.c_str());
-  if (doc == NULL) return false;
+  const auto doc = XMLDoc::Parse(xml);
+  if (!doc) return false;
 
-  // ... did I mention that I hate navigating XML documents ?
-  struct xmlelement *didl_node = find_element_in_doc(doc, "DIDL-Lite");
-  if (didl_node == NULL) return false;
-
-  struct xmlelement *item_node = find_element_in_element(didl_node, "item");
-  if (item_node == NULL) return false;
-
-  struct xmlelement *value_node = NULL;
-  value_node = find_element_in_element(item_node, "dc:title");
-  if (value_node) title_ = get_node_value(value_node);
-
-  value_node = find_element_in_element(item_node, "upnp:artist");
-  if (value_node) artist_ = get_node_value(value_node);
-
-  value_node = find_element_in_element(item_node, "upnp:album");
-  if (value_node) album_ = get_node_value(value_node);
-
-  value_node = find_element_in_element(item_node, "upnp:genre");
-  if (value_node) genre_ = get_node_value(value_node);
-
-  xmldoc_free(doc);
+  const auto items = doc->findElement("DIDL-Lite").findElement("item");
+  if (items.isEmpty()) return false;
+  title_ = items.findElement("dc:title").value();
+  artist_ = items.findElement("upnp:artist").value();
+  album_ = items.findElement("upnp:album").value();
+  genre_ = items.findElement("upnp:genre").value();
   return true;
 }
 
