@@ -43,7 +43,6 @@
 #include "upnp_service.h"
 #include "variable-container.h"
 #include "webserver.h"
-#include "xmlescape.h"
 
 #define CONTROL_TYPE "urn:schemas-upnp-org:service:RenderingControl:1"
 
