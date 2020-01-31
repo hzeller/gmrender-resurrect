@@ -450,7 +450,6 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
                                      const char *ip_address,
                                      unsigned short port) {
   int rc;
-  char *buf;
   struct service *srv;
   struct icon *icon_entry;
 
@@ -475,9 +474,9 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 
   /* generate and register service schemas in web server */
   for (int i = 0; (srv = device_def->services[i]); i++) {
-    buf = upnp_get_scpd(srv);
-    assert(buf != NULL);
-    webserver_register_buf(srv->scpd_url, buf, "text/xml");
+    const std::string scpd_xml = upnp_get_scpd(srv);
+    // TODO(hzeller): keep string and serve from there, don't strdup()
+    webserver_register_buf(srv->scpd_url, strdup(scpd_xml.c_str()), "text/xml");
   }
 
   if (!initialize_device(device_def, result_device, ip_address, port)) {

@@ -40,6 +40,8 @@
 #include <ithread.h>
 #include <upnp.h>
 
+#include <iostream>
+
 #include "git-version.h"
 #include "upnp_connmgr.h"
 #include "upnp_control.h"
@@ -83,22 +85,13 @@ static struct upnp_device_descriptor render_device = {
 };
 
 void upnp_renderer_dump_connmgr_scpd(void) {
-  char *buf;
-  buf = upnp_get_scpd(upnp_connmgr_get_service());
-  assert(buf != NULL);
-  fputs(buf, stdout);
+  std::cout << upnp_get_scpd(upnp_connmgr_get_service());
 }
 void upnp_renderer_dump_control_scpd(void) {
-  char *buf;
-  buf = upnp_get_scpd(upnp_control_get_service());
-  assert(buf != NULL);
-  fputs(buf, stdout);
+  std::cout << upnp_get_scpd(upnp_control_get_service());
 }
 void upnp_renderer_dump_transport_scpd(void) {
-  char *buf;
-  buf = upnp_get_scpd(upnp_transport_get_service());
-  assert(buf != NULL);
-  fputs(buf, stdout);
+  std::cout << upnp_get_scpd(upnp_transport_get_service());
 }
 
 static int upnp_renderer_init(void) {

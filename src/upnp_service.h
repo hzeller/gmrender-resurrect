@@ -30,6 +30,8 @@
 #include "upnp_compat.h"
 #include "variable-container.h"
 
+#include <string>
+
 struct action;
 struct service;
 struct action_event;
@@ -116,6 +118,6 @@ struct action_event {
 struct action *find_action(struct service *event_service,
                            const char *action_name);
 
-char *upnp_get_scpd(struct service *srv);
+std::string upnp_get_scpd(const service *srv);
 
 #endif /* _UPNP_SERVICE_H */

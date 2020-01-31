@@ -49,104 +49,74 @@ static const char *ParamDatatypeName(DataType t) {
   return nullptr;  // not reached.
 }
 
-static struct xmlelement *gen_specversion(struct xmldoc *doc, int major,
-                                          int minor) {
-  struct xmlelement *top;
-
-  top = xmlelement_new(doc, "specVersion");
-
-  add_value_element_int(doc, top, "major", major);
-  add_value_element_int(doc, top, "minor", minor);
-
-  return top;
+static void add_specversion(XMLElement parent, int major, int minor) {
+  auto specVersion = parent.AddElement("specVersion");
+  specVersion.AddElement("major").SetValue(major);
+  specVersion.AddElement("minor").SetValue(minor);
 }
 
-static struct xmlelement *gen_scpd_action(
-  struct xmldoc *doc,
-  struct action *act,
-  struct argument *arglist,
-  const VariableContainer::MetaContainer &meta) {
-  struct xmlelement *top;
-  struct xmlelement *parent, *child;
+static void add_scpd_action(XMLElement parent,
+                            struct action *act,
+                            struct argument *arglist,
+                            const VariableContainer::MetaContainer &meta) {
+  if (!act) return;
 
-  top = xmlelement_new(doc, "action");
-
-  add_value_element(doc, top, "name", act->action_name);
+  auto action = parent.AddElement("action");
+  action.AddElement("name").SetValue(act->action_name);
   if (arglist) {
     struct argument *arg;
     int j;
-    parent = xmlelement_new(doc, "argumentList");
-    xmlelement_add_element(doc, top, parent);
+    auto argumentList = action.AddElement("argumentList");
     /* a NULL name is the sentinel for 'end of list' */
     for (j = 0; (arg = &arglist[j], arg->name); j++) {
-      child = xmlelement_new(doc, "argument");
-      add_value_element(doc, child, "name", arg->name);
-      add_value_element(doc, child, "direction",
-                        (arg->direction == ParamDir::kIn) ? "in" : "out");
-      add_value_element(doc, child, "relatedStateVariable",
-                        meta[arg->statevar]->name);
-      xmlelement_add_element(doc, parent, child);
+      auto singleArg = argumentList.AddElement("argument");
+      singleArg.AddElement("name").SetValue(arg->name);
+      singleArg.AddElement("direction")
+        .SetValue(arg->direction == ParamDir::kIn ? "in" : "out");
+      singleArg.AddElement("relatedStateVariable").SetValue(meta[arg->statevar]->name);
     }
   }
-  return top;
 }
 
-static struct xmlelement *gen_scpd_actionlist(struct xmldoc *doc,
-                                              struct service *srv) {
-  struct xmlelement *top;
-  struct xmlelement *child;
-  int i;
-
-  top = xmlelement_new(doc, "actionList");
-  for (i = 0; i < srv->command_count; i++) {
+static void add_scpd_actionlist(XMLElement parent, const service *srv) {
+  auto actionList = parent.AddElement("actionList");
+  for (int i = 0; i < srv->command_count; i++) {
     struct action *act;
     struct argument *arglist;
     act = &(srv->actions[i]);
     arglist = srv->action_arguments[i];
-    if (act) {
-      child = gen_scpd_action(doc, act, arglist,
-                              srv->variable_container->meta());
-      xmlelement_add_element(doc, top, child);
-    }
+    add_scpd_action(actionList, act, arglist,
+                    srv->variable_container->meta());
   }
-  return top;
 }
 
-static struct xmlelement *gen_scpd_statevar(struct xmldoc *doc,
-                                            const struct var_meta *meta) {
-  struct xmlelement *top, *parent;
-  const char **valuelist;
-  struct param_range *range;
+static void add_scpd_statevar(XMLElement parent, const struct var_meta *meta) {
+  // Discrete values _and_ range ?
+  assert(!(meta->allowed_values && meta->allowed_range));
 
-  valuelist = meta->allowed_values;
-  range = meta->allowed_range;
+  auto stateVar = parent.AddElement("stateVariable")
+    .SetAttribute("sendEvents",
+                  (meta->sendevents == Eventing::kYes) ? "yes" : "no");
+  stateVar.AddElement("name").SetValue(meta->name);
+  stateVar.AddElement("dataType").SetValue(ParamDatatypeName(meta->datatype));
 
-  top = xmlelement_new(doc, "stateVariable");
-
-  xmlelement_set_attribute(doc, top, "sendEvents",
-                           (meta->sendevents == Eventing::kYes) ? "yes" : "no");
-  add_value_element(doc, top, "name", meta->name);
-  add_value_element(doc, top, "dataType", ParamDatatypeName(meta->datatype));
-
-  if (valuelist) {
+  if (const char **valuelist = meta->allowed_values) {
     const char *allowed_value;
     int i;
-    parent = xmlelement_new(doc, "allowedValueList");
-    xmlelement_add_element(doc, top, parent);
+    auto allowedValueList = stateVar.AddElement("allowedValueList");
     for (i = 0; (allowed_value = valuelist[i]); i++) {
-      add_value_element(doc, parent, "allowedValue", allowed_value);
+      allowedValueList.AddElement("allowedValue").SetValue(allowed_value);
     }
   }
-  if (range) {
-    parent = xmlelement_new(doc, "allowedValueRange");
-    xmlelement_add_element(doc, top, parent);
-    add_value_element_long(doc, parent, "minimum", range->min);
-    add_value_element_long(doc, parent, "maximum", range->max);
+
+  if (const param_range *range = meta->allowed_range) {
+    auto allowedValueRange = stateVar.AddElement("allowedValueRange");
+    allowedValueRange.AddElement("minimum").SetValue(range->min);
+    allowedValueRange.AddElement("maximum").SetValue(range->max);
     if (range->step != 0L) {
-      add_value_element_long(doc, parent, "step", range->step);
+      allowedValueRange.AddElement("step").SetValue(range->step);
     }
   }
-  assert(!(valuelist && range));  // Discrete values _and_ range ?
 
   if (meta->default_value) {
     // Reconsider: we never set the default value before, mostly
@@ -165,44 +135,16 @@ static struct xmlelement *gen_scpd_statevar(struct xmldoc *doc,
     // (technical changes should be separate from functional changes)
     if (strcmp(meta->name, "CurrentPlayMode") == 0 &&
         strcmp(meta->default_value, "NORMAL") == 0) {
-      add_value_element(doc, top, "defaultValue", meta->default_value);
+      stateVar.AddElement("defaultValue").SetValue(meta->default_value);
     }
   }
-
-  return top;
 }
 
-static struct xmlelement *gen_scpd_servicestatetable(struct xmldoc *doc,
-                                                     struct service *srv) {
-  struct xmlelement *top;
-  struct xmlelement *child;
-
-  top = xmlelement_new(doc, "serviceStateTable");
+static void add_scpd_servicestatetable(XMLElement parent, const service *srv) {
+  auto serviceStateTable = parent.AddElement("serviceStateTable");
   for (auto meta : srv->variable_container->meta()) {
-    child = gen_scpd_statevar(doc, meta);
-    xmlelement_add_element(doc, top, child);
+    add_scpd_statevar(serviceStateTable, meta);
   }
-  return top;
-}
-
-static struct xmldoc *generate_scpd(struct service *srv) {
-  struct xmldoc *doc;
-  struct xmlelement *root;
-  struct xmlelement *child;
-
-  doc = xmldoc_new();
-
-  root = xmldoc_new_topelement(doc, "scpd", "urn:schemas-upnp-org:service-1-0");
-  child = gen_specversion(doc, 1, 0);
-  xmlelement_add_element(doc, root, child);
-
-  child = gen_scpd_actionlist(doc, srv);
-  xmlelement_add_element(doc, root, child);
-
-  child = gen_scpd_servicestatetable(doc, srv);
-  xmlelement_add_element(doc, root, child);
-
-  return doc;
 }
 
 struct action *find_action(struct service *event_service,
@@ -219,14 +161,12 @@ struct action *find_action(struct service *event_service,
   return NULL;
 }
 
-char *upnp_get_scpd(struct service *srv) {
-  char *result = NULL;
-  struct xmldoc *doc;
+std::string upnp_get_scpd(const service *srv) {
+  XMLDoc doc;
 
-  doc = generate_scpd(srv);
-  if (doc != NULL) {
-    result = xmldoc_tostring(doc);
-    xmldoc_free(doc);
-  }
-  return result;
+  auto root = doc.AddElement("scpd", "urn:schemas-upnp-org:service-1-0");
+  add_specversion(root, 1, 0);
+  add_scpd_actionlist(root, srv);
+  add_scpd_servicestatetable(root, srv);
+  return doc.ToString();
 }
