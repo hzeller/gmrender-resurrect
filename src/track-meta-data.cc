@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "xmldoc2.h"
+#include "xmldoc.h"
 #include "xmlescape.h"
 
 static constexpr char kDidlHeader[] =

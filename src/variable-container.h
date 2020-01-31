@@ -51,7 +51,7 @@
 #include <vector>
 #include <set>
 
-#include "xmldoc2.h"
+#include "xmldoc.h"
 
 struct var_meta;
 struct upnp_device;

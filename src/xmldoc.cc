@@ -1,7 +1,7 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
-/* xmldoc.h - XML builder abstraction
+/* xmldoc.h - XML abstraction around libupnp iXML
  *
- * Copyright (C) 2007   Ivo Clarysse
+ * Copyright (C) 2020 H. Zeller
  *
  * This file is part of GMediaRender.
  *
@@ -23,165 +23,92 @@
  */
 #include "xmldoc.h"
 
-#ifndef _GNU_SOURCE
-#  define _GNU_SOURCE   // for asprintf()
-#endif
-
-#include <assert.h>
 #include <ixml.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-// The structs are mere placeholders that we internally cast to the
-// objects used in the upnplib.
-struct xmlelement {};
-struct xmldoc {};
-
-static IXML_Document *to_idoc(struct xmldoc *x) { return (IXML_Document *)x; }
-
-static IXML_Element *to_ielem(struct xmlelement *x) {
-  return (IXML_Element *)x;
-}
-
-struct xmldoc *xmldoc_new(void) {
-  IXML_Document *doc;
-  doc = ixmlDocument_createDocument();
-  return (struct xmldoc *)doc;
-}
-
-void xmldoc_free(struct xmldoc *doc) {
-  assert(doc != NULL);
-  ixmlDocument_free(to_idoc(doc));
-}
-
-char *xmldoc_tostring(struct xmldoc *doc) {
-  char *result = NULL;
-  assert(doc != NULL);
-  result = ixmlDocumenttoString(to_idoc(doc));
-  return result;
-}
-
-struct xmldoc *xmldoc_parsexml(const char *xml_text) {
-  IXML_Document *doc = ixmlParseBuffer(xml_text);
-  return (struct xmldoc *)doc;
-}
-
-struct xmlelement *xmldoc_new_topelement(struct xmldoc *doc,
-                                         const char *elementName,
-                                         const char *xmlns) {
-  assert(doc != NULL);
-  assert(elementName != NULL);
-  IXML_Element *element;
-  if (xmlns) {
-    element = ixmlDocument_createElementNS(to_idoc(doc), xmlns, elementName);
-    ixmlElement_setAttribute(element, "xmlns", xmlns);
-  } else {
-    element = ixmlDocument_createElement(to_idoc(doc), elementName);
-  }
-  ixmlNode_appendChild((IXML_Node *)(to_idoc(doc)), (IXML_Node *)element);
-  return (struct xmlelement *)element;
-}
-
-struct xmlelement *xmlelement_new(struct xmldoc *doc, const char *elementName) {
-  assert(doc != NULL);
-  assert(elementName != NULL);
-  IXML_Element *element;
-  element = ixmlDocument_createElement(to_idoc(doc), elementName);
-  return (struct xmlelement *)element;
-}
-
-static struct xmlelement *find_element(IXML_Node *node, const char *key) {
+static IXML_Element *find_element(IXML_Node *node, const std::string &key) {
+  if (!node) return nullptr;
   node = ixmlNode_getFirstChild(node);
   for (/**/; node != NULL; node = ixmlNode_getNextSibling(node)) {
-    if (strcmp(ixmlNode_getNodeName(node), key) == 0) {
-      return (struct xmlelement *)node;
+    if (key == ixmlNode_getNodeName(node)) {
+      return (IXML_Element*) node;
     }
   }
   return NULL;
 }
 
-struct xmlelement *find_element_in_doc(struct xmldoc *doc, const char *key) {
-  return find_element((IXML_Node *)to_idoc(doc), key);
+std::unique_ptr<XMLDoc> XMLDoc::Parse(const std::string &xml_text) {
+  IXML_Document *doc = ixmlParseBuffer(xml_text.c_str());
+  if (!doc) return nullptr;
+  std::unique_ptr<XMLDoc> result(new XMLDoc(doc));
+  return result;
 }
 
-struct xmlelement *find_element_in_element(struct xmlelement *element,
-                                           const char *key) {
-  return find_element((IXML_Node *)to_ielem(element), key);
+XMLDoc::XMLDoc() : XMLDoc(ixmlDocument_createDocument()) {}
+XMLDoc::~XMLDoc() { ixmlDocument_free(doc_); }
+
+XMLElement XMLDoc::AddElement(const std::string &name, const char *ns) {
+  IXML_Element *element;
+  if (ns) {
+    element = ixmlDocument_createElementNS(doc_, ns, name.c_str());
+    ixmlElement_setAttribute(element, "xmlns", ns);
+  } else {
+    element = ixmlDocument_createElement(doc_, name.c_str());
+  }
+  ixmlNode_appendChild((IXML_Node *)doc_, (IXML_Node *)element);
+  return { doc_, element };
 }
 
-char *get_node_value(struct xmlelement *element) {
-  IXML_Node *node = (IXML_Node *)to_ielem(element);
+std::string XMLDoc::ToString() const {
+  char *result_raw = ixmlDocumenttoString(doc_);
+  std::string result = result_raw;
+  free(result_raw);
+  return result;
+}
+
+std::string XMLElement::value() const {
+  if (!exists()) return "";
+  IXML_Node *node = (IXML_Node *)element_;
   node = ixmlNode_getFirstChild(node);
-  const char *node_value = (node != NULL ? ixmlNode_getNodeValue(node) : NULL);
-  return strdup(node_value != NULL ? node_value : "");
+  if (!node) return "";
+  const char *node_value = ixmlNode_getNodeValue(node);
+  if (!node_value) return "";
+  return node_value;
 }
 
-void xmlelement_add_element(struct xmldoc *doc, struct xmlelement *parent,
-                            struct xmlelement *child) {
-  assert(doc != NULL);
-  assert(parent != NULL);
-  assert(child != NULL);
-  ixmlNode_appendChild((IXML_Node *)to_ielem(parent),
-                       (IXML_Node *)to_ielem(child));
+XMLElement XMLElement::AddElement(const std::string &name) {
+  IXML_Element *new_child = ixmlDocument_createElement(doc_, name.c_str());
+  ixmlNode_appendChild((IXML_Node*)element_, (IXML_Node*)new_child);
+  return { doc_, new_child };
 }
 
-void xmlelement_add_text(struct xmldoc *doc, struct xmlelement *parent,
-                         const char *text) {
-  assert(doc != NULL);
-  assert(parent != NULL);
-  assert(text != NULL);
+XMLElement &XMLElement::SetAttribute(const std::string &name,
+                                     const std::string &value) {
+  ixmlElement_setAttribute(element_, name.c_str(), value.c_str());
+  return *this;
+}
+
+XMLElement &XMLElement::SetValue(const char *value) {
   IXML_Node *textNode;
-  textNode = ixmlDocument_createTextNode(to_idoc(doc), text);
-  ixmlNode_appendChild((IXML_Node *)to_ielem(parent), textNode);
+  textNode = ixmlDocument_createTextNode(doc_, value);
+  ixmlNode_appendChild((IXML_Node *)element_, textNode);
+  return *this;
 }
 
-void xmlelement_set_attribute(struct xmldoc *doc, struct xmlelement *element,
-                              const char *name, const char *value) {
-  assert(doc != NULL);
-  assert(element != NULL);
-  assert(name != NULL);
-  assert(value != NULL);
-  ixmlElement_setAttribute(to_ielem(element), name, value);
+XMLElement &XMLElement::SetValue(const std::string &value) {
+  return SetValue(value.c_str());
 }
 
-void add_value_element(struct xmldoc *doc, struct xmlelement *parent,
-                       const char *tagname, const char *value) {
-  struct xmlelement *top;
-
-  top = xmlelement_new(doc, tagname);
-  xmlelement_add_text(doc, top, value);
-  xmlelement_add_element(doc, parent, top);
+XMLElement &XMLElement::SetValue(long v) {
+  char buf[15];
+  snprintf(buf, sizeof(buf), "%ld", v);
+  return SetValue(buf);
 }
 
-struct xmlelement *add_attributevalue_element(struct xmldoc *doc,
-                                              struct xmlelement *parent,
-                                              const char *tagname,
-                                              const char *attribute_name,
-                                              const char *value) {
-  struct xmlelement *top;
-
-  top = xmlelement_new(doc, tagname);
-  xmlelement_set_attribute(doc, top, attribute_name, value);
-  xmlelement_add_element(doc, parent, top);
-  return top;
+XMLElement XMLDoc::findElement(const std::string &name) const {
+  return { doc_, find_element((IXML_Node *)doc_, name) };
 }
 
-void add_value_element_int(struct xmldoc *doc, struct xmlelement *parent,
-                           const char *tagname, int value) {
-  char *buf;
-
-  if (asprintf(&buf, "%d", value) >= 0) {
-    add_value_element(doc, parent, tagname, buf);
-    free(buf);
-  }
-}
-void add_value_element_long(struct xmldoc *doc, struct xmlelement *parent,
-                            const char *tagname, long long value) {
-  char *buf;
-
-  if (asprintf(&buf, "%lld", value) >= 0) {
-    add_value_element(doc, parent, tagname, buf);
-    free(buf);
-  }
+XMLElement XMLElement::findElement(const std::string &name) const {
+  return { doc_, find_element((IXML_Node *)element_, name) };
 }

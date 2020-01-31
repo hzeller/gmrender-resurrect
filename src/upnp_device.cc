@@ -43,7 +43,7 @@
 #include "upnp_service.h"
 #include "variable-container.h"
 #include "webserver.h"
-#include "xmldoc2.h"
+#include "xmldoc.h"
 #include "xmlescape.h"
 
 // Enable logging of action requests.

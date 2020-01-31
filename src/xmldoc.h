@@ -1,7 +1,7 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
-/* xmldoc.h - XML builder abstraction
+/* xmldoc.h - XML abstraction around libupnp iXML
  *
- * Copyright (C) 2007   Ivo Clarysse
+ * Copyright (C) 2020 H. Zeller
  *
  * This file is part of GMediaRender.
  *
@@ -21,53 +21,67 @@
  * MA 02110-1301, USA.
  *
  */
+#ifndef XMLDOC_H_
+#define XMLDOC_H_
 
-#ifndef _XMLDOC_H
-#define _XMLDOC_H
+#include <ixml.h>
+#include <memory>
 
-struct xmldoc;
-struct xmlelement;
+// Basic XML api with only the functions we need. Wrapper around underlying
+// ixml.
 
-struct xmldoc *xmldoc_new(void);
+class XMLElement;
+class XMLDoc {
+public:
+  XMLDoc();
+  ~XMLDoc();
 
-void xmldoc_free(struct xmldoc *doc);
-char *xmldoc_tostring(struct xmldoc *doc);
-struct xmldoc *xmldoc_parsexml(const char *xml_text);
+  // Factory for a new XML document: parse document; if valid, return a doc.
+  static std::unique_ptr<XMLDoc> Parse(const std::string &xml_text);
 
-struct xmlelement *xmldoc_new_topelement(struct xmldoc *doc,
-                                         const char *elementName,
-                                         const char *xmlns);
 
-struct xmlelement *xmlelement_new(struct xmldoc *doc, const char *elementName);
+  // TODO: this should just have an ... argument list with a sequence
+  XMLElement findElement(const std::string &name) const;
 
-void xmlelement_add_element(struct xmldoc *doc, struct xmlelement *parent,
-                            struct xmlelement *child);
-void xmlelement_add_text(struct xmldoc *doc, struct xmlelement *parent,
-                         const char *text);
-void xmlelement_set_attribute(struct xmldoc *doc, struct xmlelement *element,
-                              const char *name, const char *value);
+  // Create a new top element with an optional namespace.
+  XMLElement AddElement(const std::string &name, const char *ns = nullptr);
 
-void add_value_element(struct xmldoc *doc, struct xmlelement *parent,
-                       const char *tagname, const char *value);
+  // Create an XML string representation out of the document.
+  std::string ToString() const;
 
-// Find element in document. This returns a newly allocated struct.
-struct xmlelement *find_element_in_doc(struct xmldoc *doc, const char *key);
-// Find element in document. This returns a newly allocated struct.
-struct xmlelement *find_element_in_element(struct xmlelement *element,
-                                           const char *key);
+private:
+  XMLDoc(IXML_Document *doc) : doc_(doc) {}
 
-// Returns a newly allocated string representing the element value.
-char *get_node_value(struct xmlelement *element);
+  IXML_Document *const doc_;
+};
 
-struct xmlelement *add_attributevalue_element(struct xmldoc *doc,
-                                              struct xmlelement *parent,
-                                              const char *tagname,
-                                              const char *attribute_name,
-                                              const char *value);
+class XMLElement {
+public:
+  XMLElement() {}
+  bool exists() const { return element_ != nullptr; }
 
-void add_value_element_int(struct xmldoc *doc, struct xmlelement *parent,
-                           const char *tagname, int value);
-void add_value_element_long(struct xmldoc *doc, struct xmlelement *parent,
-                            const char *tagname, long long value);
+  // Get text value
+  std::string value() const;
 
-#endif /* _XMLDOC_H */
+  XMLElement findElement(const std::string &name) const;
+
+  // Create new element within this node.
+  XMLElement AddElement(const std::string &name);
+
+  // Set attribute of this element. Returns itself for chaining.
+  XMLElement &SetAttribute(const std::string &name, const std::string &value);
+
+  // Set text Value. Returns itself for chaining.
+  XMLElement &SetValue(const char *value);
+  XMLElement &SetValue(const std::string &value);
+  XMLElement &SetValue(long v);
+private:
+  friend class XMLDoc;
+  XMLElement(IXML_Document *doc, IXML_Element *element)
+    : doc_(doc), element_(element) {}
+
+  IXML_Document *doc_ = nullptr;    // Not owned.
+  IXML_Element *element_ = nullptr; // Not owned.
+};
+
+#endif  // XMLDOC_H_
