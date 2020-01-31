@@ -34,27 +34,22 @@
 #include "xmldoc.h"
 #include "xmlescape.h"
 
-static constexpr char kDidlHeader[] =
-    "<DIDL-Lite "
-    "xmlns=\"urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/\" "
-    "xmlns:dc=\"http://purl.org/dc/elements/1.1/\" "
-    "xmlns:upnp=\"urn:schemas-upnp-org:metadata-1-0/upnp/\">";
-static constexpr char kDidlFooter[] = "</item></DIDL-Lite>";
-
 std::string TrackMetadata::generateDIDL(const std::string &id) const {
-  std::string result(kDidlHeader);
-  result.append("<item id=\"").append(id).append("\">\n");
-  struct XMLAddTag { const std::string tag; const std::string &value; };
-  const XMLAddTag printTags[]
-    = { { "dc:title",     title_ }, { "upnp:artist", artist_ },
-        { "upnp:album",   album_ }, { "upnp:genre",  genre_ },
-        { "upnp:creator", composer_ } };
-  for (auto t : printTags) {
-    if (t.value.empty()) continue;
-    result += "  <" + t.tag + ">" + xmlescape(t.value) + "</" + t.tag + ">\n";
-  }
-  result.append(kDidlFooter);
-  return result;
+  XMLDoc doc;
+  auto item = doc.AddElement("DIDL-Lite",
+                             "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/")
+    .SetAttribute("xmlns:dc", "http://purl.org/dc/elements/1.1/")
+    .SetAttribute("xmlns:upnp", "urn:schemas-upnp-org:metadata-1-0/upnp/")
+    .AddElement("item").SetAttribute("id", id);
+  auto SetOptional = [&item](const char *name, const std::string &val) {
+                       if (!val.empty()) item.AddElement(name).SetValue(val);
+                     };
+  SetOptional("dc:title", title_);
+  SetOptional("upnp:artist", artist_);
+  SetOptional("upnp:album", album_);
+  SetOptional("upnp:genre", genre_);
+  SetOptional("upnp:creator", composer_);
+  return doc.ToString();
 }
 
 // Takes input, if it finds the given XML-tag, then replaces the content
@@ -111,6 +106,7 @@ bool TrackMetadata::ParseDIDL(const std::string &xml) {
   artist_ = items.findElement("upnp:artist").value();
   album_ = items.findElement("upnp:album").value();
   genre_ = items.findElement("upnp:genre").value();
+  composer_ = items.findElement("upnp:creator").value();
   return true;
 }
 
