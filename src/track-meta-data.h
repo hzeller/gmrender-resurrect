@@ -61,6 +61,11 @@ public:
   // Parse DIDL-Lite and fill SongMetaData struct. Returns true when successful.
   bool ParseDIDL(const std::string &xml);
 
+  bool operator==(const TrackMetadata &o) const {
+    return title_ == o.title_ && artist_ == o.artist_ && album_ == o.album_
+      && genre_ == o.genre_ && composer_ == o.composer_;
+  }
+
 private:
   static std::string DefaultCreateNewId();
   // Generate a new DIDL XML.

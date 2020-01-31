@@ -59,6 +59,8 @@ class XMLElement {
 public:
   XMLElement() {}
   bool exists() const { return element_ != nullptr; }
+  operator bool() const { return exists(); }
+
   XMLElement findElement(const std::string &name) const;
 
   // Create new sub-element within this node.
@@ -66,6 +68,9 @@ public:
 
   // Set attribute of this element. Returns itself for chaining.
   XMLElement &SetAttribute(const std::string &name, const std::string &value);
+
+  // Get an attribute
+  std::string attribute(const std::string &name) const;
 
   // Set text Value. Returns itself for chaining. Overloads for various types.
   XMLElement &SetValue(const char *value);

@@ -76,6 +76,13 @@ std::string XMLElement::value() const {
   return node_value;
 }
 
+std::string XMLElement::attribute(const std::string &name) const {
+  if (!exists()) return "";
+  const char *val = ixmlElement_getAttribute(element_, name.c_str());
+  if (!val) return "";
+  return val;
+}
+
 XMLElement XMLElement::AddElement(const std::string &name) {
   IXML_Element *new_child = ixmlDocument_createElement(doc_, name.c_str());
   ixmlNode_appendChild((IXML_Node*)element_, (IXML_Node*)new_child);
@@ -89,9 +96,17 @@ XMLElement &XMLElement::SetAttribute(const std::string &name,
 }
 
 XMLElement &XMLElement::SetValue(const char *value) {
+  IXML_Node *oldText = ixmlNode_getFirstChild((IXML_Node*)element_);
+
   IXML_Node *textNode;
   textNode = ixmlDocument_createTextNode(doc_, value);
-  ixmlNode_appendChild((IXML_Node *)element_, textNode);
+  if (oldText) {
+    IXML_Node *removed;
+    ixmlNode_replaceChild((IXML_Node*)element_, textNode, oldText, &removed);
+    ixmlNode_free(removed);
+  } else {
+    ixmlNode_appendChild((IXML_Node*)element_, textNode);
+  }
   return *this;
 }
 

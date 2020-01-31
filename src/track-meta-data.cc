@@ -32,7 +32,6 @@
 #include <string.h>
 
 #include "xmldoc.h"
-#include "xmlescape.h"
 
 std::string TrackMetadata::generateDIDL(const std::string &id) const {
   XMLDoc doc;
@@ -50,24 +49,6 @@ std::string TrackMetadata::generateDIDL(const std::string &id) const {
   SetOptional("upnp:genre", genre_);
   SetOptional("upnp:creator", composer_);
   return doc.ToString();
-}
-
-// Takes input, if it finds the given XML-tag, then replaces the content
-// between these with 'content'. Returns true if tag was found and replace.
-static bool replace_tag(const char *tag_start, const char *tag_end,
-                        const std::string &unescaped_content,
-                        std::string *document) {
-  if (unescaped_content.empty())
-    return false;  // unknown content; document unchanged.
-  const std::string content = xmlescape(unescaped_content);
-
-  auto begin_replace = document->find(tag_start);
-  if (begin_replace == std::string::npos) return false;
-  begin_replace += strlen(tag_start);
-  auto end_replace = document->find(tag_end, begin_replace);
-  if (end_replace == std::string::npos) return false;
-  document->replace(begin_replace, end_replace - begin_replace, content);
-  return true;
 }
 
 bool TrackMetadata::UpdateFromTags(const GstTagList *tag_list) {
@@ -121,31 +102,32 @@ bool TrackMetadata::ParseDIDL(const std::string &xml) {
   return unique_id;
 }
 
-// TODO: Maybe use some XMLdoc library for this; however, we are also
-// interested in minimally invasive edit incoming XML - control points might
-// only really be able to parse their own style of XML. So it might be
-// not compatible with the control point if we re-create the XML.
 std::string TrackMetadata::ToDIDL(const std::string &original_xml,
                                   std::function<std::string()> idgen) const {
-  if (original_xml.empty()) {
-    const std::string new_id = idgen ? idgen() : DefaultCreateNewId();
-    return generateDIDL(new_id);
+  auto doc = XMLDoc::Parse(original_xml);
+  XMLElement items;
+  if (!doc || !(items = doc->findElement("DIDL-Lite").findElement("item"))) {
+    return generateDIDL(idgen ? idgen() : DefaultCreateNewId());
   }
-  std::string result;
-  // Otherwise, surgically edit the original document to give
-  // control points as close as possible what they sent themself.
-  result = original_xml;
+
+  auto updateFun = [&items](const char *name, const std::string &val) -> bool {
+                     auto tag = items.findElement(name);
+                     if (tag.value() == val) return false; // no change.
+                     if (!tag.exists()) tag = items.AddElement(name);
+                     tag.SetValue(val);
+                     return true;
+                   };
+
   bool any_change = false;
-  any_change |= replace_tag(":title>", "</", title_, &result);
-  any_change |= replace_tag(":artist>", "</", artist_, &result);
-  any_change |= replace_tag(":album>", "</", album_, &result);
-  any_change |= replace_tag(":genre>",  "</", genre_, &result);
-  any_change |= replace_tag(":creator>", "</", composer_, &result);
+  any_change |= updateFun("dc:title", title_);
+  any_change |= updateFun("upnp:artist", artist_);
+  any_change |= updateFun("upnp:genre", genre_);
+  any_change |= updateFun("upnp:album", album_);
+  any_change |= updateFun("upnp:creator", composer_);
   if (any_change) {
-    // Only if we changed the content, we generate a new
-    // unique id.
+    // Only if we changed the content, we generate a new unique id.
     const std::string new_id = idgen ? idgen() : DefaultCreateNewId();
-    replace_tag(" id=\"", "\"", new_id, &result);
+    doc->findElement("DIDL-Lite").SetAttribute("id", new_id);
   }
-  return result;
+  return doc->ToString();
 }
