@@ -99,9 +99,9 @@ XMLElement &XMLElement::SetValue(const std::string &value) {
   return SetValue(value.c_str());
 }
 
-XMLElement &XMLElement::SetValue(int v) {
-  char buf[10];
-  snprintf(buf, sizeof(buf), "%d", v);
+XMLElement &XMLElement::SetValue(long v) {
+  char buf[15];
+  snprintf(buf, sizeof(buf), "%ld", v);
   return SetValue(buf);
 }
 

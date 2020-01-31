@@ -74,8 +74,7 @@ public:
   // Set text Value. Returns itself for chaining.
   XMLElement &SetValue(const char *value);
   XMLElement &SetValue(const std::string &value);
-  XMLElement &SetValue(int v);
-
+  XMLElement &SetValue(long v);
 private:
   friend class XMLDoc;
   XMLElement(IXML_Document *doc, IXML_Element *element)
