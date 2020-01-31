@@ -25,6 +25,8 @@
 #ifndef _UPNP_DEVICE_H
 #define _UPNP_DEVICE_H
 
+#include <string>
+
 struct upnp_device_descriptor {
   int (*init_function)(void);
   const char *device_type;
@@ -76,7 +78,7 @@ int upnp_device_notify(struct upnp_device *device, const char *serviceID,
 struct service *find_service(struct upnp_device_descriptor *device_def,
                              const char *service_name);
 
-// Returns a newly allocated string with the device descriptor.
-char *upnp_create_device_desc(struct upnp_device_descriptor *device_def);
+// Returns a string with the XML device descriptor.
+std::string upnp_create_device_desc(const upnp_device_descriptor *device_def);
 
 #endif /* _UPNP_DEVICE_H */

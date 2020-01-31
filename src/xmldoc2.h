@@ -44,8 +44,7 @@ public:
   XMLElement findElement(const std::string &name) const;
 
   // Create a new top element with an optional namespace.
-  XMLElement CreateElement(const std::string &name,
-                           const char *ns = nullptr);
+  XMLElement AddElement(const std::string &name, const char *ns = nullptr);
 
   // Create an XML string representation out of the document.
   std::string ToString() const;
@@ -67,10 +66,15 @@ public:
   XMLElement findElement(const std::string &name) const;
 
   // Create new element within this node.
-  XMLElement CreateElement(const std::string &name);
+  XMLElement AddElement(const std::string &name);
 
   // Set attribute of this element. Returns itself for chaining.
   XMLElement &SetAttribute(const std::string &name, const std::string &value);
+
+  // Set text Value. Returns itself for chaining.
+  XMLElement &SetValue(const char *value);
+  XMLElement &SetValue(const std::string &value);
+  XMLElement &SetValue(int v);
 
 private:
   friend class XMLDoc;

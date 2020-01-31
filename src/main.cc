@@ -46,6 +46,8 @@
 #include <unistd.h>
 #include <upnp.h>
 
+#include <iostream>
+
 #include "git-version.h"
 #include "logging.h"
 #include "output.h"
@@ -301,9 +303,7 @@ int main(int argc, char **argv) {
   if (show_devicedesc) {
     // This can only be run after all services have been
     // initialized.
-    char *buf = upnp_create_device_desc(upnp_renderer);
-    assert(buf != NULL);
-    fputs(buf, stdout);
+    std::cout << upnp_create_device_desc(upnp_renderer);
     exit(EXIT_SUCCESS);
   }
 

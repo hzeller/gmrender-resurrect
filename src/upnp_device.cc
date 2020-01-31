@@ -43,7 +43,7 @@
 #include "upnp_service.h"
 #include "variable-container.h"
 #include "webserver.h"
-#include "xmldoc.h"
+#include "xmldoc2.h"
 #include "xmlescape.h"
 
 // Enable logging of action requests.
@@ -386,7 +386,6 @@ static gboolean initialize_device(struct upnp_device_descriptor *device_def,
                                   struct upnp_device *result_device,
                                   const char *ip_address, unsigned short port) {
   int rc;
-  char *buf;
 
   rc = UpnpInit(ip_address, port);
   /* There have been situations reported in which UPNP had issues
@@ -425,11 +424,11 @@ static gboolean initialize_device(struct upnp_device_descriptor *device_def,
     return FALSE;
   }
 
-  buf = upnp_create_device_desc(device_def);
-  rc = UpnpRegisterRootDevice2(UPNPREG_BUF_DESC, buf, strlen(buf), 1,
+  std::string device_desc = upnp_create_device_desc(device_def);
+  rc = UpnpRegisterRootDevice2(UPNPREG_BUF_DESC,
+                               device_desc.c_str(), device_desc.length(), 1,
                                &event_handler, result_device,
                                &(result_device->device_handle));
-  free(buf);
 
   if (UPNP_E_SUCCESS != rc) {
     Log_error("upnp", "UpnpRegisterRootDevice2() Error: %s (%d)",
@@ -510,108 +509,59 @@ struct service *find_service(struct upnp_device_descriptor *device_def,
 
 /// ---- code to generate device descriptor
 
-static struct xmlelement *gen_specversion(struct xmldoc *doc, int major,
-                                          int minor) {
-  struct xmlelement *top;
-
-  top = xmlelement_new(doc, "specVersion");
-
-  add_value_element_int(doc, top, "major", major);
-  add_value_element_int(doc, top, "minor", minor);
-
-  return top;
+static void add_specversion(XMLElement parent, int major, int minor) {
+  auto specVersion = parent.AddElement("specVersion");
+  specVersion.AddElement("major").SetValue(major);
+  specVersion.AddElement("minor").SetValue(minor);
 }
 
-static struct xmlelement *gen_desc_iconlist(struct xmldoc *doc,
-                                            struct icon **icons) {
-  struct xmlelement *top;
-  struct xmlelement *parent;
-  struct icon *icon_entry;
+static void add_desc_iconlist(XMLElement parent, struct icon **icons) {
+  if (!icons) return;
 
-  top = xmlelement_new(doc, "iconList");
-
+  auto iconList = parent.AddElement("iconList");
+  const icon *icon_entry;
   for (int i = 0; (icon_entry = icons[i]); i++) {
-    parent = xmlelement_new(doc, "icon");
-    add_value_element(doc, parent, "mimetype", icon_entry->mimetype);
-    add_value_element_int(doc, parent, "width", icon_entry->width);
-    add_value_element_int(doc, parent, "height", icon_entry->height);
-    add_value_element_int(doc, parent, "depth", icon_entry->depth);
-    add_value_element(doc, parent, "url", icon_entry->url);
-    xmlelement_add_element(doc, top, parent);
+    auto icon = iconList.AddElement("icon");
+    icon.AddElement("mimetype").SetValue(icon_entry->mimetype);
+    icon.AddElement("width").SetValue(icon_entry->width);
+    icon.AddElement("height").SetValue(icon_entry->height);
+    icon.AddElement("depth").SetValue(icon_entry->depth);
+    icon.AddElement("url").SetValue(icon_entry->url);
   }
-
-  return top;
 }
 
-static struct xmlelement *gen_desc_servicelist(
-    struct upnp_device_descriptor *device_def, struct xmldoc *doc) {
-  int i;
-  struct service *srv;
-  struct xmlelement *top;
-  struct xmlelement *parent;
+static void add_desc_servicelist(XMLElement parent, service **services) {
+  auto serviceList = parent.AddElement("serviceList");
 
-  top = xmlelement_new(doc, "serviceList");
-
-  for (i = 0; (srv = device_def->services[i]); i++) {
-    parent = xmlelement_new(doc, "service");
-    add_value_element(doc, parent, "serviceType", srv->service_type);
-    add_value_element(doc, parent, "serviceId", srv->service_id);
-    add_value_element(doc, parent, "SCPDURL", srv->scpd_url);
-    add_value_element(doc, parent, "controlURL", srv->control_url);
-    add_value_element(doc, parent, "eventSubURL", srv->event_url);
-    xmlelement_add_element(doc, top, parent);
+  const service *srv;
+  for (int i = 0; (srv = services[i]); i++) {
+    auto service = serviceList.AddElement("service");
+    service.AddElement("serviceType").SetValue(srv->service_type);
+    service.AddElement("serviceId").SetValue(srv->service_id);
+    service.AddElement("SCPDURL").SetValue(srv->scpd_url);
+    service.AddElement("controlURL").SetValue(srv->control_url);
+    service.AddElement("eventSubURL").SetValue(srv->event_url);
   }
-
-  return top;
 }
 
-static struct xmldoc *generate_desc(struct upnp_device_descriptor *device_def) {
-  struct xmldoc *doc;
-  struct xmlelement *root;
-  struct xmlelement *child;
-  struct xmlelement *parent;
+std::string upnp_create_device_desc(const upnp_device_descriptor *device_def) {
+  XMLDoc doc;
 
-  doc = xmldoc_new();
+  auto root = doc.AddElement("root", "urn:schemas-upnp-org:device-1-0");
+  add_specversion(root, 1, 0);
+  auto device = root.AddElement("device");
+  device.AddElement("deviceType").SetValue(device_def->device_type);
+  device.AddElement("presentationURL").SetValue(device_def->presentation_url);
+  device.AddElement("friendlyName").SetValue(device_def->friendly_name);
+  device.AddElement("manufacturer").SetValue(device_def->manufacturer);
+  device.AddElement("manufacturerURL").SetValue(device_def->manufacturer_url);
+  device.AddElement("modelDescription").SetValue(device_def->model_description);
+  device.AddElement("modelName").SetValue(device_def->model_name);
+  device.AddElement("modelNumber").SetValue(device_def->model_number);
+  device.AddElement("modelURL").SetValue(device_def->model_url);
+  device.AddElement("UDN").SetValue(device_def->udn);
+  add_desc_iconlist(device, device_def->icons);
+  add_desc_servicelist(device, device_def->services);
 
-  root = xmldoc_new_topelement(doc, "root", "urn:schemas-upnp-org:device-1-0");
-  child = gen_specversion(doc, 1, 0);
-  xmlelement_add_element(doc, root, child);
-  parent = xmlelement_new(doc, "device");
-  xmlelement_add_element(doc, root, parent);
-  add_value_element(doc, parent, "deviceType", device_def->device_type);
-  add_value_element(doc, parent, "presentationURL",
-                    device_def->presentation_url);
-  add_value_element(doc, parent, "friendlyName", device_def->friendly_name);
-  add_value_element(doc, parent, "manufacturer", device_def->manufacturer);
-  add_value_element(doc, parent, "manufacturerURL",
-                    device_def->manufacturer_url);
-  add_value_element(doc, parent, "modelDescription",
-                    device_def->model_description);
-  add_value_element(doc, parent, "modelName", device_def->model_name);
-  add_value_element(doc, parent, "modelNumber", device_def->model_number);
-  add_value_element(doc, parent, "modelURL", device_def->model_url);
-  add_value_element(doc, parent, "UDN", device_def->udn);
-  // add_value_element(doc,parent,"serialNumber", device_def->serial_number);
-  // add_value_element(doc,parent,"UPC", device_def->upc);
-  if (device_def->icons) {
-    child = gen_desc_iconlist(doc, device_def->icons);
-    xmlelement_add_element(doc, parent, child);
-  }
-  child = gen_desc_servicelist(device_def, doc);
-  xmlelement_add_element(doc, parent, child);
-
-  return doc;
-}
-
-char *upnp_create_device_desc(struct upnp_device_descriptor *device_def) {
-  char *result = NULL;
-  struct xmldoc *doc;
-
-  doc = generate_desc(device_def);
-
-  if (doc != NULL) {
-    result = xmldoc_tostring(doc);
-    xmldoc_free(doc);
-  }
-  return result;
+  return doc.ToString();
 }

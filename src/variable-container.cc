@@ -91,10 +91,10 @@ void UPnPLastChangeBuilder::Add(const std::string &name,
   if (!change_event_doc_) {
     change_event_doc_.reset(new XMLDoc());
     // Right now, we only have exactly one instance.
-    instance_element_ = change_event_doc_->CreateElement("Event", xml_ns_)
-      .CreateElement("InstanceID").SetAttribute("val", "0");
+    instance_element_ = change_event_doc_->AddElement("Event", xml_ns_)
+      .AddElement("InstanceID").SetAttribute("val", "0");
   }
-  auto elem = instance_element_.CreateElement(name).SetAttribute("val", value);
+  auto elem = instance_element_.AddElement(name).SetAttribute("val", value);
   // HACK!
   // The volume related events need another qualifying
   // attribute that represents the channel. Since all other elements just

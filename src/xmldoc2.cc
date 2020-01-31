@@ -47,7 +47,7 @@ std::unique_ptr<XMLDoc> XMLDoc::Parse(const std::string &xml_text) {
 XMLDoc::XMLDoc() : XMLDoc(ixmlDocument_createDocument()) {}
 XMLDoc::~XMLDoc() { ixmlDocument_free(doc_); }
 
-XMLElement XMLDoc::CreateElement(const std::string &name, const char *ns) {
+XMLElement XMLDoc::AddElement(const std::string &name, const char *ns) {
   IXML_Element *element;
   if (ns) {
     element = ixmlDocument_createElementNS(doc_, ns, name.c_str());
@@ -76,7 +76,7 @@ std::string XMLElement::value() const {
   return node_value;
 }
 
-XMLElement XMLElement::CreateElement(const std::string &name) {
+XMLElement XMLElement::AddElement(const std::string &name) {
   IXML_Element *new_child = ixmlDocument_createElement(doc_, name.c_str());
   ixmlNode_appendChild((IXML_Node*)element_, (IXML_Node*)new_child);
   return { doc_, new_child };
@@ -86,6 +86,23 @@ XMLElement &XMLElement::SetAttribute(const std::string &name,
                                      const std::string &value) {
   ixmlElement_setAttribute(element_, name.c_str(), value.c_str());
   return *this;
+}
+
+XMLElement &XMLElement::SetValue(const char *value) {
+  IXML_Node *textNode;
+  textNode = ixmlDocument_createTextNode(doc_, value);
+  ixmlNode_appendChild((IXML_Node *)element_, textNode);
+  return *this;
+}
+
+XMLElement &XMLElement::SetValue(const std::string &value) {
+  return SetValue(value.c_str());
+}
+
+XMLElement &XMLElement::SetValue(int v) {
+  char buf[10];
+  snprintf(buf, sizeof(buf), "%d", v);
+  return SetValue(buf);
 }
 
 XMLElement XMLDoc::findElement(const std::string &name) const {
