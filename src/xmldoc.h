@@ -59,22 +59,22 @@ class XMLElement {
 public:
   XMLElement() {}
   bool exists() const { return element_ != nullptr; }
-
-  // Get text value
-  std::string value() const;
-
   XMLElement findElement(const std::string &name) const;
 
-  // Create new element within this node.
+  // Create new sub-element within this node.
   XMLElement AddElement(const std::string &name);
 
   // Set attribute of this element. Returns itself for chaining.
   XMLElement &SetAttribute(const std::string &name, const std::string &value);
 
-  // Set text Value. Returns itself for chaining.
+  // Set text Value. Returns itself for chaining. Overloads for various types.
   XMLElement &SetValue(const char *value);
   XMLElement &SetValue(const std::string &value);
   XMLElement &SetValue(long v);
+
+  // Get text value
+  std::string value() const;
+
 private:
   friend class XMLDoc;
   XMLElement(IXML_Document *doc, IXML_Element *element)
