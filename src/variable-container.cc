@@ -33,7 +33,6 @@
 
 #include "upnp_device.h"
 #include "upnp_service.h"
-#include "xmldoc.h"
 #include "xmlescape.h"
 
 VariableContainer::VariableContainer(int variable_num,
@@ -84,26 +83,18 @@ void VariableContainer::RegisterCallback(const ChangeListener &callback) {
 
 // -- UPnPLastChangeBuilder
 UPnPLastChangeBuilder::UPnPLastChangeBuilder(const char *xml_namespace)
-  : xml_namespace_(xml_namespace) {}
-UPnPLastChangeBuilder::~UPnPLastChangeBuilder() {
-  if (change_event_doc_) {
-    xmldoc_free(change_event_doc_);
-  }
-}
+  : xml_ns_(xml_namespace) {}
 
 // Add a name/value pair to event on. We just append it
 void UPnPLastChangeBuilder::Add(const std::string &name,
                                 const std::string &value) {
-  if (change_event_doc_ == NULL) {
-    change_event_doc_ = xmldoc_new();
-    struct xmlelement *toplevel = xmldoc_new_topelement(
-      change_event_doc_, "Event", xml_namespace_);
+  if (!change_event_doc_) {
+    change_event_doc_.reset(new XMLDoc());
     // Right now, we only have exactly one instance.
-    instance_element_ = add_attributevalue_element(
-      change_event_doc_, toplevel, "InstanceID", "val", "0");
+    instance_element_ = change_event_doc_->CreateElement("Event", xml_ns_)
+      .CreateElement("InstanceID").SetAttribute("val", "0");
   }
-  xmlelement *const xml_value = add_attributevalue_element(
-    change_event_doc_, instance_element_, name.c_str(), "val", value.c_str());
+  auto elem = instance_element_.CreateElement(name).SetAttribute("val", value);
   // HACK!
   // The volume related events need another qualifying
   // attribute that represents the channel. Since all other elements just
@@ -113,23 +104,15 @@ void UPnPLastChangeBuilder::Add(const std::string &name,
   // we add the attribute manually.
   if (name == "Volume" || name == "VolumeDB" ||
       name == "Mute" || name == "Loudness") {
-    xmlelement_set_attribute(change_event_doc_, xml_value, "channel",
-                             "Master");
+    elem.SetAttribute("channel", "Master");
   }
 }
 
-// Return the collected change as XML document.
+// Return the collected change as XML document and reset.
 std::string UPnPLastChangeBuilder::toXML() {
   if (!change_event_doc_) return "";
-
-  char *xml_doc_string = xmldoc_tostring(change_event_doc_);
-  std::string result = xml_doc_string;
-  free(xml_doc_string);  // TODO: avoid double allocation and one free()
-
-  xmldoc_free(change_event_doc_);
-  change_event_doc_ = nullptr;
-  instance_element_ = nullptr;
-
+  const std::string result = change_event_doc_->ToString();
+  change_event_doc_.reset(nullptr);
   return result;
 }
 

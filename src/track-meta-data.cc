@@ -106,7 +106,7 @@ bool TrackMetadata::ParseDIDL(const std::string &xml) {
   if (!doc) return false;
 
   const auto items = doc->findElement("DIDL-Lite").findElement("item");
-  if (items.isEmpty()) return false;
+  if (!items.exists()) return false;
   title_ = items.findElement("dc:title").value();
   artist_ = items.findElement("upnp:artist").value();
   album_ = items.findElement("upnp:album").value();

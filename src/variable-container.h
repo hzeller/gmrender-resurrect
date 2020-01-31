@@ -51,10 +51,10 @@
 #include <vector>
 #include <set>
 
+#include "xmldoc2.h"
+
 struct var_meta;
 struct upnp_device;
-struct xmldoc;
-struct xmlelement;
 
 class VariableContainer {
 public:
@@ -104,7 +104,6 @@ private:
 class UPnPLastChangeBuilder {
 public:
   UPnPLastChangeBuilder(const char *xml_namespace);
-  ~UPnPLastChangeBuilder();
 
   // Add a name/value pair to event on.
   void Add(const std::string &name, const std::string &value);
@@ -113,9 +112,9 @@ public:
   std::string toXML();
 
 private:
-  const char *const xml_namespace_;
-  xmldoc *change_event_doc_ = nullptr;
-  xmlelement *instance_element_ = nullptr;
+  const char *const xml_ns_;
+  std::unique_ptr<XMLDoc> change_event_doc_;
+  XMLElement instance_element_;
 };
 
 class UPnPLastChangeCollector {

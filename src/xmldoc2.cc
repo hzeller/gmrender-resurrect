@@ -26,11 +26,11 @@
 #include <ixml.h>
 #include <string.h>
 
-static IXML_Element *find_element(IXML_Node *node, const char *key) {
+static IXML_Element *find_element(IXML_Node *node, const std::string &key) {
   if (!node) return nullptr;
   node = ixmlNode_getFirstChild(node);
   for (/**/; node != NULL; node = ixmlNode_getNextSibling(node)) {
-    if (strcmp(ixmlNode_getNodeName(node), key) == 0) {
+    if (key == ixmlNode_getNodeName(node)) {
       return (IXML_Element*) node;
     }
   }
@@ -47,8 +47,27 @@ std::unique_ptr<XMLDoc> XMLDoc::Parse(const std::string &xml_text) {
 XMLDoc::XMLDoc() : XMLDoc(ixmlDocument_createDocument()) {}
 XMLDoc::~XMLDoc() { ixmlDocument_free(doc_); }
 
+XMLElement XMLDoc::CreateElement(const std::string &name, const char *ns) {
+  IXML_Element *element;
+  if (ns) {
+    element = ixmlDocument_createElementNS(doc_, ns, name.c_str());
+    ixmlElement_setAttribute(element, "xmlns", ns);
+  } else {
+    element = ixmlDocument_createElement(doc_, name.c_str());
+  }
+  ixmlNode_appendChild((IXML_Node *)doc_, (IXML_Node *)element);
+  return { doc_, element };
+}
+
+std::string XMLDoc::ToString() const {
+  char *result_raw = ixmlDocumenttoString(doc_);
+  std::string result = result_raw;
+  free(result_raw);
+  return result;
+}
+
 std::string XMLElement::value() const {
-  if (isEmpty()) return "";
+  if (!exists()) return "";
   IXML_Node *node = (IXML_Node *)element_;
   node = ixmlNode_getFirstChild(node);
   if (!node) return "";
@@ -57,10 +76,22 @@ std::string XMLElement::value() const {
   return node_value;
 }
 
-XMLElement XMLDoc::findElement(const char *name) const {
-  return find_element((IXML_Node *)doc_, name);
+XMLElement XMLElement::CreateElement(const std::string &name) {
+  IXML_Element *new_child = ixmlDocument_createElement(doc_, name.c_str());
+  ixmlNode_appendChild((IXML_Node*)element_, (IXML_Node*)new_child);
+  return { doc_, new_child };
 }
 
-XMLElement XMLElement::findElement(const char *name) const {
-  return find_element((IXML_Node *)element_, name);
+XMLElement &XMLElement::SetAttribute(const std::string &name,
+                                     const std::string &value) {
+  ixmlElement_setAttribute(element_, name.c_str(), value.c_str());
+  return *this;
+}
+
+XMLElement XMLDoc::findElement(const std::string &name) const {
+  return { doc_, find_element((IXML_Node *)doc_, name) };
+}
+
+XMLElement XMLElement::findElement(const std::string &name) const {
+  return { doc_, find_element((IXML_Node *)element_, name) };
 }
