@@ -111,7 +111,7 @@ void UPnPLastChangeBuilder::Add(const std::string &name,
 // Return the collected change as XML document and reset.
 std::string UPnPLastChangeBuilder::toXML() {
   if (!change_event_doc_) return "";
-  const std::string result = change_event_doc_->ToString();
+  const std::string result = change_event_doc_->ToXMLString();
   change_event_doc_.reset(nullptr);
   return result;
 }

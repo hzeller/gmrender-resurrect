@@ -48,7 +48,7 @@ std::string TrackMetadata::generateDIDL(const std::string &id) const {
   SetOptional("upnp:album", album_);
   SetOptional("upnp:genre", genre_);
   SetOptional("upnp:creator", composer_);
-  return doc.ToString();
+  return doc.ToXMLString();
 }
 
 bool TrackMetadata::UpdateFromTags(const GstTagList *tag_list) {
@@ -129,5 +129,5 @@ std::string TrackMetadata::ToDIDL(const std::string &original_xml,
     const std::string new_id = idgen ? idgen() : DefaultCreateNewId();
     doc->findElement("DIDL-Lite").SetAttribute("id", new_id);
   }
-  return doc->ToString();
+  return doc->ToXMLString();
 }

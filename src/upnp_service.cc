@@ -168,5 +168,5 @@ std::string upnp_get_scpd(const service *srv) {
   add_specversion(root, 1, 0);
   add_scpd_actionlist(root, srv);
   add_scpd_servicestatetable(root, srv);
-  return doc.ToString();
+  return doc.ToXMLString();
 }

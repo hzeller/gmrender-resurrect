@@ -59,7 +59,7 @@ XMLElement XMLDoc::AddElement(const std::string &name, const char *ns) {
   return { doc_, element };
 }
 
-std::string XMLDoc::ToString() const {
+std::string XMLDoc::ToXMLString() const {
   char *result_raw = ixmlDocumenttoString(doc_);
   std::string result = result_raw;
   free(result_raw);

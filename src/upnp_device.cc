@@ -562,5 +562,5 @@ std::string upnp_create_device_desc(const upnp_device_descriptor *device_def) {
   add_desc_iconlist(device, device_def->icons);
   add_desc_servicelist(device, device_def->services);
 
-  return doc.ToString();
+  return doc.ToXMLString();
 }

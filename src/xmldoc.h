@@ -39,7 +39,6 @@ public:
   // Factory for a new XML document: parse document; if valid, return a doc.
   static std::unique_ptr<XMLDoc> Parse(const std::string &xml_text);
 
-
   // TODO: this should just have an ... argument list with a sequence
   XMLElement findElement(const std::string &name) const;
 
@@ -47,7 +46,7 @@ public:
   XMLElement AddElement(const std::string &name, const char *ns = nullptr);
 
   // Create an XML string representation out of the document.
-  std::string ToString() const;
+  std::string ToXMLString() const;
 
 private:
   XMLDoc(IXML_Document *doc) : doc_(doc) {}
