@@ -460,7 +460,7 @@ static void update_meta_from_stream(const TrackMetadata &meta) {
   if (meta.title().empty()) return;
 
   auto original_xml = state_variables_->Get(TRANSPORT_VAR_AV_URI_META);
-  const std::string didl = meta.ToDIDL(original_xml);
+  const std::string didl = meta.ToXML(original_xml);
   service_lock();
   state_variables_->Set(TRANSPORT_VAR_AV_URI_META, didl);
   state_variables_->Set(TRANSPORT_VAR_CUR_TRACK_META, didl);

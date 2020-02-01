@@ -55,11 +55,11 @@ public:
   // edited version of that document.
   // "idgen" is a generator for the toplevel identifier attribute of the
   // document; if null, a default generator is used.
-  std::string ToDIDL(const std::string &original_xml,
-                     std::function<std::string()> idgen = nullptr) const;
+  std::string ToXML(const std::string &original_xml,
+                    std::function<std::string()> idgen = nullptr) const;
 
   // Parse DIDL-Lite and fill SongMetaData struct. Returns true when successful.
-  bool ParseDIDL(const std::string &xml);
+  bool ParseXML(const std::string &xml);
 
   bool operator==(const TrackMetadata &o) const {
     return title_ == o.title_ && artist_ == o.artist_ && album_ == o.album_

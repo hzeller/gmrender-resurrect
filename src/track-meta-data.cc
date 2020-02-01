@@ -77,7 +77,7 @@ bool TrackMetadata::UpdateFromTags(const GstTagList *tag_list) {
   return any_change;
 }
 
-bool TrackMetadata::ParseDIDL(const std::string &xml) {
+bool TrackMetadata::ParseXML(const std::string &xml) {
   const auto doc = XMLDoc::Parse(xml);
   if (!doc) return false;
 
@@ -102,8 +102,8 @@ bool TrackMetadata::ParseDIDL(const std::string &xml) {
   return unique_id;
 }
 
-std::string TrackMetadata::ToDIDL(const std::string &original_xml,
-                                  std::function<std::string()> idgen) const {
+std::string TrackMetadata::ToXML(const std::string &original_xml,
+                                 std::function<std::string()> idgen) const {
   auto doc = XMLDoc::Parse(original_xml);
   XMLElement items;
   if (!doc || !(items = doc->findElement("DIDL-Lite").findElement("item"))) {
