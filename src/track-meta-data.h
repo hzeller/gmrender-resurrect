@@ -28,25 +28,17 @@
 
 #include <string>
 #include <functional>
+#include <unordered_map>
 
 // Metadata for a song that can be filled by GStreamer tags and import/export
 // as DIDL-Lite XML, used in the UPnP world to describe track metadata.
 class TrackMetadata {
 public:
-  const std::string& title() const { return title_; }
-  void set_title(const std::string &v) { title_ = v; }
+  const std::string& title() const { return get_field("dc:title"); }
 
-  const std::string& artist() const { return artist_; }
-  void set_artist(const std::string &v) { artist_ = v; }
+  //-- there are more fields that can be added when needed.
 
-  const std::string& album() const { return album_; }
-  void set_album(const std::string &v) { album_ = v; }
-
-  const std::string& genre() const { return genre_; }
-  void set_genre(const std::string &v) { genre_ = v; }
-
-  const std::string& composer() const { return composer_; }
-  void set_composer(const std::string &v) { composer_ = v; }
+  void Clear() { fields_.clear(); }
 
   // Update from GstTags. Return if there was any change.
   bool UpdateFromTags(const GstTagList *tag_list);
@@ -62,23 +54,19 @@ public:
   // Parse DIDL-Lite and fill TrackMetaData. Returns true when successful.
   bool ParseXML(const std::string &xml);
 
-  bool operator==(const TrackMetadata &o) const {
-    return (title() == o.title() && artist() == o.artist()
-            && album() == o.album() && genre() == o.genre()
-            && composer() == o.composer());
-  }
+protected:
+  typedef std::unordered_map<std::string, std::string> MetaMap;
+  const std::string& get_field(const char *name) const;
+
+  // We store the fields keyed by their XML name, as this is the primary
+  // interaction with the outside world.
+  MetaMap fields_;
 
 private:
   static std::string DefaultCreateNewId();
 
   // Generate a new DIDL XML.
   std::string generateDIDL(const std::string &id) const;
-
-  std::string title_;
-  std::string artist_;
-  std::string album_;
-  std::string genre_;
-  std::string composer_;
 };
 
 #endif  // _TRACK_META_DATA_H
