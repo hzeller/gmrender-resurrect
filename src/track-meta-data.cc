@@ -33,19 +33,6 @@
 
 #include "xmldoc.h"
 
-std::string TrackMetadata::generateDIDL(const std::string &id) const {
-  XMLDoc doc;
-  auto item = doc.AddElement("DIDL-Lite",
-                             "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/")
-    .SetAttribute("xmlns:dc", "http://purl.org/dc/elements/1.1/")
-    .SetAttribute("xmlns:upnp", "urn:schemas-upnp-org:metadata-1-0/upnp/")
-    .AddElement("item").SetAttribute("id", id);
-  for (auto pair : fields_) {
-    item.AddElement(pair.first).SetValue(pair.second);
-  }
-  return doc.ToXMLString();
-}
-
 const std::string& TrackMetadata::get_field(const char *name) const {
   static std::string kDefault;
   auto found = fields_.find(name);
@@ -58,9 +45,9 @@ bool TrackMetadata::UpdateFromTags(const GstTagList *tag_list) {
     tag_list,
     [](const GstTagList *tag_list, const gchar *tag_name, gpointer ctx) {
       static std::unordered_map<std::string, std::string> kGstToXML
-        = { { GST_TAG_TITLE, "dc:title" }, { GST_TAG_ARTIST, "upnp:artist" },
-            { GST_TAG_ALBUM, "upnp:album" }, { GST_TAG_GENRE, "upnp:genre" },
-            { GST_TAG_COMPOSER, "upnp:creator" }};
+        = {{ GST_TAG_TITLE, "dc:title"}, { GST_TAG_ARTIST, "upnp:artist"},
+           { GST_TAG_ALBUM, "upnp:album"}, { GST_TAG_GENRE, "upnp:genre"},
+           { GST_TAG_COMPOSER, "upnp:creator"}};
       auto found = kGstToXML.find(tag_name);
       if (found == kGstToXML.end()) return; // unsupported tag.
       auto xml_name = found->second;
@@ -100,6 +87,19 @@ bool TrackMetadata::ParseXML(const std::string &xml) {
   char unique_id[4 + 8 + 1];
   snprintf(unique_id, sizeof(unique_id), "gmr-%08x", xml_id++);
   return unique_id;
+}
+
+std::string TrackMetadata::generateDIDL(const std::string &id) const {
+  XMLDoc doc;
+  auto item = doc.AddElement("DIDL-Lite",
+                             "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/")
+    .SetAttribute("xmlns:dc", "http://purl.org/dc/elements/1.1/")
+    .SetAttribute("xmlns:upnp", "urn:schemas-upnp-org:metadata-1-0/upnp/")
+    .AddElement("item").SetAttribute("id", id);
+  for (auto pair : fields_) {
+    item.AddElement(pair.first).SetValue(pair.second);
+  }
+  return doc.ToXMLString();
 }
 
 std::string TrackMetadata::ToXML(const std::string &original_xml,
