@@ -1,5 +1,5 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
-/* song-meta-data - Object holding meta data for a song.
+/* track-meta-data - Object holding meta data for a song.
  *
  * Copyright (C) 2012 Henner Zeller
  *
@@ -21,15 +21,16 @@
  * MA 02110-1301, USA.
  *
  */
-#ifndef _SONG_META_DATA_H
-#define _SONG_META_DATA_H
+#ifndef _TRACK_META_DATA_H
+#define _TRACK_META_DATA_H
 
 #include <gst/gsttaglist.h>
 
 #include <string>
 #include <functional>
 
-// Metadata for a song.
+// Metadata for a song that can be filled by GStreamer tags and import/export
+// as DIDL-Lite XML, used in the UPnP world to describe track metadata.
 class TrackMetadata {
 public:
   const std::string& title() const { return title_; }
@@ -58,16 +59,18 @@ public:
   std::string ToXML(const std::string &original_xml,
                     std::function<std::string()> idgen = nullptr) const;
 
-  // Parse DIDL-Lite and fill SongMetaData struct. Returns true when successful.
+  // Parse DIDL-Lite and fill TrackMetaData. Returns true when successful.
   bool ParseXML(const std::string &xml);
 
   bool operator==(const TrackMetadata &o) const {
-    return title_ == o.title_ && artist_ == o.artist_ && album_ == o.album_
-      && genre_ == o.genre_ && composer_ == o.composer_;
+    return (title() == o.title() && artist() == o.artist()
+            && album() == o.album() && genre() == o.genre()
+            && composer() == o.composer());
   }
 
 private:
   static std::string DefaultCreateNewId();
+
   // Generate a new DIDL XML.
   std::string generateDIDL(const std::string &id) const;
 
@@ -78,4 +81,4 @@ private:
   std::string composer_;
 };
 
-#endif  // _SONG_META_DATA_H
+#endif  // _TRACK_META_DATA_H
