@@ -66,6 +66,11 @@ std::string XMLDoc::ToXMLString() const {
   return result;
 }
 
+const char *XMLElement::name() const {
+  if (!exists()) return nullptr;
+  return ixmlNode_getNodeName((IXML_Node*)element_);
+}
+
 std::string XMLElement::value() const {
   if (!exists()) return "";
   IXML_Node *node = (IXML_Node *)element_;
@@ -74,6 +79,10 @@ std::string XMLElement::value() const {
   const char *node_value = ixmlNode_getNodeValue(node);
   if (!node_value) return "";
   return node_value;
+}
+
+ElementRange XMLElement::children() const {
+  return ElementRange(doc_, element_);
 }
 
 std::string XMLElement::attribute(const std::string &name) const {
