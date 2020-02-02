@@ -304,6 +304,7 @@ void GstreamerOutput::SetUri(const std::string& uri) {
   Log_info(TAG, "Set uri to '%s'", uri.c_str());
 
   uri_ = uri;
+  metadata_.Clear();
 }
 
 /**
