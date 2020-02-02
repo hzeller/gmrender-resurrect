@@ -85,6 +85,11 @@ class GstreamerOutput : public OutputModule,
   void NextStream(void);
   bool BusCallback(GstMessage* message);
 
+  // Update "meta" from the gstreamer "tag_list".
+  // Returns 'true' if there was any change.
+  bool UpdateMetadata(const GstTagList* tag_list,
+                      TrackMetadata *meta);
+
   GstElement* player_ = nullptr;
 
   std::string uri_;

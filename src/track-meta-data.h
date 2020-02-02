@@ -34,7 +34,22 @@
 // as DIDL-Lite XML, used in the UPnP world to describe track metadata.
 class TrackMetadata {
 public:
-  const std::string& title() const { return get_field("dc:title"); }
+  typedef const char *TagLabel; // Opaque type used in labels.
+  static TagLabel TAG_TITLE;
+  static TagLabel TAG_ARTIST;
+  static TagLabel TAG_ALBUM;
+  static TagLabel TAG_GENRE;
+  static TagLabel TAG_COMPOSER;
+
+  // Get field with given tag.
+  const std::string& get_field(TagLabel tag) const;
+
+  // Set the field with the given "tag" to "value". Returns 'true' if
+  // the field value changed.
+  bool set_field(TagLabel tag, const std::string &value);
+
+  // Convenience getter for title.
+  const std::string& title() const { return get_field(TAG_TITLE); }
 
   //-- there are more fields that can be added when needed.
 
@@ -54,19 +69,17 @@ public:
   // Parse DIDL-Lite and fill TrackMetaData. Returns true when successful.
   bool ParseXML(const std::string &xml);
 
-protected:
-  typedef std::unordered_map<std::string, std::string> MetaMap;
-  const std::string& get_field(const char *name) const;
-
-  // We store the fields keyed by their XML name, as this is the primary
-  // interaction with the outside world.
-  MetaMap fields_;
-
 private:
+  typedef std::unordered_map<std::string, std::string> MetaMap;
+
   static std::string DefaultCreateNewId();
 
   // Generate a new DIDL XML.
   std::string GenerateDIDL(const std::string &id) const;
+
+  // We store the fields keyed by their XML name, as this is the primary
+  // interaction with the outside world.
+  MetaMap fields_;
 };
 
 #endif  // _TRACK_META_DATA_H

@@ -33,38 +33,26 @@
 
 #include "xmldoc.h"
 
-const std::string& TrackMetadata::get_field(const char *name) const {
+const char *TrackMetadata::TAG_TITLE    = "dc:title";
+const char *TrackMetadata::TAG_ARTIST   = "upnp:artist";
+const char *TrackMetadata::TAG_ALBUM    = "upnp:album";
+const char *TrackMetadata::TAG_GENRE    = "upnp:genre";
+const char *TrackMetadata::TAG_COMPOSER = "upnp:creator";
+
+const std::string& TrackMetadata::get_field(TagLabel tag) const {
   static std::string kDefault;
-  auto found = fields_.find(name);
+  auto found = fields_.find(tag);
   return found != fields_.end() ? found->second : kDefault;
 }
 
-bool TrackMetadata::UpdateFromTags(const GstTagList *tag_list) {
-  struct Context { MetaMap *fields; bool modified; } ctx = { &fields_, false };
-  gst_tag_list_foreach(
-    tag_list,
-    [](const GstTagList *tag_list, const gchar *tag_name, gpointer ctx) {
-      static const std::unordered_map<std::string, std::string> kGstToXML
-        = {{ GST_TAG_TITLE, "dc:title"}, { GST_TAG_ARTIST, "upnp:artist"},
-           { GST_TAG_ALBUM, "upnp:album"}, { GST_TAG_GENRE, "upnp:genre"},
-           { GST_TAG_COMPOSER, "upnp:creator"}};
-      auto found = kGstToXML.find(tag_name);
-      if (found == kGstToXML.end()) return; // unsupported tag.
-      auto xml_name = found->second;
-
-      gchar* value = nullptr;
-      if (!gst_tag_list_get_string(tag_list, tag_name, &value)) return;
-
-      Context* context = (Context*) ctx;
-      std::string &to_update = (*context->fields)[xml_name];
-      if (to_update != value) {
-        context->modified = true;
-        to_update = value;
-      }
-      g_free(value);
-    }, &ctx);
-
-  return ctx.modified;
+bool TrackMetadata::set_field(TagLabel tag, const std::string &value) {
+  std::string &to_update = fields_[tag];
+  if (to_update != value) {
+    to_update = value;
+    return true;
+  } else {
+    return false;
+  }
 }
 
 bool TrackMetadata::ParseXML(const std::string &xml) {

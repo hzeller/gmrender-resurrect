@@ -536,6 +536,33 @@ void GstreamerOutput::NextStream(void) {
   }
 }
 
+bool GstreamerOutput::UpdateMetadata(const GstTagList* tag_list,
+                                     TrackMetadata *meta) {
+  struct Context { TrackMetadata *meta; bool modified; } ctx = { meta, false };
+  // We set GST content to the appropriate metadata tag.
+  gst_tag_list_foreach(
+    tag_list,
+    [](const GstTagList *tag_list, const gchar *tag_name, gpointer ctx) {
+      static const std::unordered_map<std::string, TrackMetadata::TagLabel>
+        kGstToTag = {{ GST_TAG_TITLE,    TrackMetadata::TAG_TITLE},
+                     { GST_TAG_ARTIST,   TrackMetadata::TAG_ARTIST},
+                     { GST_TAG_ALBUM,    TrackMetadata::TAG_ALBUM},
+                     { GST_TAG_GENRE,    TrackMetadata::TAG_GENRE},
+                     { GST_TAG_COMPOSER, TrackMetadata::TAG_COMPOSER}};
+      auto found = kGstToTag.find(tag_name);
+      if (found == kGstToTag.end()) return; // unsupported tag.
+
+      gchar* value = nullptr;
+      if (!gst_tag_list_get_string(tag_list, tag_name, &value)) return;
+
+      Context* context = (Context*) ctx;
+      context->modified |= context->meta->set_field(found->second, value);
+      g_free(value);
+    }, &ctx);
+
+  return ctx.modified;
+}
+
 /**
   @brief  Handle message from the Gstreamer bus
 
@@ -605,7 +632,7 @@ bool GstreamerOutput::BusCallback(GstMessage* message) {
       GstTagList* tag_list = NULL;
       gst_message_parse_tag(message, &tag_list);
 
-      if (metadata_.UpdateFromTags(tag_list)) {
+      if (UpdateMetadata(tag_list, &metadata_)) {
         NotifyMetadataChange(metadata_);
       }
 
