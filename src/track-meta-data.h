@@ -66,7 +66,7 @@ private:
   static std::string DefaultCreateNewId();
 
   // Generate a new DIDL XML.
-  std::string generateDIDL(const std::string &id) const;
+  std::string GenerateDIDL(const std::string &id) const;
 };
 
 #endif  // _TRACK_META_DATA_H
