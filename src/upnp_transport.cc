@@ -49,7 +49,7 @@
 // Namespace, see UPnP-av-AVTransport-v3-Service-20101231.pdf page 15
 #define TRANSPORT_EVENT_XML_NS "urn:schemas-upnp-org:metadata-1-0/AVT/"
 
-enum {
+enum TransportCommand {
   TRANSPORT_CMD_GETCURRENTTRANSPORTACTIONS,
   TRANSPORT_CMD_GETDEVICECAPABILITIES,
   TRANSPORT_CMD_GETMEDIAINFO,
@@ -190,7 +190,7 @@ static struct param_range track_range = {0, 4294967295LL, 1};
 
 static struct param_range track_nr_range = {0, 4294967295LL, 0};
 
-typedef enum {
+enum TransportVariable {
   TRANSPORT_VAR_TRANSPORT_STATUS,
   TRANSPORT_VAR_NEXT_AV_URI,
   TRANSPORT_VAR_NEXT_AV_URI_META,
@@ -222,7 +222,7 @@ typedef enum {
   TRANSPORT_VAR_TRANSPORT_STATE,
   TRANSPORT_VAR_POS_REC_QUAL_MODE,
   TRANSPORT_VAR_COUNT
-} transport_variable_t;
+};
 
 static struct argument arguments_setavtransporturi[] = {
     {"InstanceID", ParamDir::kIn, TRANSPORT_VAR_AAT_INSTANCE_ID},

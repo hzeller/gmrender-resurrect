@@ -58,7 +58,7 @@
 // Namespace, see UPnP-av-RenderingControl-v3-Service-20101231.pdf page 19
 #define CONTROL_EVENT_XML_NS "urn:schemas-upnp-org:metadata-1-0/RCS/"
 
-typedef enum {
+enum ControlCommand {
   CONTROL_CMD_GET_BLUE_BLACK,
   CONTROL_CMD_GET_BLUE_GAIN,
   CONTROL_CMD_GET_BRIGHTNESS,
@@ -95,7 +95,7 @@ typedef enum {
   CONTROL_CMD_SET_VOL,
   CONTROL_CMD_SET_VOL_DB,
   CONTROL_CMD_COUNT
-} control_cmd;
+};
 
 static const char *aat_presetnames[] = {
     "FactoryDefaults", "InstallationDefaults", "Vendor defined", NULL};
@@ -136,7 +136,7 @@ static struct param_range vid_black_range = {0, 100, 1};
 static struct param_range colortemp_range = {0, 65535, 1};
 static struct param_range keystone_range = {-32768, 32767, 1};
 
-typedef enum {
+enum ControlVariable {
   CONTROL_VAR_G_GAIN,
   CONTROL_VAR_B_BLACK,
   CONTROL_VAR_VER_KEYSTONE,
@@ -159,7 +159,7 @@ typedef enum {
   CONTROL_VAR_CONTRAST,
   CONTROL_VAR_BRIGHTNESS,
   CONTROL_VAR_COUNT
-} control_variable_t;
+};
 
 static VariableContainer *state_variables_ = NULL;
 
@@ -382,7 +382,7 @@ static struct argument *argument_list[] = {
     [CONTROL_CMD_COUNT] = NULL};
 
 // Replace given variable without sending an state-change event.
-static void replace_var(control_variable_t varnum, const char *new_value) {
+static void replace_var(ControlVariable varnum, const char *new_value) {
   state_variables_->Set(varnum, new_value);
 }
 
@@ -392,7 +392,7 @@ static void change_volume(const char *volume, const char *db_volume) {
 }
 
 static int cmd_obtain_variable(struct action_event *event,
-                               control_variable_t varnum,
+                               ControlVariable varnum,
                                const char *paramname) {
   const char *instance = upnp_get_string(event, "InstanceID");
   if (instance == NULL) {

@@ -56,7 +56,7 @@
 #define CONNMGR_CONTROL_URL "/upnp/control/renderconnmgr1"
 #define CONNMGR_EVENT_URL "/upnp/event/renderconnmgr1"
 
-typedef enum {
+enum ConnmgrVariable {
   CONNMGR_VAR_AAT_CONN_MGR,
   CONNMGR_VAR_SINK_PROTO_INFO,
   CONNMGR_VAR_AAT_CONN_STATUS,
@@ -68,16 +68,16 @@ typedef enum {
   CONNMGR_VAR_SRC_PROTO_INFO,
   CONNMGR_VAR_CUR_CONN_IDS,
   CONNMGR_VAR_COUNT
-} connmgr_variable;
+};
 
-typedef enum {
+enum ConnmgrCommand {
   CONNMGR_CMD_GETCURRENTCONNECTIONIDS,
   CONNMGR_CMD_SETCURRENTCONNECTIONINFO,
   CONNMGR_CMD_GETPROTOCOLINFO,
   CONNMGR_CMD_PREPAREFORCONNECTION,
   // CONNMGR_CMD_CONNECTIONCOMPLETE,
   CONNMGR_CMD_COUNT
-} connmgr_cmd;
+};
 
 static struct argument arguments_getprotocolinfo[] = {
     {"Source", ParamDir::kOut, CONNMGR_VAR_SRC_PROTO_INFO},
