@@ -70,25 +70,21 @@ void TrackMetadata::CreateXmlRoot(XMLDoc& xml_document) const {
 std::string TrackMetadata::ToXml(const std::string& xml) const {
   // Parse existing document
   auto xml_document = XMLDoc::Parse(xml);
-
-  XMLElement root;
+  
   XMLElement item;
-
   // Attempt to find root and item element from original XML
   if (xml_document != nullptr) {
-    root = xml_document->findElement("DIDL-Lite");
-    item = root.findElement("item");
+    item = xml_document->findElement("DIDL-Lite").findElement("item");
   }
 
   // Existing format sucks, just make our own
-  if (!root.exists() || !item.exists()) {
+  if (!item.exists()) {
     xml_document.reset(new XMLDoc());
 
     CreateXmlRoot(*xml_document);
 
     // Update locals with new document objects
-    root = xml_document->findElement("DIDL-Lite");
-    item = root.findElement("item");
+    item = xml_document->findElement("DIDL-Lite").findElement("item");
   }
 
   bool modified = false;
