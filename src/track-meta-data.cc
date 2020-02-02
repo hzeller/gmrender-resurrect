@@ -75,15 +75,14 @@ std::string TrackMetadata::ToXml(const std::string& xml) const {
   XMLElement item;
 
   // Attempt to find root and item element from original XML
-  if (xml_document != nullptr)
-  {
+  if (xml_document != nullptr) {
     root = xml_document->findElement("DIDL-Lite");
     item = root.findElement("item");
   }
 
   // Existing format sucks, just make our own
   if (!root.exists() || !item.exists()) {
-    xml_document = std::unique_ptr<XMLDoc>(new XMLDoc()); // This is awkward
+    xml_document.reset(new XMLDoc());
 
     CreateXmlRoot(*xml_document);
 
