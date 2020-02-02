@@ -74,7 +74,7 @@ std::string TrackMetadata::ToXml(const std::string& xml) const {
   XMLElement item;
   // Attempt to find root and item element from original XML
   if (xml_document != nullptr) {
-    item = xml_document->findElement("DIDL-Lite").findElement("item");
+    item = xml_document->FindElement("DIDL-Lite").FindElement("item");
   }
 
   // Existing format sucks, just make our own
@@ -84,7 +84,7 @@ std::string TrackMetadata::ToXml(const std::string& xml) const {
     CreateXmlRoot(*xml_document);
 
     // Update locals with new document objects
-    item = xml_document->findElement("DIDL-Lite").findElement("item");
+    item = xml_document->FindElement("DIDL-Lite").FindElement("item");
   }
 
   bool modified = false;
@@ -95,7 +95,7 @@ std::string TrackMetadata::ToXml(const std::string& xml) const {
     // Skip if no value
     if (value.empty()) continue;
 
-    XMLElement element = item.findElement(tag.c_str());
+    XMLElement element = item.FindElement(tag.c_str());
     if (element) {
       // Check if already equal to avoid ID update
       if (value.compare(element.value()) == 0) continue;

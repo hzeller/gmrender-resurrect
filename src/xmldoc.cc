@@ -129,10 +129,10 @@ XMLElement &XMLElement::SetValue(long v) {
   return SetValue(buf);
 }
 
-XMLElement XMLDoc::findElement(const std::string &name) const {
+XMLElement XMLDoc::FindElement(const std::string &name) const {
   return { doc_, find_element((IXML_Node *)doc_, name) };
 }
 
-XMLElement XMLElement::findElement(const std::string &name) const {
+XMLElement XMLElement::FindElement(const std::string &name) const {
   return { doc_, find_element((IXML_Node *)element_, name) };
 }

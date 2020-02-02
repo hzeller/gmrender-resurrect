@@ -41,7 +41,7 @@ public:
   static std::unique_ptr<XMLDoc> Parse(const std::string &xml_text);
 
   // TODO: this should just have an ... argument list with a sequence
-  XMLElement findElement(const std::string &name) const;
+  XMLElement FindElement(const std::string &name) const;
 
   // Create a new top element with an optional namespace.
   XMLElement AddElement(const std::string &name, const char *ns = nullptr);
@@ -64,7 +64,7 @@ public:
   // Get name of element.
   const char *name() const;
 
-  XMLElement findElement(const std::string &name) const;
+  XMLElement FindElement(const std::string &name) const;
 
   // Iterate through children. Use in Loops such as
   // for (XMLElement e : foo.children()) { do something }
