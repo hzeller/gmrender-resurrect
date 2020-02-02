@@ -44,7 +44,7 @@ bool TrackMetadata::UpdateFromTags(const GstTagList *tag_list) {
   gst_tag_list_foreach(
     tag_list,
     [](const GstTagList *tag_list, const gchar *tag_name, gpointer ctx) {
-      static std::unordered_map<std::string, std::string> kGstToXML
+      static const std::unordered_map<std::string, std::string> kGstToXML
         = {{ GST_TAG_TITLE, "dc:title"}, { GST_TAG_ARTIST, "upnp:artist"},
            { GST_TAG_ALBUM, "upnp:album"}, { GST_TAG_GENRE, "upnp:genre"},
            { GST_TAG_COMPOSER, "upnp:creator"}};
