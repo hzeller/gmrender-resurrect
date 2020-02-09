@@ -34,14 +34,26 @@ class XMLElement;
 class ElementRange;
 class XMLDoc {
 public:
+  // Create a new, empty XMLDocument.
   XMLDoc();
   ~XMLDoc();
 
   // Factory for a new XML document: parse document; if valid, return a doc.
   static std::unique_ptr<XMLDoc> Parse(const std::string &xml_text);
 
-  // TODO: this should just have an ... argument list with a sequence
-  XMLElement FindElement(const std::string &name) const;
+  // Find child element with the given name.
+  // If it doesn't exist, returns an XMLElement with exists() == false.
+  XMLElement FindChild(const std::string &name) const;
+
+  // Iterate through children. Use in Loops such as
+  // for (XMLElement e : foo.children()) { do something }
+  // Or if you are just interested in the first element, use
+  // foo.children().first().
+  ElementRange children() const;
+
+  // Find nested elements with given name. Recurses down the document,
+  // returning iterable elements with the given name.
+  ElementRange AllNested(const char *name) const;
 
   // Create a new top element with an optional namespace.
   XMLElement AddElement(const std::string &name, const char *ns = nullptr);
@@ -64,11 +76,17 @@ public:
   // Get name of element.
   const char *name() const;
 
-  XMLElement FindElement(const std::string &name) const;
+  // Find child element with the given name.
+  // If it doesn't exist, returns an XMLElement with exists() == false.
+  XMLElement FindChild(const std::string &name) const;
 
   // Iterate through children. Use in Loops such as
   // for (XMLElement e : foo.children()) { do something }
   ElementRange children() const;
+
+  // Find nested elements with given name. Recurses down the document,
+  // returning iterable elements with the given name.
+  ElementRange AllNested(const char *name) const;
 
   // Create new sub-element within this "name".
   XMLElement AddElement(const std::string &name);
@@ -98,12 +116,15 @@ private:
   IXML_Element *element_ = nullptr; // Not owned.
 };
 
+// Iterable range over nodes returned from children() or AllNested()
 class ElementRange {
 public:
   class iterator {
   public:
     ~iterator() { ixmlNodeList_free(list_); }
-    XMLElement operator*() const { return { doc_, (IXML_Element*)it_->nodeItem }; }
+    XMLElement operator*() const {
+      return { doc_, (IXML_Element*)it_->nodeItem };
+    }
     iterator& operator++() { it_ = it_->next; return *this; }
     bool operator!=(const iterator &other) const { return other.it_ != it_; }
 
@@ -119,18 +140,44 @@ public:
   };
 
   iterator begin() const {
-    if (!parent_) return iterator();
-    return iterator(doc_, ixmlNode_getChildNodes((IXML_Node*)parent_));
+    if (!parent_) return end();
+    if (filter_name_) {
+      // find nested. Different for document or element.
+      return parent_is_doc_
+        ? iterator(doc_, ixmlDocument_getElementsByTagName(
+                     (IXML_Document*)parent_, filter_name_))
+        : iterator(doc_, ixmlElement_getElementsByTagName(
+                     (IXML_Element*)parent_, filter_name_));
+    } else {
+      return iterator(doc_, ixmlNode_getChildNodes(parent_));
+    }
   }
+
   iterator end() const { return iterator(); }
+
+  // Get the first element of this Range or a non-exist XMLElement if there
+  // is non in the range.
+  XMLElement first() const {
+    iterator it = begin();
+    if (it != end()) return *it;
+    return { doc_, nullptr };
+  }
 
 private:
   friend class XMLElement;
-  ElementRange(IXML_Document *doc, IXML_Element *parent)
-    : doc_(doc), parent_(parent) {}
+  friend class XMLDoc;
+  ElementRange(IXML_Document *doc, IXML_Element *parent, const char *name)
+    : doc_(doc), parent_((IXML_Node*)parent), parent_is_doc_(false),
+      filter_name_(name) {}
+
+  ElementRange(IXML_Document *doc, IXML_Document *parent, const char *name)
+    : doc_(doc), parent_((IXML_Node*)parent), parent_is_doc_(true),
+      filter_name_(name) {}
 
   IXML_Document *const doc_;
-  IXML_Element *const parent_;
+  IXML_Node *const parent_;
+  const bool parent_is_doc_;
+  const char *const filter_name_;
 };
 
 #endif  // XMLDOC_H_

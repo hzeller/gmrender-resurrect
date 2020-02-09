@@ -59,7 +59,7 @@ bool TrackMetadata::ParseXML(const std::string &xml) {
   const auto doc = XMLDoc::Parse(xml);
   if (!doc) return false;
 
-  const auto items = doc->FindElement("DIDL-Lite").FindElement("item");
+  const auto items = doc->FindChild("DIDL-Lite").FindChild("item");
   for (XMLElement elem : items.children()) {
     fields_[elem.name()] = elem.value();
   }
@@ -94,13 +94,13 @@ std::string TrackMetadata::ToXML(const std::string &original_xml,
                                  std::function<std::string()> idgen) const {
   auto doc = XMLDoc::Parse(original_xml);
   XMLElement items;
-  if (!doc || !(items = doc->FindElement("DIDL-Lite").FindElement("item"))) {
+  if (!doc || !(items = doc->FindChild("DIDL-Lite").FindChild("item"))) {
     return GenerateDIDL(idgen ? idgen() : DefaultCreateNewId());
   }
 
   bool any_change = false;
   for (auto pair : fields_) {
-    auto tag = items.FindElement(pair.first);
+    auto tag = items.FindChild(pair.first);
     if (tag.value() == pair.second) continue;
     if (!tag.exists()) tag = items.AddElement(pair.first);
     tag.SetValue(pair.second);
@@ -109,7 +109,7 @@ std::string TrackMetadata::ToXML(const std::string &original_xml,
   if (any_change) {
     // Only if we changed the content, we generate a new unique id.
     const std::string new_id = idgen ? idgen() : DefaultCreateNewId();
-    doc->FindElement("DIDL-Lite").SetAttribute("id", new_id);
+    doc->FindChild("DIDL-Lite").SetAttribute("id", new_id);
   }
   return doc->ToXMLString();
 }

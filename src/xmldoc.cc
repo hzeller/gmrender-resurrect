@@ -81,10 +81,6 @@ std::string XMLElement::value() const {
   return node_value;
 }
 
-ElementRange XMLElement::children() const {
-  return ElementRange(doc_, element_);
-}
-
 std::string XMLElement::attribute(const std::string &name) const {
   if (!exists()) return "";
   const char *val = ixmlElement_getAttribute(element_, name.c_str());
@@ -129,10 +125,26 @@ XMLElement &XMLElement::SetValue(long v) {
   return SetValue(buf);
 }
 
-XMLElement XMLDoc::FindElement(const std::string &name) const {
+XMLElement XMLDoc::FindChild(const std::string &name) const {
   return { doc_, find_element((IXML_Node *)doc_, name) };
 }
 
-XMLElement XMLElement::FindElement(const std::string &name) const {
+ElementRange XMLDoc::children() const {
+  return ElementRange(doc_, doc_, nullptr);
+}
+
+ElementRange XMLDoc::AllNested(const char *name) const {
+  return ElementRange(doc_, doc_, name);
+}
+
+XMLElement XMLElement::FindChild(const std::string &name) const {
   return { doc_, find_element((IXML_Node *)element_, name) };
+}
+
+ElementRange XMLElement::children() const {
+  return ElementRange(doc_, element_, nullptr);
+}
+
+ElementRange XMLElement::AllNested(const char *name) const {
+  return ElementRange(doc_, element_, name);
 }
