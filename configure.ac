@@ -34,6 +34,18 @@ if test "x$enable_debug" = "xyes"; then
         CFLAGS="$CFLAGS -g -O0 -Wall -Werror"
 fi
 
+# Add option to enable MPRIS interface
+AC_ARG_ENABLE([mpris], AS_HELP_STRING([--enable-mpris], [enable MPRIS D-Bus interface]))
+
+# Check additional packages if MPRIS is enabled
+AS_IF([test "x$enable_mpris" = "xyes"], [
+  AC_DEFINE([ENABLE_MPRIS], , [Enable the MPRIS D-Bus interface])
+  PKG_CHECK_MODULES([GIO_UNIX], [gio-unix-2.0],
+    [CFLAGS="${GIO_UNIX_CFLAGS} ${CFLAGS}" LIBS="${GIO_UNIX_LIBS} ${LIBS}"],
+    [AC_MSG_ERROR(MPRIS D-Bus support requires libglib2.0-dev)])
+])
+AM_CONDITIONAL([ENABLE_MPRIS], [test "x$enable_mpris" = "xyes"])
+
 PKG_PROG_PKG_CONFIG
 
 PKG_CHECK_MODULES(GLIB, glib-2.0 gthread-2.0, HAVE_GLIB=yes, HAVE_GLIB=no)

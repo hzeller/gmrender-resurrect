@@ -1,4 +1,6 @@
 bin_PROGRAMS = gmediarender
+BUILT_SOURCES =
+CLEANFILES =
 
 gmediarender_SOURCES = main.c git-version.h \
 	upnp_service.c upnp_control.c upnp_connmgr.c  upnp_transport.c \
@@ -18,6 +20,20 @@ gmediarender_SOURCES += \
 	output_gstreamer.c  output_gstreamer.h
 endif
 
+if ENABLE_MPRIS
+mpris_TARGETS = mpris_interface.c mpris_interface.h
+
+$(mpris_TARGETS):  mpris-spec/*.xml
+	gdbus-codegen --interface-prefix org.mpris --c-namespace Mpris --generate-c-code mpris_interface $^
+
+gmediarender_SOURCES += \
+	mpris_notification.c mpris_notification.h \
+	$(mpris_TARGETS)
+
+BUILT_SOURCES += $(mpris_TARGETS)
+CLEANFILES += $(mpris_TARGETS)
+endif
+
 main.c : git-version.h
 
 git-version.h: .FORCE
@@ -29,3 +45,11 @@ git-version.h: .FORCE
 
 AM_CPPFLAGS = $(GLIB_CFLAGS) $(GST_CFLAGS) $(LIBUPNP_CFLAGS) -DPKG_DATADIR=\"$(datadir)/gmediarender\"
 gmediarender_LDADD = $(GLIB_LIBS) $(GST_LIBS) $(LIBUPNP_LIBS)
+
+install-exec-hook:
+if ENABLE_MPRIS
+DBUS_POLICY_DIR=$(DESTDIR)/etc/dbus-1/system.d
+DBUS_POLICY_TARGET=$(DBUS_POLICY_DIR)/gmrender-resurrect-mpris-policy.conf
+	mkdir -p $(DBUS_POLICY_DIR)
+	[ -f $(DBUS_POLICY_TARGET) ] || cp ../scripts/gmrender-resurrect-mpris-policy.conf $(DBUS_POLICY_TARGET)
+endif

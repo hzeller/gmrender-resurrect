@@ -60,6 +60,9 @@
 #include "upnp_renderer.h"
 #include "upnp_transport.h"
 #include "upnp_connmgr.h"
+#ifdef ENABLE_MPRIS
+#include "mpris_notification.h"
+#endif
 
 static gboolean show_version = FALSE;
 static gboolean show_devicedesc = FALSE;
@@ -321,6 +324,11 @@ int main(int argc, char **argv)
 		upnp_control_register_variable_listener(log_variable_change,
 							(void*) "control");
 	}
+
+#ifdef ENABLE_MPRIS
+	// Enable MPRIS D-Bus signaling
+	mpris_configure(uuid, friendly_name);
+#endif
 
 	// Write both to the log (which might be disabled) and console.
 	Log_info("main", "Ready for rendering ('%s'; uuid=%s).",

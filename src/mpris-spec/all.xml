@@ -1,0 +1,187 @@
+<tp:spec
+  xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0"
+  xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <tp:title>MPRIS D-Bus Interface Specification</tp:title>
+  <tp:version>2.2</tp:version>
+
+  <tp:copyright>
+    Copyright © 2006-2012 the VideoLAN team
+    (Mirsal Ennaime, Rafaël Carré, Jean-Paul Saman)
+  </tp:copyright>
+  <tp:copyright>Copyright © 2005-2008 Milosz Derezynski</tp:copyright>
+  <tp:copyright>Copyright © 2008 Nick Welch</tp:copyright>
+  <tp:copyright>Copyright © 2010-2012 Alex Merry</tp:copyright>
+
+  <tp:license xmlns="http://www.w3.org/1999/xhtml">
+    <p>
+      This library is free software; you can redistribute it and/or
+      modify it under the terms of the GNU Lesser General Public
+      License as published by the Free Software Foundation; either
+      version 2.1 of the License, or (at your option) any later
+      version.
+    </p>
+
+    <p>
+      This library is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      GNU Lesser General Public License for more details.
+    </p>
+
+    <p>
+      You should have received a copy of the GNU Lesser General
+      Public License along with this library; if not, write to the
+      Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+      Boston, MA 02110-1301, USA.
+    </p>
+  </tp:license>
+
+  <tp:section name="About">
+    <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+        The Media Player Remote Interfacing Specification is a standard
+        <a href="http://www.freedesktop.org/wiki/Software/dbus">D-Bus</a>
+        interface which aims to provide a common programmatic API
+        for controlling media players.
+      </p>
+      <p>
+        It provides a mechanism for discovery, querying and basic playback
+        control of compliant media players, as well as a tracklist
+        interface which is used to add context to the active media item.
+      </p>
+    </tp:docstring>
+  </tp:section>
+
+  <tp:section name="Changes">
+    <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+      <dl>
+        <dt>From 2.1 to 2.2:</dt>
+        <dd>
+          <ul>
+            <li>
+              Added the optional <b>Fullscreen</b> and <b>CanSetFullscreen</b> properties
+              to the <b>org.mpris.MediaPlayer2</b> interface.
+            </li>
+            <li>
+              The path <b>/org/mpris/MediaPlayer2/TrackList/NoTrack</b> now represents
+              "no track" where required in the <b>org.mpris.MediaPlayer2.TrackList</b>
+              interface (since empty paths are not allowed by D-Bus).
+            </li>
+            <li>
+              The suggested unique instance identifier no longer violates the D-Bus
+              specification by begining with a digit.
+            </li>
+          </ul>
+        </dd>
+        <dt>From 2.0 to 2.1:</dt>
+        <dd>
+          <ul>
+            <li>Added the optional <b>org.mpris.MediaPlayer2.Playlists</b> interface.</li>
+          </ul>
+        </dd>
+      </dl>
+    </tp:docstring>
+  </tp:section>
+
+  <tp:section name="Corrections">
+    <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+      <ul>
+        <li>
+          2012-08-07: Clarified behaviour of the Play method
+          of the Player interface when paused.
+        </li>
+      </ul>
+    </tp:docstring>
+  </tp:section>
+
+  <tp:section name="Bus Name Policy">
+    <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+        Each media player <strong>must</strong> request a unique bus name
+        which begins with <b>org.mpris.MediaPlayer2</b>. For example:
+      </p>
+      <ul>
+        <li>org.mpris.MediaPlayer2.audacious</li>
+        <li>org.mpris.MediaPlayer2.vlc</li>
+        <li>org.mpris.MediaPlayer2.bmp</li>
+        <li>org.mpris.MediaPlayer2.xmms2</li>
+      </ul>
+
+      <p>
+        This allows clients to list available media players
+        (either already running or which can be started via D-Bus activation)
+      </p>
+
+      <p>
+        In the case where the media player allows multiple instances running
+        simultaneously, each additional instance should request a unique bus
+        name, adding a dot and a unique identifier to its usual bus name, such
+        as one based on a UNIX process id.
+
+        For example, this could be:
+      </p>
+
+      <ul>
+          <li>org.mpris.MediaPlayer2.vlc.instance7389</li>
+      </ul>
+
+      <p>
+        Note: According to the <a href="http://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-names-bus">
+        D-Bus specification</a>, the unique identifier "must only contain the
+        ASCII characters '[A-Z][a-z][0-9]_-'" and "must not begin with a digit".
+      </p>
+
+    </tp:docstring>
+  </tp:section>
+
+  <tp:section name="Entry point">
+    <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+
+      <p>
+        The media player <strong>must</strong> expose the
+        <strong>/org/mpris/MediaPlayer2</strong> object path, which
+        <strong>must</strong> implement the following interfaces:
+      </p>
+
+      <ul>
+        <li>org.mpris.MediaPlayer2</li>
+        <li>org.mpris.MediaPlayer2.Player</li>
+      </ul>
+
+      <p>
+        The <strong>/org/mpris/MediaPlayer2</strong> object may implement
+        the <strong>org.mpris.MediaPlayer2.TrackList</strong> interface.
+      </p>
+
+      <p>
+        The <strong>/org/mpris/MediaPlayer2</strong> object may implement
+        the <strong>org.mpris.MediaPlayer2.Playlists</strong> interface.
+      </p>
+
+    </tp:docstring>
+  </tp:section>
+
+  <tp:section name="The PropertiesChanged signal">
+    <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+        The <abbr title="Media Player Remote Interfacing Specification">MPRIS</abbr>
+        uses the <literal>org.freedesktop.DBus.Properties.PropertiesChanged</literal>
+        signal to notify clients of changes in the media player state.
+        If a client implementation uses D-Bus bindings which do not support this
+        signal, then it should connect to it manually.
+        If a media player implementation uses D-Bus bindings which do not support
+        this signal, then it should send it manually
+      </p>
+    </tp:docstring>
+  </tp:section>
+
+  <tp:section name="Interfaces">
+    <xi:include href="org.mpris.MediaPlayer2.xml" />
+    <xi:include href="org.mpris.MediaPlayer2.Player.xml" />
+    <xi:include href="org.mpris.MediaPlayer2.TrackList.xml" />
+    <xi:include href="org.mpris.MediaPlayer2.Playlists.xml" />
+  </tp:section>
+
+</tp:spec>
+<!-- vim:set sw=2 sts=2 et ft=xml: -->

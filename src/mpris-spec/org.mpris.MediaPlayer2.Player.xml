@@ -1,0 +1,672 @@
+<?xml version="1.0" ?>
+<node name="/Player_Interface" xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
+  <interface name="org.mpris.MediaPlayer2.Player">
+
+    <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+        This interface implements the methods for querying and providing basic
+        control over what is currently playing.
+      </p>
+    </tp:docstring>
+
+    <tp:enum name="Playback_Status" tp:name-for-bindings="Playback_Status" type="s">
+      <tp:enumvalue suffix="Playing" value="Playing">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>A track is currently playing.</p>
+        </tp:docstring>
+      </tp:enumvalue>
+      <tp:enumvalue suffix="Paused" value="Paused">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>A track is currently paused.</p>
+        </tp:docstring>
+      </tp:enumvalue>
+      <tp:enumvalue suffix="Stopped" value="Stopped">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>There is no track currently playing.</p>
+        </tp:docstring>
+      </tp:enumvalue>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>A playback state.</p>
+      </tp:docstring>
+    </tp:enum>
+
+    <tp:enum name="Loop_Status" tp:name-for-bindings="Loop_Status" type="s">
+      <tp:enumvalue suffix="None" value="None">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>The playback will stop when there are no more tracks to play</p>
+        </tp:docstring>
+      </tp:enumvalue>
+      <tp:enumvalue suffix="Track" value="Track">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>The current track will start again from the begining once it has finished playing</p>
+        </tp:docstring>
+      </tp:enumvalue>
+      <tp:enumvalue suffix="Playlist" value="Playlist">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>The playback loops through a list of tracks</p>
+        </tp:docstring>
+      </tp:enumvalue>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>A repeat / loop status</p>
+      </tp:docstring>
+    </tp:enum>
+
+    <tp:simple-type name="Track_Id" type="o" array-name="Track_Id_List">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Unique track identifier.</p>
+        <p>
+          If the media player implements the TrackList interface and allows
+          the same track to appear multiple times in the tracklist,
+          this must be unique within the scope of the tracklist.
+        </p>
+        <p>
+          Note that this should be a valid D-Bus object id, although clients
+          should not assume that any object is actually exported with any
+          interfaces at that path.
+        </p>
+        <p>
+          Media players may not use any paths starting with
+          <literal>/org/mpris</literal> unless explicitly allowed by this specification.
+          Such paths are intended to have special meaning, such as
+          <literal>/org/mpris/MediaPlayer2/TrackList/NoTrack</literal>
+          to indicate "no track".
+        </p>
+        <tp:rationale>
+          <p>
+            This is a D-Bus object id as that is the definitive way to have
+            unique identifiers on D-Bus.  It also allows for future optional
+            expansions to the specification where tracks are exported to D-Bus
+            with an interface similar to org.gnome.UPnP.MediaItem2.
+          </p>
+        </tp:rationale>
+      </tp:docstring>
+    </tp:simple-type>
+
+    <tp:simple-type name="Playback_Rate" type="d">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>A playback rate</p>
+        <p>
+          This is a multiplier, so a value of 0.5 indicates that playback is
+          happening at half speed, while 1.5 means that 1.5 seconds of "track time"
+          is consumed every second.
+        </p>
+      </tp:docstring>
+    </tp:simple-type>
+
+    <tp:simple-type name="Volume" type="d">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Audio volume level</p>
+        <ul>
+          <li>0.0 means mute.</li>
+          <li>1.0 is a sensible maximum volume level (ex: 0dB).</li>
+        </ul>
+        <p>
+          Note that the volume may be higher than 1.0, although generally
+          clients should not attempt to set it above 1.0.
+        </p>
+      </tp:docstring>
+    </tp:simple-type>
+
+    <tp:simple-type name="Time_In_Us" type="x">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Time in microseconds.</p>
+      </tp:docstring>
+    </tp:simple-type>
+
+    <method name="Next" tp:name-for-bindings="Next">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Skips to the next track in the tracklist.</p>
+        <p>
+          If there is no next track (and endless playback and track
+          repeat are both off), stop playback.
+        </p>
+        <p>If playback is paused or stopped, it remains that way.</p>
+        <p>
+          If <tp:member-ref>CanGoNext</tp:member-ref> is
+          <strong>false</strong>, attempting to call this method should have
+          no effect.
+        </p>
+      </tp:docstring>
+    </method>
+
+    <method name="Previous" tp:name-for-bindings="Previous">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Skips to the previous track in the tracklist.</p>
+        <p>
+          If there is no previous track (and endless playback and track
+          repeat are both off), stop playback.
+        </p>
+        <p>If playback is paused or stopped, it remains that way.</p>
+        <p>
+          If <tp:member-ref>CanGoPrevious</tp:member-ref> is
+          <strong>false</strong>, attempting to call this method should have
+          no effect.
+        </p>
+      </tp:docstring>
+    </method>
+
+    <method name="Pause" tp:name-for-bindings="Pause">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Pauses playback.</p>
+        <p>If playback is already paused, this has no effect.</p>
+        <p>
+          Calling Play after this should cause playback to start again
+          from the same position.
+        </p>
+        <p>
+          If <tp:member-ref>CanPause</tp:member-ref> is
+          <strong>false</strong>, attempting to call this method should have
+          no effect.
+        </p>
+      </tp:docstring>
+    </method>
+
+    <method name="PlayPause" tp:name-for-bindings="PlayPause">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Pauses playback.</p>
+        <p>If playback is already paused, resumes playback.</p>
+        <p>If playback is stopped, starts playback.</p>
+        <p>
+          If <tp:member-ref>CanPause</tp:member-ref> is
+          <strong>false</strong>, attempting to call this method should have
+          no effect and raise an error.
+        </p>
+      </tp:docstring>
+    </method>
+
+    <method name="Stop" tp:name-for-bindings="Stop">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Stops playback.</p>
+        <p>If playback is already stopped, this has no effect.</p>
+        <p>
+          Calling Play after this should cause playback to
+          start again from the beginning of the track.
+        </p>
+        <p>
+          If <tp:member-ref>CanControl</tp:member-ref> is
+          <strong>false</strong>, attempting to call this method should have
+          no effect and raise an error.
+        </p>
+      </tp:docstring>
+    </method>
+
+    <method name="Play" tp:name-for-bindings="Play">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Starts or resumes playback.</p>
+        <p>If already playing, this has no effect.</p>
+        <p>If paused, playback resumes from the current position.</p>
+        <p>If there is no track to play, this has no effect.</p>
+        <p>
+          If <tp:member-ref>CanPlay</tp:member-ref> is
+          <strong>false</strong>, attempting to call this method should have
+          no effect.
+        </p>
+      </tp:docstring>
+    </method>
+
+    <method name="Seek" tp:name-for-bindings="Seek">
+      <arg direction="in" type="x" name="Offset" tp:type="Time_In_Us">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>The number of microseconds to seek forward.</p>
+        </tp:docstring>
+      </arg>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          Seeks forward in the current track by the specified number
+          of microseconds.
+        </p>
+        <p>
+          A negative value seeks back. If this would mean seeking
+          back further than the start of the track, the position
+          is set to 0.
+        </p>
+        <p>
+          If the value passed in would mean seeking beyond the end
+          of the track, acts like a call to Next.
+        </p>
+        <p>
+          If the <tp:member-ref>CanSeek</tp:member-ref> property is false,
+          this has no effect.
+        </p>
+      </tp:docstring>
+    </method>
+
+    <method name="SetPosition" tp:name-for-bindings="Set_Position">
+      <arg direction="in" type="o" tp:type="Track_Id" name="TrackId">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>The currently playing track's identifier.</p>
+          <p>
+            If this does not match the id of the currently-playing track,
+            the call is ignored as "stale".
+          </p>
+          <p>
+            <literal>/org/mpris/MediaPlayer2/TrackList/NoTrack</literal>
+            is <em>not</em> a valid value for this argument.
+          </p>
+        </tp:docstring>
+      </arg>
+      <arg direction="in" type="x" tp:type="Time_In_Us" name="Position">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>Track position in microseconds.</p>
+          <p>This must be between 0 and &lt;track_length&gt;.</p>
+        </tp:docstring>
+      </arg>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Sets the current track position in microseconds.</p>
+        <p>If the Position argument is less than 0, do nothing.</p>
+        <p>
+          If the Position argument is greater than the track length,
+          do nothing.
+        </p>
+        <p>
+          If the <tp:member-ref>CanSeek</tp:member-ref> property is false,
+          this has no effect.
+        </p>
+        <tp:rationale>
+          <p>
+            The reason for having this method, rather than making
+            <tp:member-ref>Position</tp:member-ref> writable, is to include
+            the TrackId argument to avoid race conditions where a client tries
+            to seek to a position when the track has already changed.
+          </p>
+        </tp:rationale>
+      </tp:docstring>
+    </method>
+
+    <method name="OpenUri" tp:name-for-bindings="Open_Uri">
+      <arg direction="in" type="s" tp:type="Uri" name="Uri">
+        <tp:docstring>
+          <p>
+            Uri of the track to load. Its uri scheme should be an element of the
+            <literal>org.mpris.MediaPlayer2.SupportedUriSchemes</literal>
+            property and the mime-type should match one of the elements of the
+            <literal>org.mpris.MediaPlayer2.SupportedMimeTypes</literal>.
+          </p>
+        </tp:docstring>
+      </arg>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Opens the Uri given as an argument</p>
+        <p>If the playback is stopped, starts playing</p>
+        <p>
+          If the uri scheme or the mime-type of the uri to open is not supported,
+          this method does nothing and may raise an error.  In particular, if the
+          list of available uri schemes is empty, this method may not be
+          implemented.
+        </p>
+        <p>Clients should not assume that the Uri has been opened as soon as this
+           method returns. They should wait until the mpris:trackid field in the
+           <tp:member-ref>Metadata</tp:member-ref> property changes.
+        </p>
+        <p>
+          If the media player implements the TrackList interface, then the
+          opened track should be made part of the tracklist, the
+          <literal>org.mpris.MediaPlayer2.TrackList.TrackAdded</literal> or
+          <literal>org.mpris.MediaPlayer2.TrackList.TrackListReplaced</literal>
+          signal should be fired, as well as the
+          <literal>org.freedesktop.DBus.Properties.PropertiesChanged</literal>
+          signal on the tracklist interface.
+        </p>
+      </tp:docstring>
+    </method>
+
+    <property name="PlaybackStatus" tp:name-for-bindings="Playback_Status" type="s" tp:type="Playback_Status" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>The current playback status.</p>
+        <p>
+          May be "Playing", "Paused" or "Stopped".
+        </p>
+      </tp:docstring>
+    </property>
+
+    <property name="LoopStatus" type="s" access="readwrite"
+              tp:name-for-bindings="Loop_Status" tp:type="Loop_Status">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <annotation name="org.mpris.MediaPlayer2.property.optional" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>The current loop / repeat status</p>
+        <p>May be:
+          <ul>
+            <li>"None" if the playback will stop when there are no more tracks to play</li>
+            <li>"Track" if the current track will start again from the begining once it has finished playing</li>
+            <li>"Playlist" if the playback loops through a list of tracks</li>
+          </ul>
+        </p>
+        <p>
+          If <tp:member-ref>CanControl</tp:member-ref> is
+          <strong>false</strong>, attempting to set this property should have
+          no effect and raise an error.
+        </p>
+      </tp:docstring>
+    </property>
+
+    <property name="Rate" tp:name-for-bindings="Rate" type="d" tp:type="Playback_Rate" access="readwrite">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>The current playback rate.</p>
+        <p>
+          The value must fall in the range described by
+          <tp:member-ref>MinimumRate</tp:member-ref> and
+          <tp:member-ref>MaximumRate</tp:member-ref>, and must not be 0.0.  If
+          playback is paused, the <tp:member-ref>PlaybackStatus</tp:member-ref>
+          property should be used to indicate this.  A value of 0.0 should not
+          be set by the client.  If it is, the media player should act as
+          though <tp:member-ref>Pause</tp:member-ref> was called.
+        </p>
+        <p>
+          If the media player has no ability to play at speeds other than the
+          normal playback rate, this must still be implemented, and must
+          return 1.0.  The <tp:member-ref>MinimumRate</tp:member-ref> and
+          <tp:member-ref>MaximumRate</tp:member-ref> properties must also be
+          set to 1.0.
+        </p>
+        <p>
+          Not all values may be accepted by the media player.  It is left to
+          media player implementations to decide how to deal with values they
+          cannot use; they may either ignore them or pick a "best fit" value.
+          Clients are recommended to only use sensible fractions or multiples
+          of 1 (eg: 0.5, 0.25, 1.5, 2.0, etc).
+        </p>
+        <tp:rationale>
+          <p>
+            This allows clients to display (reasonably) accurate progress bars
+            without having to regularly query the media player for the current
+            position.
+          </p>
+        </tp:rationale>
+      </tp:docstring>
+    </property>
+
+    <property name="Shuffle" tp:name-for-bindings="Shuffle" type="b" access="readwrite">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <annotation name="org.mpris.MediaPlayer2.property.optional" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          A value of <strong>false</strong> indicates that playback is
+          progressing linearly through a playlist, while <strong>true</strong>
+          means playback is progressing through a playlist in some other order.
+        </p>
+        <p>
+          If <tp:member-ref>CanControl</tp:member-ref> is
+          <strong>false</strong>, attempting to set this property should have
+          no effect and raise an error.
+        </p>
+      </tp:docstring>
+    </property>
+
+    <property name="Metadata" tp:name-for-bindings="Metadata" type="a{sv}" tp:type="Metadata_Map" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>The metadata of the current element.</p>
+        <p>
+          If there is a current track, this must have a "mpris:trackid" entry
+          (of D-Bus type "o") at the very least, which contains a D-Bus path that
+          uniquely identifies this track.
+        </p>
+        <p>
+          See the type documentation for more details.
+        </p>
+      </tp:docstring>
+    </property>
+
+    <property name="Volume" type="d" tp:type="Volume" tp:name-for-bindings="Volume" access="readwrite">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true" />
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>The volume level.</p>
+        <p>
+          When setting, if a negative value is passed, the volume
+          should be set to 0.0.
+        </p>
+        <p>
+          If <tp:member-ref>CanControl</tp:member-ref> is
+          <strong>false</strong>, attempting to set this property should have
+          no effect and raise an error.
+        </p>
+      </tp:docstring>
+    </property>
+
+    <property name="Position" type="x" tp:type="Time_In_Us" tp:name-for-bindings="Position" access="read">
+        <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>
+            The current track position in microseconds, between 0 and
+            the 'mpris:length' metadata entry (see Metadata).
+          </p>
+          <p>
+            Note: If the media player allows it, the current playback position
+            can be changed either the SetPosition method or the Seek method on
+            this interface.  If this is not the case, the
+            <tp:member-ref>CanSeek</tp:member-ref> property is false, and
+            setting this property has no effect and can raise an error.
+          </p>
+          <p>
+            If the playback progresses in a way that is inconstistant with the
+            <tp:member-ref>Rate</tp:member-ref> property, the
+            <tp:member-ref>Seeked</tp:member-ref> signal is emited.
+          </p>
+        </tp:docstring>
+    </property>
+
+    <property name="MinimumRate" tp:name-for-bindings="Minimum_Rate" type="d" tp:type="Playback_Rate" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The minimum value which the <tp:member-ref>Rate</tp:member-ref>
+          property can take.
+          Clients should not attempt to set the
+          <tp:member-ref>Rate</tp:member-ref> property below this value.
+        </p>
+        <p>
+          Note that even if this value is 0.0 or negative, clients should
+          not attempt to set the <tp:member-ref>Rate</tp:member-ref> property
+          to 0.0.
+        </p>
+        <p>This value should always be 1.0 or less.</p>
+      </tp:docstring>
+    </property>
+
+    <property name="MaximumRate" tp:name-for-bindings="Maximum_Rate" type="d" tp:type="Playback_Rate" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The maximum value which the <tp:member-ref>Rate</tp:member-ref>
+          property can take.
+          Clients should not attempt to set the
+          <tp:member-ref>Rate</tp:member-ref> property above this value.
+        </p>
+        <p>
+          This value should always be 1.0 or greater.
+        </p>
+      </tp:docstring>
+    </property>
+
+    <property name="CanGoNext" tp:name-for-bindings="Can_Go_Next" type="b" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          Whether the client can call the <tp:member-ref>Next</tp:member-ref>
+          method on this interface and expect the current track to change.
+        </p>
+        <p>
+          If it is unknown whether a call to <tp:member-ref>Next</tp:member-ref> will
+          be successful (for example, when streaming tracks), this property should
+          be set to <strong>true</strong>.
+        </p>
+        <p>
+          If <tp:member-ref>CanControl</tp:member-ref> is
+          <strong>false</strong>, this property should also be
+          <strong>false</strong>.
+        </p>
+        <tp:rationale>
+          <p>
+            Even when playback can generally be controlled, there may not
+            always be a next track to move to.
+          </p>
+        </tp:rationale>
+      </tp:docstring>
+    </property>
+
+    <property name="CanGoPrevious" tp:name-for-bindings="Can_Go_Previous" type="b" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          Whether the client can call the
+          <tp:member-ref>Previous</tp:member-ref> method on this interface and
+          expect the current track to change.
+        </p>
+        <p>
+          If it is unknown whether a call to <tp:member-ref>Previous</tp:member-ref>
+          will be successful (for example, when streaming tracks), this property
+          should be set to <strong>true</strong>.
+        </p>
+        <p>
+          If <tp:member-ref>CanControl</tp:member-ref> is
+          <strong>false</strong>, this property should also be
+          <strong>false</strong>.
+        </p>
+        <tp:rationale>
+          <p>
+            Even when playback can generally be controlled, there may not
+            always be a next previous to move to.
+          </p>
+        </tp:rationale>
+
+      </tp:docstring>
+    </property>
+
+    <property name="CanPlay" tp:name-for-bindings="Can_Play" type="b" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Whether playback can be started using
+           <tp:member-ref>Play</tp:member-ref> or
+           <tp:member-ref>PlayPause</tp:member-ref>.
+        </p>
+        <p>
+          Note that this is related to whether there is a "current track": the
+          value should not depend on whether the track is currently paused or
+          playing.  In fact, if a track is currently playing (and
+          <tp:member-ref>CanControl</tp:member-ref> is <strong>true</strong>),
+          this should be <strong>true</strong>.
+        </p>
+        <p>
+          If <tp:member-ref>CanControl</tp:member-ref> is
+          <strong>false</strong>, this property should also be
+          <strong>false</strong>.
+        </p>
+        <tp:rationale>
+          <p>
+            Even when playback can generally be controlled, it may not be
+            possible to enter a "playing" state, for example if there is no
+            "current track".
+          </p>
+        </tp:rationale>
+      </tp:docstring>
+    </property>
+
+    <property name="CanPause" tp:name-for-bindings="Can_Pause" type="b" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Whether playback can be paused using
+           <tp:member-ref>Pause</tp:member-ref> or
+           <tp:member-ref>PlayPause</tp:member-ref>.
+        </p>
+        <p>
+          Note that this is an intrinsic property of the current track: its
+          value should not depend on whether the track is currently paused or
+          playing.  In fact, if playback is currently paused (and
+          <tp:member-ref>CanControl</tp:member-ref> is <strong>true</strong>),
+          this should be <strong>true</strong>.
+        </p>
+        <p>
+          If <tp:member-ref>CanControl</tp:member-ref> is
+          <strong>false</strong>, this property should also be
+          <strong>false</strong>.
+        </p>
+        <tp:rationale>
+          <p>
+            Not all media is pausable: it may not be possible to pause some
+            streamed media, for example.
+          </p>
+        </tp:rationale>
+      </tp:docstring>
+    </property>
+
+    <property name="CanSeek" tp:name-for-bindings="Can_Seek" type="b" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          Whether the client can control the playback position using
+          <tp:member-ref>Seek</tp:member-ref> and
+          <tp:member-ref>SetPosition</tp:member-ref>.  This may be different for
+          different tracks.
+        </p>
+        <p>
+          If <tp:member-ref>CanControl</tp:member-ref> is
+          <strong>false</strong>, this property should also be
+          <strong>false</strong>.
+        </p>
+        <tp:rationale>
+          <p>
+            Not all media is seekable: it may not be possible to seek when
+            playing some streamed media, for example.
+          </p>
+        </tp:rationale>
+      </tp:docstring>
+    </property>
+
+    <property name="CanControl" tp:name-for-bindings="Can_Control" type="b" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Whether the media player may be controlled over this interface.</p>
+        <p>
+          This property is not expected to change, as it describes an intrinsic
+          capability of the implementation.
+        </p>
+        <p>
+          If this is <strong>false</strong>, clients should assume that all
+          properties on this interface are read-only (and will raise errors
+          if writing to them is attempted), no methods are implemented
+          and all other properties starting with "Can" are also
+          <strong>false</strong>.
+        </p>
+        <tp:rationale>
+          <p>
+            This allows clients to determine whether to present and enable
+            controls to the user in advance of attempting to call methods
+            and write to properties.
+          </p>
+        </tp:rationale>
+      </tp:docstring>
+    </property>
+
+    <signal name="Seeked" tp:name-for-bindings="Seeked">
+      <arg name="Position" type="x" tp:type="Time_In_Us">
+        <tp:docstring>
+          <p>The new position, in microseconds.</p>
+        </tp:docstring>
+      </arg>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          Indicates that the track position has changed in a way that is
+          inconsistant with the current playing state.
+        </p>
+        <p>When this signal is not received, clients should assume that:</p>
+        <ul>
+          <li>
+            When playing, the position progresses according to the rate property.
+          </li>
+          <li>When paused, it remains constant.</li>
+        </ul>
+        <p>
+          This signal does not need to be emitted when playback starts
+          or when the track changes, unless the track is starting at an
+          unexpected position. An expected position would be the last
+          known one when going from Paused to Playing, and 0 when going from
+          Stopped to Playing.
+        </p>
+      </tp:docstring>
+    </signal>
+
+  </interface>
+</node>
+<!-- vim:set sw=2 sts=2 et ft=xml: -->

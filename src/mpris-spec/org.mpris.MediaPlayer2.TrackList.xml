@@ -1,0 +1,349 @@
+<?xml version="1.0" ?>
+<node name="/Track_List_Interface" xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
+  <interface name="org.mpris.MediaPlayer2.TrackList">
+
+    <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+        Provides access to a short list of tracks which were recently played or
+        will be played shortly.  This is intended to provide context to the
+        currently-playing track, rather than giving complete access to the
+        media player's playlist.
+      </p>
+      <p>
+        Example use cases are the list of tracks from the same album as the
+        currently playing song or the
+        <a href="http://projects.gnome.org/rhythmbox/">Rhythmbox</a> play queue.
+      </p>
+      <p>
+        Each track in the tracklist has a unique identifier.
+        The intention is that this uniquely identifies the track within
+        the scope of the tracklist. In particular, if a media item
+        (a particular music file, say) occurs twice in the track list, each
+        occurrence should have a different identifier. If a track is removed
+        from the middle of the playlist, it should not affect the track ids
+        of any other tracks in the tracklist.
+      </p>
+      <p>
+        As a result, the traditional track identifiers of URLs and position
+        in the playlist cannot be used. Any scheme which satisfies the
+        uniqueness requirements is valid, as clients should not make any
+        assumptions about the value of the track id beyond the fact
+        that it is a unique identifier.
+      </p>
+      <p>
+        Note that the (memory and processing) burden of implementing the
+        TrackList interface and maintaining unique track ids for the
+        playlist can be mitigated by only exposing a subset of the playlist when
+        it is very long (the 20 or so tracks around the currently playing
+        track, for example). This is a recommended practice as the tracklist
+        interface is not designed to enable browsing through a large list of tracks,
+        but rather to provide clients with context about the currently playing track.
+      </p>
+    </tp:docstring>
+
+    <tp:mapping name="Metadata_Map" array-name="Metadata_Map_List">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>A mapping from metadata attribute names to values.</p>
+        <p>
+          The <b>mpris:trackid</b> attribute must always be present, and must be
+          of D-Bus type "o".  This contains a D-Bus path that uniquely identifies
+          the track within the scope of the playlist.  There may or may not be
+          an actual D-Bus object at that path; this specification says nothing
+          about what interfaces such an object may implement.
+        </p>
+        <p>
+          If the length of the track is known, it should be provided in the
+          metadata property with the "mpris:length" key.  The length must be
+          given in microseconds, and be represented as a signed 64-bit integer.
+        </p>
+        <p>
+          If there is an image associated with the track, a URL for it may be
+          provided using the "mpris:artUrl" key.  For other metadata, fields
+          defined by the
+          <a href="http://xesam.org/main/XesamOntology">Xesam ontology</a>
+          should be used, prefixed by "xesam:".  See the
+          <a href="http://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata">metadata page on the freedesktop.org wiki</a>
+          for a list of common fields.
+        </p>
+        <p>
+          Lists of strings should be passed using the array-of-string ("as")
+          D-Bus type.  Dates should be passed as strings using the ISO 8601
+          extended format (eg: 2007-04-29T14:35:51).  If the timezone is
+          known, RFC 3339's internet profile should be used (eg:
+          2007-04-29T14:35:51+02:00).
+        </p>
+      </tp:docstring>
+      <tp:member type="s" name="Attribute">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>
+            The name of the attribute; see the
+            <a href="http://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata">metadata page</a>
+            for guidelines on names to use.
+          </p>
+        </tp:docstring>
+      </tp:member>
+      <tp:member type="v" name="Value">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>The value of the attribute, in the most appropriate format.</p>
+        </tp:docstring>
+      </tp:member>
+    </tp:mapping>
+
+    <tp:simple-type name="Uri" type="s">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>A unique resource identifier.</p>
+      </tp:docstring>
+    </tp:simple-type>
+
+    <method name="GetTracksMetadata" tp:name-for-bindings="Get_Tracks_Metadata">
+      <arg direction="in" name="TrackIds" type="ao" tp:type="Track_Id[]">
+        <tp:docstring>
+          <p>The list of track ids for which metadata is requested.</p>
+        </tp:docstring>
+      </arg>
+      <arg direction="out" type="aa{sv}" tp:type="Metadata_Map[]" name="Metadata">
+        <tp:docstring>
+          <p>Metadata of the set of tracks given as input.</p>
+          <p>See the type documentation for more details.</p>
+        </tp:docstring>
+      </arg>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Gets all the metadata available for a set of tracks.</p>
+        <p>
+          Each set of metadata must have a "mpris:trackid" entry at the very least,
+          which contains a string that uniquely identifies this track within
+          the scope of the tracklist.
+        </p>
+      </tp:docstring>
+    </method>
+
+    <method name="AddTrack" tp:name-for-bindings="Add_Track">
+      <arg direction="in" type="s" tp:type="Uri" name="Uri">
+        <tp:docstring>
+          <p>
+            The uri of the item to add. Its uri scheme should be an element of the
+            <strong>org.mpris.MediaPlayer2.SupportedUriSchemes</strong>
+            property and the mime-type should match one of the elements of the
+            <strong>org.mpris.MediaPlayer2.SupportedMimeTypes</strong>
+          </p>
+        </tp:docstring>
+      </arg>
+      <arg direction="in" type="o" tp:type="Track_Id" name="AfterTrack">
+        <tp:docstring>
+          <p>
+            The identifier of the track after which
+            the new item should be inserted. The path
+            <literal>/org/mpris/MediaPlayer2/TrackList/NoTrack</literal>
+            indicates that the track should be inserted at the
+            start of the track list.
+          </p>
+        </tp:docstring>
+      </arg>
+      <arg direction="in" type="b" name="SetAsCurrent">
+        <tp:docstring>
+          <p>
+            Whether the newly inserted track should be considered as
+            the current track. Setting this to true has the same effect as
+            calling GoTo afterwards.
+          </p>
+        </tp:docstring>
+      </arg>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Adds a URI in the TrackList.</p>
+        <p>
+          If the <tp:member-ref>CanEditTracks</tp:member-ref> property is false,
+          this has no effect.
+        </p>
+        <p>
+          Note: Clients should not assume that the track has been added at the
+          time when this method returns. They should wait for a TrackAdded (or
+          TrackListReplaced) signal.
+        </p>
+      </tp:docstring>
+    </method>
+
+    <method name="RemoveTrack" tp:name-for-bindings="Remove__Track">
+      <arg direction="in" type="o" tp:type="Track_Id" name="TrackId">
+        <tp:docstring>
+          <p>Identifier of the track to be removed.</p>
+          <p>
+            <literal>/org/mpris/MediaPlayer2/TrackList/NoTrack</literal>
+            is <em>not</em> a valid value for this argument.
+          </p>
+        </tp:docstring>
+      </arg>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Removes an item from the TrackList.</p>
+        <p>If the track is not part of this tracklist, this has no effect.</p>
+        <p>
+          If the <tp:member-ref>CanEditTracks</tp:member-ref> property is false,
+          this has no effect.
+        </p>
+        <p>
+          Note: Clients should not assume that the track has been removed at the
+          time when this method returns. They should wait for a TrackRemoved (or
+          TrackListReplaced) signal.
+        </p>
+      </tp:docstring>
+    </method>
+
+    <method name="GoTo" tp:name-for-bindings="Go_To">
+      <arg direction="in" type="o" tp:type="Track_Id" name="TrackId">
+        <tp:docstring>
+          <p>Identifier of the track to skip to.</p>
+          <p>
+            <literal>/org/mpris/MediaPlayer2/TrackList/NoTrack</literal>
+            is <em>not</em> a valid value for this argument.
+          </p>
+        </tp:docstring>
+      </arg>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Skip to the specified TrackId.</p>
+        <p>If the track is not part of this tracklist, this has no effect.</p>
+        <p>
+          If this object is not <strong>/org/mpris/MediaPlayer2</strong>,
+          the current TrackList's tracks should be replaced with the contents of
+          this TrackList, and the TrackListReplaced signal should be fired from
+          <strong>/org/mpris/MediaPlayer2</strong>.
+        </p>
+      </tp:docstring>
+    </method>
+
+    <property name="Tracks" type="ao" tp:type="Track_Id[]" tp:name-for-bindings="Tracks" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="invalidates"/>
+      <tp:docstring>
+        <p>
+          An array which contains the identifier of each track
+          in the tracklist, in order.
+        </p>
+        <p>
+          The <literal>org.freedesktop.DBus.Properties.PropertiesChanged</literal>
+          signal is emited every time this property changes, but the signal
+          message does not contain the new value.
+
+          Client implementations should rather rely on the
+          <tp:member-ref>TrackAdded</tp:member-ref>,
+          <tp:member-ref>TrackRemoved</tp:member-ref> and
+          <tp:member-ref>TrackListReplaced</tp:member-ref> signals to keep their
+          representation of the tracklist up to date.
+        </p>
+      </tp:docstring>
+    </property>
+
+    <property name="CanEditTracks" type="b" tp:name-for-bindings="Can_Edit_Tracks" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          If <strong>false</strong>, calling
+          <tp:member-ref>AddTrack</tp:member-ref> or
+          <tp:member-ref>RemoveTrack</tp:member-ref> will have no effect,
+          and may raise a NotSupported error.
+        </p>
+      </tp:docstring>
+    </property>
+
+    <signal name="TrackListReplaced" tp:name-for-bindings="Track_List_Replaced">
+      <arg name="Tracks" type="ao" tp:type="Track_Id[]">
+        <tp:docstring>
+          <p>The new content of the tracklist.</p>
+        </tp:docstring>
+      </arg>
+      <arg name="CurrentTrack" type="o" tp:type="Track_Id">
+        <tp:docstring>
+          <p>The identifier of the track to be considered as current.</p>
+          <p>
+            <literal>/org/mpris/MediaPlayer2/TrackList/NoTrack</literal>
+            indicates that there is no current track.
+          </p>
+          <p>
+            This should correspond to the <literal>mpris:trackid</literal> field of the
+            Metadata property of the <literal>org.mpris.MediaPlayer2.Player</literal>
+            interface.
+          </p>
+        </tp:docstring>
+      </arg>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Indicates that the entire tracklist has been replaced.</p>
+        <p>
+          It is left up to the implementation to decide when
+          a change to the track list is invasive enough that
+          this signal should be emitted instead of a series of
+          TrackAdded and TrackRemoved signals.
+        </p>
+      </tp:docstring>
+    </signal>
+
+    <signal name="TrackAdded" tp:name-for-bindings="Track_Added">
+      <arg type="a{sv}" tp:type="Metadata_Map" name="Metadata">
+        <tp:docstring>
+          <p>The metadata of the newly added item.</p>
+          <p>This must include a mpris:trackid entry.</p>
+          <p>See the type documentation for more details.</p>
+        </tp:docstring>
+      </arg>
+      <arg type="o" tp:type="Track_Id" name="AfterTrack">
+        <tp:docstring>
+          <p>
+            The identifier of the track after which the new track
+            was inserted. The path
+            <literal>/org/mpris/MediaPlayer2/TrackList/NoTrack</literal>
+            indicates that the track was inserted at the
+            start of the track list.
+          </p>
+        </tp:docstring>
+      </arg>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Indicates that a track has been added to the track list.</p>
+      </tp:docstring>
+    </signal>
+
+    <signal name="TrackRemoved" tp:name-for-bindings="Track_Removed">
+      <arg type="o" tp:type="Track_Id" name="TrackId">
+        <tp:docstring>
+          <p>The identifier of the track being removed.</p>
+          <p>
+            <literal>/org/mpris/MediaPlayer2/TrackList/NoTrack</literal>
+            is <em>not</em> a valid value for this argument.
+          </p>
+        </tp:docstring>
+      </arg>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Indicates that a track has been removed from the track list.</p>
+      </tp:docstring>
+    </signal>
+
+    <signal name="TrackMetadataChanged" tp:name-for-bindings="Track_Metadata_Changed">
+      <arg type="o" tp:type="Track_Id" name="TrackId">
+        <tp:docstring>
+          <p>The id of the track which metadata has changed.</p>
+          <p>If the track id has changed, this will be the old value.</p>
+          <p>
+            <literal>/org/mpris/MediaPlayer2/TrackList/NoTrack</literal>
+            is <em>not</em> a valid value for this argument.
+          </p>
+        </tp:docstring>
+      </arg>
+      <arg type="a{sv}" tp:type="Metadata_Map" name="Metadata">
+        <tp:docstring>
+          <p>The new track metadata.</p>
+          <p>
+            This must include a mpris:trackid entry.  If the track id has
+            changed, this will be the new value.
+          </p>
+          <p>See the type documentation for more details.</p>
+        </tp:docstring>
+      </arg>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          Indicates that the metadata of a track in the tracklist has changed.
+        </p>
+        <p>
+          This may indicate that a track has been replaced, in which case the
+          mpris:trackid metadata entry is different from the TrackId argument.
+        </p>
+      </tp:docstring>
+    </signal>
+
+  </interface>
+</node>
+<!-- vim:set sw=2 sts=2 et ft=xml: -->

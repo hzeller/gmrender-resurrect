@@ -1,0 +1,250 @@
+<?xml version="1.0" ?>
+<node name="/Playlists_Interface" xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
+  <interface name="org.mpris.MediaPlayer2.Playlists">
+    <tp:added version="2.1" />
+    <tp:docstring>
+      <p>Provides access to the media player's playlists.</p>
+      <p>
+        Since D-Bus does not provide an easy way to check for what interfaces
+        are exported on an object, clients should attempt to get one of the
+        properties on this interface to see if it is implemented.
+      </p>
+    </tp:docstring>
+
+    <tp:simple-type name="Playlist_Id" type="o" array-name="Playlist_Id_List">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Unique playlist identifier.</p>
+        <tp:rationale>
+          <p>
+            Multiple playlists may have the same name.
+          </p>
+          <p>
+            This is a D-Bus object id as that is the definitive way to have
+            unique identifiers on D-Bus.  It also allows for future optional
+            expansions to the specification where tracks are exported to D-Bus
+            with an interface similar to org.gnome.UPnP.MediaItem2.
+          </p>
+        </tp:rationale>
+      </tp:docstring>
+    </tp:simple-type>
+
+    <tp:simple-type name="Uri" type="s" array-name="Uri_List">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>A URI.</p>
+      </tp:docstring>
+    </tp:simple-type>
+
+    <tp:struct name="Playlist" array-name="Playlist_List">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>A data structure describing a playlist.</p>
+      </tp:docstring>
+      <tp:member type="o" tp:type="Playlist_Id" name="Id">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>A unique identifier for the playlist.</p>
+          <p>This should remain the same if the playlist is renamed.</p>
+        </tp:docstring>
+      </tp:member>
+      <tp:member type="s" name="Name">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>The name of the playlist, typically given by the user.</p>
+        </tp:docstring>
+      </tp:member>
+      <tp:member type="s" tp:type="Uri" name="Icon">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>The URI of an (optional) icon.</p>
+        </tp:docstring>
+      </tp:member>
+    </tp:struct>
+
+    <tp:struct name="Maybe_Playlist">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>A data structure describing a playlist, or nothing.</p>
+        <tp:rationale>
+          <p>
+            D-Bus does not (at the time of writing) support a MAYBE type,
+            so we are forced to invent our own.
+          </p>
+        </tp:rationale>
+      </tp:docstring>
+      <tp:member type="b" name="Valid">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>Whether this structure refers to a valid playlist.</p>
+        </tp:docstring>
+      </tp:member>
+      <tp:member type="(oss)" tp:type="Playlist" name="Playlist">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>The playlist, providing Valid is true, otherwise undefined.</p>
+          <p>
+            When constructing this type, it should be noted that the playlist
+            ID must be a valid object path, or D-Bus implementations may reject
+            it.  This is true even when Valid is false.  It is suggested that
+            "/" is used as the playlist ID in this case.
+          </p>
+        </tp:docstring>
+      </tp:member>
+    </tp:struct>
+
+    <tp:enum name="Playlist_Ordering" array-name="Playlist_Ordering_List" type="s">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Specifies the ordering of returned playlists.</p>
+      </tp:docstring>
+      <tp:enumvalue suffix="Alphabetical" value="Alphabetical">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>Alphabetical ordering by name, ascending.</p>
+        </tp:docstring>
+      </tp:enumvalue>
+      <tp:enumvalue suffix="CreationDate" value="Created">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>Ordering by creation date, oldest first.</p>
+        </tp:docstring>
+      </tp:enumvalue>
+      <tp:enumvalue suffix="ModifiedDate" value="Modified">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>Ordering by last modified date, oldest first.</p>
+        </tp:docstring>
+      </tp:enumvalue>
+      <tp:enumvalue suffix="LastPlayDate" value="Played">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>Ordering by date of last playback, oldest first.</p>
+        </tp:docstring>
+      </tp:enumvalue>
+      <tp:enumvalue suffix="UserDefined" value="User">
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+          <p>A user-defined ordering.</p>
+          <tp:rationale>
+            <p>
+              Some media players may allow users to order playlists as they
+              wish.  This ordering allows playlists to be retreived in that
+              order.
+            </p>
+          </tp:rationale>
+        </tp:docstring>
+      </tp:enumvalue>
+    </tp:enum>
+
+    <method name="ActivatePlaylist" tp:name-for-bindings="Activate_Playlist">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          Starts playing the given playlist.
+        </p>
+        <p>
+          Note that this must be implemented.  If the media player does not
+          allow clients to change the playlist, it should not implement this
+          interface at all.
+        </p>
+        <p>
+          It is up to the media player whether this completely replaces the
+          current tracklist, or whether it is merely inserted into the
+          tracklist and the first track starts.  For example, if the media
+          player is operating in a "jukebox" mode, it may just append the
+          playlist to the list of upcoming tracks, and skip to the first
+          track in the playlist.
+        </p>
+      </tp:docstring>
+      <arg direction="in" name="PlaylistId" type="o">
+        <tp:docstring>
+          <p>The id of the playlist to activate.</p>
+        </tp:docstring>
+      </arg>
+    </method>
+
+    <method name="GetPlaylists" tp:name-for-bindings="Get_Playlists">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Gets a set of playlists.</p>
+      </tp:docstring>
+      <arg direction="in" name="Index" type="u">
+        <tp:docstring>
+          <p>The index of the first playlist to be fetched (according to the ordering).</p>
+        </tp:docstring>
+      </arg>
+      <arg direction="in" name="MaxCount" type="u">
+        <tp:docstring>
+          <p>The maximum number of playlists to fetch.</p>
+        </tp:docstring>
+      </arg>
+      <arg direction="in" name="Order" type="s" tp:type="Playlist_Ordering">
+        <tp:docstring>
+          <p>The ordering that should be used.</p>
+        </tp:docstring>
+      </arg>
+      <arg direction="in" name="ReverseOrder" type="b">
+        <tp:docstring>
+          <p>Whether the order should be reversed.</p>
+        </tp:docstring>
+      </arg>
+      <arg direction="out" name="Playlists" type="a(oss)" tp:type="Playlist[]">
+        <tp:docstring>
+          <p>A list of (at most MaxCount) playlists.</p>
+        </tp:docstring>
+      </arg>
+    </method>
+
+    <property name="PlaylistCount" type="u" tp:name-for-bindings="Playlist_Count" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The number of playlists available.
+        </p>
+      </tp:docstring>
+    </property>
+
+    <property name="Orderings" tp:name-for-bindings="Orderings" type="as" tp:type="Playlist_Ordering[]" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The available orderings.  At least one must be offered.
+        </p>
+        <tp:rationale>
+          <p>
+            Media players may not have access to all the data required for some
+            orderings.  For example, creation times are not available on UNIX
+            filesystems (don't let the ctime fool you!).  On the other hand,
+            clients should have some way to get the "most recent" playlists.
+          </p>
+        </tp:rationale>
+      </tp:docstring>
+    </property>
+
+    <property name="ActivePlaylist" type="(b(oss))" tp:name-for-bindings="Active_Playlist" tp:type="Maybe_Playlist" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The currently-active playlist.
+        </p>
+        <p>
+          If there is no currently-active playlist, the structure's Valid field
+          will be false, and the Playlist details are undefined.
+        </p>
+        <p>
+          Note that this may not have a value even after ActivatePlaylist is
+          called with a valid playlist id as ActivatePlaylist implementations
+          have the option of simply inserting the contents of the playlist into
+          the current tracklist.
+        </p>
+      </tp:docstring>
+    </property>
+
+    <signal name="PlaylistChanged" tp:name-for-bindings="Playlist_Changed">
+      <arg name="Playlist" type="(oss)" tp:type="Playlist">
+        <tp:docstring>
+          The playlist which details have changed.
+        </tp:docstring>
+      </arg>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Indicates that either the Name or Icon attribute of a
+           playlist has changed.
+        </p>
+        <p>Client implementations should be aware that this signal
+           may not be implemented.
+        </p>
+        <tp:rationale>
+           Without this signal, media players have no way to notify clients
+           of a change in the attributes of a playlist other than the active one
+        </tp:rationale>
+      </tp:docstring>
+    </signal>
+
+  </interface>
+</node>
+<!-- vim:set sw=2 sts=2 et ft=xml: -->
+
