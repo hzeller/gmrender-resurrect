@@ -46,6 +46,8 @@ struct output_module {
 	int (*set_volume)(float);
 	int (*get_mute)(int *);
 	int (*set_mute)(int);
+
+	struct output_module *next;
 };
 
 #endif

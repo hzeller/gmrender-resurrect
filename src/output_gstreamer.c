@@ -595,4 +595,5 @@ struct output_module gstreamer_output = {
 	.set_volume  = output_gstreamer_set_volume,
 	.get_mute  = output_gstreamer_get_mute,
 	.set_mute  = output_gstreamer_set_mute,
+	.next = NULL,
 };

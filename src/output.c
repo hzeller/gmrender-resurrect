@@ -42,54 +42,56 @@
 #endif
 #include "output.h"
 
-static struct output_module *modules[] = {
-#ifdef HAVE_GST
-	&gstreamer_output,
-#else
-	// this will be a runtime error, but there is not much point
-	// in waiting till then.
-#error "No output configured. You need to ./configure --with-gstreamer"
-#endif
-};
+static struct output_module *modules = NULL;
 
 static struct output_module *output_module = NULL;
 
+void output_append_module(struct output_module *new)
+{
+	if (new == NULL)
+		return;
+	new->next = modules;
+	modules = new;
+}
+
 void output_dump_modules(void)
 {
-	int count;
-
-	count = sizeof(modules) / sizeof(struct output_module *);
-	if (count == 0) {
+	struct output_module *module = modules;
+	if (modules == NULL)
 		puts("  NONE!");
-	} else {
-		int i;
-		for (i=0; i<count; i++) {
+	else
+	{
+		int i = 0;
+		while (module != NULL)
+		{
 			printf("Available output: %s\t%s%s\n",
-			       modules[i]->shortname,
-			       modules[i]->description,
+			       modules->shortname,
+			       modules->description,
 			       (i==0) ? " (default)" : "");
+			i = 1;
+			module = module->next;
 		}
 	}
 }
 
 int output_init(const char *shortname)
 {
-	int count;
-
-	count = sizeof(modules) / sizeof(struct output_module *);
-	if (count == 0) {
+	struct output_module *module = modules;
+	if (module == NULL) {
 		Log_error("output", "No output module available");
 		return -1;
 	}
+
 	if (shortname == NULL) {
-		output_module = modules[0];
+		output_module = module;
 	} else {
-		int i;
-		for (i=0; i<count; i++) {
-			if (strcmp(modules[i]->shortname, shortname)==0) {
-				output_module = modules[i];
+		while (module != NULL)
+		{
+			if (strcmp(module->shortname, shortname)==0) {
+				output_module = module;
 				break;
 			}
+			module = module->next;
 		}
 	}
 
@@ -132,16 +134,16 @@ int output_loop()
 
 int output_add_options(GOptionContext *ctx)
 {
-  	int count, i;
-
-	count = sizeof(modules) / sizeof(struct output_module *);
-	for (i = 0; i < count; ++i) {
-		if (modules[i]->add_options) {
-			int result = modules[i]->add_options(ctx);
+	struct output_module *module = modules;
+	while (module != NULL)
+	{
+		if (module->add_options) {
+			int result = module->add_options(ctx);
 			if (result != 0) {
 				return result;
 			}
 		}
+		module = module->next;
 	}
 
 	return 0;
