@@ -29,7 +29,7 @@
 struct output_module {
         const char *shortname;
         const char *description;
-	int (*add_options)(GOptionContext *ctx);
+	int (*add_options)(int *argc, char **argv[]);
 
 	// Commands.
 	int (*init)(void);

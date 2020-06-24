@@ -44,7 +44,7 @@ void output_append_module(struct output_module *new);
 void output_load_module(const char *output);
 
 int output_init(const char *shortname);
-int output_add_options(GOptionContext *ctx);
+int output_add_options(int *argc, char **argv[]);
 void output_dump_modules(void);
 
 int output_loop(void);
