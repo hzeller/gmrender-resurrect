@@ -16,7 +16,7 @@ gmediarender_SOURCES = main.c git-version.h \
 
 if HAVE_GST
 libgmrender_gst_la_SOURCES = \
-	output_gstreamer.c  output_gstreamer.h
+	output_gstreamer.c
 endif
 
 main.c : git-version.h
@@ -33,8 +33,9 @@ MOD_MINOR_VERSION=$(word 2,$(subst ., ,$(GMRENDER_GST_VERSION)))
 MOD_MICRO_VERSION=$(word 3,$(subst ., ,$(GMRENDER_GST_VERSION)))
 
 AM_CPPFLAGS = $(GLIB_CFLAGS) $(GST_CFLAGS) $(LIBUPNP_CFLAGS) -DPKG_DATADIR=\"$(datadir)/gmediarender\"
-gmediarender_CFLAGS = $(GLIB_CFLAGS) $(LIBUPNP_CFLAGS) -DPKG_DATADIR=\"$(datadir)/gmediarender\"
-gmediarender_LDADD = $(GLIB_LIBS) $(LIBUPNP_LIBS) -lgmrender_gst
+gmediarender_CFLAGS = $(GLIB_CFLAGS) $(LIBUPNP_CFLAGS) -DPKG_DATADIR=\"$(datadir)/gmediarender\"  -DLIBDIR=\"$(libdir)\"
+gmediarender_LDADD = $(GLIB_LIBS) $(LIBUPNP_LIBS) -ldl
+gmediarender_LDFLAGS = -rdynamic -Wl,-rpath -Wl,$(libdir)
 libgmrender_gst_la_CFLAGS = $(GLIB_CFLAGS) $(GST_CFLAGS)
 libgmrender_gst_la_CFLAGS += -DMOD_MAJOR_VERSION=$(MOD_MAJOR_VERSION)
 libgmrender_gst_la_CFLAGS += -DMOD_MINOR_VERSION=$(MOD_MINOR_VERSION)

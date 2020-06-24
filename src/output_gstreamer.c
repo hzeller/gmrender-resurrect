@@ -40,7 +40,8 @@
 #include "logging.h"
 #include "upnp_connmgr.h"
 #include "output_module.h"
-#include "output_gstreamer.h"
+
+void output_gstreamer_initlib(void) __attribute__((constructor));
 
 static double buffer_duration = 0.0; /* Buffer disbled by default, see #182 */
 
@@ -588,7 +589,7 @@ static const char *output_gstreamer_version(char *buffer, size_t len)
 	return buffer;
 }
 
-struct output_module gstreamer_output = {
+static struct output_module gstreamer_output = {
         .shortname = "gst",
 	.description = "GStreamer multimedia framework",
 	.add_options = output_gstreamer_add_options,
@@ -609,3 +610,12 @@ struct output_module gstreamer_output = {
 	.set_mute  = output_gstreamer_set_mute,
 	.next = NULL,
 };
+
+void output_gstreamer_initlib(void)
+{
+	printf("gstreamer module %p\n", &gstreamer_output);
+#if !GLIB_CHECK_VERSION(2,32,0)
+	g_thread_init (NULL);  // Was necessary < glib 2.32, deprecated since.
+#endif
+	output_append_module(&gstreamer_output);
+}

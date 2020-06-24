@@ -51,9 +51,6 @@
 #include "git-version.h"
 #include "logging.h"
 #include "output.h"
-#ifdef HAVE_GST
-# include "output_gstreamer.h"
-#endif
 #include "upnp_service.h"
 #include "upnp_control.h"
 #include "upnp_device.h"
@@ -216,14 +213,6 @@ int main(int argc, char **argv)
 {
 	int rc;
 	struct upnp_device_descriptor *upnp_renderer;
-
-#if !GLIB_CHECK_VERSION(2,32,0)
-	g_thread_init (NULL);  // Was necessary < glib 2.32, deprecated since.
-#endif
-
-#ifdef HAVE_GST
-	output_append_module(&gstreamer_output);
-#endif
 
 	if (!process_cmdline(argc, argv)) {
 		return EXIT_FAILURE;

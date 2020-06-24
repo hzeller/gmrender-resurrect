@@ -32,14 +32,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <dlfcn.h>
+#include <errno.h>
 
 #include <glib.h>
 
 #include "logging.h"
 #include "output_module.h"
-#ifdef HAVE_GST
-#include "output_gstreamer.h"
-#endif
 #include "output.h"
 
 static struct output_module *modules = NULL;
@@ -81,7 +80,18 @@ void output_dump_modules(void)
 
 int output_init(const char *shortname)
 {
-	struct output_module *module = modules;
+	struct output_module *module = NULL;
+	if (shortname != NULL) {
+		char *file = NULL;
+		if (asprintf(&file, LIBDIR"/libgmrender_%s.so", shortname) > 0) {
+			void *dh = dlopen(file, RTLD_NOW | RTLD_DEEPBIND | RTLD_GLOBAL);
+			if (dh == NULL) {
+				Log_error("error", "ERROR: No such output library: '%s %s'", file, dlerror());
+			}
+			free(file);
+		}
+	}
+	module = modules;
 	if (module == NULL) {
 		Log_error("output", "No output module available");
 		return -1;
