@@ -268,6 +268,8 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
+	output_load_module(output);
+
 	rc = output_init(output);
 	if (rc != 0) {
 		Log_error("main",

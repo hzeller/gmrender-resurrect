@@ -41,6 +41,7 @@ typedef void (*output_update_meta_cb_t)(const struct SongMetaData *);
 
 struct output_module;
 void output_append_module(struct output_module *new);
+void output_load_module(const char *output);
 
 int output_init(const char *shortname);
 int output_add_options(GOptionContext *ctx);

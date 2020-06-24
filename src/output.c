@@ -33,7 +33,6 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <dlfcn.h>
-#include <errno.h>
 
 #include <glib.h>
 
@@ -51,6 +50,20 @@ void output_append_module(struct output_module *new)
 		return;
 	new->next = modules;
 	modules = new;
+}
+
+void output_load_module(const char *output)
+{
+	if (output != NULL) {
+		char *file = NULL;
+		if (asprintf(&file, LIBDIR"/libgmrender_%s.so", output) > 0) {
+			void *dh = dlopen(file, RTLD_NOW | RTLD_DEEPBIND | RTLD_GLOBAL);
+			if (dh == NULL) {
+				Log_error("error", "ERROR: No such output library: '%s %s'", file, dlerror());
+			}
+			free(file);
+		}
+	}
 }
 
 void output_dump_modules(void)
@@ -81,16 +94,6 @@ void output_dump_modules(void)
 int output_init(const char *shortname)
 {
 	struct output_module *module = NULL;
-	if (shortname != NULL) {
-		char *file = NULL;
-		if (asprintf(&file, LIBDIR"/libgmrender_%s.so", shortname) > 0) {
-			void *dh = dlopen(file, RTLD_NOW | RTLD_DEEPBIND | RTLD_GLOBAL);
-			if (dh == NULL) {
-				Log_error("error", "ERROR: No such output library: '%s %s'", file, dlerror());
-			}
-			free(file);
-		}
-	}
 	module = modules;
 	if (module == NULL) {
 		Log_error("output", "No output module available");
