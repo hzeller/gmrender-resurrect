@@ -47,9 +47,6 @@
 
 // For version strings of upnp and gstreamer
 #include <upnpconfig.h>
-#ifdef HAVE_GST
-#  include <gst/gst.h>
-#endif
 
 #include "git-version.h"
 #include "logging.h"
@@ -133,18 +130,10 @@ static GOptionEntry option_entries[] = {
 
 // Fill buffer with version information. Returns pointer to beginning of string.
 static const char *GetVersionInfo(char *buffer, size_t len) {
-#ifdef HAVE_GST
 	snprintf(buffer, len, "gmediarender %s "
-		 "(libupnp-%s; glib-%d.%d.%d; gstreamer-%d.%d.%d)",
-		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
-		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION,
-		 GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
-#else
-	snprintf(buffer, len, "gmediarender %s "
-		 "(libupnp-%s; glib-%d.%d.%d; without gstreamer.)",
+		 "(libupnp-%s; glib-%d.%d.%d)",
 		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
 		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
-#endif
 	return buffer;
 }
 

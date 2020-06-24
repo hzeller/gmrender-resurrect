@@ -68,6 +68,11 @@ void output_dump_modules(void)
 			       modules->shortname,
 			       modules->description,
 			       (i==0) ? " (default)" : "");
+			if (module->version != NULL)
+			{
+				char buffer[64];
+				printf("\tversion: %s\n", module->version(buffer, sizeof(buffer)));
+			}
 			i = 1;
 			module = module->next;
 		}

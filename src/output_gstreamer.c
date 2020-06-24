@@ -577,12 +577,22 @@ static int output_gstreamer_init(void)
 	return 0;
 }
 
+static const char *output_gstreamer_version(char *buffer, size_t len)
+{
+	snprintf(buffer, len, "%s (glib-%d.%d.%d; gstreamer-%d.%d.%d)",
+		 PACKAGE_VERSION,
+		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION,
+		 GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
+	return buffer;
+}
+
 struct output_module gstreamer_output = {
         .shortname = "gst",
 	.description = "GStreamer multimedia framework",
 	.add_options = output_gstreamer_add_options,
 
 	.init        = output_gstreamer_init,
+	.version     = output_gstreamer_version,
 	.set_uri     = output_gstreamer_set_uri,
 	.set_next_uri= output_gstreamer_set_next_uri,
 	.play        = output_gstreamer_play,
