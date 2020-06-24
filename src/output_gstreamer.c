@@ -579,8 +579,8 @@ static int output_gstreamer_init(void)
 
 static const char *output_gstreamer_version(char *buffer, size_t len)
 {
-	snprintf(buffer, len, "%s (glib-%d.%d.%d; gstreamer-%d.%d.%d)",
-		 PACKAGE_VERSION,
+	snprintf(buffer, len, "%d.%d.%d (glib-%d.%d.%d; gstreamer-%d.%d.%d)",
+	     MOD_MAJOR_VERSION, MOD_MINOR_VERSION, MOD_MICRO_VERSION,
 		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION,
 		 GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
 	return buffer;
