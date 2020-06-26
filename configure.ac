@@ -111,6 +111,27 @@ if test x$HAVE_LIBUPNP = xyes; then
 fi
 AC_SUBST(HAVE_LIBUPNP)
 
+PKG_CHECK_MODULES(ALSA, alsa, HAVE_ALSA=yes, HAVE_ALSA=no)
+if test x$HAVE_ALSA = xyes; then
+  AC_DEFINE(HAVE_ALSA, , [Use Alsa])
+fi
+AC_SUBST(HAVE_ALSA)
+AM_CONDITIONAL(HAVE_ALSA, test x$HAVE_ALSA = xyes)
+
+AC_ARG_WITH( mpg123,
+  AC_HELP_STRING([--without-mpg123],[compile without MPG123 support]),
+  try_mpg123=$withval, try_mpg123=yes )
+HAVE_MPG123=no
+if test x$try_gstreamer = xyes; then
+  dnl check for GStreamer
+  PKG_CHECK_MODULES(MPG123, libmpg123, HAVE_MPG123=yes, HAVE_MPG123=no)
+fi
+if test x$HAVE_MPG123 = xyes; then
+  AC_DEFINE(HAVE_MPG123, , [Use mpg123])
+fi
+AC_SUBST(HAVE_MPG123)
+AM_CONDITIONAL(HAVE_MPG123, test x$HAVE_MPG123 = xyes)
+
 # Checks for header files.
 AC_HEADER_STDC
 
@@ -123,6 +144,7 @@ fi
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile
+                 contribs/Makefile
 		 data/Makefile])
 AC_OUTPUT
 
