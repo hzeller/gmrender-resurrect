@@ -47,9 +47,6 @@
 
 // For version strings of upnp and gstreamer
 #include <upnpconfig.h>
-#ifdef HAVE_GST
-#  include <gst/gst.h>
-#endif
 
 #include "git-version.h"
 #include "logging.h"
@@ -130,18 +127,10 @@ static GOptionEntry option_entries[] = {
 
 // Fill buffer with version information. Returns pointer to beginning of string.
 static const char *GetVersionInfo(char *buffer, size_t len) {
-#ifdef HAVE_GST
 	snprintf(buffer, len, "gmediarender %s "
-		 "(libupnp-%s; glib-%d.%d.%d; gstreamer-%d.%d.%d)",
-		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
-		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION,
-		 GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
-#else
-	snprintf(buffer, len, "gmediarender %s "
-		 "(libupnp-%s; glib-%d.%d.%d; without gstreamer.)",
+		 "(libupnp-%s; glib-%d.%d.%d)",
 		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
 		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
-#endif
 	return buffer;
 }
 
@@ -159,23 +148,15 @@ static void do_show_version(void)
 	       PACKAGE_STRING, version);
 }
 
-static gboolean process_cmdline(int argc, char **argv)
+static gboolean process_cmdline(int *argc, char **argv[])
 {
 	GOptionContext *ctx;
 	GError *err = NULL;
-	int rc;
 
 	ctx = g_option_context_new("- GMediaRender");
 	g_option_context_add_main_entries(ctx, option_entries, NULL);
 
-	rc = output_add_options(ctx);
-	if (rc != 0) {
-		fprintf(stderr, "Failed to add output options\n");
-		g_option_context_free(ctx);
-		return FALSE;
-	}
-
-	if (!g_option_context_parse (ctx, &argc, &argv, &err)) {
+	if (!g_option_context_parse (ctx, argc, argv, &err)) {
 		fprintf(stderr, "Failed to initialize: %s\n", err->message);
 		g_error_free (err);
 		g_option_context_free(ctx);
@@ -225,11 +206,7 @@ int main(int argc, char **argv)
 	int rc;
 	struct upnp_device_descriptor *upnp_renderer;
 
-#if !GLIB_CHECK_VERSION(2,32,0)
-	g_thread_init (NULL);  // Was necessary < glib 2.32, deprecated since.
-#endif
-
-	if (!process_cmdline(argc, argv)) {
+	if (!process_cmdline(&argc, &argv)) {
 		return EXIT_FAILURE;
 	}
 
@@ -282,6 +259,9 @@ int main(int argc, char **argv)
 	if (upnp_renderer == NULL) {
 		return EXIT_FAILURE;
 	}
+
+	output_load_module(output);
+	output_add_options(&argc, &argv);
 
 	rc = output_init(output);
 	if (rc != 0) {

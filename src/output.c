@@ -32,64 +32,84 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <dlfcn.h>
 
 #include <glib.h>
 
 #include "logging.h"
 #include "output_module.h"
-#ifdef HAVE_GST
-#include "output_gstreamer.h"
-#endif
 #include "output.h"
 
-static struct output_module *modules[] = {
-#ifdef HAVE_GST
-	&gstreamer_output,
-#else
-	// this will be a runtime error, but there is not much point
-	// in waiting till then.
-#error "No output configured. You need to ./configure --with-gstreamer"
-#endif
-};
+static struct output_module *modules = NULL;
 
 static struct output_module *output_module = NULL;
 
+void output_append_module(struct output_module *new)
+{
+	if (new == NULL)
+		return;
+	new->next = modules;
+	modules = new;
+}
+
+void output_load_module(const char *output)
+{
+	if (output != NULL) {
+		char *file = NULL;
+		if (asprintf(&file, LIBDIR"/gmediarender/gmrender_%s.so", output) > 0) {
+			void *dh = dlopen(file, RTLD_NOW | RTLD_DEEPBIND | RTLD_GLOBAL);
+			if (dh == NULL) {
+				Log_error("error", "ERROR: No such output library: '%s %s'", file, dlerror());
+			}
+			free(file);
+		}
+	}
+}
+
 void output_dump_modules(void)
 {
-	int count;
-
-	count = sizeof(modules) / sizeof(struct output_module *);
-	if (count == 0) {
+	struct output_module *module = modules;
+	if (modules == NULL)
 		puts("  NONE!");
-	} else {
-		int i;
-		for (i=0; i<count; i++) {
+	else
+	{
+		int i = 0;
+		while (module != NULL)
+		{
 			printf("Available output: %s\t%s%s\n",
-			       modules[i]->shortname,
-			       modules[i]->description,
+			       modules->shortname,
+			       modules->description,
 			       (i==0) ? " (default)" : "");
+			if (module->version != NULL)
+			{
+				char buffer[64];
+				printf("\tversion: %s\n", module->version(buffer, sizeof(buffer)));
+			}
+			i = 1;
+			module = module->next;
 		}
 	}
 }
 
 int output_init(const char *shortname)
 {
-	int count;
-
-	count = sizeof(modules) / sizeof(struct output_module *);
-	if (count == 0) {
+	struct output_module *module = NULL;
+	module = modules;
+	if (module == NULL) {
 		Log_error("output", "No output module available");
 		return -1;
 	}
+
 	if (shortname == NULL) {
-		output_module = modules[0];
+		output_module = module;
 	} else {
-		int i;
-		for (i=0; i<count; i++) {
-			if (strcmp(modules[i]->shortname, shortname)==0) {
-				output_module = modules[i];
+		while (module != NULL)
+		{
+			if (strcmp(module->shortname, shortname)==0) {
+				output_module = module;
 				break;
 			}
+			module = module->next;
 		}
 	}
 
@@ -130,18 +150,24 @@ int output_loop()
         return 0;
 }
 
-int output_add_options(GOptionContext *ctx)
+int output_add_options(int *argc, char **argv[])
 {
-  	int count, i;
-
-	count = sizeof(modules) / sizeof(struct output_module *);
-	for (i = 0; i < count; ++i) {
-		if (modules[i]->add_options) {
-			int result = modules[i]->add_options(ctx);
+	struct output_module *module = modules;
+	if (*argc > 1 && !strcmp((*argv)[1], "--")) {
+		int i;
+		for (i = 1; i < *argc; i++) {
+			(*argv)[i] = (*argv)[i + 1];
+		}
+		*argc = (*argc) - 1;
+	}
+	while (module != NULL) {
+		if (module->add_options) {
+			int result = module->add_options(argc, argv);
 			if (result != 0) {
 				return result;
 			}
 		}
+		module = module->next;
 	}
 
 	return 0;
