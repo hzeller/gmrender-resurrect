@@ -56,7 +56,7 @@ void output_load_module(const char *output)
 {
 	if (output != NULL) {
 		char *file = NULL;
-		if (asprintf(&file, LIBDIR"/libgmrender_%s.so", output) > 0) {
+		if (asprintf(&file, LIBDIR"/gmediarender/gmrender_%s.so", output) > 0) {
 			void *dh = dlopen(file, RTLD_NOW | RTLD_DEEPBIND | RTLD_GLOBAL);
 			if (dh == NULL) {
 				Log_error("error", "ERROR: No such output library: '%s %s'", file, dlerror());

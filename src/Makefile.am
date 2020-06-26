@@ -1,5 +1,5 @@
 bin_PROGRAMS = gmediarender
-lib_LTLIBRARIES = libgmrender_gst.la
+pkglib_LTLIBRARIES = gmrender_gst.la
 
 gmediarender_SOURCES = main.c git-version.h \
 	upnp_service.c upnp_control.c upnp_connmgr.c  upnp_transport.c \
@@ -15,7 +15,7 @@ gmediarender_SOURCES = main.c git-version.h \
 	xmlescape.c xmlescape.h
 
 if HAVE_GST
-libgmrender_gst_la_SOURCES = \
+gmrender_gst_la_SOURCES = \
 	output_gstreamer.c
 endif
 
@@ -36,9 +36,9 @@ AM_CPPFLAGS = $(GLIB_CFLAGS) $(GST_CFLAGS) $(LIBUPNP_CFLAGS) -DPKG_DATADIR=\"$(d
 gmediarender_CFLAGS = $(GLIB_CFLAGS) $(LIBUPNP_CFLAGS) -DPKG_DATADIR=\"$(datadir)/gmediarender\"  -DLIBDIR=\"$(libdir)\"
 gmediarender_LDADD = $(GLIB_LIBS) $(LIBUPNP_LIBS) -ldl
 gmediarender_LDFLAGS = -rdynamic -Wl,-rpath -Wl,$(libdir)
-libgmrender_gst_la_CFLAGS = $(GLIB_CFLAGS) $(GST_CFLAGS)
-libgmrender_gst_la_CFLAGS += -DMOD_MAJOR_VERSION=$(MOD_MAJOR_VERSION)
-libgmrender_gst_la_CFLAGS += -DMOD_MINOR_VERSION=$(MOD_MINOR_VERSION)
-libgmrender_gst_la_CFLAGS += -DMOD_MICRO_VERSION=$(MOD_MICRO_VERSION)
-libgmrender_gst_la_LIBADD = $(GLIB_LIBS) $(GST_LIBS)
-libgmrender_gst_la_LDFLAGS = -release $(GMRENDER_GST_VERSION)
+gmrender_gst_la_CFLAGS = $(GLIB_CFLAGS) $(GST_CFLAGS)
+gmrender_gst_la_CFLAGS += -DMOD_MAJOR_VERSION=$(MOD_MAJOR_VERSION)
+gmrender_gst_la_CFLAGS += -DMOD_MINOR_VERSION=$(MOD_MINOR_VERSION)
+gmrender_gst_la_CFLAGS += -DMOD_MICRO_VERSION=$(MOD_MICRO_VERSION)
+gmrender_gst_la_LIBADD = $(GLIB_LIBS) $(GST_LIBS)
+gmrender_gst_la_LDFLAGS = -module -release $(GMRENDER_GST_VERSION)
