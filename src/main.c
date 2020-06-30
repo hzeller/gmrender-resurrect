@@ -37,6 +37,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <getopt.h>
 
 #ifndef HAVE_LIBUPNP
 # error "To have gmrender any useful, you need to have libupnp installed."
@@ -89,43 +90,24 @@ static const char *log_file = NULL;
 static const char *mime_filter = NULL;
 
 /* Generic GMediaRender options */
-static GOptionEntry option_entries[] = {
-	{ "version", 0, 0, G_OPTION_ARG_NONE, &show_version,
-	  "Output version information and exit", NULL },
-	{ "ip-address", 'I', 0, G_OPTION_ARG_STRING, &ip_address,
-	  "The local IP address the service is running and advertised "
-	  "(only one, 0.0.0.0 won't work)", NULL },
-	// The following is not very reliable, as libupnp does not set
-	// SO_REUSEADDR by default, so it might increment (sending patch).
-	{ "port", 'p', 0, G_OPTION_ARG_INT, &listen_port,
-	  "Port to listen to; [49152..65535] (libupnp does not use "
-	  "SO_REUSEADDR, so might increment)", NULL },
-	{ "uuid", 'u', 0, G_OPTION_ARG_STRING, &uuid,
-	  "UUID to advertise", NULL },
-	{ "friendly-name", 'f', 0, G_OPTION_ARG_STRING, &friendly_name,
-	  "Friendly name to advertise.", NULL },
-	{ "output", 'o', 0, G_OPTION_ARG_STRING, &output,
-	  "Output module to use.", NULL },
-	{ "pid-file", 'P', 0, G_OPTION_ARG_STRING, &pid_file,
-	  "File the process ID should be written to.", NULL },
-	{ "daemon", 'd', 0, G_OPTION_ARG_NONE, &daemon_mode,
-	  "Run as daemon.", NULL },
-	{ "mime-filter", 0, 0, G_OPTION_ARG_STRING, &mime_filter,
-	  "Filter the supported media types. "
-		"e.g. Audio only: '--mime-filter audio'. Disable FLAC: '--mime-filter -audio/x-flac'.", NULL },
-	{ "logfile", 0, 0, G_OPTION_ARG_STRING, &log_file,
-	  "Debug log filename. Use 'stdout' or 'stderr' to log to console.", NULL },
-	{ "list-outputs", 0, 0, G_OPTION_ARG_NONE, &show_outputs,
-	  "List available output modules and exit", NULL },
-	{ "dump-devicedesc", 0, 0, G_OPTION_ARG_NONE, &show_devicedesc,
-	  "Dump device descriptor XML and exit.", NULL },
-	{ "dump-connmgr-scpd", 0, 0, G_OPTION_ARG_NONE, &show_connmgr_scpd,
-	  "Dump Connection Manager service description XML and exit.", NULL },
-	{ "dump-control-scpd", 0, 0, G_OPTION_ARG_NONE, &show_control_scpd,
-	  "Dump Rendering Control service description XML and exit.", NULL },
-	{ "dump-transport-scpd", 0, 0, G_OPTION_ARG_NONE, &show_transport_scpd,
-	  "Dump A/V Transport service description XML and exit.", NULL },
-	{ NULL }
+static struct option option_entries[] = {
+	/* These options set a flag. */
+	{"version", no_argument, &show_version, 1},
+	{"ip-address",   required_argument, NULL, 0},
+	{"port",     required_argument,       0, 'p'},
+	{"uuid",  required_argument, 0, 'u'},
+	{"friendly-name",  required_argument, 0, 'f'},
+	{"output",    required_argument, NULL, 0},
+	{"pid-file",    required_argument, 0, 'P'},
+	{"daemon",    no_argument, &daemon_mode, 1},
+	{"mime-filter",    required_argument, 0, 0},
+	{"logfile",    required_argument, 0, 0},
+	{"list-outputs",    no_argument, &show_outputs, 1},
+	{"dump-devicedesc",    no_argument, &show_devicedesc, 1},
+	{"dump-connmgr-scpd",    no_argument, &show_connmgr_scpd, 1},
+	{"dump-control-scpd",    no_argument, &show_control_scpd, 1},
+	{"dump-transport-scpd",    no_argument, &show_transport_scpd, 1},
+	{0, 0, 0, 0}
 };
 
 // Fill buffer with version information. Returns pointer to beginning of string.
@@ -161,20 +143,54 @@ static void do_show_version(void)
 
 static int process_cmdline(int *argc, char **argv[])
 {
-	GOptionContext *ctx;
-	GError *err = NULL;
+	int c;
+	while (1) {
+		int option_index = 0;
 
-	ctx = g_option_context_new("- GMediaRender");
-	g_option_context_add_main_entries(ctx, option_entries, NULL);
+		c = getopt_long (*argc, *argv, "I:p:u:f:o:P:d",
+			option_entries, &option_index);
 
-	if (!g_option_context_parse (ctx, argc, argv, &err)) {
-		fprintf(stderr, "Failed to initialize: %s\n", err->message);
-		g_error_free (err);
-		g_option_context_free(ctx);
-		return 0;
+		/* Detect the end of the options. */
+		if (c == -1)
+		break;
+
+		switch (c) {
+		case 0:
+			/* If this option set a flag, do nothing else now. */
+			if (option_entries[option_index].flag != 0)
+				break;
+			if (!strcmp(option_entries[option_index].name, "mime-filter"))
+				mime_filter = optarg;
+			if (!strcmp(option_entries[option_index].name, "logfile"))
+				log_file = optarg;
+		break;
+		case 'I':
+			ip_address = optarg;
+		break;
+		case 'p':
+			listen_port = atoi(optarg);
+		break;
+		case 'u':
+			uuid = optarg;
+		break;
+		case 'f':
+			friendly_name = optarg;
+		break;
+		case 'o':
+			output = optarg;
+		break;
+		case 'P':
+			pid_file = optarg;
+		break;
+		case 'd':
+			daemon_mode = 1;
+		break;
+		}
 	}
-
-	g_option_context_free(ctx);
+	*argc -= optind - 1;
+	int i;
+	for (i = 0; i < *argc; i++)
+		(*argv)[i + 1] = (*argv)[i + optind];
 	return 1;
 }
 
