@@ -57,6 +57,13 @@
 #define CONNMGR_CONTROL_URL "/upnp/control/renderconnmgr1"
 #define CONNMGR_EVENT_URL "/upnp/event/renderconnmgr1"
 
+typedef struct mime_type_filters_t
+{
+	GSList* allowed_roots;
+	GSList* removed_types;
+	GSList* added_types;
+} mime_type_filters_t;
+
 typedef enum {
 	CONNMGR_VAR_AAT_CONN_MGR,
 	CONNMGR_VAR_SINK_PROTO_INFO,
