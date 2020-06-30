@@ -159,23 +159,15 @@ static void do_show_version(void)
 	       PACKAGE_STRING, version);
 }
 
-static int process_cmdline(int argc, char **argv)
+static int process_cmdline(int *argc, char **argv[])
 {
 	GOptionContext *ctx;
 	GError *err = NULL;
-	int rc;
 
 	ctx = g_option_context_new("- GMediaRender");
 	g_option_context_add_main_entries(ctx, option_entries, NULL);
 
-	rc = output_add_options(ctx);
-	if (rc != 0) {
-		fprintf(stderr, "Failed to add output options\n");
-		g_option_context_free(ctx);
-		return 0;
-	}
-
-	if (!g_option_context_parse (ctx, &argc, &argv, &err)) {
+	if (!g_option_context_parse (ctx, argc, argv, &err)) {
 		fprintf(stderr, "Failed to initialize: %s\n", err->message);
 		g_error_free (err);
 		g_option_context_free(ctx);
@@ -229,7 +221,7 @@ int main(int argc, char **argv)
 	g_thread_init (NULL);  // Was necessary < glib 2.32, deprecated since.
 #endif
 
-	if (!process_cmdline(argc, argv)) {
+	if (!process_cmdline(&argc, &argv)) {
 		return EXIT_FAILURE;
 	}
 
@@ -283,6 +275,7 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
+	output_add_options(&argc, &argv);
 	rc = output_init(output);
 	if (rc != 0) {
 		Log_error("main",

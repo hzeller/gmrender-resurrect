@@ -401,17 +401,25 @@ static GOptionEntry option_entries[] = {
 };
 
 
-static int output_gstreamer_add_options(GOptionContext *ctx)
+static int output_gstreamer_add_options(int *argc, char **argv[])
 {
-	GOptionGroup *option_group;
-	option_group = g_option_group_new("gstout", "GStreamer Output Options",
-	                                  "Show GStreamer Output Options",
-	                                  NULL, NULL);
-	g_option_group_add_entries(option_group, option_entries);
+	GOptionContext *ctx;
+	GError *err = NULL;
 
-	g_option_context_add_group (ctx, option_group);
+	ctx = g_option_context_new("- GStreamer Output Options");
+	g_option_context_add_main_entries(ctx, option_entries, NULL);
 
 	g_option_context_add_group (ctx, gst_init_get_option_group ());
+
+	if (!g_option_context_parse (ctx, argc, argv, &err)) {
+		fprintf(stderr, "Failed to initialize: %s\n", err->message);
+		g_error_free (err);
+		g_option_context_free(ctx);
+		return 0;
+	}
+
+	g_option_context_free(ctx);
+
 	return 0;
 }
 

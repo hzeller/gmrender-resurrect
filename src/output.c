@@ -130,14 +130,21 @@ int output_loop()
         return 0;
 }
 
-int output_add_options(GOptionContext *ctx)
+int output_add_options(int *argc, char **argv[])
 {
   	int count, i;
+	if (*argc > 1 && !strcmp((*argv)[1], "--")) {
+		int i;
+		for (i = 1; i < *argc; i++) {
+			(*argv)[i] = (*argv)[i + 1];
+		}
+		*argc = (*argc) - 1;
+	}
 
 	count = sizeof(modules) / sizeof(struct output_module *);
 	for (i = 0; i < count; ++i) {
 		if (modules[i]->add_options) {
-			int result = modules[i]->add_options(ctx);
+			int result = modules[i]->add_options(argc, argv);
 			if (result != 0) {
 				return result;
 			}
