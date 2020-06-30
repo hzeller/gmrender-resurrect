@@ -30,6 +30,7 @@ struct output_module {
         const char *shortname;
         const char *description;
 	int (*add_options)(int *argc, char **argv[]);
+	const char *(*version)(char *buffer, size_t len);
 
 	// Commands.
 	int (*init)(void);
