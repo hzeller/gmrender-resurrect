@@ -61,32 +61,32 @@
 #include "upnp_transport.h"
 #include "upnp_connmgr.h"
 
-static gboolean show_version = FALSE;
-static gboolean show_devicedesc = FALSE;
-static gboolean show_connmgr_scpd = FALSE;
-static gboolean show_control_scpd = FALSE;
-static gboolean show_transport_scpd = FALSE;
-static gboolean show_outputs = FALSE;
-static gboolean daemon_mode = FALSE;
+static int show_version = FALSE;
+static int show_devicedesc = FALSE;
+static int show_connmgr_scpd = FALSE;
+static int show_control_scpd = FALSE;
+static int show_transport_scpd = FALSE;
+static int show_outputs = FALSE;
+static int daemon_mode = FALSE;
 
 // IP-address seems strange in libupnp: they actually don't bind to
 // that address, but to INADDR_ANY (miniserver.c in upnp library).
 // Apparently they just use this for the advertisement ? Anyway, 0.0.0.0 would
 // not work.
-static const gchar *ip_address = NULL;
+static const char *ip_address = NULL;
 static int listen_port = 49494;
 
 #ifdef GMRENDER_UUID
 // Compile-time uuid.
-static const gchar *uuid = GMRENDER_UUID;
+static const char *uuid = GMRENDER_UUID;
 #else
-static const gchar *uuid = "GMediaRender-1_0-000-000-002";
+static const char *uuid = "GMediaRender-1_0-000-000-002";
 #endif
-static const gchar *friendly_name = PACKAGE_NAME;
-static const gchar *output = NULL;
-static const gchar *pid_file = NULL;
-static const gchar *log_file = NULL;
-static const gchar *mime_filter = NULL;
+static const char *friendly_name = PACKAGE_NAME;
+static const char *output = NULL;
+static const char *pid_file = NULL;
+static const char *log_file = NULL;
+static const char *mime_filter = NULL;
 
 /* Generic GMediaRender options */
 static GOptionEntry option_entries[] = {
@@ -159,7 +159,7 @@ static void do_show_version(void)
 	       PACKAGE_STRING, version);
 }
 
-static gboolean process_cmdline(int argc, char **argv)
+static int process_cmdline(int argc, char **argv)
 {
 	GOptionContext *ctx;
 	GError *err = NULL;
@@ -172,18 +172,18 @@ static gboolean process_cmdline(int argc, char **argv)
 	if (rc != 0) {
 		fprintf(stderr, "Failed to add output options\n");
 		g_option_context_free(ctx);
-		return FALSE;
+		return 0;
 	}
 
 	if (!g_option_context_parse (ctx, &argc, &argv, &err)) {
 		fprintf(stderr, "Failed to initialize: %s\n", err->message);
 		g_error_free (err);
 		g_option_context_free(ctx);
-		return FALSE;
+		return 0;
 	}
 
 	g_option_context_free(ctx);
-	return TRUE;
+	return 1;
 }
 
 static void log_variable_change(void *userdata, int var_num,
