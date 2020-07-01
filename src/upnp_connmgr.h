@@ -24,15 +24,6 @@
 #ifndef _UPNP_CONNMGR_H
 #define _UPNP_CONNMGR_H
 
-#include <glib.h>
-
-typedef struct mime_type_filters_t
-{
-	GSList* allowed_roots;
-	GSList* removed_types;
-	GSList* added_types;
-} mime_type_filters_t;
-
 struct service *upnp_connmgr_get_service(void);
 int connmgr_init(const char* mime_filter);
 

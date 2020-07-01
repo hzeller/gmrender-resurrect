@@ -25,6 +25,7 @@
 #include "config.h"
 #endif
 
+#define _GNU_SOURCE
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,8 +37,8 @@
 
 // Can't include above upnp.h breaks stdbool?
 #include <stdbool.h>
-#include <glib.h>
 
+#include "gmrender_list.h"
 #include "upnp_connmgr.h"
 
 #include "logging.h"
@@ -56,6 +57,13 @@
 #define CONNMGR_SCPD_URL "/upnp/renderconnmgrSCPD.xml"
 #define CONNMGR_CONTROL_URL "/upnp/control/renderconnmgr1"
 #define CONNMGR_EVENT_URL "/upnp/event/renderconnmgr1"
+
+typedef struct mime_type_filters_t
+{
+	GmSList* allowed_roots;
+	GmSList* removed_types;
+	GmSList* added_types;
+} mime_type_filters_t;
 
 typedef enum {
 	CONNMGR_VAR_AAT_CONN_MGR,
@@ -143,16 +151,16 @@ static const char *direction_values[] = {
 
 static ithread_mutex_t connmgr_mutex;
 
-static GSList* supported_types_list;
+static GmSList* supported_types_list;
 
 static bool add_mime_type(const char* mime_type)
 {
 	// Check for duplicate MIME type
-	if (g_slist_find_custom(supported_types_list, mime_type, (GCompareFunc) strcmp) != NULL)
+	if (gm_slist_find_custom(supported_types_list, mime_type, (GmCompareFunc) strcmp) != NULL)
 		return false;
 
 	// Sorted insert into list
-	supported_types_list = g_slist_insert_sorted(supported_types_list, strdup(mime_type), (GCompareFunc) strcmp);
+	supported_types_list = gm_slist_insert_sorted(supported_types_list, strdup(mime_type), (GmCompareFunc) strcmp);
 
 	return true;
 }
@@ -164,21 +172,21 @@ static bool remove_mime_type(const char* mime_type)
 		return false;
 
 	// Search for the MIME type
-	GSList* entry = g_slist_find_custom(supported_types_list, mime_type, (GCompareFunc) strcmp);
+	GmSList* entry = gm_slist_find_custom(supported_types_list, mime_type, (GmCompareFunc) strcmp);
 	if (entry != NULL)
 	{
 		// Free the string pointer
 		free(entry->data);
 
 		// Free the list entry
-		supported_types_list = g_slist_delete_link(supported_types_list, entry);
+		supported_types_list = gm_slist_delete_link(supported_types_list, entry);
 		return true;
 	}
 
 	return false;
 }
 
-static gint g_compare_mime_root(gconstpointer a, gconstpointer b)
+static int g_compare_mime_root(const void* a, const void* b)
 {
 	size_t aLen = strlen((const char*)a);
 	size_t bLen = strlen((const char*)b);
@@ -189,12 +197,12 @@ static gint g_compare_mime_root(gconstpointer a, gconstpointer b)
 	return strncmp((const char*) a, (const char*) b, min);
 }
 
-static void g_add_mime_type(gpointer data, gpointer user_data)
+static void g_add_mime_type(void* data, void* user_data)
 {
 	add_mime_type((const char*) data);
 }
 
-static void g_remove_mime_type(gpointer data, gpointer user_data)
+static void g_remove_mime_type(void* data, void* user_data)
 {
 	remove_mime_type((const char*) data);
 }
@@ -265,17 +273,17 @@ static mime_type_filters_t connmgr_parse_mime_filter_string(const char* filter_s
 	{
 		if (token[0] == '+')
 		{
-			mime_filter.added_types = g_slist_prepend(mime_filter.added_types,
+			mime_filter.added_types = gm_slist_prepend(mime_filter.added_types,
 				strdup(&token[1]));
 		}
 		else if (token[0] == '-')
 		{
-			mime_filter.removed_types = g_slist_prepend(mime_filter.removed_types,
+			mime_filter.removed_types = gm_slist_prepend(mime_filter.removed_types,
 				strdup(&token[1]));
 		}
 		else
 		{
-			mime_filter.allowed_roots = g_slist_prepend(mime_filter.allowed_roots,
+			mime_filter.allowed_roots = gm_slist_prepend(mime_filter.allowed_roots,
 				strdup(token));
 		}
 
@@ -293,16 +301,16 @@ static void connmgr_filter_mime_type_root(const mime_type_filters_t* mime_filter
 		return;
 
 	// Iterate through the supported types and filter by root
-	GSList* entry = supported_types_list;
+	GmSList* entry = supported_types_list;
 	while (entry != NULL)
 	{
-		GSList* next = entry->next;
+		GmSList* next = entry->next;
 
-		if (g_slist_find_custom(mime_filter->allowed_roots, entry->data, g_compare_mime_root) == NULL)
+		if (gm_slist_find_custom(mime_filter->allowed_roots, entry->data, g_compare_mime_root) == NULL)
 		{
 			// Free matching MIME type and remove the entry
 			free(entry->data);
-			supported_types_list = g_slist_delete_link(supported_types_list, entry);
+			supported_types_list = gm_slist_delete_link(supported_types_list, entry);
 		}
 		entry = next;
 	}
@@ -319,33 +327,44 @@ int connmgr_init(const char* mime_filter_string) {
 	connmgr_filter_mime_type_root(&mime_filter);
 
 	// Manually add additional MIME types
-	g_slist_foreach(mime_filter.added_types, g_add_mime_type, NULL);
+	gm_slist_foreach(mime_filter.added_types, g_add_mime_type, NULL);
 
 	// Manually remove specific MIME types
-	g_slist_foreach(mime_filter.removed_types, g_remove_mime_type, NULL);
+	gm_slist_foreach(mime_filter.removed_types, g_remove_mime_type, NULL);
 
-	GString* protoInfo = g_string_new(NULL);
-	for (GSList* entry = supported_types_list; entry != NULL; entry = g_slist_next(entry))
+	char *protoInfo = NULL;
+	for (GmSList* entry = supported_types_list; entry != NULL; entry = gm_slist_next(entry))
 	{
 		Log_info("connmgr", "Registering support for '%s'", (const char*) entry->data);
-		g_string_append_printf(protoInfo, "http-get:*:%s:*,", (const char*) entry->data);
+		int rc = 0;
+		if (protoInfo == NULL && entry->data != NULL)
+			rc = asprintf(&protoInfo, "http-get:*:%s:*,", (const char*) entry->data);
+		else if (entry->data != NULL)
+		{
+			char *tempo = protoInfo;
+			rc = asprintf(&protoInfo, "%shttp-get:*:%s:*,", tempo, (const char*) entry->data);
+			free(tempo);
+		}
+		if (rc == -1)
+			break;
 	}
 
-	if (protoInfo->len > 0) {
+	if (protoInfo != NULL) {
 		// Truncate final comma
-		protoInfo = g_string_truncate(protoInfo, protoInfo->len - 1);
+		size_t length = strlen(protoInfo);
+		protoInfo[length] = '\0';
 		VariableContainer_change(srv->variable_container,
-					 CONNMGR_VAR_SINK_PROTO_INFO, protoInfo->str);
+					 CONNMGR_VAR_SINK_PROTO_INFO, protoInfo);
 	}
 
 	// Free string and its data
-	g_string_free(protoInfo, TRUE);
+	free(protoInfo);
 
 	// Free all lists that were generated
-	g_slist_free_full(supported_types_list, free);
-	g_slist_free_full(mime_filter.allowed_roots, free);
-	g_slist_free_full(mime_filter.added_types, free);
-	g_slist_free_full(mime_filter.removed_types, free);
+	gm_slist_free_full(supported_types_list, free);
+	gm_slist_free_full(mime_filter.allowed_roots, free);
+	gm_slist_free_full(mime_filter.added_types, free);
+	gm_slist_free_full(mime_filter.removed_types, free);
 
 	return 0;
 }

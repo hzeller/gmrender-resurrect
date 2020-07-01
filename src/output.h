@@ -24,7 +24,6 @@
 #ifndef _OUTPUT_H
 #define _OUTPUT_H
 
-#include <glib.h>
 #include "song-meta-data.h"
 
 // Feedback for the controlling part what is happening with the
@@ -40,7 +39,7 @@ typedef void (*output_transition_cb_t)(enum PlayFeedback);
 typedef void (*output_update_meta_cb_t)(const struct SongMetaData *);
 
 int output_init(const char *shortname);
-int output_add_options(GOptionContext *ctx);
+int output_add_options(int *argc, char **argv[]);
 void output_dump_modules(void);
 
 int output_loop(void);
@@ -51,8 +50,8 @@ void output_set_next_uri(const char *uri);
 int output_play(output_transition_cb_t done_callback);
 int output_stop(void);
 int output_pause(void);
-int output_get_position(gint64 *track_dur_nanos, gint64 *track_pos_nanos);
-int output_seek(gint64 position_nanos);
+int output_get_position(int64_t *track_dur_nanos, int64_t *track_pos_nanos);
+int output_seek(int64_t position_nanos);
 
 int output_get_volume(float *v);
 int output_set_volume(float v);

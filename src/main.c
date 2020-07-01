@@ -30,13 +30,13 @@
 #endif
 
 #include <assert.h>
-#include <glib.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <getopt.h>
 
 #ifndef HAVE_LIBUPNP
 # error "To have gmrender any useful, you need to have libupnp installed."
@@ -47,9 +47,6 @@
 
 // For version strings of upnp and gstreamer
 #include <upnpconfig.h>
-#ifdef HAVE_GST
-#  include <gst/gst.h>
-#endif
 
 #include "git-version.h"
 #include "logging.h"
@@ -61,87 +58,58 @@
 #include "upnp_transport.h"
 #include "upnp_connmgr.h"
 
-static gboolean show_version = FALSE;
-static gboolean show_devicedesc = FALSE;
-static gboolean show_connmgr_scpd = FALSE;
-static gboolean show_control_scpd = FALSE;
-static gboolean show_transport_scpd = FALSE;
-static gboolean show_outputs = FALSE;
-static gboolean daemon_mode = FALSE;
+static int show_version = FALSE;
+static int show_devicedesc = FALSE;
+static int show_connmgr_scpd = FALSE;
+static int show_control_scpd = FALSE;
+static int show_transport_scpd = FALSE;
+static int show_outputs = FALSE;
+static int daemon_mode = FALSE;
 
 // IP-address seems strange in libupnp: they actually don't bind to
 // that address, but to INADDR_ANY (miniserver.c in upnp library).
 // Apparently they just use this for the advertisement ? Anyway, 0.0.0.0 would
 // not work.
-static const gchar *ip_address = NULL;
+static const char *ip_address = NULL;
 static int listen_port = 49494;
 
 #ifdef GMRENDER_UUID
 // Compile-time uuid.
-static const gchar *uuid = GMRENDER_UUID;
+static const char *uuid = GMRENDER_UUID;
 #else
-static const gchar *uuid = "GMediaRender-1_0-000-000-002";
+static const char *uuid = "GMediaRender-1_0-000-000-002";
 #endif
-static const gchar *friendly_name = PACKAGE_NAME;
-static const gchar *output = NULL;
-static const gchar *pid_file = NULL;
-static const gchar *log_file = NULL;
-static const gchar *mime_filter = NULL;
+static const char *friendly_name = PACKAGE_NAME;
+static const char *output = NULL;
+static const char *pid_file = NULL;
+static const char *log_file = NULL;
+static const char *mime_filter = NULL;
 
 /* Generic GMediaRender options */
-static GOptionEntry option_entries[] = {
-	{ "version", 0, 0, G_OPTION_ARG_NONE, &show_version,
-	  "Output version information and exit", NULL },
-	{ "ip-address", 'I', 0, G_OPTION_ARG_STRING, &ip_address,
-	  "The local IP address the service is running and advertised "
-	  "(only one, 0.0.0.0 won't work)", NULL },
-	// The following is not very reliable, as libupnp does not set
-	// SO_REUSEADDR by default, so it might increment (sending patch).
-	{ "port", 'p', 0, G_OPTION_ARG_INT, &listen_port,
-	  "Port to listen to; [49152..65535] (libupnp does not use "
-	  "SO_REUSEADDR, so might increment)", NULL },
-	{ "uuid", 'u', 0, G_OPTION_ARG_STRING, &uuid,
-	  "UUID to advertise", NULL },
-	{ "friendly-name", 'f', 0, G_OPTION_ARG_STRING, &friendly_name,
-	  "Friendly name to advertise.", NULL },
-	{ "output", 'o', 0, G_OPTION_ARG_STRING, &output,
-	  "Output module to use.", NULL },
-	{ "pid-file", 'P', 0, G_OPTION_ARG_STRING, &pid_file,
-	  "File the process ID should be written to.", NULL },
-	{ "daemon", 'd', 0, G_OPTION_ARG_NONE, &daemon_mode,
-	  "Run as daemon.", NULL },
-	{ "mime-filter", 0, 0, G_OPTION_ARG_STRING, &mime_filter,
-	  "Filter the supported media types. "
-		"e.g. Audio only: '--mime-filter audio'. Disable FLAC: '--mime-filter -audio/x-flac'.", NULL },
-	{ "logfile", 0, 0, G_OPTION_ARG_STRING, &log_file,
-	  "Debug log filename. Use 'stdout' or 'stderr' to log to console.", NULL },
-	{ "list-outputs", 0, 0, G_OPTION_ARG_NONE, &show_outputs,
-	  "List available output modules and exit", NULL },
-	{ "dump-devicedesc", 0, 0, G_OPTION_ARG_NONE, &show_devicedesc,
-	  "Dump device descriptor XML and exit.", NULL },
-	{ "dump-connmgr-scpd", 0, 0, G_OPTION_ARG_NONE, &show_connmgr_scpd,
-	  "Dump Connection Manager service description XML and exit.", NULL },
-	{ "dump-control-scpd", 0, 0, G_OPTION_ARG_NONE, &show_control_scpd,
-	  "Dump Rendering Control service description XML and exit.", NULL },
-	{ "dump-transport-scpd", 0, 0, G_OPTION_ARG_NONE, &show_transport_scpd,
-	  "Dump A/V Transport service description XML and exit.", NULL },
-	{ NULL }
+static struct option option_entries[] = {
+	/* These options set a flag. */
+	{"version", no_argument, &show_version, 1},
+	{"ip-address",   required_argument, NULL, 0},
+	{"port",     required_argument,       0, 'p'},
+	{"uuid",  required_argument, 0, 'u'},
+	{"friendly-name",  required_argument, 0, 'f'},
+	{"output",    required_argument, NULL, 0},
+	{"pid-file",    required_argument, 0, 'P'},
+	{"daemon",    no_argument, &daemon_mode, 1},
+	{"mime-filter",    required_argument, 0, 0},
+	{"logfile",    required_argument, 0, 0},
+	{"list-outputs",    no_argument, &show_outputs, 1},
+	{"dump-devicedesc",    no_argument, &show_devicedesc, 1},
+	{"dump-connmgr-scpd",    no_argument, &show_connmgr_scpd, 1},
+	{"dump-control-scpd",    no_argument, &show_control_scpd, 1},
+	{"dump-transport-scpd",    no_argument, &show_transport_scpd, 1},
+	{0, 0, 0, 0}
 };
 
 // Fill buffer with version information. Returns pointer to beginning of string.
 static const char *GetVersionInfo(char *buffer, size_t len) {
-#ifdef HAVE_GST
-	snprintf(buffer, len, "gmediarender %s "
-		 "(libupnp-%s; glib-%d.%d.%d; gstreamer-%d.%d.%d)",
-		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
-		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION,
-		 GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
-#else
-	snprintf(buffer, len, "gmediarender %s "
-		 "(libupnp-%s; glib-%d.%d.%d; without gstreamer.)",
-		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
-		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
-#endif
+	snprintf(buffer, len, "gmediarender %s (libupnp-%s)",
+		 GM_COMPILE_VERSION, UPNP_VERSION_STRING);
 	return buffer;
 }
 
@@ -159,31 +127,57 @@ static void do_show_version(void)
 	       PACKAGE_STRING, version);
 }
 
-static gboolean process_cmdline(int argc, char **argv)
+static int process_cmdline(int *argc, char **argv[])
 {
-	GOptionContext *ctx;
-	GError *err = NULL;
-	int rc;
+	int c;
+	while (1) {
+		int option_index = 0;
 
-	ctx = g_option_context_new("- GMediaRender");
-	g_option_context_add_main_entries(ctx, option_entries, NULL);
+		c = getopt_long (*argc, *argv, "I:p:u:f:o:P:d",
+			option_entries, &option_index);
 
-	rc = output_add_options(ctx);
-	if (rc != 0) {
-		fprintf(stderr, "Failed to add output options\n");
-		g_option_context_free(ctx);
-		return FALSE;
+		/* Detect the end of the options. */
+		if (c == -1)
+		break;
+
+		switch (c) {
+		case 0:
+			/* If this option set a flag, do nothing else now. */
+			if (option_entries[option_index].flag != 0)
+				break;
+			if (!strcmp(option_entries[option_index].name, "mime-filter"))
+				mime_filter = optarg;
+			if (!strcmp(option_entries[option_index].name, "logfile"))
+				log_file = optarg;
+		break;
+		case 'I':
+			ip_address = optarg;
+		break;
+		case 'p':
+			listen_port = atoi(optarg);
+		break;
+		case 'u':
+			uuid = optarg;
+		break;
+		case 'f':
+			friendly_name = optarg;
+		break;
+		case 'o':
+			output = optarg;
+		break;
+		case 'P':
+			pid_file = optarg;
+		break;
+		case 'd':
+			daemon_mode = 1;
+		break;
+		}
 	}
-
-	if (!g_option_context_parse (ctx, &argc, &argv, &err)) {
-		fprintf(stderr, "Failed to initialize: %s\n", err->message);
-		g_error_free (err);
-		g_option_context_free(ctx);
-		return FALSE;
-	}
-
-	g_option_context_free(ctx);
-	return TRUE;
+	*argc -= optind - 1;
+	int i;
+	for (i = 0; i < *argc; i++)
+		(*argv)[i + 1] = (*argv)[i + optind];
+	return 1;
 }
 
 static void log_variable_change(void *userdata, int var_num,
@@ -225,11 +219,7 @@ int main(int argc, char **argv)
 	int rc;
 	struct upnp_device_descriptor *upnp_renderer;
 
-#if !GLIB_CHECK_VERSION(2,32,0)
-	g_thread_init (NULL);  // Was necessary < glib 2.32, deprecated since.
-#endif
-
-	if (!process_cmdline(argc, argv)) {
+	if (!process_cmdline(&argc, &argv)) {
 		return EXIT_FAILURE;
 	}
 
@@ -283,6 +273,7 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
+	output_add_options(&argc, &argv);
 	rc = output_init(output);
 	if (rc != 0) {
 		Log_error("main",

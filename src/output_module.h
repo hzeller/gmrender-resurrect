@@ -29,19 +29,21 @@
 struct output_module {
         const char *shortname;
         const char *description;
-	int (*add_options)(GOptionContext *ctx);
+	int (*add_options)(int *argc, char **argv[]);
+	const char *(*version)(char *buffer, size_t len);
 
 	// Commands.
 	int (*init)(void);
+	int (*loop)(void);
 	void (*set_uri)(const char *uri, output_update_meta_cb_t meta_info);
 	void (*set_next_uri)(const char *uri);
 	int (*play)(output_transition_cb_t transition_callback);
 	int (*stop)(void);
 	int (*pause)(void);
-	int (*seek)(gint64 position_nanos);
+	int (*seek)(int64_t position_nanos);
 
 	// parameters
-	int (*get_position)(gint64 *track_duration, gint64 *track_pos);
+	int (*get_position)(int64_t *track_duration, int64_t *track_pos);
 	int (*get_volume)(float *);
 	int (*set_volume)(float);
 	int (*get_mute)(int *);

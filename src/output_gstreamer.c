@@ -194,7 +194,7 @@ static int output_gstreamer_pause(void) {
 	}
 }
 
-static int output_gstreamer_seek(gint64 position_nanos) {
+static int output_gstreamer_seek(int64_t position_nanos) {
 	if (gst_element_seek(player_, 1.0, GST_FORMAT_TIME,
 			     GST_SEEK_FLAG_FLUSH,
 			     GST_SEEK_TYPE_SET, position_nanos,
@@ -401,22 +401,30 @@ static GOptionEntry option_entries[] = {
 };
 
 
-static int output_gstreamer_add_options(GOptionContext *ctx)
+static int output_gstreamer_add_options(int *argc, char **argv[])
 {
-	GOptionGroup *option_group;
-	option_group = g_option_group_new("gstout", "GStreamer Output Options",
-	                                  "Show GStreamer Output Options",
-	                                  NULL, NULL);
-	g_option_group_add_entries(option_group, option_entries);
+	GOptionContext *ctx;
+	GError *err = NULL;
 
-	g_option_context_add_group (ctx, option_group);
+	ctx = g_option_context_new("- GStreamer Output Options");
+	g_option_context_add_main_entries(ctx, option_entries, NULL);
 
 	g_option_context_add_group (ctx, gst_init_get_option_group ());
+
+	if (!g_option_context_parse (ctx, argc, argv, &err)) {
+		fprintf(stderr, "Failed to initialize: %s\n", err->message);
+		g_error_free (err);
+		g_option_context_free(ctx);
+		return 0;
+	}
+
+	g_option_context_free(ctx);
+
 	return 0;
 }
 
-static int output_gstreamer_get_position(gint64 *track_duration,
-					 gint64 *track_pos) {
+static int output_gstreamer_get_position(int64_t *track_duration,
+					 int64_t *track_pos) {
 	*track_duration = last_known_time_.duration;
 	*track_pos = last_known_time_.position;
 
@@ -577,12 +585,48 @@ static int output_gstreamer_init(void)
 	return 0;
 }
 
+static const char *output_gstreamer_version(char *buffer, size_t len)
+{
+	snprintf(buffer, len, "%s (glib-%d.%d.%d; gstreamer-%d.%d.%d)",
+		 PACKAGE_VERSION,
+		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION,
+		 GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
+	return buffer;
+}
+
+static GMainLoop *main_loop_ = NULL;
+static void exit_loop_sighandler(int sig) {
+	if (main_loop_) {
+		// TODO(hzeller): revisit - this is not safe to do.
+		g_main_loop_quit(main_loop_);
+	}
+}
+
+static int output_gstreamer_loop(void)
+{
+#if !GLIB_CHECK_VERSION(2,32,0)
+	g_thread_init (NULL);  // Was necessary < glib 2.32, deprecated since.
+#endif
+
+        /* Create a main loop that runs the default GLib main context */
+        main_loop_ = g_main_loop_new(NULL, FALSE);
+
+	signal(SIGINT, &exit_loop_sighandler);
+	signal(SIGTERM, &exit_loop_sighandler);
+
+        g_main_loop_run(main_loop_);
+
+        return 0;
+}
+
 struct output_module gstreamer_output = {
         .shortname = "gst",
 	.description = "GStreamer multimedia framework",
 	.add_options = output_gstreamer_add_options,
+	.version = output_gstreamer_version,
 
 	.init        = output_gstreamer_init,
+	.loop        = output_gstreamer_loop,
 	.set_uri     = output_gstreamer_set_uri,
 	.set_next_uri= output_gstreamer_set_next_uri,
 	.play        = output_gstreamer_play,
