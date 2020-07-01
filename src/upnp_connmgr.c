@@ -186,7 +186,7 @@ static bool remove_mime_type(const char* mime_type)
 	return false;
 }
 
-static gint g_compare_mime_root(gconstpointer a, gconstpointer b)
+static int g_compare_mime_root(const void* a, const void* b)
 {
 	size_t aLen = strlen((const char*)a);
 	size_t bLen = strlen((const char*)b);
@@ -197,12 +197,12 @@ static gint g_compare_mime_root(gconstpointer a, gconstpointer b)
 	return strncmp((const char*) a, (const char*) b, min);
 }
 
-static void g_add_mime_type(gpointer data, gpointer user_data)
+static void g_add_mime_type(void* data, void* user_data)
 {
 	add_mime_type((const char*) data);
 }
 
-static void g_remove_mime_type(gpointer data, gpointer user_data)
+static void g_remove_mime_type(void* data, void* user_data)
 {
 	remove_mime_type((const char*) data);
 }
