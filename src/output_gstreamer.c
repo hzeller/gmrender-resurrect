@@ -194,7 +194,7 @@ static int output_gstreamer_pause(void) {
 	}
 }
 
-static int output_gstreamer_seek(gint64 position_nanos) {
+static int output_gstreamer_seek(int64_t position_nanos) {
 	if (gst_element_seek(player_, 1.0, GST_FORMAT_TIME,
 			     GST_SEEK_FLAG_FLUSH,
 			     GST_SEEK_TYPE_SET, position_nanos,
@@ -423,8 +423,8 @@ static int output_gstreamer_add_options(int *argc, char **argv[])
 	return 0;
 }
 
-static int output_gstreamer_get_position(gint64 *track_duration,
-					 gint64 *track_pos) {
+static int output_gstreamer_get_position(int64_t *track_duration,
+					 int64_t *track_pos) {
 	*track_duration = last_known_time_.duration;
 	*track_pos = last_known_time_.position;
 

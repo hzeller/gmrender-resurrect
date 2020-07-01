@@ -40,10 +40,10 @@ struct output_module {
 	int (*play)(output_transition_cb_t transition_callback);
 	int (*stop)(void);
 	int (*pause)(void);
-	int (*seek)(gint64 position_nanos);
+	int (*seek)(int64_t position_nanos);
 
 	// parameters
-	int (*get_position)(gint64 *track_duration, gint64 *track_pos);
+	int (*get_position)(int64_t *track_duration, int64_t *track_pos);
 	int (*get_volume)(float *);
 	int (*set_volume)(float);
 	int (*get_mute)(int *);
