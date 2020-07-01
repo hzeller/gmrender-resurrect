@@ -594,6 +594,31 @@ static const char *output_gstreamer_version(char *buffer, size_t len)
 	return buffer;
 }
 
+static GMainLoop *main_loop_ = NULL;
+static void exit_loop_sighandler(int sig) {
+	if (main_loop_) {
+		// TODO(hzeller): revisit - this is not safe to do.
+		g_main_loop_quit(main_loop_);
+	}
+}
+
+static int output_gstreamer_loop(void)
+{
+#if !GLIB_CHECK_VERSION(2,32,0)
+	g_thread_init (NULL);  // Was necessary < glib 2.32, deprecated since.
+#endif
+
+        /* Create a main loop that runs the default GLib main context */
+        main_loop_ = g_main_loop_new(NULL, FALSE);
+
+	signal(SIGINT, &exit_loop_sighandler);
+	signal(SIGTERM, &exit_loop_sighandler);
+
+        g_main_loop_run(main_loop_);
+
+        return 0;
+}
+
 struct output_module gstreamer_output = {
         .shortname = "gst",
 	.description = "GStreamer multimedia framework",
@@ -601,6 +626,7 @@ struct output_module gstreamer_output = {
 	.version = output_gstreamer_version,
 
 	.init        = output_gstreamer_init,
+	.loop        = output_gstreamer_loop,
 	.set_uri     = output_gstreamer_set_uri,
 	.set_next_uri= output_gstreamer_set_next_uri,
 	.play        = output_gstreamer_play,

@@ -30,7 +30,6 @@
 #endif
 
 #include <assert.h>
-#include <glib.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -219,10 +218,6 @@ int main(int argc, char **argv)
 {
 	int rc;
 	struct upnp_device_descriptor *upnp_renderer;
-
-#if !GLIB_CHECK_VERSION(2,32,0)
-	g_thread_init (NULL);  // Was necessary < glib 2.32, deprecated since.
-#endif
 
 	if (!process_cmdline(&argc, &argv)) {
 		return EXIT_FAILURE;

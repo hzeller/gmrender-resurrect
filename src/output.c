@@ -114,25 +114,12 @@ int output_init(const char *shortname)
 	return 0;
 }
 
-static GMainLoop *main_loop_ = NULL;
-static void exit_loop_sighandler(int sig) {
-	if (main_loop_) {
-		// TODO(hzeller): revisit - this is not safe to do.
-		g_main_loop_quit(main_loop_);
-	}
-}
-
-int output_loop()
+int output_loop(void)
 {
-        /* Create a main loop that runs the default GLib main context */
-        main_loop_ = g_main_loop_new(NULL, FALSE);
-
-	signal(SIGINT, &exit_loop_sighandler);
-	signal(SIGTERM, &exit_loop_sighandler);
-
-        g_main_loop_run(main_loop_);
-
-        return 0;
+	if (output_module && output_module->loop) {
+		return output_module->loop();
+	}
+	return -1;
 }
 
 int output_add_options(int *argc, char **argv[])
