@@ -25,6 +25,7 @@
 #include "config.h"
 #endif
 
+#define _GNU_SOURCE
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -331,22 +332,33 @@ int connmgr_init(const char* mime_filter_string) {
 	// Manually remove specific MIME types
 	g_slist_foreach(mime_filter.removed_types, g_remove_mime_type, NULL);
 
-	GString* protoInfo = g_string_new(NULL);
+	char *protoInfo = NULL;
 	for (GSList* entry = supported_types_list; entry != NULL; entry = g_slist_next(entry))
 	{
 		Log_info("connmgr", "Registering support for '%s'", (const char*) entry->data);
-		g_string_append_printf(protoInfo, "http-get:*:%s:*,", (const char*) entry->data);
+		int rc = 0;
+		if (protoInfo == NULL && entry->data != NULL)
+			rc = asprintf(&protoInfo, "http-get:*:%s:*,", (const char*) entry->data);
+		else if (entry->data != NULL)
+		{
+			char *tempo = protoInfo;
+			rc = asprintf(&protoInfo, "%shttp-get:*:%s:*,", tempo, (const char*) entry->data);
+			free(tempo);
+		}
+		if (rc == -1)
+			break;
 	}
 
-	if (protoInfo->len > 0) {
+	if (protoInfo != NULL) {
 		// Truncate final comma
-		protoInfo = g_string_truncate(protoInfo, protoInfo->len - 1);
+		size_t length = strlen(protoInfo);
+		protoInfo[length] = '\0';
 		VariableContainer_change(srv->variable_container,
-					 CONNMGR_VAR_SINK_PROTO_INFO, protoInfo->str);
+					 CONNMGR_VAR_SINK_PROTO_INFO, protoInfo);
 	}
 
 	// Free string and its data
-	g_string_free(protoInfo, TRUE);
+	free(protoInfo);
 
 	// Free all lists that were generated
 	g_slist_free_full(supported_types_list, free);
