@@ -51,7 +51,7 @@ to show up on controllers under a recognisable and unique name. This is
 the option to set that name.
 .TP
 .B \-I, \-\-ip\-address \fI\<ip-address\>\fP
-The local IP address the service is running and advertised on.  
+The local IP address the service is running and advertised on.
 
 This can 
 only be a single address, and must be explicitly specified (i.e. not 
@@ -63,7 +63,7 @@ Port to listen to. [49152..65535].
 \fBlibupnp\fP does not use SO_REUSEADDR, 
 so it might be necessary to increment this number.
 .TP
-.B \-P, \-\-pid\-file \fI\<pidfile\>\fP                    
+.B \-P, \-\-pid\-file \fI\<pidfile\>\fP
 Name of the file which the process ID should be written to.
 .TP
 .B \-u, \-\-uuid \fI\<uuid>\fP
@@ -86,7 +86,7 @@ output. Use this option to limit the advertised media support or add/remove
 support for a specific type.
 
 Filters take 3 forms. Multiple filters are separated by a comma.
- 
+
 \(bu Prefix filters will only advertise MIME types that match the supplied prefix. e.g. audio, video, image.
 
 \(bu Inclusion filters will add the supplied type to the supported list. e.g. +audio/x-flac
@@ -124,7 +124,7 @@ List available output modules and exit.
 .B \-o, \-\-output \fI\<module\>\fR
 Output module to use.
 
-Use \fB\-\-output\fP to obtain a list of valid modules.
+Use \fB\-\-list\-outputs\fP to obtain a list of valid modules.
 .SS "Debug options:"
 
 .TP
@@ -140,11 +140,10 @@ Dump Rendering Control service description XML and exit.
 \fB\-\-dump\-transport\-scpd\fR
 Dump A/V Transport service description XML and exit.
 .TP
-.B \-\-logfile \fI\<logfile\>\fP              
-Name of a file to log output of the program to.  
+.B \-\-logfile \fI\<logfile\>\fP
+Name of a file to log output of the program to.
 
-To log to the terminal use
-use \-\-logfile \/dev\/stdout
+To log to the terminal use \-\-logfile /dev/stdout.
 This file can get quite large over time, so it is only recommended to use
 this option for debugging purposes.
 .SS "Help options"
