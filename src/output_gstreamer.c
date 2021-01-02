@@ -156,6 +156,10 @@ static void output_gstreamer_set_uri(const char *uri,
 	gsuri_ = (uri && *uri) ? strdup(uri) : NULL;
 	meta_update_callback_ = meta_cb;
 	SongMetaData_clear(&song_meta_);
+
+	// If already playing, update the playbin's URI
+	if (get_current_player_state() == GST_STATE_PLAYING)
+		output_gstreamer_play(play_trans_callback_);
 }
 
 static int output_gstreamer_play(output_transition_cb_t callback) {
