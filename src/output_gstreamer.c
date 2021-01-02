@@ -143,25 +143,6 @@ static GstState get_current_player_state() {
 	return state;
 }
 
-static void output_gstreamer_set_next_uri(const char *uri) {
-	Log_info("gstreamer", "Set next uri to '%s'", uri);
-	free(gs_next_uri_);
-	gs_next_uri_ = (uri && *uri) ? strdup(uri) : NULL;
-}
-
-static void output_gstreamer_set_uri(const char *uri,
-				     output_update_meta_cb_t meta_cb) {
-	Log_info("gstreamer", "Set uri to '%s'", uri);
-	free(gsuri_);
-	gsuri_ = (uri && *uri) ? strdup(uri) : NULL;
-	meta_update_callback_ = meta_cb;
-	SongMetaData_clear(&song_meta_);
-
-	// If already playing, update the playbin's URI
-	if (get_current_player_state() == GST_STATE_PLAYING)
-		output_gstreamer_play(play_trans_callback_);
-}
-
 static int output_gstreamer_play(output_transition_cb_t callback) {
 	play_trans_callback_ = callback;
 	if (get_current_player_state() != GST_STATE_PAUSED) {
@@ -207,6 +188,25 @@ static int output_gstreamer_seek(gint64 position_nanos) {
 	} else {
 		return 0;
 	}
+}
+
+static void output_gstreamer_set_next_uri(const char *uri) {
+	Log_info("gstreamer", "Set next uri to '%s'", uri);
+	free(gs_next_uri_);
+	gs_next_uri_ = (uri && *uri) ? strdup(uri) : NULL;
+}
+
+static void output_gstreamer_set_uri(const char *uri,
+				     output_update_meta_cb_t meta_cb) {
+	Log_info("gstreamer", "Set uri to '%s'", uri);
+	free(gsuri_);
+	gsuri_ = (uri && *uri) ? strdup(uri) : NULL;
+	meta_update_callback_ = meta_cb;
+	SongMetaData_clear(&song_meta_);
+
+	// If already playing, update the playbin's URI
+	if (get_current_player_state() == GST_STATE_PLAYING)
+		output_gstreamer_play(play_trans_callback_);
 }
 
 #if 0
