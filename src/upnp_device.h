@@ -51,7 +51,7 @@ struct upnp_device;
 struct action_event;
 
 struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
-                                     const char *ip_address,
+                                     const char *interface_name,
                                      unsigned short port);
 
 void upnp_device_shutdown(struct upnp_device *device);

@@ -66,11 +66,7 @@ static gboolean show_transport_scpd = FALSE;
 static gboolean show_outputs = FALSE;
 static gboolean daemon_mode = FALSE;
 
-// IP-address seems strange in libupnp: they actually don't bind to
-// that address, but to INADDR_ANY (miniserver.c in upnp library).
-// Apparently they just use this for the advertisement ? Anyway, 0.0.0.0 would
-// not work.
-static const gchar *ip_address = NULL;
+static const gchar *interface_name = NULL;
 static int listen_port = 49494;
 
 #ifdef GMRENDER_UUID
@@ -89,10 +85,8 @@ static const gchar *mime_filter = NULL;
 static GOptionEntry option_entries[] = {
     {"version", 0, 0, G_OPTION_ARG_NONE, &show_version,
      "Output version information and exit", NULL},
-    {"ip-address", 'I', 0, G_OPTION_ARG_STRING, &ip_address,
-     "The local IP address the service is running and advertised "
-     "(only one, 0.0.0.0 won't work)",
-     NULL},
+    {"interface-name", 'I', 0, G_OPTION_ARG_STRING, &interface_name,
+     "The local interface name the service is running and advertised", NULL},
     // The following is not very reliable, as libupnp does not set
     // SO_REUSEADDR by default, so it might increment (sending patch).
     {"port", 'p', 0, G_OPTION_ARG_INT, &listen_port,
@@ -291,7 +285,7 @@ int main(int argc, char **argv) {
               listen_port);
     return EXIT_FAILURE;
   }
-  device = upnp_device_init(upnp_renderer, ip_address, listen_port);
+  device = upnp_device_init(upnp_renderer, interface_name, listen_port);
   if (device == NULL) {
     Log_error("main", "ERROR: Failed to initialize UPnP device");
     return EXIT_FAILURE;
