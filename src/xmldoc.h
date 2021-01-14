@@ -26,6 +26,7 @@
 
 #include <ixml.h>
 #include <memory>
+#include <string>
 
 // Basic XML api with only the functions we need. Wrapper around underlying
 // ixml.
