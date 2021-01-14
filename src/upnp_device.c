@@ -416,13 +416,13 @@ static UPNP_CALLBACK(event_handler, EventType, event, userdata)
 
 static gboolean initialize_device(struct upnp_device_descriptor *device_def,
 				  struct upnp_device *result_device,
-				  const char *ip_address,
+				  const char *interface_name,
 				  unsigned short port)
 {
 	int rc;
 	char *buf;
 
-	rc = UpnpInit(ip_address, port);
+	rc = UpnpInit2(interface_name, port);
 	/* There have been situations reported in which UPNP had issues
 	 * initializing right after network came up. #129
 	 */
@@ -430,13 +430,13 @@ static gboolean initialize_device(struct upnp_device_descriptor *device_def,
 	static const int kRetryTimeMs = 1000;
 	while (rc != UPNP_E_SUCCESS && retries_left--) {
 		usleep(kRetryTimeMs * 1000);
-		Log_error("upnp", "UpnpInit(ip=%s, port=%d) Error: %s (%d). Retrying... (%ds)",
-			  ip_address, port, UpnpGetErrorMessage(rc), rc, retries_left);
-		rc = UpnpInit(ip_address, port);
+		Log_error("upnp", "UpnpInit2(interface=%s, port=%d) Error: %s (%d). Retrying... (%ds)",
+			  interface_name, port, UpnpGetErrorMessage(rc), rc, retries_left);
+		rc = UpnpInit2(interface_name, port);
 	}
 	if (UPNP_E_SUCCESS != rc) {
-		Log_error("upnp", "UpnpInit(ip=%s, port=%d) Error: %s (%d). Giving up.",
-			  ip_address, port, UpnpGetErrorMessage(rc), rc);
+		Log_error("upnp", "UpnpInit2(interface=%s, port=%d) Error: %s (%d). Giving up.",
+			  interface_name, port, UpnpGetErrorMessage(rc), rc);
 		return FALSE;
 	}
 	Log_info("upnp", "Registered IP=%s port=%d\n",
@@ -483,7 +483,7 @@ static gboolean initialize_device(struct upnp_device_descriptor *device_def,
 }
 
 struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
-				     const char *ip_address,
+				     const char *interface_name,
 				     unsigned short port)
 {
 	int rc;
@@ -516,7 +516,7 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 		webserver_register_buf(srv->scpd_url, buf, "text/xml");
 	}
 
-	if (!initialize_device(device_def, result_device, ip_address, port)) {
+	if (!initialize_device(device_def, result_device, interface_name, port)) {
 		UpnpFinish();
 		free(result_device);
 		return NULL;

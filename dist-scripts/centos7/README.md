@@ -45,7 +45,7 @@ Additional configuration is also recommended, sice there's no configuration file
     # vi /etc/systemd/system/gmediarender.service.d/customize.conf   # or nano, or emacs, or whatever editor you like
     [Service]
     ExecStart=
-    ExecStart=/usr/bin/gmediarender --port=49494 --ip-address=<your_IP_address> -f "DLNA Renderer GMediaRender"
+    ExecStart=/usr/bin/gmediarender --port=49494 --interface-name=<your_interface_name> -f "DLNA Renderer GMediaRender"
 
     # systemctl daemon-reload
     # systemctl start gmediarender.service
