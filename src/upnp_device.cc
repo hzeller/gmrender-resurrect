@@ -395,12 +395,14 @@ static gboolean initialize_device(struct upnp_device_descriptor *device_def,
   while (rc != UPNP_E_SUCCESS && retries_left--) {
     usleep(kRetryTimeMs * 1000);
     Log_error("upnp",
-              "UpnpInit2(ip=%s, port=%d) Error: %s (%d). Retrying... (%ds)",
+              "UpnpInit2(interface=%s, port=%d) Error: %s (%d). "
+              "Retrying... (%ds)",
               interface_name, port, UpnpGetErrorMessage(rc), rc, retries_left);
     rc = UpnpInit2(interface_name, port);
   }
   if (UPNP_E_SUCCESS != rc) {
-    Log_error("upnp", "UpnpInit2(ip=%s, port=%d) Error: %s (%d). Giving up.",
+    Log_error("upnp", "UpnpInit2(interface=%s, port=%d) Error: %s (%d). "
+              "Giving up.",
               interface_name, port, UpnpGetErrorMessage(rc), rc);
     return FALSE;
   }
