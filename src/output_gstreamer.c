@@ -570,17 +570,17 @@ static int output_gstreamer_init(void)
 		sink = gst_element_factory_make (video_sink, "sink");
 		g_object_set (G_OBJECT (player_), "video-sink", sink, NULL);
 	}
-    if(video_pipe != NULL) {
-        GstElement *sink = NULL;
-        Log_info("gstreamer", "Setting video sink-pipeline to %s\n", video_pipe);
-        sink = gst_parse_bin_from_description(video_pipe, TRUE, NULL);
+	if (video_pipe != NULL) {
+		GstElement *sink = NULL;
+		Log_info("gstreamer", "Setting video sink-pipeline to %s\n", video_pipe);
+		sink = gst_parse_bin_from_description(video_pipe, TRUE, NULL);
 
-        if(sink == NULL) {
-            Log_error("gstreamer", "Could not create pipeline.");
-        } else {
-            g_object_set (G_OBJECT (player_), "video-sink", sink, NULL);
-        }
-    }
+		if (sink == NULL) {
+			Log_error("gstreamer", "Could not create pipeline.");
+		} else {
+			g_object_set (G_OBJECT (player_), "video-sink", sink, NULL);
+		}
+	}
 
 	if (gst_element_set_state(player_, GST_STATE_READY) ==
 	    GST_STATE_CHANGE_FAILURE) {
