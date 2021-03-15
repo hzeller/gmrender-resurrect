@@ -371,7 +371,8 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 static gchar *audio_sink = NULL;
 static gchar *audio_device = NULL;
 static gchar *audio_pipe = NULL;
-static gchar *videosink = NULL;
+static gchar *video_sink = NULL;
+static gchar *video_pipe = NULL;
 static double initial_db = 0.0;
 
 /* Options specific to output_gstreamer */
@@ -387,9 +388,13 @@ static GOptionEntry option_entries[] = {
           "GStreamer audio sink to pipeline"
           "(gst-launch format) useful for further output format conversion.",
 	  NULL },
-        { "gstout-videosink", 0, 0, G_OPTION_ARG_STRING, &videosink,
+        { "gstout-videosink", 0, 0, G_OPTION_ARG_STRING, &video_sink,
           "GStreamer video sink to use "
 	  "(autovideosink, xvimagesink, ximagesink, ...)",
+	  NULL },
+        { "gstout-videopipe", 0, 0, G_OPTION_ARG_STRING, &video_pipe,
+          "GStreamer video sink to pipeline"
+          "(gst-launch format) useful for further output format conversion.",
 	  NULL },
         { "gstout-buffer-duration", 0, 0, G_OPTION_ARG_DOUBLE, &buffer_duration,
           "The size of the buffer in seconds. Set to zero to disable buffering.",
@@ -528,6 +533,10 @@ static int output_gstreamer_init(void)
 		Log_error("gstreamer", "--gstout-audosink and --gstout-audiopipe are mutually exclusive.");
 		return 1;
 	}
+	if (video_sink != NULL && video_pipe != NULL) {
+		Log_error("gstreamer", "--gstout-videosink and --gstout-videopipe are mutually exclusive.");
+		return 1;
+	}
 
 	if (audio_sink != NULL) {
 		GstElement *sink = NULL;
@@ -555,11 +564,22 @@ static int output_gstreamer_init(void)
 			g_object_set (G_OBJECT (player_), "audio-sink", sink, NULL);
 		}
 	}
-	if (videosink != NULL) {
+	if (video_sink != NULL) {
 		GstElement *sink = NULL;
-		Log_info("gstreamer", "Setting video sink to %s", videosink);
-		sink = gst_element_factory_make (videosink, "sink");
+		Log_info("gstreamer", "Setting video sink to %s", video_sink);
+		sink = gst_element_factory_make (video_sink, "sink");
 		g_object_set (G_OBJECT (player_), "video-sink", sink, NULL);
+	}
+	if (video_pipe != NULL) {
+		GstElement *sink = NULL;
+		Log_info("gstreamer", "Setting video sink-pipeline to %s\n", video_pipe);
+		sink = gst_parse_bin_from_description(video_pipe, TRUE, NULL);
+
+		if (sink == NULL) {
+			Log_error("gstreamer", "Could not create pipeline.");
+		} else {
+			g_object_set (G_OBJECT (player_), "video-sink", sink, NULL);
+		}
 	}
 
 	if (gst_element_set_state(player_, GST_STATE_READY) ==
