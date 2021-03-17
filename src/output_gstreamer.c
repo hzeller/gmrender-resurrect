@@ -159,6 +159,15 @@ static void output_gstreamer_set_uri(const char *uri,
 }
 
 static int output_gstreamer_play(output_transition_cb_t callback) {
+	Log_info("gstreamer", "PLAY requested");
+
+        //ASimb: the following lines ensure, that no empty URI  
+        //       is transmitted to the GStreamer
+        if (gsuri_==NULL) {
+	        Log_info("gstreamer", "setting play state failed (No URI to play)");
+                return -1;
+        }
+
 	play_trans_callback_ = callback;
 	if (get_current_player_state() != GST_STATE_PAUSED) {
 		if (gst_element_set_state(player_, GST_STATE_READY) ==
@@ -177,6 +186,7 @@ static int output_gstreamer_play(output_transition_cb_t callback) {
 }
 
 static int output_gstreamer_stop(void) {
+	Log_info("gstreamer", "STOP requested");
 	if (gst_element_set_state(player_, GST_STATE_READY) ==
 	    GST_STATE_CHANGE_FAILURE) {
 		return -1;
@@ -186,6 +196,7 @@ static int output_gstreamer_stop(void) {
 }
 
 static int output_gstreamer_pause(void) {
+	Log_info("gstreamer", "PAUSE requested");
 	if (gst_element_set_state(player_, GST_STATE_PAUSED) ==
 	    GST_STATE_CHANGE_FAILURE) {
 		return -1;
@@ -195,6 +206,7 @@ static int output_gstreamer_pause(void) {
 }
 
 static int output_gstreamer_seek(gint64 position_nanos) {
+	Log_info("gstreamer", "SEEK requested");
 	if (gst_element_seek(player_, 1.0, GST_FORMAT_TIME,
 			     GST_SEEK_FLAG_FLUSH,
 			     GST_SEEK_TYPE_SET, position_nanos,
@@ -284,14 +296,28 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 			free(gsuri_);
 			gsuri_ = gs_next_uri_;
 			gs_next_uri_ = NULL;
-			gst_element_set_state(player_, GST_STATE_READY);
+                        //ASimb: ensure, that gstreamer REALLY stops
+                        while (get_current_player_state() != GST_STATE_READY) {
+	      			gst_element_set_state(player_, GST_STATE_READY);
+			}
+		        Log_info("gstreamer", "%s: starting next stream (NextURI)", msgSrcName);
 			g_object_set(G_OBJECT(player_), "uri", gsuri_, NULL);
 			gst_element_set_state(player_, GST_STATE_PLAYING);
 			if (play_trans_callback_) {
 				play_trans_callback_(PLAY_STARTED_NEXT_STREAM);
 			}
-		} else if (play_trans_callback_) {
-			play_trans_callback_(PLAY_STOPPED);
+		} else {
+                        //ASimb: the following second line is needed to ensure, 
+                        //       that the GStreamer really stops
+		        Log_info("gstreamer", "%s: No further stream available", msgSrcName);
+                        gst_element_set_state(player_, GST_STATE_READY);
+                      
+                        if (play_trans_callback_) {
+			        play_trans_callback_(PLAY_STOPPED);
+                        }
+                        //ASimb: URI has to cleared 
+			free(gsuri_);
+			gsuri_ = NULL;
 		}
 		break;
 
@@ -480,18 +506,19 @@ static void prepare_next_stream(GstElement *obj, gpointer userdata) {
 
 	Log_info("gstreamer", "about-to-finish cb: setting uri %s",
 		 gs_next_uri_);
-	free(gsuri_);
-	gsuri_ = gs_next_uri_;
-	gs_next_uri_ = NULL;
-	if (gsuri_ != NULL) {
-		g_object_set(G_OBJECT(player_), "uri", gsuri_, NULL);
-		if (play_trans_callback_) {
-			// TODO(hzeller): can we figure out when we _actually_
-			// start playing this ? there are probably a couple
-			// of seconds between now and actual start.
-			play_trans_callback_(PLAY_STARTED_NEXT_STREAM);
-		}
-	}
+//ASimb: not needed any more due to sampling-rate-problem
+//	free(gsuri_);
+//	gsuri_ = gs_next_uri_;
+//	gs_next_uri_ = NULL;
+//	if (gsuri_ != NULL) {
+//		g_object_set(G_OBJECT(player_), "uri", gsuri_, NULL);
+//		if (play_trans_callback_) {
+//			// TODO(hzeller): can we figure out when we _actually_
+//			// start playing this ? there are probably a couple
+//			// of seconds between now and actual start.
+//			play_trans_callback_(PLAY_STARTED_NEXT_STREAM);
+//		}
+//	}
 }
 
 static int output_gstreamer_init(void)
