@@ -244,6 +244,9 @@ void register_mime_type(const char *mime_type) {
 	  register_mime_type_internal("audio/m4a");
 	  register_mime_type_internal("audio/mp4");
 	}
+	if (strcmp("video/quicktime", mime_type) == 0) {
+	  register_mime_type_internal("video/mp4");
+	}
 }
 
 static mime_type_filters_t connmgr_parse_mime_filter_string(const char* filter_string)
