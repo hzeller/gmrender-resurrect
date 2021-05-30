@@ -1,0 +1,198 @@
+<?xml version="1.0" ?>
+<node name="/Media_Player" xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
+  <interface name="org.mpris.MediaPlayer2">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+
+    <method name="Raise" tp:name-for-bindings="Raise">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          Brings the media player's user interface to the front using any
+          appropriate mechanism available.
+        </p>
+        <p>
+          The media player may be unable to control how its user interface
+          is displayed, or it may not have a graphical user interface at all.
+          In this case, the <tp:member-ref>CanRaise</tp:member-ref> property is
+          <strong>false</strong> and this method does nothing.
+        </p>
+      </tp:docstring>
+    </method>
+
+    <method name="Quit" tp:name-for-bindings="Quit">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Causes the media player to stop running.</p>
+        <p>
+          The media player may refuse to allow clients to shut it down.
+          In this case, the <tp:member-ref>CanQuit</tp:member-ref> property is
+          <strong>false</strong> and this method does nothing.
+        </p>
+        <p>
+          Note: Media players which can be D-Bus activated, or for which there is
+          no sensibly easy way to terminate a running instance (via the main
+          interface or a notification area icon for example) should allow clients
+          to use this method. Otherwise, it should not be needed.
+        </p>
+        <p>If the media player does not have a UI, this should be implemented.</p>
+      </tp:docstring>
+    </method>
+
+    <property name="CanQuit" type="b" tp:name-for-bindings="Can_Quit" access="read">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          If <strong>false</strong>, calling
+          <tp:member-ref>Quit</tp:member-ref> will have no effect, and may
+          raise a NotSupported error.  If <strong>true</strong>, calling
+          <tp:member-ref>Quit</tp:member-ref> will cause the media application
+          to attempt to quit (although it may still be prevented from quitting
+          by the user, for example).
+        </p>
+      </tp:docstring>
+    </property>
+
+    <property name="Fullscreen" type="b" tp:name-for-bindings="Fullscreen" access="readwrite">
+      <tp:added version="2.2" />
+      <annotation name="org.mpris.MediaPlayer2.property.optional" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>Whether the media player is occupying the fullscreen.</p>
+        <p>
+          This is typically used for videos.  A value of <strong>true</strong>
+          indicates that the media player is taking up the full screen.
+        </p>
+        <p>
+          Media centre software may well have this value fixed to <strong>true</strong>
+        </p>
+        <p>
+          If <tp:member-ref>CanSetFullscreen</tp:member-ref> is <strong>true</strong>,
+          clients may set this property to <strong>true</strong> to tell the media player
+          to enter fullscreen mode, or to <strong>false</strong> to return to windowed
+          mode.
+        </p>
+        <p>
+          If <tp:member-ref>CanSetFullscreen</tp:member-ref> is <strong>false</strong>,
+          then attempting to set this property should have no effect, and may raise
+          an error.  However, even if it is <strong>true</strong>, the media player
+          may still be unable to fulfil the request, in which case attempting to set
+          this property will have no effect (but should not raise an error).
+        </p>
+        <tp:rationale>
+          <p>
+            This allows remote control interfaces, such as LIRC or mobile devices like
+            phones, to control whether a video is shown in fullscreen.
+          </p>
+        </tp:rationale>
+      </tp:docstring>
+    </property>
+
+    <property name="CanSetFullscreen" type="b" tp:name-for-bindings="Can_Set_Fullscreen" access="read">
+      <tp:added version="2.2" />
+      <annotation name="org.mpris.MediaPlayer2.property.optional" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          If <strong>false</strong>, attempting to set
+          <tp:member-ref>Fullscreen</tp:member-ref> will have no effect, and may
+          raise an error.  If <strong>true</strong>, attempting to set
+          <tp:member-ref>Fullscreen</tp:member-ref> will not raise an error, and (if it
+          is different from the current value) will cause the media player to attempt to
+          enter or exit fullscreen mode.
+        </p>
+        <p>
+          Note that the media player may be unable to fulfil the request.
+          In this case, the value will not change.  If the media player knows in
+          advance that it will not be able to fulfil the request, however, this
+          property should be <strong>false</strong>.
+        </p>
+        <tp:rationale>
+          <p>
+            This allows clients to choose whether to display controls for entering
+            or exiting fullscreen mode.
+          </p>
+        </tp:rationale>
+      </tp:docstring>
+    </property>
+
+    <property name="CanRaise" type="b" tp:name-for-bindings="Can_Raise" access="read">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          If <strong>false</strong>, calling
+          <tp:member-ref>Raise</tp:member-ref> will have no effect, and may
+          raise a NotSupported error.  If <strong>true</strong>, calling
+          <tp:member-ref>Raise</tp:member-ref> will cause the media application
+          to attempt to bring its user interface to the front, although it may
+          be prevented from doing so (by the window manager, for example).
+        </p>
+      </tp:docstring>
+    </property>
+
+    <property name="HasTrackList" type="b" tp:name-for-bindings="Has_TrackList" access="read">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          Indicates whether the <strong>/org/mpris/MediaPlayer2</strong>
+          object implements the <strong>org.mpris.MediaPlayer2.TrackList</strong>
+          interface.
+        </p>
+      </tp:docstring>
+    </property>
+
+    <property name="Identity" type="s" tp:name-for-bindings="Identity" access="read">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>A friendly name to identify the media player to users.</p>
+        <p>This should usually match the name found in .desktop files</p>
+        <p>(eg: "VLC media player").</p>
+      </tp:docstring>
+    </property>
+
+    <property name="DesktopEntry" type="s" tp:name-for-bindings="Desktop_Entry" access="read">
+      <annotation name="org.mpris.MediaPlayer2.property.optional" value="true"/>
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>The basename of an installed .desktop file which complies with the <a href="http://standards.freedesktop.org/desktop-entry-spec/latest/">Desktop entry specification</a>,
+        with the ".desktop" extension stripped.</p>
+        <p>
+          Example: The desktop entry file is "/usr/share/applications/vlc.desktop",
+          and this property contains "vlc"
+        </p>
+      </tp:docstring>
+    </property>
+
+    <property name="SupportedUriSchemes" type="as" tp:name-for-bindings="Supported_Uri_Schemes" access="read">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The URI schemes supported by the media player.
+        </p>
+        <p>
+          This can be viewed as protocols supported by the player in almost
+          all cases.  Almost every media player will include support for the
+          "file" scheme.  Other common schemes are "http" and "rtsp".
+        </p>
+        <p>
+          Note that URI schemes should be lower-case.
+        </p>
+        <tp:rationale>
+          <p>
+            This is important for clients to know when using the editing
+            capabilities of the Playlist interface, for example.
+          </p>
+        </tp:rationale>
+      </tp:docstring>
+    </property>
+
+    <property name="SupportedMimeTypes" type="as" tp:name-for-bindings="Supported_Mime_Types" access="read">
+      <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The mime-types supported by the media player.
+        </p>
+        <p>
+          Mime-types should be in the standard format (eg: audio/mpeg or
+          application/ogg).
+        </p>
+        <tp:rationale>
+          <p>
+            This is important for clients to know when using the editing
+            capabilities of the Playlist interface, for example.
+          </p>
+        </tp:rationale>
+      </tp:docstring>
+    </property>
+
+  </interface>
+</node>
+<!-- vim:set sw=2 sts=2 et ft=xml: -->
