@@ -180,12 +180,12 @@ static int output_gstreamer_pause(void) {
 }
 
 static int output_gstreamer_seek(gint64 position_nanos) {
-  if (gst_element_seek_simple(player_, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
-                              position_nanos)) {
-    return 0;
-  } else {
-    return -1;
-  }
+	if (gst_element_seek_simple(player_, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
+								position_nanos)) {
+		return 0;
+	} else {
+		return -1;
+	}
 }
 
 static void output_gstreamer_set_next_uri(const char *uri) {
