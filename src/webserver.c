@@ -37,7 +37,7 @@
 
 #include <upnp.h>
 #include <upnptools.h>  // UpnpGetErrorMessage
-#include <ithread.h>
+#include <pthread.h>
 
 #include "logging.h"
 #include "webserver.h"

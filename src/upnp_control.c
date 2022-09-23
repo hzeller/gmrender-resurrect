@@ -38,7 +38,7 @@
 #include <string.h>
 
 #include <upnp.h>
-#include <ithread.h>
+#include <pthread.h>
 
 #include "logging.h"
 #include "webserver.h"
@@ -178,11 +178,11 @@ typedef enum {
 
 static variable_container_t *state_variables_ = NULL;
 
-static ithread_mutex_t control_mutex;
+static pthread_mutex_t control_mutex;
 
 static void service_lock(void)
 {
-	ithread_mutex_lock(&control_mutex);
+	pthread_mutex_lock(&control_mutex);
 	struct upnp_last_change_collector*
 		collector = upnp_control_get_service()->last_change;
 	if (collector) {
@@ -197,7 +197,7 @@ static void service_unlock(void)
 	if (collector) {
 		UPnPLastChangeCollector_finish(collector);
 	}
-	ithread_mutex_unlock(&control_mutex);
+	pthread_mutex_unlock(&control_mutex);
 }
 
 static struct argument arguments_list_presets[] = {

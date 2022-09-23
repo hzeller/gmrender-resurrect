@@ -32,7 +32,7 @@
 #include <string.h>
 
 #include <upnp.h>
-#include <ithread.h>
+#include <pthread.h>
 
 // Can't include above upnp.h breaks stdbool?
 #include <stdbool.h>
@@ -141,7 +141,7 @@ static const char *direction_values[] = {
 	NULL
 };
 
-static ithread_mutex_t connmgr_mutex;
+static pthread_mutex_t connmgr_mutex;
 
 static GSList* supported_types_list;
 

@@ -41,7 +41,7 @@
 #include <arpa/inet.h>
 
 #include <upnp.h>
-#include <ithread.h>
+#include <pthread.h>
 
 #include "webserver.h"
 #include "upnp_service.h"

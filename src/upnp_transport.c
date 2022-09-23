@@ -39,7 +39,7 @@
 #include <glib.h>
 
 #include <upnp.h>
-#include <ithread.h>
+#include <pthread.h>
 
 #include "output.h"
 #include "upnp_service.h"
@@ -406,11 +406,11 @@ static variable_container_t *state_variables_ = NULL;
 
 /* protects transport_values, and service-specific state */
 
-static ithread_mutex_t transport_mutex;
+static pthread_mutex_t transport_mutex;
 
 static void service_lock(void)
 {
-	ithread_mutex_lock(&transport_mutex);
+	pthread_mutex_lock(&transport_mutex);
 
 	struct upnp_last_change_collector *
 		collector = upnp_transport_get_service()->last_change;
@@ -426,7 +426,7 @@ static void service_unlock(void)
 	if (collector) {
 		UPnPLastChangeCollector_finish(collector);
 	}
-	ithread_mutex_unlock(&transport_mutex);
+	pthread_mutex_unlock(&transport_mutex);
 }
 
 static char has_instance_id(struct action_event *event)

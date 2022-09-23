@@ -39,7 +39,7 @@
 #include <arpa/inet.h>
 
 #include <upnp.h>
-#include <ithread.h>
+#include <pthread.h>
 #include <upnptools.h>
 
 #include "logging.h"
@@ -56,7 +56,7 @@
 
 struct upnp_device {
 	struct upnp_device_descriptor *upnp_device_descriptor;
-	ithread_mutex_t device_mutex;
+	pthread_mutex_t device_mutex;
         UpnpDevice_Handle device_handle;
 };
 
@@ -98,13 +98,13 @@ void upnp_append_variable(struct action_event *event,
 	assert(event != NULL);
 	assert(paramname != NULL);
 
-	ithread_mutex_lock(service->service_mutex);
+	pthread_mutex_lock(service->service_mutex);
 
 	value = VariableContainer_get(service->variable_container, varnum, NULL);
 	assert(value != NULL);   // triggers on invalid variable.
 	upnp_add_response(event, paramname, value);
 
-	ithread_mutex_unlock(service->service_mutex);
+	pthread_mutex_unlock(service->service_mutex);
 }
 
 void upnp_set_error(struct action_event *event, int error_code,
@@ -180,7 +180,7 @@ static int handle_subscription_request(struct upnp_device *priv,
 	}
 
 	int result = -1;
-	ithread_mutex_lock(&(priv->device_mutex));
+	pthread_mutex_lock(&(priv->device_mutex));
 
 	// There is really only one variable evented: LastChange
 	const char *eventvar_names[] = {
@@ -193,7 +193,7 @@ static int handle_subscription_request(struct upnp_device *priv,
 
 	// Build the current state of the variables as one gigantic initial
 	// LastChange update.
-	ithread_mutex_lock(srv->service_mutex);
+	pthread_mutex_lock(srv->service_mutex);
 	const int var_count =
 		VariableContainer_get_num_vars(srv->variable_container);
 	// TODO(hzeller): maybe use srv->last_change directly ?
@@ -209,7 +209,7 @@ static int handle_subscription_request(struct upnp_device *priv,
 			UPnPLastChangeBuilder_add(builder, name, value);
 		}
 	}
-	ithread_mutex_unlock(srv->service_mutex);
+	pthread_mutex_unlock(srv->service_mutex);
 	char *xml_value = UPnPLastChangeBuilder_to_xml(builder);
 	Log_info("upnp", "Initial variable sync: %s", xml_value);
 	eventvar_values[0] = xmlescape(xml_value, 0);
@@ -227,7 +227,7 @@ static int handle_subscription_request(struct upnp_device *priv,
 			  UpnpGetErrorMessage(rc), rc);
 	}
 
-	ithread_mutex_unlock(&(priv->device_mutex));
+	pthread_mutex_unlock(&(priv->device_mutex));
 
 	free((char*)eventvar_values[0]);
 
@@ -258,7 +258,7 @@ static int handle_var_request(struct upnp_device *priv,
 		return -1;
 	}
 
-	ithread_mutex_lock(srv->service_mutex);
+	pthread_mutex_lock(srv->service_mutex);
 
 	char *result = NULL;
 	const int var_count =
@@ -273,7 +273,7 @@ static int handle_var_request(struct upnp_device *priv,
 		}
 	}
 
-	ithread_mutex_unlock(srv->service_mutex);
+	pthread_mutex_unlock(srv->service_mutex);
 
 	UpnpStateVarRequest_set_CurrentVal(event, result);
 	int errCode = (result == NULL) ? UPNP_SOAP_E_INVALID_VAR : UPNP_E_SUCCESS;
@@ -314,9 +314,9 @@ static int handle_action_request(struct upnp_device *priv,
 	// It would be good to enqueue the upnp_device_notify() after
 	// the action event is finished.
 	if (event_service->last_change) {
-		ithread_mutex_lock(event_service->service_mutex);
+		pthread_mutex_lock(event_service->service_mutex);
 		UPnPLastChangeCollector_start(event_service->last_change);
-		ithread_mutex_unlock(event_service->service_mutex);
+		pthread_mutex_unlock(event_service->service_mutex);
 	}
 
 #ifdef ENABLE_ACTION_LOGGING
@@ -383,9 +383,9 @@ static int handle_action_request(struct upnp_device *priv,
 	}
 
 	if (event_service->last_change) {   // See comment above.
-		ithread_mutex_lock(event_service->service_mutex);
+		pthread_mutex_lock(event_service->service_mutex);
 		UPnPLastChangeCollector_finish(event_service->last_change);
-		ithread_mutex_unlock(event_service->service_mutex);
+		pthread_mutex_unlock(event_service->service_mutex);
 	}
 	return 0;
 }
@@ -502,7 +502,7 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 
 	struct upnp_device *result_device = (struct upnp_device*)malloc(sizeof(*result_device));
 	result_device->upnp_device_descriptor = device_def;
-	ithread_mutex_init(&(result_device->device_mutex), NULL);
+	pthread_mutex_init(&(result_device->device_mutex), NULL);
 
 	/* register icons in web server */
         for (int i = 0; (icon_entry = device_def->icons[i]); i++) {

@@ -43,7 +43,7 @@
 #endif
 
 #include <upnp.h>
-#include <ithread.h>
+#include <pthread.h>
 
 // For version strings of upnp and gstreamer
 #include <upnpconfig.h>

@@ -25,7 +25,7 @@
 #define _UPNP_SERVICE_H
 
 #include <upnp.h>
-#include <ithread.h>
+#include <pthread.h>
 #include "upnp_compat.h"
 
 struct action;
@@ -91,7 +91,7 @@ struct icon {
 };
 
 struct service {
-	ithread_mutex_t *service_mutex;
+	pthread_mutex_t *service_mutex;
 	const char *service_id;
 	const char *service_type;
 	const char *scpd_url;
