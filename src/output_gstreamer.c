@@ -510,7 +510,12 @@ static int output_gstreamer_init(void)
 #endif
 
 	player_ = gst_element_factory_make(player_element_name, "play");
-	assert(player_ != NULL);
+	if (!player_) {
+		Log_error("gstreamer", "Can not initialize '%s'; "
+			  "gstreamer installation with plugins complete ?",
+			  player_element_name);
+		return 1;
+	}
 
         /* set buffer size */
         if (buffer_duration > 0) {
