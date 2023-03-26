@@ -1,23 +1,29 @@
-FROM debian:stable-slim as build
+ARG AUDIO_BACKEND="alsa"
 
-RUN apt-get update && \
-    apt-get install -y build-essential autoconf automake libtool pkg-config libupnp-dev libgstreamer1.0-dev uuid-runtime
-
+# Build image
+FROM alpine:latest AS build
+ARG UUID
+RUN apk add --update build-base autoconf automake libtool pkgconfig gstreamer-dev libupnp-dev uuidgen
 WORKDIR /opt/gmrender-resurrect
 COPY . .
+RUN ./autogen.sh && ./configure CPPFLAGS="-DGMRENDER_UUID='\"${UUID:-`uuidgen`}\"'"
+RUN make && make install DESTDIR=/gmrender-install
 
-RUN ./autogen.sh && ./configure CPPFLAGS="-DGMRENDER_UUID='\"`uuidgen`\"'" && make && make install
+# ALSA image
+FROM alpine:latest AS alpine-alsa
+RUN apk add --update alsa-lib alsa-utils
 
-FROM debian:stable-slim as run
+# PulsaAudio image
+FROM alpine:latest AS alpine-pulse
+RUN apk add --update pulseaudio
 
-COPY --from=build /usr/local/bin/gmediarender /usr/local/bin/gmediarender
-COPY --from=build /usr/local/share/gmediarender/grender-64x64.png /usr/local/share/gmediarender/grender-64x64.png
-COPY --from=build /usr/local/share/gmediarender/grender-128x128.png /usr/local/share/gmediarender/grender-128x128.png
-
-RUN apt-get update && \
-    apt-get install -y pulseaudio libupnp-dev libgstreamer1.0-dev gstreamer1.0-libav gstreamer1.0-pulseaudio \
-        gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly
-
+# Run image
+FROM alpine-${AUDIO_BACKEND}
+COPY --from=build /gmrender-install /
+RUN apk add --update tini libupnp gstreamer gstreamer-tools gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly
+ENV FRIENDLY_NAME=
+ENV UUID=
+ENV OPTIONS=
 EXPOSE 49494
-
-ENTRYPOINT gmediarender --logfile=stdout -f $FRIENDLY_NAME
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["/bin/sh", "-c", "/usr/local/bin/gmediarender --logfile=stdout ${FRIENDLY_NAME:+-f \"$FRIENDLY_NAME\"} ${UUID:+--uuid \"$UUID\"} $OPTIONS"]
