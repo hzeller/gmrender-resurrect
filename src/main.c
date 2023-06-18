@@ -127,14 +127,14 @@ static GOptionEntry option_entries[] = {
 static const char *GetVersionInfo(char *buffer, size_t len) {
 #ifdef HAVE_GST
 	snprintf(buffer, len, "gmediarender %s "
-		 "(libupnp-%s; glib-%d.%d.%d; gstreamer-%d.%d.%d)",
-		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
+		 "(libupnp-%s (%d); glib-%d.%d.%d; gstreamer-%d.%d.%d)",
+		 GM_COMPILE_VERSION, UPNP_VERSION_STRING, UPNP_VERSION,
 		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION,
 		 GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
 #else
 	snprintf(buffer, len, "gmediarender %s "
-		 "(libupnp-%s; glib-%d.%d.%d; without gstreamer.)",
-		 GM_COMPILE_VERSION, UPNP_VERSION_STRING,
+		 "(libupnp-%s (%d); glib-%d.%d.%d; without gstreamer.)",
+		 GM_COMPILE_VERSION, UPNP_VERSION_STRING, UPNP_VERSION,
 		 GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
 #endif
 	return buffer;
