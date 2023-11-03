@@ -38,6 +38,6 @@ You can reach me via <h.zeller@acm.org>.
 
 [orig-project]: http://gmrender.nongnu.org/
 [orig-cvs]:http://cvs.savannah.gnu.org/viewvc/gmrender/?root=gmrender
-[compat-wiki]: https://github.com/hzeller/gmrender-resurrect/wiki/Comptibility
+[compat-wiki]: https://github.com/hzeller/gmrender-resurrect/wiki/Compatibility
 [upnp-display]: https://github.com/hzeller/upnp-display
 [open-max-support]: https://github.com/hzeller/gmrender-resurrect/issues/33#issuecomment-23859699
