@@ -2,7 +2,7 @@
 
 ### BEGIN INIT INFO
 # Provides: gmediarender
-# Required-Start: $remote_fs $syslog $all 
+# Required-Start: $remote_fs $syslog $all $network
 # Required-Stop: $remote_fs $syslog
 # Default-Start: 2 3 4 5
 # Default-Stop: 0 1 6
