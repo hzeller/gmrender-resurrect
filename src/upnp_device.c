@@ -439,9 +439,12 @@ static gboolean initialize_device(struct upnp_device_descriptor *device_def,
 			  interface_name, port, UpnpGetErrorMessage(rc), rc);
 		return FALSE;
 	}
-	Log_info("upnp", "Registered IP=%s port=%d\n",
+	Log_info("upnp", "Registered IPv4 %s:%d\n",
 		 UpnpGetServerIpAddress(), UpnpGetServerPort());
-
+	if (UpnpGetServerIp6Address() && *UpnpGetServerIp6Address()) {
+	  Log_info("upnp", "Registered IPv6 %s:%d\n",
+		   UpnpGetServerIp6Address(), UpnpGetServerPort6());
+	}
 	rc = UpnpEnableWebserver(TRUE);
 	if (UPNP_E_SUCCESS != rc) {
 		Log_error("upnp", "UpnpEnableWebServer() Error: %s (%d)",

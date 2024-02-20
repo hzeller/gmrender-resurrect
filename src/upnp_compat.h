@@ -27,7 +27,15 @@
 #include <upnp.h>
 #include <UpnpString.h>
 
-#if UPNP_VERSION >= 10803
+#if UPNP_VERSION >= 11000
+#define UpnpAddVirtualDir(x) UpnpAddVirtualDir(x, NULL, NULL)
+#define VD_GET_INFO_CALLBACK(NAME, FILENAME, INFO, COOKIE) int NAME(const char* FILENAME, UpnpFileInfo* INFO, const void* COOKIE, const void ** REQUEST_COOKIE)
+#define VD_OPEN_CALLBACK(NAME, FILENAME, MODE, COOKIE) UpnpWebFileHandle NAME(const char* FILENAME, enum UpnpOpenFileMode MODE, const void* COOKIE, const void * REQUEST_COOKIE)
+#define VD_READ_CALLBACK(NAME, HANDLE, BUFFER, LENGTH, COOKIE) int NAME(UpnpWebFileHandle HANDLE, char* BUFFER, size_t LENGTH, const void* COOKIE, const void * REQUEST_COOKIE)
+#define VD_WRITE_CALLBACK(...) VD_READ_CALLBACK(__VA_ARGS__)
+#define VD_SEEK_CALLBACK(NAME, HANDLE, OFFSET, ORIGIN, COOKIE) int NAME(UpnpWebFileHandle HANDLE, off_t OFFSET, int ORIGIN, const void* COOKIE, const void * REQUEST_COOKIE)
+#define VD_CLOSE_CALLBACK(NAME, HANDLE, COOKIE) int NAME(UpnpWebFileHandle HANDLE, const void* COOKIE, const void * REQUEST_COOKIE)
+#elif UPNP_VERSION >= 10803
 #define UpnpAddVirtualDir(x) UpnpAddVirtualDir(x, NULL, NULL)
 #define VD_GET_INFO_CALLBACK(NAME, FILENAME, INFO, COOKIE) int NAME(const char* FILENAME, UpnpFileInfo* INFO, const void* COOKIE)
 #define VD_OPEN_CALLBACK(NAME, FILENAME, MODE, COOKIE) UpnpWebFileHandle NAME(const char* FILENAME, enum UpnpOpenFileMode MODE, const void* COOKIE)

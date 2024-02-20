@@ -323,8 +323,10 @@ int main(int argc, char **argv)
 	}
 
 	// Write both to the log (which might be disabled) and console.
-	Log_info("main", "Ready for rendering.");
-	fprintf(stderr, "Ready for rendering.\n");
+	Log_info("main", "Ready for rendering ('%s'; uuid=%s).",
+		 friendly_name, uuid);
+	fprintf(stderr, "Ready for rendering ('%s'; uuid=%s).\n",
+		friendly_name, uuid);
 
 	output_loop();
 
