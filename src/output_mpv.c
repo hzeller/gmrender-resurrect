@@ -175,10 +175,10 @@ static double initial_db = 0.0;
 
 /* Options specific to output_mpv */
 static GOptionEntry option_entries[] = {
-		{"mpvout-initial-volume-db", 0, 0, G_OPTION_ARG_DOUBLE, &initial_db,
-				"MPV initial volume in decibel (e.g. 0.0 = max; -6 = 1/2 max) ",
-				NULL},
-		{NULL}
+	{"mpvout-initial-volume-db", 0, 0, G_OPTION_ARG_DOUBLE, &initial_db,
+		"MPV initial volume in decibel (e.g. 0.0 = max; -6 = 1/2 max) ",
+		NULL},
+	{NULL}
 };
 
 static int output_mpv_add_options(GOptionContext *ctx)
@@ -368,14 +368,19 @@ static mpv_handle *output_mpv_create()
 	return handle;
 }
 
+static int play_internal()
+{
+	const char *cmd[] = {"loadfile", gsuri_, NULL};
+	return exec_command(cmd);
+}
+
 static int output_mpv_play(output_transition_cb_t callback)
 {
 	play_trans_callback_ = callback;
 	if (paused) {
 		return output_mpv_pause(0);
 	} else {
-		const char *cmd[] = {"loadfile", gsuri_, NULL};
-		return exec_command(cmd);
+		return play_internal();
 	}
 }
 
@@ -388,8 +393,13 @@ static void output_mpv_set_uri(const char *uri,
 	meta_update_callback_ = meta_cb;
 	SongMetaData_clear(&song_meta_);
 
-	paused = 0;
-	output_mpv_play(play_trans_callback_);
+	if (paused) {
+		paused = 0;
+		output_mpv_pause(0);
+		play_internal();
+	} else {
+		output_mpv_play(play_trans_callback_);
+	}
 }
 
 static int create_mpv_handle()
@@ -417,21 +427,21 @@ static int output_mpv_init(void)
 }
 
 struct output_module mpv_output = {
-		.shortname = "mpv",
-		.description = "Cross-platform media player",
-		.add_options = output_mpv_add_options,
+	.shortname = "mpv",
+	.description = "Cross-platform media player",
+	.add_options = output_mpv_add_options,
 
-		.init        = output_mpv_init,
-		.set_uri     = output_mpv_set_uri,
-		.set_next_uri= output_mpv_set_next_uri,
-		.play        = output_mpv_play,
-		.stop        = output_mpv_stop,
-		.pause       = output_mpv_pause_wrap,
-		.seek        = output_mpv_seek,
+	.init        = output_mpv_init,
+	.set_uri     = output_mpv_set_uri,
+	.set_next_uri= output_mpv_set_next_uri,
+	.play        = output_mpv_play,
+	.stop        = output_mpv_stop,
+	.pause       = output_mpv_pause_wrap,
+	.seek        = output_mpv_seek,
 
-		.get_position = output_mpv_get_position,
-		.get_volume  = output_mpv_get_volume,
-		.set_volume  = output_mpv_set_volume,
-		.get_mute  = output_mpv_get_mute,
-		.set_mute  = output_mpv_set_mute,
+	.get_position = output_mpv_get_position,
+	.get_volume  = output_mpv_get_volume,
+	.set_volume  = output_mpv_set_volume,
+	.get_mute  = output_mpv_get_mute,
+	.set_mute  = output_mpv_set_mute,
 };
