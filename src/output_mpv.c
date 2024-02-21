@@ -173,11 +173,19 @@ static void output_mpv_set_next_uri(const char *uri)
 }
 
 static double initial_db = 0.0;
+static int64_t output_screen = -1;
+static char *output_screen_name = NULL;
 
 /* Options specific to output_mpv */
 static GOptionEntry option_entries[] = {
 	{"mpvout-initial-volume-db", 0, 0, G_OPTION_ARG_DOUBLE, &initial_db,
 		"MPV initial volume in decibel (e.g. 0.0 = max; -6 = 1/2 max) ",
+		NULL},
+	{"mpvout-screen",            0, 0, G_OPTION_ARG_INT64,  &output_screen,
+		"MPV output screen number, 0 based ",
+		NULL},
+	{"mpvout-screen-name",       0, 0, G_OPTION_ARG_STRING, &output_screen_name,
+		"MPV output screen name, to get the name list, run 'xrandr --listmonitors'",
 		NULL},
 	{NULL}
 };
@@ -377,6 +385,23 @@ static mpv_handle *output_mpv_create()
 	data.name = "fullscreen";
 	flag = 1;
 	do_set_property(handle, &data);
+
+	// set output screen
+	if (output_screen >= 0) {
+		data.name = "screen";
+		data.format = MPV_FORMAT_INT64;
+		data.data = &output_screen;
+		do_set_property(handle, &data);
+		data.name = "fs-screen";
+		do_set_property(handle, &data);
+	} else if (output_screen_name != NULL) {
+		data.name = "screen-name";
+		data.format = MPV_FORMAT_STRING;
+		data.data = &output_screen_name;
+		do_set_property(handle, &data);
+		data.name = "fs-screen-name";
+		do_set_property(handle, &data);
+	}
 
 	if (initial_db < 0) {
 		float value = exp(initial_db / 20 * log(10));
