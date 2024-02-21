@@ -35,6 +35,7 @@
 
 #include "logging.h"
 #include "upnp_connmgr.h"
+#include "upnp_service.h"
 #include "output_module.h"
 
 typedef enum {
@@ -223,19 +224,41 @@ static int output_mpv_get_volume(float *v)
 {
 	double volume;
 	if (get_property("volume", MPV_FORMAT_DOUBLE, &volume) == 0) {
-		Log_info("mpv", "Query volume fraction: %f", volume);
-		*v = volume / 100;
+		Log_info("mpv", "Query volume level: %f", volume);
+		*v = volume;
 		return 0;
 	} else {
 		return -1;
 	}
 }
 
-static int output_mpv_set_volume(float value)
+// copied from upnp_control.c
+static const float vol_min_db = -60.0;
+static const float vol_mid_db = -20.0;
+static const float vol_max_db = 0.0;
+static const int vol_mid_point = 50;  // volume_range.max / 2
+static struct param_range volume_range = {0, 100, 1};
+
+static int volume_decibel_to_level(float decibel)
 {
-	double percent = value * 100;
-	if (set_property("volume", MPV_FORMAT_DOUBLE, &percent) == 0) {
-		Log_info("mpv", "Set volume fraction: %f", percent);
+	if (decibel < vol_min_db) return volume_range.min;
+	if (decibel > vol_max_db) return volume_range.max;
+	if (decibel < vol_mid_db) {
+		return (decibel - vol_min_db) * vol_mid_point / (vol_mid_db - vol_min_db);
+	} else {
+		const int range = volume_range.max - vol_mid_point;
+		return (decibel - vol_mid_db) * range / (vol_max_db - vol_mid_db) + vol_mid_point;
+	}
+}
+
+static int output_mpv_set_volume(float fraction)
+{
+	// const double fraction = exp(decibel / 20 * log(10));
+	// calculate the volume level
+	float decibel = log(fraction) * 20 / log(10);
+	double level = volume_decibel_to_level(decibel);
+	if (set_property("volume", MPV_FORMAT_DOUBLE, &level) == 0) {
+		Log_info("mpv", "Set volume level: %f", level);
 		return 0;
 	} else {
 		return -1;
