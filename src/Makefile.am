@@ -18,6 +18,11 @@ gmediarender_SOURCES += \
 	output_gstreamer.c  output_gstreamer.h
 endif
 
+if HAVE_MPV
+gmediarender_SOURCES += \
+	output_mpv.c  output_mpv.h
+endif
+
 main.c : git-version.h
 
 git-version.h: .FORCE
@@ -27,5 +32,5 @@ git-version.h: .FORCE
 
 .FORCE:
 
-AM_CPPFLAGS = $(GLIB_CFLAGS) $(GST_CFLAGS) $(LIBUPNP_CFLAGS) -DPKG_DATADIR=\"$(datadir)/gmediarender\"
-gmediarender_LDADD = $(GLIB_LIBS) $(GST_LIBS) $(LIBUPNP_LIBS)
+AM_CPPFLAGS = $(GLIB_CFLAGS) $(GST_CFLAGS) $(MPV_CFLAGS) $(LIBUPNP_CFLAGS) -DPKG_DATADIR=\"$(datadir)/gmediarender\"
+gmediarender_LDADD = $(GLIB_LIBS) $(GST_LIBS) $(MPV_LIBS) $(LIBUPNP_LIBS)

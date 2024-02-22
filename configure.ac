@@ -82,6 +82,27 @@ fi
 AC_SUBST(HAVE_GST)
 AM_CONDITIONAL(HAVE_GST, test x$HAVE_GST = xyes)
 
+AC_ARG_WITH( mpv,
+  AC_HELP_STRING([--without-mpv],[compile without MPV support]),
+  try_mpv=$withval, try_mpv=yes )
+HAVE_MPV=no
+if test x$try_mpv = xyes; then
+  dnl check for MPV
+  PKG_CHECK_MODULES(MPV, mpv >= 1.0.0,
+    [
+      HAVE_MPV=yes
+      AC_SUBST(MPV_CFLAGS)
+      AC_SUBST(MPV_LIBS)
+    ],
+    [
+      HAVE_MPV=no
+    ])
+fi
+if test x$HAVE_MPV = xyes; then
+  AC_DEFINE(HAVE_MPV, , [Use MPV])
+fi
+AC_SUBST(HAVE_MPV)
+AM_CONDITIONAL(HAVE_MPV, test x$HAVE_MPV = xyes)
 
 LIBUPNP_REQUIRED=1.6.0
 AC_ARG_WITH( libupnp,

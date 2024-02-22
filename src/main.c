@@ -32,6 +32,7 @@
 #include <assert.h>
 #include <glib.h>
 #include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -170,6 +171,7 @@ static gboolean process_cmdline(int argc, char **argv)
 		return FALSE;
 	}
 
+	setlocale(LC_ALL, "");
 	if (!g_option_context_parse (ctx, &argc, &argv, &err)) {
 		fprintf(stderr, "Failed to initialize: %s\n", err->message);
 		g_error_free (err);
