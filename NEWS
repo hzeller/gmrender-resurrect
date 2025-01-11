@@ -1,3 +1,7 @@
+2025-01-11 Bump version number: GMediaRender 0.3
+        - Mostly compilation fixes with downstream libraries.
+        - there was also a tag v0.2, which misses the version
+          bump in the configure.
 2022-09-23 Bump version number: GMediaRender 0.1
 2021-01-21 Bump version number: GMediaRender 0.0.9
 	- More fine-grained mime filters
