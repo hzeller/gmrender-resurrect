@@ -32,6 +32,7 @@
 #include <assert.h>
 #include <glib.h>
 #include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -219,6 +220,12 @@ int main(int argc, char **argv)
 {
 	int rc;
 	struct upnp_device_descriptor *upnp_renderer;
+
+	// According to the official GLib documentation (https://docs.gtk.org/glib/running.html#locale),
+	// many GLib interfaces rely on the application's current locale.
+	// Therefore, most applications using GLib should call setlocale(LC_ALL, "") to properly set up the locale,
+	// ensuring correct string handling, character encoding, and localization functionality.
+	setlocale(LC_ALL, "");
 
 #if !GLIB_CHECK_VERSION(2,32,0)
 	g_thread_init (NULL);  // Was necessary < glib 2.32, deprecated since.
