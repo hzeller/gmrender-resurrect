@@ -18,14 +18,13 @@ gmediarender_SOURCES += \
 	output_gstreamer.c  output_gstreamer.h
 endif
 
-main.c : git-version.h
+BUILT_SOURCES = git-version.h
+EXTRA_DIST = git-version.h
 
-git-version.h: .FORCE
+git-version.h: $(wildcard $(top_srcdir)/.git/HEAD $(top_srcdir)/.git/refs/heads/*)
 	$(AM_V_GEN)(echo "#define GM_COMPILE_VERSION \"$(shell git describe 2>/dev/null || echo -n '0.3')\"" > $@-new; \
 	cmp -s $@ $@-new || cp $@-new $@; \
 	rm $@-new)
-
-.FORCE:
 
 AM_CPPFLAGS = $(GLIB_CFLAGS) $(GST_CFLAGS) $(LIBUPNP_CFLAGS) -DPKG_DATADIR=\"$(datadir)/gmediarender\"
 gmediarender_LDADD = $(GLIB_LIBS) $(GST_LIBS) $(LIBUPNP_LIBS)
