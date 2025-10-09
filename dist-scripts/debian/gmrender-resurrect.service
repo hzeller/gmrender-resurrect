@@ -3,11 +3,19 @@ Description=gmrender-resurrect service
 After=network.target sound.target
 
 [Service]
-Environment="UPNP_DEVICE_NAME=Raspberry"
-ExecStartPre=/bin/sh -c "/bin/systemctl set-environment UPNP_UUID=`ip link show | awk '/ether/ {print \"salt:)-\" $2}' | head -1 | md5sum | awk '{print $1}'`"
+User=pi
+Group=audio
+Environment="GS_SINK_PARAM=autoaudiosink"
 
+ExecStartPre=/bin/sh -c "/usr/bin/test -f '/tmp/gmrender-resurrect.vars' || /bin/rm /tmp/gmrender-resurrect.vars"
+ExecStartPre=/bin/sh -c "echo UPNP_DEVICE_NAME=`/bin/hostname` > /tmp/gmrender-resurrect.vars"
+ExecStartPre=/bin/sh -c "echo UPNP_UUID=`ip link show | awk '/ether/ {print \"salt:)-\" $2}' | head -1 | md5sum | awk '{print $1}'` >> /tmp/gmrender-resurrect.vars"
+ExecStartPre=/bin/sh -c "pulseaudio --version ||echo GS_SINK_PARAM=alsasink >>/tmp/gmrender-resurrect.vars"
+ExecStartPre=/bin/sh -c "echo GS_DEVICE_PARAM=`aplay -l|awk '/^card 0/ {print $3}'` >>/tmp/gmrender-resurrect.vars"
+
+EnvironmentFile=/tmp/gmrender-resurrect.vars
 ExecStart=/usr/local/bin/gmediarender -f "$UPNP_DEVICE_NAME" -u "$UPNP_UUID" \
-                                      --gstout-audiosink=alsasink --gstout-audiodevice=sysdefault \
+                                      --gstout-audiosink=${GS_SINK_PARAM} --gstout-audiodevice=${GS_DEVICE_PARAM} \
                                       --logfile=/tmp/gmediarenderer.log --gstout-initial-volume-db=-10
 Restart=always
 
