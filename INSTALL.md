@@ -59,7 +59,7 @@ PREFIX in the configure step).
 There is a sample init script in `scripts/init.d/gmediarenderer` that could be
 a good start if you install things on your system.
 
-A systemd unit file can be found in `dist-scripts/debian/gmrender-resurrect.service`.
+A systemd unit file can be found in `scripts/systemd/`.
 
 (To Linux distribution packagers: please let me know if you have some
 common changes that might be useful to have in upstream; other than that, just
