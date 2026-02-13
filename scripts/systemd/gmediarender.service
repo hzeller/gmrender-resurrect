@@ -1,0 +1,31 @@
+[Unit]
+Description=GMediaRender UPnP/DLNA renderer
+After=network-online.target local-fs.target
+Wants=network-online.target
+Documentation=man:gmediarender
+
+[Service]
+# Identity & Permissions
+DynamicUser=yes
+SupplementaryGroups=audio
+RuntimeDirectory=gmediarender
+PrivateDevices=no
+# Explicitly allow access to ALSA device nodes
+DeviceAllow=/dev/snd rwm
+DeviceAllow=/dev/dsp rwm
+DeviceAllow=char-alsa rw
+
+# This ensures that ALSA can find its own configuration files
+BindReadOnlyPaths=/usr/share/alsa /var/lib/alsa
+
+
+Environment=XDG_CACHE_HOME=/run/gmediarender
+Environment=XDG_CONFIG_HOME=/run/gmediarender
+
+# Generate Configuration
+ExecStart=/usr/libexec/gmediarender/gmediarender-wrapper
+
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

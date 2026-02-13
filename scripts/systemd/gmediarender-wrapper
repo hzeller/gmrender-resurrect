@@ -1,0 +1,43 @@
+#!/bin/bash
+
+set -e
+
+CONF_SRC="/etc/gmediarender/gmediarender.conf"
+
+# setup defaults.
+UPNP_DEVICE_NAME="gmediarender on $(hostname)"
+INITIAL_VOLUME_DB=-10
+GS_SINK_PARAM="--gstout-audiosink=autodetect"
+GS_DEVICE_PARAM=""
+DAEMON_EXTRA_ARGS=""
+
+if [ -r "$CONF_SRC" ]; then
+    . "$CONF_SRC"
+fi
+
+if [ -z "$UPNP_UUID" ] ; then
+  UPNP_UUID=`ip link show | awk '/ether/ {print "salt:)-" $2}' | head -1 | md5sum | awk '{print $1}'`
+fi
+
+if [ -n "$ALSA_DEVICE" ] ; then
+        GS_SINK_PARAM="--gstout-audiosink=alsasink"
+        GS_DEVICE_PARAM="--gstout-audiodevice=$ALSA_DEVICE"
+fi
+
+if [ -n "$GS_AUDIOSINK" ] ; then
+  GS_SINK_PARAM="--gstout-audiosink=${GS_AUDIOSINK}"
+fi
+
+if [ -n "$GS_AUDIODEVICE" ] ; then
+  GS_DEVICE_PARAM="--gstout-audiodevice=${GS_AUDIODEVICE}"
+fi
+
+/usr/bin/gmediarender \
+    --logfile=stdout -f \
+    "$UPNP_DEVICE_NAME" \
+    -u "$UPNP_UUID" \
+    "$GS_SINK_PARAM" \
+    "$GS_DEVICE_PARAM" \
+    "--gstout-initial-volume-db=$INITIAL_VOLUME_DB" \
+    $DAEMON_EXTRA_ARGS
+
