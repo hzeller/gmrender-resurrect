@@ -22,7 +22,7 @@ BUILT_SOURCES = git-version.h
 EXTRA_DIST = git-version.h
 
 git-version.h: $(wildcard $(top_srcdir)/.git/HEAD $(top_srcdir)/.git/refs/heads/*)
-	$(AM_V_GEN)(echo "#define GM_COMPILE_VERSION \"$(shell git describe 2>/dev/null || echo -n '0.3')\"" > $@-new; \
+	$(AM_V_GEN)(echo "#define GM_COMPILE_VERSION \"$(shell git describe 2>/dev/null || echo -n '0.3.1')\"" > $@-new; \
 	cmp -s $@ $@-new || cp $@-new $@; \
 	rm $@-new)
 

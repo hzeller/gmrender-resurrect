@@ -1,3 +1,4 @@
+2026-02-13 Maintenance release GMediaRender 0.3.1
 2025-01-11 Bump version number: GMediaRender 0.3
         - Mostly compilation fixes with downstream libraries.
         - there was also a tag v0.2, which misses the version
