@@ -1,0 +1,13 @@
+[Unit]
+Description=gmrender-resurrect-pre service
+Before=gmrender-resurrect.service
+
+[Service]
+Type=oneshot
+User=pi
+Group=audio
+
+ExecStart=/bin/sh -c "touch /tmp/gmrender-resurrect.vars"
+
+[Install]
+WantedBy=multi-user.target
