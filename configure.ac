@@ -106,6 +106,28 @@ if test x$HAVE_LIBUPNP = xyes; then
 fi
 AC_SUBST(HAVE_LIBUPNP)
 
+AC_ARG_WITH( libcurl,
+  AC_HELP_STRING([--without-libcurl],[compile without libcurl (BluOS output) support]),
+  try_libcurl=$withval, try_libcurl=yes )
+HAVE_LIBCURL=no
+if test x$try_libcurl = xyes; then
+  dnl check for libcurl
+  PKG_CHECK_MODULES(LIBCURL, libcurl,
+    [
+      HAVE_LIBCURL=yes
+      AC_SUBST(LIBCURL_CFLAGS)
+      AC_SUBST(LIBCURL_LIBS)
+    ],
+    [
+      HAVE_LIBCURL=no
+    ])
+fi
+if test x$HAVE_LIBCURL = xyes; then
+  AC_DEFINE(HAVE_LIBCURL, , [Use libcurl])
+fi
+AC_SUBST(HAVE_LIBCURL)
+AM_CONDITIONAL(HAVE_LIBCURL, test x$HAVE_LIBCURL = xyes)
+
 # Checks for header files.
 AC_HEADER_STDC
 

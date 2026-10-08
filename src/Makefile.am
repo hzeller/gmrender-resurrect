@@ -18,6 +18,11 @@ gmediarender_SOURCES += \
 	output_gstreamer.c  output_gstreamer.h
 endif
 
+if HAVE_LIBCURL
+gmediarender_SOURCES += \
+	output_bluos.c  output_bluos.h
+endif
+
 BUILT_SOURCES = git-version.h
 EXTRA_DIST = git-version.h
 
@@ -26,5 +31,5 @@ git-version.h: $(wildcard $(top_srcdir)/.git/HEAD $(top_srcdir)/.git/refs/heads/
 	cmp -s $@ $@-new || cp $@-new $@; \
 	rm $@-new)
 
-AM_CPPFLAGS = $(GLIB_CFLAGS) $(GST_CFLAGS) $(LIBUPNP_CFLAGS) -DPKG_DATADIR=\"$(datadir)/gmediarender\"
-gmediarender_LDADD = $(GLIB_LIBS) $(GST_LIBS) $(LIBUPNP_LIBS)
+AM_CPPFLAGS = $(GLIB_CFLAGS) $(GST_CFLAGS) $(LIBUPNP_CFLAGS) $(LIBCURL_CFLAGS) -DPKG_DATADIR=\"$(datadir)/gmediarender\"
+gmediarender_LDADD = $(GLIB_LIBS) $(GST_LIBS) $(LIBUPNP_LIBS) $(LIBCURL_LIBS)
