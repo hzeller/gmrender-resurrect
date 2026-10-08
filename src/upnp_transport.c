@@ -873,7 +873,9 @@ static int seek(struct action_event *event)
 	}
 
 	const char *unit = upnp_get_string(event, "Unit");
-	if (strcmp(unit, "REL_TIME") == 0) {
+	// We play one track at a time: ABS_TIME is the same as REL_TIME.
+	// Some control points (e.g. Symfonium) only send ABS_TIME.
+	if (strcmp(unit, "REL_TIME") == 0 || strcmp(unit, "ABS_TIME") == 0) {
 		// This is the only thing we support right now.
 		const char *target = upnp_get_string(event, "Target");
 		gint64 nanos = parse_upnp_time(target);
