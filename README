@@ -73,6 +73,9 @@ The following libraries are required to build and run GMediaRender:
     * GStreamer 1.x (LGPL).
          https://gstreamer.freedesktop.org/
 
+    * libcurl (MIT/X derivate license), optional, for the BluOS output.
+         https://curl.se/libcurl/
+
 
 Note that GMediaRender completely relies on GStreamer for rendering
 content, so if your GStreamer environment does not support a given

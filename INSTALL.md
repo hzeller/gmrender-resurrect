@@ -131,6 +131,42 @@ Note, as always with the volume level in this renderer, this does not
 influence the hardware level (e.g. Alsa), but only the internal attenuation.
 So it is advised to always set the hardware output to 100% by system means.
 
+### -o bluos: BluOS players
+With `-o bluos`, gmediarender does not play anything itself, but remote-controls
+a BluOS player (Bluesound, NAD, ...) through its HTTP API. The player fetches
+the music URIs by itself. So you can use your UPnP control point to play music
+on such a player.
+
+This output is built if libcurl is found when running configure:
+
+    sudo apt-get install libcurl4-openssl-dev
+
+Give the address of the player with `--bluosout-host`:
+
+    gmediarender -f "Living Room" -o bluos --bluosout-host=192.168.1.20
+
+The options are described with
+
+    gmediarender --help-bluosout
+
+Some things to know:
+
+  * `--bluosout-rewrite-from` and `--bluosout-rewrite-to` replace the beginning
+    of the URIs before they are sent to the player. This is useful if your
+    music server is set up in the control point with its public address: with
+    `--bluosout-rewrite-from=https://music.example.org --bluosout-rewrite-to=http://192.168.1.10:4533`
+    the player fetches the music directly on your local network.
+  * At the end of a track, the player goes on with its own play queue, if
+    anything is left in it, until gmediarender starts the next track. You
+    might hear a fraction of a second of it. `--bluosout-clear-queue` empties
+    the play queue of the player before each track; this also removes what was
+    queued from the BluOS app.
+  * Seeking only works if the player knows the length of the track. This is
+    the case with FLAC, but not with some .m4b files, for instance.
+  * If the player is used by something else (BluOS app, other source, buttons),
+    gmediarender reports the playback as stopped and leaves it alone. Some
+    control points then go on with the next track.
+
 ### Running as daemon
 
 If you want to run gmediarender as daemon, the follwing two options are for
