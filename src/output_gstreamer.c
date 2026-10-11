@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 #include <inttypes.h>
 
@@ -233,6 +234,73 @@ struct MetaModify {
 	int any_change;
 };
 
+static char *image_uri_from_tags(const GstTagList *list)
+{
+#if GST_VERSION_MAJOR < 1
+	(void)list;
+	return NULL;
+#else
+	const GValue *value = gst_tag_list_get_value_index(list, GST_TAG_IMAGE, 0);
+	if (value == NULL || !GST_VALUE_HOLDS_SAMPLE(value)) {
+		return NULL;
+	}
+
+	GstSample *sample = gst_value_get_sample(value);
+	GstBuffer *buffer = gst_sample_get_buffer(sample);
+	if (buffer == NULL) {
+		return NULL;
+	}
+
+	GstMapInfo map;
+	if (!gst_buffer_map(buffer, &map, GST_MAP_READ)) {
+		return NULL;
+	}
+
+	char *uri = NULL;
+	if (map.size > 7 &&
+		(strncmp((const char *)map.data, "http://", 7) == 0 ||
+		 strncmp((const char *)map.data, "https://", 8) == 0)) {
+		uri = strndup((const char *)map.data, map.size);
+		if (uri != NULL) {
+			char *end = strpbrk(uri, "\r\n");
+			if (end != NULL) {
+				*end = '\0';
+			}
+		}
+	}
+	gst_buffer_unmap(buffer, &map);
+	return uri;
+#endif
+}
+
+static int is_image_uri(const char *uri)
+{
+	const char *end = strpbrk(uri, "?#");
+	const char *path_end = end ? end : uri + strlen(uri);
+	const char *extension = NULL;
+	const char *cursor = path_end;
+	while (cursor > uri && cursor[-1] != '/') {
+		if (cursor[-1] == '.') {
+			extension = cursor - 1;
+			break;
+		}
+		cursor--;
+	}
+	if (extension == NULL) {
+		return 0;
+	}
+	return (path_end - extension == 4 &&
+		strncasecmp(extension, ".jpg", 4) == 0) ||
+	       (path_end - extension == 5 &&
+		strncasecmp(extension, ".jpeg", 5) == 0) ||
+	       (path_end - extension == 4 &&
+		strncasecmp(extension, ".png", 4) == 0) ||
+	       (path_end - extension == 4 &&
+		strncasecmp(extension, ".gif", 4) == 0) ||
+	       (path_end - extension == 5 &&
+		strncasecmp(extension, ".webp", 5) == 0);
+}
+
 static void MetaModify_add_tag(const GstTagList *list, const gchar *tag,
 			       gpointer user_data) {
 	struct MetaModify *data = (struct MetaModify*) user_data;
@@ -247,10 +315,19 @@ static void MetaModify_add_tag(const GstTagList *list, const gchar *tag,
 		destination = &data->meta->genre;
 	} else if (strcmp(tag, GST_TAG_COMPOSER) == 0) {
 		destination = &data->meta->composer;
+	} else if (strcmp(tag, "stream-url") == 0 ||
+		   strcmp(tag, "image-uri") == 0 ||
+		   strcmp(tag, "homepage") == 0) {
+		destination = &data->meta->album_art_uri;
 	}
 	if (destination != NULL) {
 		char *replace = NULL;
 		gst_tag_list_get_string(list, tag, &replace);
+		if (strcmp(tag, "homepage") == 0 &&
+		    (replace == NULL || !is_image_uri(replace))) {
+			free(replace);
+			return;
+		}
 		if (replace != NULL &&
 		    (*destination == NULL
 		     || strcmp(replace, *destination) != 0)) {
@@ -336,6 +413,16 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 			modify.meta = &song_meta_;
 			modify.any_change = 0;
 			gst_tag_list_foreach(tags, &MetaModify_add_tag, &modify);
+			char *image_uri = image_uri_from_tags(tags);
+			if (image_uri != NULL &&
+				(modify.meta->album_art_uri == NULL ||
+				 strcmp(image_uri, modify.meta->album_art_uri) != 0)) {
+				free((char *)modify.meta->album_art_uri);
+				modify.meta->album_art_uri = image_uri;
+				modify.any_change++;
+			} else {
+				free(image_uri);
+			}
 			gst_tag_list_free(tags);
 			if (modify.any_change) {
 				meta_update_callback_(&song_meta_);
