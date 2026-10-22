@@ -1,5 +1,5 @@
-AC_PREREQ(2.59)
-AC_INIT(gmediarender, 0.3.1, https://github.com/hzeller/gmrender-resurrect)
+AC_PREREQ([2.73])
+AC_INIT([gmediarender],[0.3.1],[https://github.com/hzeller/gmrender-resurrect])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_SRCDIR(src/main.c)
 AC_CONFIG_HEADERS(config.h)
@@ -9,7 +9,6 @@ AC_SYS_LARGEFILE
 
 # Checks for programs
 AC_PROG_CC
-AC_PROG_CC_STDC
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
@@ -47,7 +46,7 @@ GST_OLD_MAJORMINOR=0.10
 GST_NEW_MAJORMINOR=1.0
 
 AC_ARG_WITH( gstreamer,
-  AC_HELP_STRING([--without-gstreamer],[compile without GStreamer support]),
+  AS_HELP_STRING([--without-gstreamer],[compile without GStreamer support]),
   try_gstreamer=$withval, try_gstreamer=yes )
 HAVE_GST=no
 if test x$try_gstreamer = xyes; then
@@ -85,7 +84,7 @@ AM_CONDITIONAL(HAVE_GST, test x$HAVE_GST = xyes)
 
 LIBUPNP_REQUIRED=1.6.0
 AC_ARG_WITH( libupnp,
-  AC_HELP_STRING([--without-libupnp],[compile without libupnp support]),
+  AS_HELP_STRING([--without-libupnp],[compile without libupnp support]),
   try_libupnp=$withval, try_libupnp=yes )
 HAVE_LIBUPNP=no
 if test x$try_libupnp = xyes; then
@@ -101,13 +100,30 @@ if test x$try_libupnp = xyes; then
       HAVE_LIBUPNP=no
     ])
 fi
-if test x$HAVE_LIBUPNP = xyes; then
-  AC_DEFINE(HAVE_LIBUPNP, , [Use libupnp])
-fi
-AC_SUBST(HAVE_LIBUPNP)
+AS_IF([test "x$HAVE_LIBUPNP" = xyes], [
+  AC_DEFINE([HAVE_LIBUPNP], [], [Use libupnp])
+
+  AC_MSG_CHECKING([whether Upnp_FunPtr takes const void*])
+  saved_CFLAGS="$CFLAGS"; CFLAGS="$CFLAGS $LIBUPNP_CFLAGS -Werror"
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <upnp.h>
+    static int cb(Upnp_EventType t, const void *e, void *c) { return 0; }]],
+    [[Upnp_FunPtr f = cb; (void)f;]])],
+    [AC_MSG_RESULT([yes])
+     AC_DEFINE([UPNP_CALLBACK_CONST], [1], [const event arg])],
+    [AC_MSG_RESULT([no])])
+  CFLAGS="$saved_CFLAGS"
+])
+AC_SUBST([HAVE_LIBUPNP])
 
 # Checks for header files.
-AC_HEADER_STDC
+m4_warn([obsolete],
+[The preprocessor macro 'STDC_HEADERS' is obsolete.
+  Except in unusual embedded environments, you can safely include all
+  C89 headers unconditionally.])dnl
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+# AC_CHECK_INCLUDES_DEFAULT
+# AC_PROG_EGREP
 
 dnl Give error and exit if we don't have any UPnP SDK
 if test "x$HAVE_LIBUPNP" = "xno"; then
