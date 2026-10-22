@@ -8,7 +8,7 @@ AM_INIT_AUTOMAKE([1.8 dist-bzip2 no-dist-gzip check-news])
 AC_SYS_LARGEFILE
 
 # Checks for programs
-AC_REQUIRE([AC_PROG_CC])
+AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
