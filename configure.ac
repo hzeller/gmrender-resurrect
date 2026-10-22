@@ -104,19 +104,20 @@ if test x$try_libupnp = xyes; then
       HAVE_LIBUPNP=no
     ])
 fi
-if test x$HAVE_LIBUPNP = xyes; then
-  AC_DEFINE(HAVE_LIBUPNP, , [Use libupnp])
+AS_IF([test "x$HAVE_LIBUPNP" = xyes], [
+  AC_DEFINE([HAVE_LIBUPNP], [], [Use libupnp])
 
   AC_MSG_CHECKING([whether Upnp_FunPtr takes const void*])
   saved_CFLAGS="$CFLAGS"; CFLAGS="$CFLAGS $LIBUPNP_CFLAGS -Werror"
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <upnp.h>
     static int cb(Upnp_EventType t, const void *e, void *c) { return 0; }]],
     [[Upnp_FunPtr f = cb; (void)f;]])],
-    [AC_MSG_RESULT([yes]); AC_DEFINE([UPNP_CALLBACK_CONST], [1], [const event arg])],
+    [AC_MSG_RESULT([yes])
+     AC_DEFINE([UPNP_CALLBACK_CONST], [1], [const event arg])],
     [AC_MSG_RESULT([no])])
   CFLAGS="$saved_CFLAGS"
-fi
-AC_SUBST(HAVE_LIBUPNP)
+])
+AC_SUBST([HAVE_LIBUPNP])
 
 # Checks for header files.
 m4_warn([obsolete],
@@ -127,7 +128,6 @@ m4_warn([obsolete],
 # script's behavior did not change.  They are probably safe to remove.
 # AC_CHECK_INCLUDES_DEFAULT
 # AC_PROG_EGREP
-
 
 dnl Give error and exit if we don't have any UPnP SDK
 if test "x$HAVE_LIBUPNP" = "xno"; then
