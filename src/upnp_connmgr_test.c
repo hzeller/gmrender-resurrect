@@ -3,10 +3,47 @@
  * This file is part of GMediaRender.
  */
 
+#include <upnp.h>
+
 #include "test-helpers.h"
+#include "upnp_compat.h"
 #include "upnp_connmgr.h"
+#include "upnp_device.h"
 #include "upnp_service.h"
 #include "variable-container.h"
+
+static int invoke_connmgr_action(struct service *srv, const char *action_name,
+				 const char *xml, char **out_response_xml) {
+	struct action *act = find_action(srv, action_name);
+	EXPECT_TRUE(act != NULL);
+	EXPECT_TRUE(act->callback != NULL);
+
+	UpnpActionRequest *req = UpnpActionRequest_new();
+	UpnpActionRequest_strcpy_ActionName(req, action_name);
+	IXML_Document *req_doc = ixmlParseBuffer(xml);
+	EXPECT_TRUE(req_doc != NULL);
+	UpnpActionRequest_set_ActionRequest(req, req_doc);
+
+	struct action_event ev;
+	memset(&ev, 0, sizeof(ev));
+	ev.request = req;
+	ev.service = srv;
+
+	int rc = act->callback(&ev);
+
+	IXML_Document *res_doc = UpnpActionRequest_get_ActionResult(req);
+	if (out_response_xml != NULL) {
+		*out_response_xml = res_doc ? ixmlDocumenttoString(res_doc) : NULL;
+	}
+	if (res_doc != NULL) {
+		ixmlDocument_free(res_doc);
+		UpnpActionRequest_set_ActionResult(req, NULL);
+	}
+	ixmlDocument_free(req_doc);
+	UpnpActionRequest_set_ActionRequest(req, NULL);
+	UpnpActionRequest_delete(req);
+	return rc;
+}
 
 static void test_connmgr_mime_registration_and_filtering(void) {
 	struct service *srv = upnp_connmgr_get_service();
@@ -49,10 +86,31 @@ static void test_connmgr_mime_registration_and_filtering(void) {
 
 static void test_connmgr_service_actions(void) {
 	struct service *srv = upnp_connmgr_get_service();
-	EXPECT_TRUE(find_action(srv, "GetProtocolInfo") != NULL);
-	EXPECT_TRUE(find_action(srv, "GetCurrentConnectionIDs") != NULL);
-	EXPECT_TRUE(find_action(srv, "GetCurrentConnectionInfo") != NULL);
-	EXPECT_TRUE(find_action(srv, "PrepareForConnection") != NULL);
+	char *resp = NULL;
+
+	/* GetCurrentConnectionIDs should return 0 (success) and ConnectionIDs=0. */
+	EXPECT_INT_EQ(invoke_connmgr_action(
+		srv, "GetCurrentConnectionIDs",
+		"<u:GetCurrentConnectionIDs xmlns:u=\"urn:schemas-upnp-org:service:ConnectionManager:1\">"
+		"</u:GetCurrentConnectionIDs>", &resp), 0);
+	EXPECT_TRUE(resp != NULL);
+	EXPECT_TRUE(strstr(resp, "<ConnectionIDs>0</ConnectionIDs>") != NULL);
+	free(resp);
+
+	/* GetProtocolInfo returns Source and Sink. */
+	EXPECT_INT_EQ(invoke_connmgr_action(
+		srv, "GetProtocolInfo",
+		"<u:GetProtocolInfo xmlns:u=\"urn:schemas-upnp-org:service:ConnectionManager:1\">"
+		"</u:GetProtocolInfo>", &resp), 0);
+	EXPECT_TRUE(resp != NULL);
+	EXPECT_TRUE(strstr(resp, "<Sink>") != NULL);
+	free(resp);
+
+	/* GetCurrentConnectionInfo with missing ConnectionID returns -1. */
+	EXPECT_INT_EQ(invoke_connmgr_action(
+		srv, "GetCurrentConnectionInfo",
+		"<u:GetCurrentConnectionInfo xmlns:u=\"urn:schemas-upnp-org:service:ConnectionManager:1\">"
+		"</u:GetCurrentConnectionInfo>", NULL), -1);
 }
 
 int main(void) {

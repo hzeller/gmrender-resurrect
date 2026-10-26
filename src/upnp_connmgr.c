@@ -361,8 +361,7 @@ static int get_protocol_info(struct action_event *event)
 
 static int get_current_conn_ids(struct action_event *event)
 {
-	int rc = -1;
-	upnp_add_response(event, "ConnectionIDs", "0");
+	int rc = upnp_add_response(event, "ConnectionIDs", "0");
 	///rc = upnp_append_variable(event, CONNMGR_VAR_CUR_CONN_IDS,
 	//			    "ConnectionIDs");
 	return rc;
