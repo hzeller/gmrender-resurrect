@@ -122,10 +122,12 @@ int webserver_register_file(const char *path, const char *content_type)
 		}
 		cbuf = (char*)malloc(buf.st_size);
 		if (cbuf == NULL) {
+			fclose(in);
 			free(entry);
 			return -1;
 		}
 		if (fread(cbuf, buf.st_size, 1, in) != 1) {
+			fclose(in);
 			free(entry);
 			free(cbuf);
 			return -1;

@@ -76,8 +76,9 @@ static void test_webserver_callbacks(void) {
 	EXPECT_INT_EQ(webserver_register_buf("/upnp/test.xml", "0123456789", "text/xml"), 0);
 	EXPECT_INT_EQ(webserver_register_buf("/upnp/empty.xml", "", "text/plain"), 0);
 
-	/* Invalid path without '/' in webserver_register_file returns -1 safely. */
+	/* Invalid path without '/' or nonexistent file in webserver_register_file returns -1 safely. */
 	EXPECT_INT_EQ(webserver_register_file("no_slash_path.png", "image/png"), -1);
+	EXPECT_INT_EQ(webserver_register_file("/upnp/nonexistent_icon.png", "image/png"), -1);
 
 	/* Test get_info (including checking that content_type is not leaked). */
 	UpnpFileInfo *info = UpnpFileInfo_new();
