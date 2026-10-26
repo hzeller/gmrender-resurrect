@@ -14,4 +14,7 @@ Makefile.in
 src/.deps
 src/git-version.h
 src/gmediarender
+src/*_test
+src/*.log
+src/*.trs
 stamp-h1
