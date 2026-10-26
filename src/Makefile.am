@@ -40,11 +40,14 @@ TESTS = \
 	upnp_device_test \
 	upnp_control_test \
 	upnp_transport_test \
-	upnp_renderer_test
+	upnp_renderer_test \
+	logging_test
 
 check_PROGRAMS = $(TESTS)
 
 xmlescape_test_SOURCES = xmlescape_test.c test-helpers.h xmlescape.c xmlescape.h
+
+logging_test_SOURCES = logging_test.c test-helpers.h logging.c logging.h
 
 xmldoc_test_SOURCES = xmldoc_test.c test-helpers.h xmldoc.c xmldoc.h
 xmldoc_test_LDADD = $(LIBUPNP_LIBS)
