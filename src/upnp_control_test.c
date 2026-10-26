@@ -102,6 +102,130 @@ static void test_volume_and_mute_actions(void) {
 		"<DesiredMute>1</DesiredMute>"
 		"</u:SetMute>", NULL), 0);
 	EXPECT_INT_EQ(last_output_mute, 1);
+
+	/* 4. GetMute returns 1. */
+	EXPECT_INT_EQ(invoke_action_xml(
+		srv, "GetMute",
+		"<u:GetMute xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">"
+		"<InstanceID>0</InstanceID>"
+		"<Channel>Master</Channel>"
+		"</u:GetMute>", &resp), 0);
+	EXPECT_TRUE(resp != NULL);
+	EXPECT_TRUE(strstr(resp, "<CurrentMute>1</CurrentMute>") != NULL);
+	free(resp);
+
+	/* 5. SetVolume in lower half (25) and upper half (75) and out-of-range (-5, 150). */
+	EXPECT_INT_EQ(invoke_action_xml(
+		srv, "SetVolume",
+		"<u:SetVolume xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">"
+		"<InstanceID>0</InstanceID><Channel>Master</Channel>"
+		"<DesiredVolume>25</DesiredVolume>"
+		"</u:SetVolume>", NULL), 0);
+	EXPECT_INT_EQ(invoke_action_xml(
+		srv, "SetVolume",
+		"<u:SetVolume xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">"
+		"<InstanceID>0</InstanceID><Channel>Master</Channel>"
+		"<DesiredVolume>75</DesiredVolume>"
+		"</u:SetVolume>", NULL), 0);
+	EXPECT_INT_EQ(invoke_action_xml(
+		srv, "SetVolume",
+		"<u:SetVolume xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">"
+		"<InstanceID>0</InstanceID><Channel>Master</Channel>"
+		"<DesiredVolume>-5</DesiredVolume>"
+		"</u:SetVolume>", NULL), 0);
+	EXPECT_INT_EQ(invoke_action_xml(
+		srv, "SetVolume",
+		"<u:SetVolume xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">"
+		"<InstanceID>0</InstanceID><Channel>Master</Channel>"
+		"<DesiredVolume>150</DesiredVolume>"
+		"</u:SetVolume>", NULL), 0);
+
+	/* 6. SetVolumeDB in lower half (-40), upper half (-10),
+	 * and out-of-range (-80, 10), plus GetVolumeDB and GetVolumeDBRange. */
+	EXPECT_INT_EQ(invoke_action_xml(
+		srv, "SetVolumeDB",
+		"<u:SetVolumeDB xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">"
+		"<InstanceID>0</InstanceID><Channel>Master</Channel>"
+		"<DesiredVolume>-40</DesiredVolume>"
+		"</u:SetVolumeDB>", NULL), 0);
+	EXPECT_INT_EQ(invoke_action_xml(
+		srv, "SetVolumeDB",
+		"<u:SetVolumeDB xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">"
+		"<InstanceID>0</InstanceID><Channel>Master</Channel>"
+		"<DesiredVolume>-10</DesiredVolume>"
+		"</u:SetVolumeDB>", NULL), 0);
+	EXPECT_INT_EQ(invoke_action_xml(
+		srv, "SetVolumeDB",
+		"<u:SetVolumeDB xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">"
+		"<InstanceID>0</InstanceID><Channel>Master</Channel>"
+		"<DesiredVolume>-80</DesiredVolume>"
+		"</u:SetVolumeDB>", NULL), 0);
+	EXPECT_INT_EQ(invoke_action_xml(
+		srv, "SetVolumeDB",
+		"<u:SetVolumeDB xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">"
+		"<InstanceID>0</InstanceID><Channel>Master</Channel>"
+		"<DesiredVolume>10</DesiredVolume>"
+		"</u:SetVolumeDB>", NULL), 0);
+
+	EXPECT_INT_EQ(invoke_action_xml(
+		srv, "GetVolumeDB",
+		"<u:GetVolumeDB xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">"
+		"<InstanceID>0</InstanceID><Channel>Master</Channel>"
+		"</u:GetVolumeDB>", &resp), 0);
+	EXPECT_TRUE(resp != NULL);
+	EXPECT_TRUE(strstr(resp, "<CurrentVolumeDB>0</CurrentVolumeDB>") != NULL);
+	free(resp);
+
+	EXPECT_INT_EQ(invoke_action_xml(
+		srv, "GetVolumeDBRange",
+		"<u:GetVolumeDBRange xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">"
+		"<InstanceID>0</InstanceID><Channel>Master</Channel>"
+		"</u:GetVolumeDBRange>", &resp), 0);
+	EXPECT_TRUE(resp != NULL);
+	EXPECT_TRUE(strstr(resp, "<MinValue>-15360</MinValue>") != NULL);
+	EXPECT_TRUE(strstr(resp, "<MaxValue>0</MaxValue>") != NULL);
+	free(resp);
+}
+
+static void test_getters_and_presets(void) {
+	struct service *srv = upnp_control_get_service();
+	char *resp = NULL;
+
+	static const char *const getter_actions[] = {
+		"ListPresets",
+		"GetLoudness",
+		"GetBrightness",
+		"GetContrast",
+		"GetSharpness",
+		"GetRedVideoGain",
+		"GetGreenVideoGain",
+		"GetBlueVideoGain",
+		"GetRedVideoBlackLevel",
+		"GetGreenVideoBlackLevel",
+		"GetBlueVideoBlackLevel",
+		"GetColorTemperature",
+		"GetHorizontalKeystone",
+		"GetVerticalKeystone",
+	};
+	for (size_t i = 0; i < sizeof(getter_actions) / sizeof(getter_actions[0]); ++i) {
+		char xml[256];
+		snprintf(xml, sizeof(xml),
+			 "<u:%s xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">"
+			 "<InstanceID>0</InstanceID>"
+			 "</u:%s>",
+			 getter_actions[i], getter_actions[i]);
+		EXPECT_INT_EQ(invoke_action_xml(srv, getter_actions[i], xml, &resp), 0);
+		EXPECT_TRUE(resp != NULL);
+		free(resp);
+		resp = NULL;
+
+		/* Also verify missing InstanceID returns -1. */
+		snprintf(xml, sizeof(xml),
+			 "<u:%s xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">"
+			 "</u:%s>",
+			 getter_actions[i], getter_actions[i]);
+		EXPECT_INT_EQ(invoke_action_xml(srv, getter_actions[i], xml, NULL), -1);
+	}
 }
 
 static void test_missing_arguments_do_not_crash(void) {
@@ -127,10 +251,47 @@ static void test_missing_arguments_do_not_crash(void) {
 		"<u:SetVolumeDB xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">"
 		"<InstanceID>0</InstanceID>"
 		"</u:SetVolumeDB>", NULL), -1);
+
+	/* Missing InstanceID in GetVolume returns -1. */
+	EXPECT_INT_EQ(invoke_action_xml(
+		srv, "GetVolume",
+		"<u:GetVolume xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">"
+		"</u:GetVolume>", NULL), -1);
+}
+
+static int control_listener_calls = 0;
+static void dummy_control_listener(void *userdata, int var_num,
+				   const char *var_name, const char *old_val,
+				   const char *new_val) {
+	(void)userdata;
+	(void)var_num;
+	(void)var_name;
+	(void)old_val;
+	(void)new_val;
+	control_listener_calls++;
+}
+
+static void test_init_and_listener(void) {
+	upnp_control_init(NULL);
+	upnp_control_register_variable_listener(dummy_control_listener, NULL);
+	struct service *srv = upnp_control_get_service();
+	EXPECT_INT_EQ(invoke_action_xml(
+		srv, "SetVolume",
+		"<u:SetVolume xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">"
+		"<InstanceID>0</InstanceID><Channel>Master</Channel>"
+		"<DesiredVolume>50</DesiredVolume>"
+		"</u:SetVolume>", NULL), 0);
+	EXPECT_TRUE(control_listener_calls > 0);
+	if (srv->last_change != NULL) {
+		UPnPLastChangeCollector_delete(srv->last_change);
+		srv->last_change = NULL;
+	}
 }
 
 int main(void) {
 	test_volume_and_mute_actions();
+	test_getters_and_presets();
 	test_missing_arguments_do_not_crash();
+	test_init_and_listener();
 	return 0;
 }

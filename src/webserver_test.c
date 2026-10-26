@@ -48,18 +48,21 @@ int UpnpVirtualDir_set_CloseCallback(VDCallback_Close cb) {
 #define CALL_GET_INFO(fn, info) captured_get_info((fn), (info), NULL, NULL)
 #define CALL_OPEN(fn, mode) captured_open((fn), (mode), NULL, NULL)
 #define CALL_READ(fh, buf, len) captured_read((fh), (buf), (len), NULL, NULL)
+#define CALL_WRITE(fh, buf, len) captured_write((fh), (buf), (len), NULL, NULL)
 #define CALL_SEEK(fh, off, orig) captured_seek((fh), (off), (orig), NULL, NULL)
 #define CALL_CLOSE(fh) captured_close((fh), NULL, NULL)
 #elif UPNP_VERSION >= 10803
 #define CALL_GET_INFO(fn, info) captured_get_info((fn), (info), NULL)
 #define CALL_OPEN(fn, mode) captured_open((fn), (mode), NULL)
 #define CALL_READ(fh, buf, len) captured_read((fh), (buf), (len), NULL)
+#define CALL_WRITE(fh, buf, len) captured_write((fh), (buf), (len), NULL)
 #define CALL_SEEK(fh, off, orig) captured_seek((fh), (off), (orig), NULL)
 #define CALL_CLOSE(fh) captured_close((fh), NULL)
 #else
 #define CALL_GET_INFO(fn, info) captured_get_info((fn), (info))
 #define CALL_OPEN(fn, mode) captured_open((fn), (mode))
 #define CALL_READ(fh, buf, len) captured_read((fh), (buf), (len))
+#define CALL_WRITE(fh, buf, len) captured_write((fh), (buf), (len))
 #define CALL_SEEK(fh, off, orig) captured_seek((fh), (off), (orig))
 #define CALL_CLOSE(fh) captured_close((fh))
 #endif
@@ -69,6 +72,7 @@ static void test_webserver_callbacks(void) {
 	EXPECT_TRUE(captured_get_info != NULL);
 	EXPECT_TRUE(captured_open != NULL);
 	EXPECT_TRUE(captured_read != NULL);
+	EXPECT_TRUE(captured_write != NULL);
 	EXPECT_TRUE(captured_seek != NULL);
 	EXPECT_TRUE(captured_close != NULL);
 
@@ -100,6 +104,9 @@ static void test_webserver_callbacks(void) {
 	EXPECT_INT_EQ(CALL_READ(fh, buf, 4), 4);
 	EXPECT_STREQ(buf, "0123");
 
+	/* Write callback is unsupported and returns -1. */
+	EXPECT_INT_EQ(CALL_WRITE(fh, buf, 4), -1);
+
 	/* Seek relative +2 -> pos 6. */
 	EXPECT_INT_EQ(CALL_SEEK(fh, 2, SEEK_CUR), 0);
 	memset(buf, 0, sizeof(buf));
@@ -115,6 +122,12 @@ static void test_webserver_callbacks(void) {
 	EXPECT_INT_EQ(CALL_SEEK(fh, 0, SEEK_END), 0);
 
 	EXPECT_INT_EQ(CALL_CLOSE(fh), 0);
+
+	/* Also test reading from empty file. */
+	UpnpWebFileHandle empty_fh = CALL_OPEN("/upnp/empty.xml", UPNP_READ);
+	EXPECT_TRUE(empty_fh != NULL);
+	EXPECT_INT_EQ(CALL_READ(empty_fh, buf, 4), 0);
+	EXPECT_INT_EQ(CALL_CLOSE(empty_fh), 0);
 }
 
 int main(void) {

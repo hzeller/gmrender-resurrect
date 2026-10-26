@@ -49,9 +49,14 @@ static void test_connmgr_mime_registration_and_filtering(void) {
 	struct service *srv = upnp_connmgr_get_service();
 	EXPECT_TRUE(srv != NULL);
 
-	/* 1. Register several MIME types and initialize with no filter. */
+	/* 1. Register several MIME types (including special mappings and duplicates)
+	 * and initialize with no filter. */
 	register_mime_type("audio/mpeg");
+	register_mime_type("audio/mpeg"); /* duplicate */
 	register_mime_type("audio/x-flac");
+	register_mime_type("audio/x-alac");
+	register_mime_type("audio/x-aiff");
+	register_mime_type("audio/x-m4a");
 	register_mime_type("video/mp4");
 
 	EXPECT_INT_EQ(connmgr_init(NULL), 0);
@@ -63,6 +68,10 @@ static void test_connmgr_mime_registration_and_filtering(void) {
 	/* audio/mpeg also auto-registers audio/x-mpeg and audio/x-scpls. */
 	EXPECT_TRUE(strstr(sink_proto, "http-get:*:audio/x-mpeg:*") != NULL);
 	EXPECT_TRUE(strstr(sink_proto, "http-get:*:audio/x-flac:*") != NULL);
+	EXPECT_TRUE(strstr(sink_proto, "http-get:*:audio/alac:*") != NULL);
+	EXPECT_TRUE(strstr(sink_proto, "http-get:*:audio/aiff:*") != NULL);
+	EXPECT_TRUE(strstr(sink_proto, "http-get:*:audio/m4a:*") != NULL);
+	EXPECT_TRUE(strstr(sink_proto, "http-get:*:audio/mp4:*") != NULL);
 	EXPECT_TRUE(strstr(sink_proto, "http-get:*:video/mp4:*") != NULL);
 
 	/* 2. Re-register and re-initialize with a filter string.
@@ -104,6 +113,27 @@ static void test_connmgr_service_actions(void) {
 		"</u:GetProtocolInfo>", &resp), 0);
 	EXPECT_TRUE(resp != NULL);
 	EXPECT_TRUE(strstr(resp, "<Sink>") != NULL);
+	free(resp);
+
+	/* PrepareForConnection returns ConnectionID, AVTransportID, RcsID. */
+	EXPECT_INT_EQ(invoke_connmgr_action(
+		srv, "PrepareForConnection",
+		"<u:PrepareForConnection xmlns:u=\"urn:schemas-upnp-org:service:ConnectionManager:1\">"
+		"</u:PrepareForConnection>", &resp), 0);
+	EXPECT_TRUE(resp != NULL);
+	EXPECT_TRUE(strstr(resp, "<ConnectionID>0</ConnectionID>") != NULL);
+	EXPECT_TRUE(strstr(resp, "<AVTransportID>0</AVTransportID>") != NULL);
+	EXPECT_TRUE(strstr(resp, "<RcsID>0</RcsID>") != NULL);
+	free(resp);
+
+	/* GetCurrentConnectionInfo with valid ConnectionID=0 succeeds. */
+	EXPECT_INT_EQ(invoke_connmgr_action(
+		srv, "GetCurrentConnectionInfo",
+		"<u:GetCurrentConnectionInfo xmlns:u=\"urn:schemas-upnp-org:service:ConnectionManager:1\">"
+		"<ConnectionID>0</ConnectionID>"
+		"</u:GetCurrentConnectionInfo>", &resp), 0);
+	EXPECT_TRUE(resp != NULL);
+	EXPECT_TRUE(strstr(resp, "<Status>Unknown</Status>") != NULL);
 	free(resp);
 
 	/* GetCurrentConnectionInfo with missing ConnectionID returns -1. */

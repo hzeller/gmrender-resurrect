@@ -46,6 +46,12 @@ static void test_logging_to_temp_file(void) {
 	EXPECT_TRUE(strstr(buf, "Already has newline\n\n") == NULL);
 	EXPECT_TRUE(strstr(buf, "ERROR [") != NULL);
 	EXPECT_TRUE(strstr(buf, "| err-cat] Error code -1\n") != NULL);
+
+	/* Re-initializing Log_init closes previous fd (> 2) and switches to stdout/stderr. */
+	Log_init("stdout");
+	EXPECT_INT_EQ(Log_info_enabled(), 1);
+	Log_init("stderr");
+	EXPECT_INT_EQ(Log_info_enabled(), 1);
 }
 
 int main(void) {
