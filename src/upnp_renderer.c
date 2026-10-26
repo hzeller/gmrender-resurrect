@@ -87,7 +87,7 @@ static struct upnp_device_descriptor render_device = {
         .model_number           = GM_COMPILE_VERSION,
         .model_url              = "http://github.com/hzeller/gmrender-resurrect",
         .serial_number          = "1",
-        .udn                    = "uuid:GMediaRender-1_0-000-000-002",
+        .udn                    = NULL,  /* set in upnp_renderer_descriptor */
         .upc                    = "",
         .presentation_url       = "",  // TODO(hzeller) show something useful.
         .mime_filter            = NULL,
@@ -95,26 +95,25 @@ static struct upnp_device_descriptor render_device = {
 	.services               = NULL,  /* set later */
 };
 
-void upnp_renderer_dump_connmgr_scpd(void)
+static void dump_service_scpd(struct service *srv)
 {
-	char *buf;
-	buf = upnp_get_scpd(upnp_connmgr_get_service());
+	char *buf = upnp_get_scpd(srv);
 	assert(buf != NULL);
 	fputs(buf, stdout);
+	free(buf);
+}
+
+void upnp_renderer_dump_connmgr_scpd(void)
+{
+	dump_service_scpd(upnp_connmgr_get_service());
 }
 void upnp_renderer_dump_control_scpd(void)
 {
-	char *buf;
-	buf = upnp_get_scpd(upnp_control_get_service());
-	assert(buf != NULL);
-	fputs(buf, stdout);
+	dump_service_scpd(upnp_control_get_service());
 }
 void upnp_renderer_dump_transport_scpd(void)
 {
-	char *buf;
-	buf = upnp_get_scpd(upnp_transport_get_service());
-	assert(buf != NULL);
-	fputs(buf, stdout);
+	dump_service_scpd(upnp_transport_get_service());
 }
 
 static int upnp_renderer_init(void)
@@ -138,7 +137,9 @@ upnp_renderer_descriptor(const char *friendly_name,
 
 	char *udn = NULL;
 	if (asprintf(&udn, "uuid:%s", uuid) > 0) {
+		free((char *)render_device.udn);
 		render_device.udn = udn;
 	}
 	return &render_device;
 }
+
