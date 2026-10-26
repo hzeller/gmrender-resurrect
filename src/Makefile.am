@@ -34,7 +34,8 @@ TESTS = \
 	xmldoc_test \
 	song-meta-data_test \
 	variable-container_test \
-	upnp_service_test
+	upnp_service_test \
+	upnp_connmgr_test
 
 check_PROGRAMS = $(TESTS)
 
@@ -67,4 +68,16 @@ upnp_service_test_SOURCES = \
 	xmldoc.c xmldoc.h \
 	xmlescape.c xmlescape.h
 upnp_service_test_LDADD = $(GLIB_LIBS) $(LIBUPNP_LIBS)
+
+upnp_connmgr_test_SOURCES = \
+	upnp_connmgr_test.c test-helpers.h \
+	upnp_connmgr.c upnp_connmgr.h \
+	upnp_service.c upnp_service.h \
+	variable-container.c variable-container.h \
+	upnp_device.c upnp_device.h \
+	webserver.c webserver.h \
+	logging.c logging.h \
+	xmldoc.c xmldoc.h \
+	xmlescape.c xmlescape.h
+upnp_connmgr_test_LDADD = $(GLIB_LIBS) $(LIBUPNP_LIBS)
 
