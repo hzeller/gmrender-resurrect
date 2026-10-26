@@ -21,9 +21,12 @@ static void test_find_action(void) {
 	};
 	struct service srv;
 	memset(&srv, 0, sizeof(srv));
+	EXPECT_TRUE(find_action(&srv, "Play") == NULL);
+
 	srv.actions = actions;
 
 	EXPECT_TRUE(find_action(NULL, "Play") == NULL);
+	EXPECT_TRUE(find_action(&srv, NULL) == NULL);
 
 	const struct action *play = find_action(&srv, "Play");
 	EXPECT_TRUE(play == &actions[0]);
