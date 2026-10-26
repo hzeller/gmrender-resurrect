@@ -192,7 +192,7 @@ static void test_last_change_collector(void) {
 	EXPECT_TRUE(strstr(mock_notify.last_varvalue, "&lt;Volume val=\"80\" channel=\"Master\"&gt;") != NULL);
 
 	reset_mock_notify();
-	free(collector);
+	UPnPLastChangeCollector_delete(collector);
 	VariableContainer_delete(vc);
 }
 

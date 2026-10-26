@@ -294,6 +294,13 @@ UPnPLastChangeCollector_new(variable_container_t *variable_container,
 	return result;
 }
 
+void UPnPLastChangeCollector_delete(upnp_last_change_collector_t *object) {
+	if (object->builder != NULL) {
+		UPnPLastChangeBuilder_delete(object->builder);
+	}
+	free(object);
+}
+
 void UPnPLastChangeCollector_add_ignore(upnp_last_change_collector_t *object,
 					int variable_num) {
 	object->not_eventable_variables |= (1 << variable_num);
