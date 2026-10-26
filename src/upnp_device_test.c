@@ -52,6 +52,8 @@ static void test_find_service_and_create_device_desc(void) {
 	desc.icons = icons;
 	desc.services = services;
 
+	EXPECT_TRUE(find_service(NULL, "urn:upnp-org:serviceId:TestService") == NULL);
+	EXPECT_TRUE(find_service(&desc, NULL) == NULL);
 	EXPECT_TRUE(find_service(&desc, "urn:upnp-org:serviceId:TestService") == &srv1);
 	EXPECT_TRUE(find_service(&desc, "urn:upnp-org:serviceId:Unknown") == NULL);
 
@@ -114,12 +116,13 @@ static void test_action_event_helpers_no_leaks(void) {
 	char *res_xml = ixmlDocumenttoString(res_doc);
 	EXPECT_TRUE(strstr(res_xml, "<CurrentVolume>42</CurrentVolume>") != NULL);
 	free(res_xml);
-	ixmlDocument_free(res_doc);
-	UpnpActionRequest_set_ActionResult(req, NULL);
 
-	/* 3. Missing argument sets error via upnp_set_error without leaking UpnpString. */
+	/* 3. Calling upnp_set_error (via missing argument in upnp_get_string)
+	 * while ActionResult is already non-NULL must free the previous
+	 * ActionResult rather than leaking it, and must not leak UpnpString. */
 	EXPECT_TRUE(upnp_get_string(&ev, "MissingArg") == NULL);
 	EXPECT_INT_EQ(ev.status, -1);
+	EXPECT_TRUE(UpnpActionRequest_get_ActionResult(req) == NULL);
 	EXPECT_TRUE(strstr(UpnpActionRequest_get_ErrStr_cstr(req), "MissingArg") != NULL);
 
 	ixmlDocument_free(req_doc);
