@@ -52,9 +52,21 @@
 #define VD_CLOSE_CALLBACK(NAME, HANDLE, COOKIE) int NAME(UpnpWebFileHandle HANDLE)
 #endif
 
+/*
+ * Upnp_FunPtr event parameter signature history in pupnp:
+ * - < 1.8.0 (UPNP_VERSION < 10800): void *
+ * - 1.8.0 .. 1.14.25 (10800 <= UPNP_VERSION < 11426): const void *
+ *   Note: CMake builds of 1.14.x up to 1.14.25 had a bug in autoheader.cmake
+ *   that set UPNP_VERSION from the libtool soversion (17.x.y -> 170000..170205)
+ *   instead of the package version; these also use const void *.
+ * - 1.14.26 .. 1.14.29 (11426 <= UPNP_VERSION < 11430): void *
+ * - 1.14.30+ on 1.14.x branch (11430 <= UPNP_VERSION < 11800): const void *
+ * - 1.18.0+ (11800..11805, 20000..20002, 220003+): void *
+ */
 #if UPNP_VERSION >= 10800 && \
    (UPNP_VERSION < 11426 || \
-   (UPNP_VERSION >= 11430 && UPNP_VERSION < 11800))
+   (UPNP_VERSION >= 11430 && UPNP_VERSION < 11800) || \
+   (UPNP_VERSION >= 170000 && UPNP_VERSION < 180000))
 #define UPNP_CALLBACK(NAME, TYPE, EVENT, COOKIE) int NAME(Upnp_EventType TYPE, const void* EVENT, void* COOKIE)
 #else
 #define UPNP_CALLBACK(NAME, TYPE, EVENT, COOKIE) int NAME(Upnp_EventType TYPE, void* EVENT, void* COOKIE)
