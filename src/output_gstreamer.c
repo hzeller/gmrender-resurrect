@@ -95,10 +95,12 @@ static void scan_mime_list(void)
 
 			GstCaps* capabilities = gst_static_caps_get(&padTemplate->static_caps);
 
-			// Skip capabilities that they tell us nothing
-			if (capabilities == NULL || gst_caps_is_any(capabilities) ||
-				gst_caps_is_empty(capabilities))
-			{
+			// Skip capabilities that tell us nothing
+			if (capabilities == NULL) {
+				continue;
+			}
+			if (gst_caps_is_any(capabilities) ||
+			    gst_caps_is_empty(capabilities)) {
 				gst_caps_unref(capabilities);
 				continue;
 			}
@@ -614,7 +616,12 @@ static int output_gstreamer_init(void)
 		GstElement *sink = NULL;
 		Log_info("gstreamer", "Setting video sink to %s", video_sink);
 		sink = gst_element_factory_make (video_sink, "sink");
-		g_object_set (G_OBJECT (player_), "video-sink", sink, NULL);
+		if (sink == NULL) {
+			Log_error("gstreamer", "Couldn't create sink '%s'",
+				  video_sink);
+		} else {
+			g_object_set (G_OBJECT (player_), "video-sink", sink, NULL);
+		}
 	}
 	if (video_pipe != NULL) {
 		GstElement *sink = NULL;
