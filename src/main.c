@@ -190,7 +190,8 @@ static void log_variable_change(void *userdata, int var_num,
 	(void)old_value;
 
 	const char *category = (const char*) userdata;
-	int needs_newline = variable_value[strlen(variable_value) - 1] != '\n';
+	const size_t len = strlen(variable_value);
+	int needs_newline = (len == 0 || variable_value[len - 1] != '\n');
 	// Silly terminal codes. Set to empty strings if not needed.
 	const char *var_start = Log_color_allowed() ? "\033[1m\033[34m" : "";
 	const char *var_end = Log_color_allowed() ? "\033[0m" : "";
@@ -319,6 +320,7 @@ int main(int argc, char **argv)
 		char *buf = upnp_create_device_desc(upnp_renderer);
 		assert(buf != NULL);
 		fputs(buf, stdout);
+		free(buf);
 		exit(EXIT_SUCCESS);
 	}
 
