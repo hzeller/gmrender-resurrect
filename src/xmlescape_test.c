@@ -7,6 +7,8 @@
 #include "xmlescape.h"
 
 static void test_plain_and_empty(void) {
+	EXPECT_TRUE(xmlescape(NULL, 0) == NULL);
+
 	char *res = xmlescape("", 0);
 	EXPECT_STREQ(res, "");
 	free(res);
