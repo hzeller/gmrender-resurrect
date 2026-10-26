@@ -159,7 +159,7 @@ typedef struct File_Info UpnpFileInfo;
 #define UpnpFileInfo_get_IsReadable(x) ((x)->is_readable)
 #define UpnpFileInfo_set_IsReadable(x, v) ((x)->is_readable = (v))
 #define UpnpFileInfo_get_ContentType(x) ((x)->content_type)
-#define UpnpFileInfo_set_ContentType(x, v) ((x)->content_type = (v))
+#define UpnpFileInfo_set_ContentType(x, v) ((x)->content_type = ixmlCloneDOMString(v))
 
 #endif
 

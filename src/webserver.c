@@ -92,8 +92,11 @@ int webserver_register_file(const char *path, const char *content_type)
 	struct virtual_file *entry;
 	int rc;
 
-	snprintf(local_fname, sizeof(local_fname), "%s%s", PKG_DATADIR,
-	         strrchr(path, '/'));
+	const char *slash = strrchr(path, '/');
+	if (slash == NULL) {
+		return -1;
+	}
+	snprintf(local_fname, sizeof(local_fname), "%s%s", PKG_DATADIR, slash);
 
 	Log_info("webserver", "Provide %s (%s) from %s", path, content_type,
 		 local_fname);
@@ -153,11 +156,9 @@ static VD_GET_INFO_CALLBACK(webserver_get_info, filename, info, cookie)
 			UpnpFileInfo_set_LastModified(info, 0);
 			UpnpFileInfo_set_IsDirectory(info, 0);
 			UpnpFileInfo_set_IsReadable(info, 1);
-			const char *contentType =
-				ixmlCloneDOMString(virtfile->content_type);
-			UpnpFileInfo_set_ContentType(info, (char*) contentType);
+			UpnpFileInfo_set_ContentType(info, virtfile->content_type);
 			Log_info("webserver", "Access %s (%s) len=%zd",
-				 filename, contentType, virtfile->len);
+				 filename, virtfile->content_type, virtfile->len);
 			return 0;
 		}
 		virtfile = virtfile->next;
@@ -202,13 +203,14 @@ static VD_READ_CALLBACK(webserver_read, fh, buf, buflen, cookie)
 	ssize_t len = -1;
 
 	len = minimum(buflen, file->len - file->pos);
-	memcpy(buf, file->contents + file->pos, len);
 
 	if (len < 0) {
 		Log_error("webserver", "In %s: %s",
 			  __FUNCTION__, strerror(errno));
-
-	} else {
+		return -1;
+	}
+	if (len > 0) {
+		memcpy(buf, file->contents + file->pos, len);
 		file->pos += len;
 	}
 
