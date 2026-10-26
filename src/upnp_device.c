@@ -82,6 +82,7 @@ int upnp_add_response(struct action_event *event,
 		UpnpActionRequest_set_ActionResult(event->request, NULL);
 		UpnpActionRequest_set_ErrCode(event->request, UPNP_SOAP_E_ACTION_FAILED);
 		UpnpActionRequest_set_ErrStr(event->request, errorMessage);
+		UpnpString_delete(errorMessage);
 		return -1;
 	}
 
@@ -123,6 +124,7 @@ void upnp_set_error(struct action_event *event, int error_code,
 	UpnpString *errStr = UpnpString_new();
 	UpnpString_set_String(errStr, buffer);
 	UpnpActionRequest_set_ErrStr(event->request, errStr);
+	UpnpString_delete(errStr);
 	Log_error("upnp", "%s: %s (%d)\n", __FUNCTION__,
 		  UpnpActionRequest_get_ErrStr_cstr(event->request),
 		  error_code);
@@ -211,8 +213,8 @@ static int handle_subscription_request(struct upnp_device *priv,
 	}
 	pthread_mutex_unlock(srv->service_mutex);
 	char *xml_value = UPnPLastChangeBuilder_to_xml(builder);
-	Log_info("upnp", "Initial variable sync: %s", xml_value);
-	eventvar_values[0] = xmlescape(xml_value, 0);
+	Log_info("upnp", "Initial variable sync: %s", xml_value ? xml_value : "");
+	eventvar_values[0] = xml_value ? xmlescape(xml_value, 0) : strdup("");
 	free(xml_value);
 	UPnPLastChangeBuilder_delete(builder);
 
@@ -275,11 +277,14 @@ static int handle_var_request(struct upnp_device *priv,
 
 	pthread_mutex_unlock(srv->service_mutex);
 
-	UpnpStateVarRequest_set_CurrentVal(event, result);
+	if (result != NULL) {
+		UpnpStateVarRequest_set_CurrentVal(event, result);
+	}
 	int errCode = (result == NULL) ? UPNP_SOAP_E_INVALID_VAR : UPNP_E_SUCCESS;
 	UpnpStateVarRequest_set_ErrCode(event, errCode);
 	Log_info("upnp", "Variable request %s -> %s (%s)",
 		UpnpStateVarRequest_get_StateVarName_cstr(event), result, serviceID);
+	free(result);
 	return 0;
 }
 

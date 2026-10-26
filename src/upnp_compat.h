@@ -108,7 +108,7 @@ typedef struct Upnp_State_Var_Request UpnpStateVarRequest;
 #define UpnpStateVarRequest_get_ServiceID_cstr(x) ((x)->ServiceID)
 #define UpnpStateVarRequest_get_StateVarName_cstr(x) ((x)->StateVarName)
 #define UpnpStateVarRequest_get_CurrentVal(x) ((x)->CurrentVal)
-#define UpnpStateVarRequest_set_CurrentVal(x, v) ((x)->CurrentVal = (v))
+#define UpnpStateVarRequest_set_CurrentVal(x, v) ((x)->CurrentVal = ixmlCloneDOMString(v))
 
 /* compat code for libupnp-1.8 */
 typedef struct Upnp_State_Var_Complete UpnpStateVarComplete;
