@@ -41,22 +41,21 @@
 #include "xmlescape.h"
 #include "xmldoc.h"
 
+static void replace_str(const char **dest, char *new_value) {
+	free((char*)*dest);
+	*dest = new_value;
+}
+
 void SongMetaData_init(struct SongMetaData *value) {
 	memset(value, 0, sizeof(struct SongMetaData));
 }
 void SongMetaData_clear(struct SongMetaData *value) {
-	free((char*)value->title);
-	value->title = NULL;
-	free((char*)value->artist);
-	value->artist = NULL;
-	free((char*)value->album);
-	value->album = NULL;
-	free((char*)value->genre);
-	value->genre = NULL;
-	free((char*)value->composer);
-	value->composer = NULL;
-	free((char*)value->album_art_uri);
-	value->album_art_uri = NULL;
+	replace_str(&value->title, NULL);
+	replace_str(&value->artist, NULL);
+	replace_str(&value->album, NULL);
+	replace_str(&value->genre, NULL);
+	replace_str(&value->composer, NULL);
+	replace_str(&value->album_art_uri, NULL);
 }
 
 static const char kDidlHeader[] = "<DIDL-Lite "
@@ -137,26 +136,30 @@ int SongMetaData_parse_DIDL(struct SongMetaData *object, const char *xml) {
 
 	// ... did I mention that I hate navigating XML documents ?
 	struct xmlelement *didl_node = find_element_in_doc(doc, "DIDL-Lite");
-	if (didl_node == NULL)
+	if (didl_node == NULL) {
+		xmldoc_free(doc);
 		return 0;
+	}
 
 	struct xmlelement *item_node = find_element_in_element(didl_node,
 							       "item");
-	if (item_node == NULL)
+	if (item_node == NULL) {
+		xmldoc_free(doc);
 		return 0;
+	}
 
 	struct xmlelement *value_node = NULL;
 	value_node = find_element_in_element(item_node, "dc:title");
-	if (value_node) object->title = get_node_value(value_node);
+	if (value_node) replace_str(&object->title, get_node_value(value_node));
 
 	value_node = find_element_in_element(item_node, "upnp:artist");
-	if (value_node) object->artist = get_node_value(value_node);
+	if (value_node) replace_str(&object->artist, get_node_value(value_node));
 
 	value_node = find_element_in_element(item_node, "upnp:album");
-	if (value_node) object->album = get_node_value(value_node);
+	if (value_node) replace_str(&object->album, get_node_value(value_node));
 
 	value_node = find_element_in_element(item_node, "upnp:genre");
-	if (value_node) object->genre = get_node_value(value_node);
+	if (value_node) replace_str(&object->genre, get_node_value(value_node));
 
 	value_node = find_element_in_element(item_node, "upnp:albumArtURI");
 	if (value_node) object->album_art_uri = get_node_value(value_node);

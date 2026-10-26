@@ -19,12 +19,14 @@ static void test_init_and_clear(void) {
 	meta.artist = strdup("Test Artist");
 	meta.album = strdup("Test Album");
 	meta.genre = strdup("Test Genre");
+	meta.composer = strdup("Test Composer");
 
 	SongMetaData_clear(&meta);
 	EXPECT_TRUE(meta.title == NULL);
 	EXPECT_TRUE(meta.artist == NULL);
 	EXPECT_TRUE(meta.album == NULL);
 	EXPECT_TRUE(meta.genre == NULL);
+	EXPECT_TRUE(meta.composer == NULL);
 }
 
 static void test_generate_and_parse_didl_roundtrip(void) {
@@ -46,6 +48,9 @@ static void test_generate_and_parse_didl_roundtrip(void) {
 	struct SongMetaData parsed;
 	SongMetaData_init(&parsed);
 	int ok = SongMetaData_parse_DIDL(&parsed, didl);
+	EXPECT_TRUE(ok == 1);
+	/* Parsing again into the same struct should not leak previous strings. */
+	ok = SongMetaData_parse_DIDL(&parsed, didl);
 	EXPECT_TRUE(ok == 1);
 	EXPECT_STREQ(parsed.title, "Song <1> & More");
 	EXPECT_STREQ(parsed.artist, "Artist & Friends");
