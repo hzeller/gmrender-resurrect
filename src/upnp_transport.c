@@ -485,7 +485,8 @@ static int replace_transport_uri_and_meta(const char *uri, const char *meta) {
 
 	// We only really want to send back meta data if we didn't get anything
 	// useful or if this is an audio item.
-	const int requires_stream_meta_callback = (strlen(meta) == 0)
+	const int requires_stream_meta_callback =
+		(meta == NULL || strlen(meta) == 0)
 		|| strstr(meta, "object.item.audioItem");
 	return requires_stream_meta_callback;
 }
@@ -539,9 +540,9 @@ static void update_meta_from_stream(const struct SongMetaData *meta) {
 	if (meta->title == NULL || strlen(meta->title) == 0) {
 		return;
 	}
+	service_lock();
 	const char *original_xml = get_var(TRANSPORT_VAR_AV_URI_META);
 	char *didl = SongMetaData_to_DIDL(meta, original_xml);
-	service_lock();
 	replace_var(TRANSPORT_VAR_AV_URI_META, didl);
 	replace_var(TRANSPORT_VAR_CUR_TRACK_META, didl);
 	service_unlock();
@@ -873,9 +874,15 @@ static int seek(struct action_event *event)
 	}
 
 	const char *unit = upnp_get_string(event, "Unit");
+	if (unit == NULL) {
+		return -1;
+	}
 	if (strcmp(unit, "REL_TIME") == 0) {
 		// This is the only thing we support right now.
 		const char *target = upnp_get_string(event, "Target");
+		if (target == NULL) {
+			return -1;
+		}
 		gint64 nanos = parse_upnp_time(target);
 		service_lock();
 		if (output_seek(nanos) == 0) {
