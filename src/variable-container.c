@@ -267,7 +267,7 @@ UPnPLastChangeCollector_new(variable_container_t *variable_container,
 	// without proper registration.
 	// Also determine, which variable is actually the "LastChange" one.
 	const int var_count = VariableContainer_get_num_vars(variable_container);
-	assert(var_count < 32);  // otherwise widen not_eventable_variables
+	assert(var_count <= 32);  // otherwise widen not_eventable_variables
 	for (int i = 0; i < var_count; ++i) {
 		const char *name;
 		const char *value = VariableContainer_get(variable_container,
@@ -303,7 +303,8 @@ void UPnPLastChangeCollector_delete(upnp_last_change_collector_t *object) {
 
 void UPnPLastChangeCollector_add_ignore(upnp_last_change_collector_t *object,
 					int variable_num) {
-	object->not_eventable_variables |= (1 << variable_num);
+	assert(variable_num >= 0 && variable_num < 32);
+	object->not_eventable_variables |= (1u << variable_num);
 }
 
 void UPnPLastChangeCollector_start(upnp_last_change_collector_t *object) {
@@ -361,7 +362,7 @@ static void UPnPLastChangeCollector_callback(void *userdata,
 	upnp_last_change_collector_t *object =
 		(upnp_last_change_collector_t*) userdata;
 
-	if (object->not_eventable_variables & (1 << var_num)) {
+	if (object->not_eventable_variables & (1u << var_num)) {
 		return;  // ignore changes on non-eventable variables.
 	}
 	UPnPLastChangeBuilder_add(object->builder, var_name, new_value);

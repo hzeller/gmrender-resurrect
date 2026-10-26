@@ -169,8 +169,9 @@ static void test_last_change_collector(void) {
 	/* The notified value is XML-escaped. */
 	EXPECT_TRUE(strstr(mock_notify.last_varvalue, "&lt;TransportState val=\"STOPPED\"&gt;") != NULL);
 
-	/* Ignore variable 1 ("IgnoredVar"). */
+	/* Ignore variable 1 ("IgnoredVar") and bit 31 (no signed shift UB). */
 	UPnPLastChangeCollector_add_ignore(collector, 1);
+	UPnPLastChangeCollector_add_ignore(collector, 31);
 	VariableContainer_change(vc, 1, "changed-but-ignored");
 	EXPECT_INT_EQ(mock_notify.call_count, 1);
 
