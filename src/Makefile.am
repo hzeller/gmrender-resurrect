@@ -37,7 +37,8 @@ TESTS = \
 	upnp_service_test \
 	upnp_connmgr_test \
 	webserver_test \
-	upnp_device_test
+	upnp_device_test \
+	upnp_control_test
 
 check_PROGRAMS = $(TESTS)
 
@@ -99,4 +100,16 @@ upnp_device_test_SOURCES = \
 	xmldoc.c xmldoc.h \
 	xmlescape.c xmlescape.h
 upnp_device_test_LDADD = $(GLIB_LIBS) $(LIBUPNP_LIBS)
+
+upnp_control_test_SOURCES = \
+	upnp_control_test.c test-helpers.h \
+	upnp_control.c upnp_control.h \
+	upnp_service.c upnp_service.h \
+	upnp_device.c upnp_device.h \
+	variable-container.c variable-container.h \
+	webserver.c webserver.h \
+	logging.c logging.h \
+	xmldoc.c xmldoc.h \
+	xmlescape.c xmlescape.h
+upnp_control_test_LDADD = $(GLIB_LIBS) $(LIBUPNP_LIBS)
 

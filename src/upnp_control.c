@@ -544,6 +544,9 @@ static void set_mute_toggle(int do_mute) {
 
 static int set_mute(struct action_event *event) {
 	const char *value = upnp_get_string(event, "DesiredMute");
+	if (value == NULL) {
+		return -1;
+	}
 	service_lock();
 	const int do_mute = atoi(value);
 	set_mute_toggle(do_mute);
@@ -608,6 +611,9 @@ static float change_volume_decibel(float raw_decibel) {
 
 static int set_volume_db(struct action_event *event) {
 	const char *str_decibel_in = upnp_get_string(event, "DesiredVolume");
+	if (str_decibel_in == NULL) {
+		return -1;
+	}
 	service_lock();
 	float raw_decibel_in = atof(str_decibel_in);
 	float decibel = change_volume_decibel(raw_decibel_in);
@@ -620,6 +626,9 @@ static int set_volume_db(struct action_event *event) {
 
 static int set_volume(struct action_event *event) {
 	const char *volume = upnp_get_string(event, "DesiredVolume");
+	if (volume == NULL) {
+		return -1;
+	}
 	service_lock();
 	int volume_level = atoi(volume);  // range 0..100
 	if (volume_level < volume_range.min) volume_level = volume_range.min;
