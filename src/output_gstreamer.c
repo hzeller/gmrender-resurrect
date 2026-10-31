@@ -234,44 +234,7 @@ struct MetaModify {
 	int any_change;
 };
 
-static char *image_uri_from_tags(const GstTagList *list)
-{
-#if GST_VERSION_MAJOR < 1
-	(void)list;
-	return NULL;
-#else
-	const GValue *value = gst_tag_list_get_value_index(list, GST_TAG_IMAGE, 0);
-	if (value == NULL || !GST_VALUE_HOLDS_SAMPLE(value)) {
-		return NULL;
-	}
-
-	GstSample *sample = gst_value_get_sample(value);
-	GstBuffer *buffer = gst_sample_get_buffer(sample);
-	if (buffer == NULL) {
-		return NULL;
-	}
-
-	GstMapInfo map;
-	if (!gst_buffer_map(buffer, &map, GST_MAP_READ)) {
-		return NULL;
-	}
-
-	char *uri = NULL;
-	if (map.size > 7 &&
-		(strncmp((const char *)map.data, "http://", 7) == 0 ||
-		 strncmp((const char *)map.data, "https://", 8) == 0)) {
-		uri = strndup((const char *)map.data, map.size);
-		if (uri != NULL) {
-			char *end = strpbrk(uri, "\r\n");
-			if (end != NULL) {
-				*end = '\0';
-			}
-		}
-	}
-	gst_buffer_unmap(buffer, &map);
-	return uri;
-#endif
-}
+static const char kStreamUrlTag[] = "stream-url";
 
 static int is_image_uri(const char *uri)
 {
@@ -315,15 +278,14 @@ static void MetaModify_add_tag(const GstTagList *list, const gchar *tag,
 		destination = &data->meta->genre;
 	} else if (strcmp(tag, GST_TAG_COMPOSER) == 0) {
 		destination = &data->meta->composer;
-	} else if (strcmp(tag, "stream-url") == 0 ||
-		   strcmp(tag, "image-uri") == 0 ||
-		   strcmp(tag, "homepage") == 0) {
+	} else if (strcmp(tag, kStreamUrlTag) == 0 ||
+		   strcmp(tag, GST_TAG_HOMEPAGE) == 0) {
 		destination = &data->meta->album_art_uri;
 	}
 	if (destination != NULL) {
 		char *replace = NULL;
 		gst_tag_list_get_string(list, tag, &replace);
-		if (strcmp(tag, "homepage") == 0 &&
+		if (destination == &data->meta->album_art_uri &&
 		    (replace == NULL || !is_image_uri(replace))) {
 			free(replace);
 			return;
@@ -413,16 +375,6 @@ static gboolean my_bus_callback(GstBus * bus, GstMessage * msg,
 			modify.meta = &song_meta_;
 			modify.any_change = 0;
 			gst_tag_list_foreach(tags, &MetaModify_add_tag, &modify);
-			char *image_uri = image_uri_from_tags(tags);
-			if (image_uri != NULL &&
-				(modify.meta->album_art_uri == NULL ||
-				 strcmp(image_uri, modify.meta->album_art_uri) != 0)) {
-				free((char *)modify.meta->album_art_uri);
-				modify.meta->album_art_uri = image_uri;
-				modify.any_change++;
-			} else {
-				free(image_uri);
-			}
 			gst_tag_list_free(tags);
 			if (modify.any_change) {
 				meta_update_callback_(&song_meta_);
