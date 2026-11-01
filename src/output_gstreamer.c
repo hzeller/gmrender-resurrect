@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 #include <inttypes.h>
 
@@ -233,6 +234,36 @@ struct MetaModify {
 	int any_change;
 };
 
+static const char kStreamUrlTag[] = "stream-url";
+
+static int is_image_uri(const char *uri)
+{
+	const char *end = strpbrk(uri, "?#");
+	const char *path_end = end ? end : uri + strlen(uri);
+	const char *extension = NULL;
+	const char *cursor = path_end;
+	while (cursor > uri && cursor[-1] != '/') {
+		if (cursor[-1] == '.') {
+			extension = cursor - 1;
+			break;
+		}
+		cursor--;
+	}
+	if (extension == NULL) {
+		return 0;
+	}
+	return (path_end - extension == 4 &&
+		strncasecmp(extension, ".jpg", 4) == 0) ||
+	       (path_end - extension == 5 &&
+		strncasecmp(extension, ".jpeg", 5) == 0) ||
+	       (path_end - extension == 4 &&
+		strncasecmp(extension, ".png", 4) == 0) ||
+	       (path_end - extension == 4 &&
+		strncasecmp(extension, ".gif", 4) == 0) ||
+	       (path_end - extension == 5 &&
+		strncasecmp(extension, ".webp", 5) == 0);
+}
+
 static void MetaModify_add_tag(const GstTagList *list, const gchar *tag,
 			       gpointer user_data) {
 	struct MetaModify *data = (struct MetaModify*) user_data;
@@ -247,10 +278,18 @@ static void MetaModify_add_tag(const GstTagList *list, const gchar *tag,
 		destination = &data->meta->genre;
 	} else if (strcmp(tag, GST_TAG_COMPOSER) == 0) {
 		destination = &data->meta->composer;
+	} else if (strcmp(tag, kStreamUrlTag) == 0 ||
+		   strcmp(tag, GST_TAG_HOMEPAGE) == 0) {
+		destination = &data->meta->album_art_uri;
 	}
 	if (destination != NULL) {
 		char *replace = NULL;
 		gst_tag_list_get_string(list, tag, &replace);
+		if (destination == &data->meta->album_art_uri &&
+		    (replace == NULL || !is_image_uri(replace))) {
+			free(replace);
+			return;
+		}
 		if (replace != NULL &&
 		    (*destination == NULL
 		     || strcmp(replace, *destination) != 0)) {
