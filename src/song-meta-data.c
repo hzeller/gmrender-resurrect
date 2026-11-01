@@ -162,7 +162,7 @@ int SongMetaData_parse_DIDL(struct SongMetaData *object, const char *xml) {
 	if (value_node) replace_str(&object->genre, get_node_value(value_node));
 
 	value_node = find_element_in_element(item_node, "upnp:albumArtURI");
-	if (value_node) object->album_art_uri = get_node_value(value_node);
+	if (value_node) replace_str(&object->album_art_uri, get_node_value(value_node));
 
 	xmldoc_free(doc);
 	return 1;
