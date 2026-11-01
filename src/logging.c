@@ -56,6 +56,9 @@ void Log_init(const char *filename) {
 	if (filename == NULL)
 		return;
 
+	if (log_fd > 2) {
+		close(log_fd);
+	}
 	if (!strcmp(filename, "stdout")) {
 		log_fd = 1;
 	} else if (!strcmp(filename, "stderr")) {
@@ -69,11 +72,9 @@ void Log_init(const char *filename) {
 		return;
 	}
 	enable_color = isatty(log_fd);
-	if (enable_color) {
-		info_markup_start_ = kInfoHighlight;
-		error_markup_start_ = kErrorHighlight;
-		markup_end_ = kTermReset;
-	}
+	info_markup_start_ = enable_color ? kInfoHighlight : "INFO  ";
+	error_markup_start_ = enable_color ? kErrorHighlight : "ERROR ";
+	markup_end_ = enable_color ? kTermReset : "";
 }
 
 int Log_color_allowed(void) { return enable_color; }
@@ -90,16 +91,23 @@ static void Log_internal(int fd, const char *markup_start,
 	char fmt_buf[128];
 	strftime(fmt_buf, sizeof(fmt_buf), "%F %T", &time_breakdown);
 	struct iovec parts[3];
-	parts[0].iov_len = asprintf((char**) &parts[0].iov_base,
-				    "%s[%s.%06ld | %s]%s ",
-				    markup_start, fmt_buf, now.tv_usec,
-				    category, markup_end_);
-	parts[1].iov_len = vasprintf((char**) &parts[1].iov_base, format, ap);
+	int prefix_len = asprintf((char**) &parts[0].iov_base,
+				  "%s[%s.%06ld | %s]%s ",
+				  markup_start, fmt_buf, now.tv_usec,
+				  category, markup_end_);
+	int msg_len = vasprintf((char**) &parts[1].iov_base, format, ap);
+	if (prefix_len < 0 || msg_len < 0) {
+		if (prefix_len >= 0) free(parts[0].iov_base);
+		if (msg_len >= 0) free(parts[1].iov_base);
+		return;
+	}
+	parts[0].iov_len = prefix_len;
+	parts[1].iov_len = msg_len;
 	parts[2].iov_base = (void*) "\n";
 	parts[2].iov_len = 1;
 	int already_newline
-		= (parts[1].iov_len > 0 &&
-		   ((const char*)parts[1].iov_base)[parts[1].iov_len-1] == '\n');
+		= (msg_len > 0 &&
+		   ((const char*)parts[1].iov_base)[msg_len - 1] == '\n');
 	if (writev(fd, parts, already_newline ? 2 : 3) < 0) {
 		// Logging trouble. Ignore.
 	}

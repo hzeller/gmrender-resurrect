@@ -79,9 +79,11 @@ int upnp_add_response(struct action_event *event,
 		/* report custom error */
 		UpnpString *errorMessage = UpnpString_new();
 		UpnpString_set_String(errorMessage, UpnpGetErrorMessage(rc));
+		ixmlDocument_free(actionResult);
 		UpnpActionRequest_set_ActionResult(event->request, NULL);
 		UpnpActionRequest_set_ErrCode(event->request, UPNP_SOAP_E_ACTION_FAILED);
 		UpnpActionRequest_set_ErrStr(event->request, errorMessage);
+		UpnpString_delete(errorMessage);
 		return -1;
 	}
 
@@ -118,11 +120,13 @@ void upnp_set_error(struct action_event *event, int error_code,
 	vsnprintf(buffer, sizeof(buffer), format, ap);
 	va_end(ap);
 
+	ixmlDocument_free(UpnpActionRequest_get_ActionResult(event->request));
 	UpnpActionRequest_set_ActionResult(event->request, NULL);
 	UpnpActionRequest_set_ErrCode(event->request, UPNP_SOAP_E_ACTION_FAILED);
 	UpnpString *errStr = UpnpString_new();
 	UpnpString_set_String(errStr, buffer);
 	UpnpActionRequest_set_ErrStr(event->request, errStr);
+	UpnpString_delete(errStr);
 	Log_error("upnp", "%s: %s (%d)\n", __FUNCTION__,
 		  UpnpActionRequest_get_ErrStr_cstr(event->request),
 		  error_code);
@@ -147,7 +151,8 @@ const char *upnp_get_string(struct action_event *event, const char *key)
 	node = ixmlNode_getFirstChild(node);
 
 	for (/**/; node != NULL; node = ixmlNode_getNextSibling(node)) {
-		if (strcmp(ixmlNode_getNodeName(node), key) == 0) {
+		const char *node_name = ixmlNode_getNodeName(node);
+		if (node_name != NULL && strcmp(node_name, key) == 0) {
 			node = ixmlNode_getFirstChild(node);
 			const char *node_value = (node != NULL
 						  ? ixmlNode_getNodeValue(node)
@@ -211,8 +216,8 @@ static int handle_subscription_request(struct upnp_device *priv,
 	}
 	pthread_mutex_unlock(srv->service_mutex);
 	char *xml_value = UPnPLastChangeBuilder_to_xml(builder);
-	Log_info("upnp", "Initial variable sync: %s", xml_value);
-	eventvar_values[0] = xmlescape(xml_value, 0);
+	Log_info("upnp", "Initial variable sync: %s", xml_value ? xml_value : "");
+	eventvar_values[0] = xml_value ? xmlescape(xml_value, 0) : strdup("");
 	free(xml_value);
 	UPnPLastChangeBuilder_delete(builder);
 
@@ -239,6 +244,8 @@ int upnp_device_notify(struct upnp_device *device,
                        const char **varnames,
                        const char **varvalues, int varcount)
 {
+	if (device == NULL)
+		return 0;
         UpnpNotify(device->device_handle,
                    device->upnp_device_descriptor->udn, serviceID,
 		   varnames, varvalues, varcount);
@@ -261,13 +268,13 @@ static int handle_var_request(struct upnp_device *priv,
 	pthread_mutex_lock(srv->service_mutex);
 
 	char *result = NULL;
+	const char *stateVarName = UpnpStateVarRequest_get_StateVarName_cstr(event);
 	const int var_count =
 		VariableContainer_get_num_vars(srv->variable_container);
 	for (int i = 0; i < var_count; ++i) {
 		const char *name = NULL;
 		const char *value = VariableContainer_get(srv->variable_container, i, &name);
-		const char *stateVarName = UpnpStateVarRequest_get_StateVarName_cstr(event);
-		if (value && strcmp(stateVarName, name) == 0) {
+		if (value && stateVarName && strcmp(stateVarName, name) == 0) {
 			result = strdup(value);
 			break;
 		}
@@ -275,11 +282,15 @@ static int handle_var_request(struct upnp_device *priv,
 
 	pthread_mutex_unlock(srv->service_mutex);
 
-	UpnpStateVarRequest_set_CurrentVal(event, result);
+	if (result != NULL) {
+		UpnpStateVarRequest_set_CurrentVal(event, result);
+	}
 	int errCode = (result == NULL) ? UPNP_SOAP_E_INVALID_VAR : UPNP_E_SUCCESS;
 	UpnpStateVarRequest_set_ErrCode(event, errCode);
 	Log_info("upnp", "Variable request %s -> %s (%s)",
-		UpnpStateVarRequest_get_StateVarName_cstr(event), result, serviceID);
+		stateVarName ? stateVarName : "(null)",
+		result ? result : "(null)", serviceID);
+	free(result);
 	return 0;
 }
 
@@ -343,6 +354,16 @@ static int handle_action_request(struct upnp_device *priv,
 		rc = (event_action->callback) (&event);
 		if (rc == 0) {
 			UpnpActionRequest_set_ErrCode(event.request, UPNP_E_SUCCESS);
+			IXML_Document *actionResult =
+				UpnpActionRequest_get_ActionResult(ar_event);
+			if (actionResult == NULL) {
+				actionResult =
+					UpnpMakeActionResponse(actionName,
+							       event_service->service_type,
+							       0, NULL);
+				UpnpActionRequest_set_ActionResult(event.request,
+								   actionResult);
+			}
 #ifdef ENABLE_ACTION_LOGGING
 			if (UpnpActionRequest_get_ActionResult(ar_event)) {
 				char *action_result_xml = ixmlDocumenttoString(
@@ -356,12 +377,13 @@ static int handle_action_request(struct upnp_device *priv,
 					 UpnpActionRequest_get_ActionName_cstr(ar_event));
 			}
 #endif
-		}
-		IXML_Document *actionResult = UpnpActionRequest_get_ActionResult(ar_event);
-		if (actionResult == NULL) {
-			actionResult = UpnpMakeActionResponse(actionName,
-						   event_service->service_type, 0, NULL);
-			UpnpActionRequest_set_ActionResult(event.request, actionResult);
+		} else {
+			ixmlDocument_free(UpnpActionRequest_get_ActionResult(ar_event));
+			UpnpActionRequest_set_ActionResult(ar_event, NULL);
+			if (UpnpActionRequest_get_ErrCode(ar_event) == UPNP_E_SUCCESS) {
+				UpnpActionRequest_set_ErrCode(ar_event,
+							      UPNP_SOAP_E_ACTION_FAILED);
+			}
 		}
 	} else {
 		int errCode = UpnpActionRequest_get_ErrCode(ar_event);
@@ -508,9 +530,11 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 	pthread_mutex_init(&(result_device->device_mutex), NULL);
 
 	/* register icons in web server */
-        for (int i = 0; (icon_entry = device_def->icons[i]); i++) {
-		webserver_register_file(icon_entry->url, "image/png");
-        }
+	if (device_def->icons) {
+		for (int i = 0; (icon_entry = device_def->icons[i]); i++) {
+			webserver_register_file(icon_entry->url, "image/png");
+		}
+	}
 
 	/* generate and register service schemas in web server */
         for (int i = 0; (srv = device_def->services[i]); i++) {
@@ -530,6 +554,7 @@ struct upnp_device *upnp_device_init(struct upnp_device_descriptor *device_def,
 
 void upnp_device_shutdown(struct upnp_device *device) {
 	UpnpFinish();
+	free(device);
 }
 
 struct service *find_service(struct upnp_device_descriptor *device_def,
@@ -538,8 +563,10 @@ struct service *find_service(struct upnp_device_descriptor *device_def,
 	struct service *event_service;
 	int serviceNum = 0;
 
-	assert(device_def != NULL);
-	assert(service_id != NULL);
+	if (device_def == NULL || device_def->services == NULL ||
+	    service_id == NULL) {
+		return NULL;
+	}
 	while (event_service =
 	       device_def->services[serviceNum], event_service != NULL) {
 		if (strcmp(event_service->service_id, service_id) == 0)

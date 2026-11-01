@@ -221,7 +221,8 @@ struct action *find_action(struct service *event_service,
 {
 	struct action *event_action;
 	int actionNum = 0;
-	if (event_service == NULL)
+	if (event_service == NULL || event_service->actions == NULL ||
+	    action_name == NULL)
 		return NULL;
 	while (event_action =
 	       &(event_service->actions[actionNum]),

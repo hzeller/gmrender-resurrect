@@ -28,3 +28,123 @@ git-version.h: $(wildcard $(top_srcdir)/.git/HEAD $(top_srcdir)/.git/refs/heads/
 
 AM_CPPFLAGS = $(GLIB_CFLAGS) $(GST_CFLAGS) $(LIBUPNP_CFLAGS) -DPKG_DATADIR=\"$(datadir)/gmediarender\"
 gmediarender_LDADD = $(GLIB_LIBS) $(GST_LIBS) $(LIBUPNP_LIBS)
+
+TESTS = \
+	xmlescape_test \
+	xmldoc_test \
+	song-meta-data_test \
+	variable-container_test \
+	upnp_service_test \
+	upnp_connmgr_test \
+	webserver_test \
+	upnp_device_test \
+	upnp_control_test \
+	upnp_transport_test \
+	upnp_renderer_test \
+	logging_test
+
+check_PROGRAMS = $(TESTS)
+
+xmlescape_test_SOURCES = xmlescape_test.c test-helpers.h xmlescape.c xmlescape.h
+
+logging_test_SOURCES = logging_test.c test-helpers.h logging.c logging.h
+
+xmldoc_test_SOURCES = xmldoc_test.c test-helpers.h xmldoc.c xmldoc.h
+xmldoc_test_LDADD = $(LIBUPNP_LIBS)
+
+song_meta_data_test_SOURCES = \
+	song-meta-data_test.c test-helpers.h \
+	song-meta-data.c song-meta-data.h \
+	xmldoc.c xmldoc.h \
+	xmlescape.c xmlescape.h
+song_meta_data_test_LDADD = $(LIBUPNP_LIBS)
+
+variable_container_test_SOURCES = \
+	variable-container_test.c test-helpers.h \
+	variable-container.c variable-container.h \
+	xmldoc.c xmldoc.h \
+	xmlescape.c xmlescape.h
+variable_container_test_LDADD = $(LIBUPNP_LIBS)
+
+upnp_service_test_SOURCES = \
+	upnp_service_test.c test-helpers.h \
+	upnp_service.c upnp_service.h \
+	variable-container.c variable-container.h \
+	upnp_device.c upnp_device.h \
+	webserver.c webserver.h \
+	logging.c logging.h \
+	xmldoc.c xmldoc.h \
+	xmlescape.c xmlescape.h
+upnp_service_test_LDADD = $(GLIB_LIBS) $(LIBUPNP_LIBS)
+
+upnp_connmgr_test_SOURCES = \
+	upnp_connmgr_test.c test-helpers.h \
+	upnp_connmgr.c upnp_connmgr.h \
+	upnp_service.c upnp_service.h \
+	variable-container.c variable-container.h \
+	upnp_device.c upnp_device.h \
+	webserver.c webserver.h \
+	logging.c logging.h \
+	xmldoc.c xmldoc.h \
+	xmlescape.c xmlescape.h
+upnp_connmgr_test_LDADD = $(GLIB_LIBS) $(LIBUPNP_LIBS)
+
+webserver_test_SOURCES = \
+	webserver_test.c test-helpers.h \
+	webserver.c webserver.h \
+	logging.c logging.h
+webserver_test_LDADD = $(GLIB_LIBS) $(LIBUPNP_LIBS)
+
+upnp_device_test_SOURCES = \
+	upnp_device_test.c test-helpers.h \
+	upnp_device.c upnp_device.h \
+	upnp_service.c upnp_service.h \
+	variable-container.c variable-container.h \
+	webserver.c webserver.h \
+	logging.c logging.h \
+	xmldoc.c xmldoc.h \
+	xmlescape.c xmlescape.h
+upnp_device_test_LDADD = $(GLIB_LIBS) $(LIBUPNP_LIBS)
+
+upnp_control_test_SOURCES = \
+	upnp_control_test.c test-helpers.h \
+	upnp_control.c upnp_control.h \
+	upnp_service.c upnp_service.h \
+	upnp_device.c upnp_device.h \
+	variable-container.c variable-container.h \
+	webserver.c webserver.h \
+	logging.c logging.h \
+	xmldoc.c xmldoc.h \
+	xmlescape.c xmlescape.h
+upnp_control_test_LDADD = $(GLIB_LIBS) $(LIBUPNP_LIBS)
+
+upnp_transport_test_SOURCES = \
+	upnp_transport_test.c test-helpers.h \
+	upnp_transport.c upnp_transport.h \
+	song-meta-data.c song-meta-data.h \
+	upnp_service.c upnp_service.h \
+	upnp_device.c upnp_device.h \
+	variable-container.c variable-container.h \
+	webserver.c webserver.h \
+	logging.c logging.h \
+	xmldoc.c xmldoc.h \
+	xmlescape.c xmlescape.h
+upnp_transport_test_LDADD = $(GLIB_LIBS) $(LIBUPNP_LIBS)
+
+upnp_renderer_test_SOURCES = \
+	upnp_renderer_test.c test-helpers.h \
+	upnp_renderer.c upnp_renderer.h \
+	upnp_connmgr.c upnp_connmgr.h \
+	upnp_control.c upnp_control.h \
+	upnp_transport.c upnp_transport.h \
+	song-meta-data.c song-meta-data.h \
+	upnp_service.c upnp_service.h \
+	upnp_device.c upnp_device.h \
+	variable-container.c variable-container.h \
+	webserver.c webserver.h \
+	logging.c logging.h \
+	xmldoc.c xmldoc.h \
+	xmlescape.c xmlescape.h
+upnp_renderer_test_LDADD = $(GLIB_LIBS) $(LIBUPNP_LIBS)
+
+

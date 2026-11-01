@@ -183,10 +183,10 @@ static gint g_compare_mime_root(gconstpointer a, gconstpointer b)
 	size_t aLen = strlen((const char*)a);
 	size_t bLen = strlen((const char*)b);
 
-	// Only compare up to the small string
-	int min = (aLen < bLen) ? aLen : bLen;
+	if (aLen == 0 || aLen > bLen)
+		return 1;
 
-	return strncmp((const char*) a, (const char*) b, min);
+	return strncmp((const char*) a, (const char*) b, aLen);
 }
 
 static void g_add_mime_type(gpointer data, gpointer user_data)
@@ -343,6 +343,7 @@ int connmgr_init(const char* mime_filter_string) {
 
 	// Free all lists that were generated
 	g_slist_free_full(supported_types_list, free);
+	supported_types_list = NULL;
 	g_slist_free_full(mime_filter.allowed_roots, free);
 	g_slist_free_full(mime_filter.added_types, free);
 	g_slist_free_full(mime_filter.removed_types, free);
@@ -360,8 +361,7 @@ static int get_protocol_info(struct action_event *event)
 
 static int get_current_conn_ids(struct action_event *event)
 {
-	int rc = -1;
-	upnp_add_response(event, "ConnectionIDs", "0");
+	int rc = upnp_add_response(event, "ConnectionIDs", "0");
 	///rc = upnp_append_variable(event, CONNMGR_VAR_CUR_CONN_IDS,
 	//			    "ConnectionIDs");
 	return rc;

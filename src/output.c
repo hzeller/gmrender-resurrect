@@ -126,6 +126,8 @@ int output_loop()
 	signal(SIGTERM, &exit_loop_sighandler);
 
         g_main_loop_run(main_loop_);
+        g_main_loop_unref(main_loop_);
+        main_loop_ = NULL;
 
         return 0;
 }

@@ -133,5 +133,5 @@ void UPnPLastChangeCollector_add_ignore(upnp_last_change_collector_t *object,
 void UPnPLastChangeCollector_start(upnp_last_change_collector_t *object);
 void UPnPLastChangeCollector_finish(upnp_last_change_collector_t *object);
 
-// no delete yet. We leak that.
+void UPnPLastChangeCollector_delete(upnp_last_change_collector_t *object);
 #endif  /* VARIABLE_CONTAINER_H */
