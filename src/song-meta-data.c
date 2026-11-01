@@ -205,21 +205,21 @@ char *SongMetaData_to_DIDL(const struct SongMetaData *object,
 		result = replace_range(result,
 				       "<upnp:creator>", "</upnp:creator>",
 				       composer, &edits);
-		result = replace_range(result,
-				       "<upnp:albumArtURI>", "</upnp:albumArtURI>",
-				       album_art_uri, &edits);
-		if (album_art_uri && strstr(result, "<upnp:albumArtURI>") == NULL) {
+		if (album_art_uri && strlen(album_art_uri) > 0 &&
+		    strstr(result, "<upnp:albumArtURI>") == NULL) {
 			char *with_art;
 			char *item_end = strstr(result, "</item>");
 			if (item_end && asprintf(&with_art, "%.*s"
-					"\t<upnp:albumArtURI>%s</upnp:albumArtURI>\n%s",
-					(int)(item_end - result), result, album_art_uri,
-					item_end) >= 0) {
+					"\t<upnp:albumArtURI></upnp:albumArtURI>\n%s",
+					(int)(item_end - result), result, item_end) >= 0) {
 				free(result);
 				result = with_art;
 				edits++;
 			}
 		}
+		result = replace_range(result,
+				       "<upnp:albumArtURI>", "</upnp:albumArtURI>",
+				       album_art_uri, &edits);
 		if (edits) {
 			// Only if we changed the content, we generate a new
 			// unique id.
